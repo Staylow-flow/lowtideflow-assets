@@ -1,0 +1,57 @@
+/* Lowtideflow — interactive hero background
+   Layer behind existing hero content (logo, type, CTAs). */
+
+.ltf-flow-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #07070d;
+}
+
+.ltf-flow-bg canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Hero wrapper — apply to the section that holds logo + copy */
+.ltf-flow-hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Content sits above the animated canvas */
+.ltf-flow-hero > *:not(.ltf-flow-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Optional subtle vignette so type stays readable */
+.ltf-flow-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%, transparent 30%, rgba(7, 7, 13, 0.55) 100%),
+    linear-gradient(to bottom, rgba(7, 7, 13, 0.15) 0%, transparent 35%, rgba(7, 7, 13, 0.35) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ltf-flow-bg canvas {
+    display: none;
+  }
+
+  .ltf-flow-bg {
+    background:
+      radial-gradient(ellipse 55% 45% at 72% 18%, rgba(45, 107, 79, 0.45) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 28% 42%, rgba(45, 212, 191, 0.35) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 55% at 55% 78%, rgba(107, 45, 158, 0.5) 0%, transparent 70%),
+      #07070d;
+  }
+}
