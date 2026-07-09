@@ -33,32 +33,27 @@ const NEBULA_FRAG = /* glsl */`
   precision highp float;
 
   uniform float time;
-  uniform float timeOffset;   /* phase shift so fg/bg layers don't overlap */
+  uniform float timeOffset;
   uniform float rockYaw;
   uniform float rockPitch;
   uniform float aspect;
-  uniform float alphaScale;      /* 0.90 bg, 0.38 fg */
-  uniform float haloOuter;       /* smoothstep outer radius */
-  uniform float tentacleStrength;/* warp amplitude: 0.26 bg, 0.48 fg */
-  uniform float rockExclusion;   /* opacity hole at rock centre: 0.0 bg, 1.0 fg */
-  uniform float edgeOnly;        /* 0 = bg volume, 1 = fg edge tentacles only */
-  uniform float gasRadius;       /* 1.0 = default reach, 0.75 = 25% tighter */
-  uniform float nebulaInertia;   /* momentum-driven swirl offset accumulator */
-  uniform vec2  mouseXY;         /* smoothed -1..1 mouse, shared both layers */
-  uniform vec2  mousePrevXY;     /* prior frame — draws air-sweep trail */
-  uniform vec2  mouseTailXY;     /* ~120 ms lag — long finger-streak line */
-  uniform float gasLiftY;        /* UV lift — locks nebula halo to rock */
+  uniform float alphaScale;
+  uniform float nebulaInertia;
+  uniform float gasLiftY;     /* pairs bounds center with lifted rock */
+  uniform float gasReach;     /* outer soft fade (UV units) */
+  uniform float gasInner;     /* inner full-strength radius */
+  uniform float edgeWarp;     /* FBM wobble on boundary */
+  uniform float gasStretchY;  /* vertical ellipse (<1 taller cloud) */
+  uniform vec2  mouseXY;
   varying vec2 vUv;
 
-  /* ── Brand palette ────────────────────────────────────────────── */
-  const vec3 TEAL    = vec3(0.122, 0.467, 0.506);  /* #1f7781 */
-  const vec3 PURPLE  = vec3(0.302, 0.145, 0.616);  /* #4d259d */
-  const vec3 GREEN   = vec3(0.043, 0.502, 0.314);  /* #0b8050 */
-  const vec3 TEALL   = vec3(0.165, 0.667, 0.722);  /* #2aaab8 */
-  const vec3 PURPLEM = vec3(0.439, 0.251, 0.753);  /* #7040c0 */
-  const vec3 NAVY    = vec3(0.165, 0.251, 0.439);  /* #2a4070 */
+  const vec3 TEAL    = vec3(0.122, 0.467, 0.506);
+  const vec3 PURPLE  = vec3(0.302, 0.145, 0.616);
+  const vec3 GREEN   = vec3(0.043, 0.502, 0.314);
+  const vec3 TEALL   = vec3(0.165, 0.667, 0.722);
+  const vec3 PURPLEM = vec3(0.439, 0.251, 0.753);
+  const vec3 NAVY    = vec3(0.165, 0.251, 0.439);
 
-  /* ── Value noise ─────────────────────────────────────────────── */
   float hash(vec2 p) {
     p = fract(p * vec2(127.1, 311.7));
     p += dot(p, p + 17.5);
@@ -68,15 +63,14 @@ const NEBULA_FRAG = /* glsl */`
   float vnoise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    vec2 u = f * f * (3.0 - 2.0 * f);  /* smoothstep */
+    vec2 u = f * f * (3.0 - 2.0 * f);
     return mix(
-      mix(hash(i),              hash(i + vec2(1.0, 0.0)), u.x),
+      mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
       mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
       u.y
     );
   }
 
-  /* ── Fractal Brownian Motion — 5 octaves ─────────────────────── */
   float fbm(vec2 p) {
     float val = 0.0;
     float amp = 0.52;
@@ -85,14 +79,12 @@ const NEBULA_FRAG = /* glsl */`
       val += amp * vnoise(p * freq);
       freq *= 2.07;
       amp  *= 0.50;
-      p    += vec2(1.74, 9.14);  /* offset each octave to break periodicity */
+      p    += vec2(1.74, 9.14);
     }
     return val;
   }
 
-  /* ── Smooth color palette indexed 0→1 ───────────────────────── */
   vec3 nebulaColor(float t, vec2 pos) {
-    /* 5-stop gradient through brand colors */
     vec3 c;
     if      (t < 0.20) c = mix(PURPLE,  TEAL,    t * 5.0);
     else if (t < 0.40) c = mix(TEAL,    TEALL,   (t - 0.20) * 5.0);
@@ -103,200 +95,70 @@ const NEBULA_FRAG = /* glsl */`
   }
 
   void main() {
-    /* Aspect-correct UV */
     vec2 uv = vec2((vUv.x - 0.5) * aspect + 0.5, vUv.y);
 
     float t     = time + timeOffset;
     float yaw   = rockYaw;
     float pitch = rockPitch;
 
-    /* Swirl rotation — rock axes + scroll inertia only (no global mouse) */
+    /* Global swirl — follows rock rotation + scroll inertia */
     vec2  center = vec2(0.5 * aspect + 0.5 * (aspect - 1.0) * 0.5, 0.5);
     vec2  ruv    = uv - center;
     float angle  = t * 0.014 + yaw * 0.28 + pitch * 0.14 + nebulaInertia * 1.35;
     float ca = cos(angle), sa = sin(angle);
     uv = vec2(ruv.x * ca - ruv.y * sa, ruv.x * sa + ruv.y * ca) + center;
 
-    /* ── Mouse — long finger streak + point stir ─────────────────────── */
-    vec2  mouseV     = vec2(mouseXY.x     * 0.5 + 0.5, mouseXY.y     * 0.5 + 0.5);
-    vec2  mousePrevV = vec2(mousePrevXY.x * 0.5 + 0.5, mousePrevXY.y * 0.5 + 0.5);
-    vec2  mouseTailV = vec2(mouseTailXY.x * 0.5 + 0.5, mouseTailXY.y * 0.5 + 0.5);
-    vec2  mouseA     = vec2((mouseV.x - 0.5) * aspect + 0.5, mouseV.y);
-
-    float mouseDist  = distance(vUv, mouseV);
-    float mouseMask  = pow(1.0 - smoothstep(0.0, 0.18, mouseDist), 1.8);
-
-    /* Long trail segment (tail → cursor) */
-    vec2  baLong     = mouseV - mouseTailV;
-    vec2  paLong     = vUv - mouseTailV;
-    float segLenLong = length(baLong);
-    float segTLong   = clamp(dot(paLong, baLong) / max(dot(baLong, baLong), 0.00004), 0.0, 1.0);
-    float fingerDist = length(paLong - baLong * segTLong);
-    float fingerMask = pow(1.0 - smoothstep(0.0, 0.095, fingerDist), 2.2);
-    fingerMask      *= smoothstep(0.012, 0.07, segLenLong);
-
-    /* Short segment (prev → cursor) for crisp leading edge */
-    vec2  ba         = mouseV - mousePrevV;
-    vec2  pa         = vUv - mousePrevV;
-    float segLen     = length(ba);
-    float segT       = clamp(dot(pa, ba) / max(dot(ba, ba), 0.00004), 0.0, 1.0);
-    float sweepDist  = length(pa - ba * segT);
-    float sweepMask  = pow(1.0 - smoothstep(0.0, 0.14, sweepDist), 1.4);
-    sweepMask       *= smoothstep(0.003, 0.045, segLen);
-
-    float trailMask  = max(fingerMask, sweepMask * 0.85);
-
-    vec2  toMouse    = uv - mouseA;
-    float localSpin  = (mouseMask + trailMask * 2.2) * (mouseXY.x * 0.22 + mouseXY.y * 0.10);
+    /* Light mouse stir — UV only, no density streaks */
+    vec2  mouseV   = vec2(mouseXY.x * 0.5 + 0.5, 0.5);
+    vec2  mouseA   = vec2((mouseV.x - 0.5) * aspect + 0.5, 0.5);
+    float mouseDist = distance(vUv, mouseV);
+    float mouseMask = pow(1.0 - smoothstep(0.03, 0.165, mouseDist), 1.15);
+    vec2  toMouse = uv - mouseA;
+    float localSpin = mouseMask * mouseXY.x * 0.12;
     float lca = cos(localSpin), lsa = sin(localSpin);
     vec2  uvTwist = vec2(
       toMouse.x * lca - toMouse.y * lsa,
       toMouse.x * lsa + toMouse.y * lca
     ) + mouseA;
-    uv = mix(uv, uvTwist, mouseMask * 0.38 + trailMask * 0.72);
+    uv = mix(uv, uvTwist, mouseMask * 0.28);
 
-    vec2 pushDir  = normalize(toMouse + vec2(0.0001));
-    vec2 fingerDir = normalize(baLong + vec2(0.0001));
-    uv += pushDir   * mouseMask   * dot(mouseXY, pushDir) * 0.045;
-    uv += fingerDir * trailMask   * 0.12;
-    uv += vec2(-fingerDir.y, fingerDir.x) * trailMask * 0.05;
-
-    /* ── Domain warp layer 1 ────────────────────────────────────── */
+    /* Domain warp — this is the sweet swirling color field */
     vec2 q = vec2(
-      fbm(uv * 2.2 + vec2(0.00, 0.00) + t * 0.10),
+      fbm(uv * 2.2 + t * 0.10),
       fbm(uv * 2.2 + vec2(5.20, 1.30) + t * 0.09)
     );
-
-    /* ── Domain warp layer 2 ────────────────────────────────────── */
     vec2 r = vec2(
       fbm(uv * 2.6 + 3.0 * q + vec2(1.70, 9.20) + t * 0.07),
       fbm(uv * 2.6 + 3.0 * q + vec2(8.30, 2.80) + t * 0.06)
     );
-
-    /* ── Final noise ────────────────────────────────────────────── */
     float f  = fbm(uv * 2.0 + 4.0 * r + t * 0.04);
-    /* Second nearby sample — blending the two meshes the color transitions */
     float f2 = fbm(uv * 2.0 + 4.0 * r + t * 0.04 + vec2(0.18, 0.11));
 
-    /* Dual-sample color blend: softens hard color borders into gradient mesh */
     vec3 col = mix(nebulaColor(f, uv), nebulaColor(f2, uv), 0.28);
-    col = mix(col, PURPLE, clamp(length(q) * 0.55 - 0.32, 0.0, 0.38)); /* +10% purple */
-    col = mix(col, NAVY,   clamp(0.55 - f * 0.45,       0.0, 0.14)); /* +5% navy in voids */
-    col = mix(col, TEALL,  clamp(r.x - 0.5,             0.0, 0.22));
+    col = mix(col, PURPLE, clamp(length(q) * 0.55 - 0.32, 0.0, 0.38));
+    col = mix(col, NAVY,   clamp(0.55 - f * 0.45, 0.0, 0.14));
+    col = mix(col, TEALL,  clamp(r.x - 0.5, 0.0, 0.22));
 
-    /* ── Density — moderate threshold ──────────────────────────── */
-    float density = pow(clamp(f * 1.8 - 0.35, 0.0, 1.0), 1.6);
+    /* Gas density from screen-space noise */
+    float gas = pow(clamp(f * 1.65 - 0.30, 0.0, 1.0), 1.35);
 
-    /* Glow on dense cores */
-    col += col * density * 0.65;
-    col  = clamp(col, 0.0, 1.0);
+    /* Soft organic bounds — warped distance only, never angle (no starburst) */
+    vec2  rockUV = vec2(0.48, 0.50 + gasLiftY);
+    vec2  p      = vUv - rockUV;
+    p.x *= aspect;
+    p.y *= gasStretchY;
 
-    /* ── Organic tentacle halo ────────────────────────────────────
-       Instead of a clean circle, the boundary is FBM-warped along
-       the angular direction — this creates swirling arm-like tendrils
-       that poke out in some directions while staying concave in others.
-       The tentacles rotate slowly and react to the rock's pitch axis.   */
-    /* Halo center — lifted with rock (gasLiftY uniform) */
-    vec2  haloUV      = vUv + vec2(0.0, gasLiftY);
-    vec2  rockUV      = vec2(0.48, 0.50);
+    vec2  warpUV = p * 2.8 + vec2(t * 0.042, t * 0.031) + vec2(yaw * 0.12, pitch * 0.07);
+    float edgeN1   = (fbm(warpUV) - 0.5) * edgeWarp;
+    float edgeN2   = (fbm(warpUV * 1.55 + vec2(t * 0.022, -t * 0.018)) - 0.5) * edgeWarp * 0.42;
+    float dist     = length(p) + edgeN1 + edgeN2;
 
-    vec2  dvRaw       = haloUV - rockUV;
-    float vertBias    = dvRaw.y > 0.0 ? 1.35 : 1.0;
-    vec2  dv          = vec2(dvRaw.x, dvRaw.y * vertBias);
-    float baseDist    = length(dv);
-    float baseAngle   = atan(dvRaw.y, dvRaw.x);
+    float contain  = 1.0 - smoothstep(gasInner, gasReach, dist);
+    contain        = pow(max(contain, 0.0), 0.72);
 
-    /* Angular FBM: tentacleStrength controls arm amplitude (fg > bg) */
-    float tentacleField = fbm(vec2(
-      baseAngle * 1.6 + t * 0.07 + yaw * 0.6,
-      baseDist  * 3.0 + pitch * 0.4
-    ));
-    float tentacleField2 = fbm(vec2(
-      baseAngle * 2.8 - t * 0.11 + pitch * 0.55,
-      baseDist  * 5.5 + t * 0.06 + yaw * 0.35
-    ));
-    float tentacleWarp = (tentacleField - 0.48) * tentacleStrength;
+    float alpha = gas * contain * alphaScale;
 
-    /* FG layer: narrow rim band for long sharp curling tentacles */
-    float warpBand = edgeOnly > 0.5
-      ? smoothstep(0.18, 0.26, baseDist) * smoothstep(0.72, 0.34, baseDist)
-      : smoothstep(0.08, 0.22, baseDist) * smoothstep(0.55, 0.28, baseDist);
-    float warpedDist = baseDist - tentacleWarp * warpBand;
-    float haloOuterR = haloOuter * gasRadius;
-
-    /* Halo fade — gasRadius scales outer reach inward */
-    float halo = 1.0 - smoothstep(0.15, haloOuterR, warpedDist);
-    halo = pow(halo, 1.05);
-
-    /* Screen-edge safety — extra fade at top so gas stays low on rock */
-    float edgeSafe = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
-    halo *= smoothstep(0.0, 0.20, edgeSafe);
-    halo *= smoothstep(0.0, 0.12, vUv.y);
-
-    density *= halo;
-
-    /* Finger streak — void channel + bright rim (both layers) */
-    float fingerCore = pow(1.0 - smoothstep(0.0, 0.055, fingerDist), 3.5) * fingerMask;
-    float fingerRim  = smoothstep(0.04, 0.08, fingerDist)
-                     * (1.0 - smoothstep(0.08, 0.13, fingerDist)) * fingerMask;
-    density *= 1.0 - fingerCore * 0.80;
-    col = mix(col, TEALL,  fingerRim * 0.70);
-    col = mix(col, PURPLEM, fingerRim * 0.40);
-
-    /* Mouse + sweep boost */
-    float mouseStir = edgeOnly > 0.5 ? 0.70 : 1.0;
-    float interact  = max(mouseMask, trailMask * 1.5);
-    density *= 1.0 + interact * 0.45 * mouseStir;
-    col += col * interact * 0.28 * mouseStir;
-    col  = clamp(col, 0.0, 1.0);
-
-    if (edgeOnly > 0.5) {
-      /* FG: ~10% edge glow + strong on-rock tentacles (flapping/warping) */
-      float edgeW = 0.10;
-      float innerGlow = smoothstep(0.20, 0.20 + edgeW * 0.45, baseDist)
-                      * (1.0 - smoothstep(0.20 + edgeW * 0.85, 0.20 + edgeW * 1.15, baseDist));
-      float outerGlow = smoothstep(0.28, 0.36, baseDist)
-                      * (1.0 - smoothstep(0.50 * gasRadius, 0.58 * gasRadius, warpedDist));
-      float edgeGlow  = max(innerGlow * 0.42, outerGlow * 0.28);
-
-      /* On-rock tentacles — same gas DNA, reaching/flapping over the face */
-      float rockFace = 1.0 - smoothstep(0.03, 0.22, baseDist);
-      float onRock   = rockFace * pow(clamp(tentacleField * tentacleField2 * 4.2, 0.0, 1.0), 0.48);
-      float flap     = sin(baseAngle * 5.0 + t * 0.24 + tentacleWarp * 2.5) * 0.5 + 0.5;
-      float warpFlap = fbm(vec2(baseAngle * 3.5 + t * 0.18, baseDist * 7.0 - t * 0.12));
-      onRock *= 0.30 + flap * 0.45 + warpFlap * 0.25;
-
-      /* Long outward arms beyond the silhouette */
-      float tentacleAccent = pow(clamp(abs(tentacleWarp) * 5.2, 0.0, 1.0), 0.32);
-      float tentacleArms   = tentacleAccent
-                             * smoothstep(0.16, 0.30, baseDist)
-                             * (1.0 - smoothstep(0.62 * gasRadius, 0.76 * gasRadius, warpedDist));
-
-      float fgMask = clamp(edgeGlow + onRock * 0.92 + tentacleArms * 0.68, 0.0, 1.0);
-      density *= fgMask;
-      col *= 0.68 + tentacleAccent * 0.32 + onRock * 0.22;
-      col  = clamp(col, 0.0, 1.0);
-    } else {
-      /* BG: soft exclusion + finger-drag streak voids in the gas */
-      float rockCore = 1.0 - smoothstep(0.04, 0.30, baseDist);
-      density *= (1.0 - rockCore * rockExclusion);
-      density *= 1.0 + rockCore * 0.38;
-
-      float streakSeed = fbm(vec2(baseAngle * 2.4 + t * 0.06, baseDist * 4.5 + pitch * 0.3));
-      float streakWave = sin(baseAngle * 8.0 + streakSeed * 7.0 + t * 0.09) * 0.5 + 0.5;
-      float stripCore  = pow(streakWave, 4.2);
-      float voidStrip  = smoothstep(0.62, 0.88, stripCore);
-      voidStrip *= smoothstep(0.10, 0.42, baseDist) * (1.0 - smoothstep(0.72 * gasRadius, 0.92 * gasRadius, baseDist));
-      density *= 1.0 - voidStrip * 0.78;
-
-      float stripEdge = smoothstep(0.42, 0.62, streakWave) * (1.0 - smoothstep(0.62, 0.80, streakWave));
-      stripEdge *= smoothstep(0.08, 0.42, baseDist);
-      col = mix(col, TEALL,  stripEdge * 0.28);
-      col = mix(col, PURPLEM, stripEdge * 0.18);
-      col  = clamp(col, 0.0, 1.0);
-    }
-
-    gl_FragColor = vec4(col, clamp(density * alphaScale, 0.0, 1.0));
+    gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
   }
 `;
 
@@ -309,9 +171,67 @@ const GAS_COAST_TAU_MS     = 3000;             // 2–4 s ease-out coast (midpoi
 const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
-const ROCK_LIFT_Y          = 1.15;               // lifts rock to match nebula halo
-const GAS_LIFT_UV          = -0.18;              // negative UV y = halo shifts up with rock
-const MOUSE_TRAIL_LAG      = 7;                  // ring-buffer frames for finger line
+const SCROLL_VEL_SCALE     = 0.0055;
+const ROCK_LIFT_PX         = 150;
+const ROCK_LIFT_Y          = 1.15;
+const GAS_REACH_BEHIND     = 0.56;  // outer fade — wider = gas reaches further
+const GAS_REACH_FRONT      = 0.48;
+const GAS_INNER            = 0.10;
+const GAS_EDGE_WARP        = 0.11;
+const GAS_STRETCH_Y        = 0.86;  // <1 = taller elliptical cloud
+const BEHIND_FG_VISIBLE    = true;  // override with ?behind=0
+const ROCK_VISIBLE         = true;  // override with ?rock=0
+const FRONT_FG_VISIBLE     = false; // off by default — behind layer carries the gas field
+const BEHIND_FG_OPACITY    = 1.0;
+const FRONT_FG_OPACITY     = 0.45;  // optional second pass — ?front=1
+
+function parsePassOn(q, keys, defaultOn) {
+  for (let i = 0; i < keys.length; i++) {
+    if (q.has(keys[i])) return q.get(keys[i]) !== '0';
+  }
+  return defaultOn;
+}
+
+/** Three-pass toggles: ?behind=1&rock=0&front=0 | shorthand ?layers=behind */
+function layerVisibility() {
+  if (typeof location === 'undefined') {
+    return { behind: BEHIND_FG_VISIBLE, rock: ROCK_VISIBLE, front: FRONT_FG_VISIBLE, frontInspect: false };
+  }
+  const q = new URLSearchParams(location.search);
+  const mode = (q.get('layers') || q.get('mode') || '').toLowerCase();
+  if (mode === 'behind' || mode === 'bg') {
+    return { behind: true, rock: false, front: false, frontInspect: false };
+  }
+  return {
+    behind: parsePassOn(q, ['behind', 'behindFg', 'bg'], BEHIND_FG_VISIBLE),
+    rock:   parsePassOn(q, ['rock'], ROCK_VISIBLE),
+    front:  parsePassOn(q, ['front', 'frontFg', 'fg'], FRONT_FG_VISIBLE),
+    frontInspect: (q.has('frontInspect') && q.get('frontInspect') !== '0')
+               || (q.has('fgInspect')     && q.get('fgInspect')     !== '0'),
+  };
+}
+
+function behindOpacity() {
+  if (typeof location === 'undefined') return BEHIND_FG_OPACITY;
+  const q = new URLSearchParams(location.search);
+  const raw = q.get('behindOp') ?? q.get('bgOp');
+  if (raw == null || raw === '') return BEHIND_FG_OPACITY;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? clamp(n, 0, 1) : BEHIND_FG_OPACITY;
+}
+
+function frontOpacity() {
+  if (typeof location === 'undefined') return FRONT_FG_OPACITY;
+  const q = new URLSearchParams(location.search);
+  const raw = q.get('frontOp') ?? q.get('fgOp');
+  if (raw == null || raw === '') return FRONT_FG_OPACITY;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? clamp(n, 0, 1) : FRONT_FG_OPACITY;
+}
+
+function rockLiftUV(viewportH) {
+  return (ROCK_LIFT_PX / viewportH) * 0.95;
+}
 
 /** Exponential smoothing factor for a time constant in ms. */
 function lagAlpha(dt, tauMs) {
@@ -363,11 +283,6 @@ class RockScene {
     this.nebulaPitchDelayed = 0;
     this._prevPitch         = 0;
     this._prevDelayedPitch  = 0;
-
-    this._mousePrevX = 0;
-    this._mousePrevY = 0;
-    this._mouseRing = Array.from({ length: 12 }, () => ({ x: 0, y: 0 }));
-    this._mouseRingIdx = 0;
 
     this._initRenderer();
     this._initScenes();
@@ -421,28 +336,28 @@ class RockScene {
   _initNebula() {
     const geo = new THREE.PlaneGeometry(2, 2);
 
-    /* ── Background layer — behind rock, tighter halo, full opacity ── */
+    function makeNebulaUniforms(timeOffset, alphaScale, gasReach) {
+      return {
+        time:          { value: 0.0 },
+        timeOffset:    { value: timeOffset },
+        rockYaw:       { value: 0.0 },
+        rockPitch:     { value: 0.0 },
+        aspect:        { value: 1.0 },
+        alphaScale:    { value: alphaScale },
+        nebulaInertia: { value: 0.0 },
+        gasLiftY:      { value: 0.0 },
+        gasReach:      { value: gasReach },
+        gasInner:      { value: GAS_INNER },
+        edgeWarp:      { value: GAS_EDGE_WARP },
+        gasStretchY:   { value: GAS_STRETCH_Y },
+        mouseXY:       { value: new THREE.Vector2(0, 0) },
+      };
+    }
+
     const bgMat = new THREE.ShaderMaterial({
       vertexShader:   NEBULA_VERT,
       fragmentShader: NEBULA_FRAG,
-      uniforms: {
-        time:             { value: 0.0 },
-        timeOffset:       { value: 0.0 },
-        rockYaw:          { value: 0.0 },
-        rockPitch:        { value: 0.0 },
-        aspect:           { value: 1.0 },
-        alphaScale:       { value: 1.0  },
-        haloOuter:        { value: 0.46 },
-        tentacleStrength: { value: 0.32 },
-        rockExclusion:    { value: 0.0  },
-        edgeOnly:         { value: 0.0  },
-        gasRadius:        { value: 0.75 },
-        nebulaInertia:    { value: 0.0  },
-        mouseXY:          { value: new THREE.Vector2(0, 0) },
-        mousePrevXY:      { value: new THREE.Vector2(0, 0) },
-        mouseTailXY:      { value: new THREE.Vector2(0, 0) },
-        gasLiftY:         { value: GAS_LIFT_UV },
-      },
+      uniforms: makeNebulaUniforms(0.0, BEHIND_FG_OPACITY, GAS_REACH_BEHIND),
       transparent: true,
       depthWrite:  false,
       depthTest:   false,
@@ -450,28 +365,10 @@ class RockScene {
     this.bgScene.add(new THREE.Mesh(geo, bgMat));
     this.nebulaUni = bgMat.uniforms;
 
-    /* ── Foreground — edge-curl tentacles only (in front of rock) ── */
     const fgMat = new THREE.ShaderMaterial({
       vertexShader:   NEBULA_VERT,
       fragmentShader: NEBULA_FRAG,
-      uniforms: {
-        time:             { value: 0.0 },
-        timeOffset:       { value: 3.7 },
-        rockYaw:          { value: 0.0 },
-        rockPitch:        { value: 0.0 },
-        aspect:           { value: 1.0 },
-        alphaScale:       { value: 0.81 },
-        haloOuter:        { value: 0.78 },
-        tentacleStrength: { value: 0.88 },
-        rockExclusion:    { value: 1.0  },
-        edgeOnly:         { value: 1.0  },
-        gasRadius:        { value: 0.75 },
-        nebulaInertia:    { value: 0.0  },
-        mouseXY:          { value: new THREE.Vector2(0, 0) },
-        mousePrevXY:      { value: new THREE.Vector2(0, 0) },
-        mouseTailXY:      { value: new THREE.Vector2(0, 0) },
-        gasLiftY:         { value: GAS_LIFT_UV },
-      },
+      uniforms: makeNebulaUniforms(3.7, FRONT_FG_OPACITY, GAS_REACH_FRONT),
       transparent: true,
       depthWrite:  false,
       depthTest:   false,
@@ -538,7 +435,9 @@ class RockScene {
 
         model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
-        console.log('[LTF Rock] Model loaded:', this.modelUrl);
+        this.rockGroup.visible = layerVisibility().rock;
+        const lv = layerVisibility();
+        console.log('[LTF Rock] loaded | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front, '| url:', location.href);
       },
 
       undefined,
@@ -561,8 +460,8 @@ class RockScene {
     window.addEventListener('scroll', this._onScrollFn, { passive: true });
 
     this._onMouseFn = (e) => {
-      this.mouseTX = (e.clientX / window.innerWidth  - 0.5) * 2;
-      this.mouseTY = (e.clientY / window.innerHeight - 0.5) * 2;
+      this.mouseTX = (e.clientX / window.innerWidth - 0.5) * 2;
+      this.mouseTY = 0;
     };
     window.addEventListener('pointermove', this._onMouseFn, { passive: true });
 
@@ -589,8 +488,14 @@ class RockScene {
     this.renderer.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.updateProjectionMatrix();
-    if (this.nebulaUni) this.nebulaUni.aspect.value = this.w / this.h;
-    if (this.fgNebulaUni) this.fgNebulaUni.aspect.value = this.w / this.h;
+    if (this.nebulaUni) {
+      this.nebulaUni.aspect.value = this.w / this.h;
+      this.nebulaUni.gasLiftY.value = rockLiftUV(this.h);
+    }
+    if (this.fgNebulaUni) {
+      this.fgNebulaUni.aspect.value = this.w / this.h;
+      this.fgNebulaUni.gasLiftY.value = rockLiftUV(this.h);
+    }
   }
 
   /* ── Per-frame tick ──────────────────────────────────────────────────────── */
@@ -603,11 +508,8 @@ class RockScene {
 
     const t = this.time;
 
-    const prevMX = this._mousePrevX;
-    const prevMY = this._mousePrevY;
-
-    this.mouseX += (this.mouseTX - this.mouseX) * 0.055;
-    this.mouseY += (this.mouseTY - this.mouseY) * 0.055;
+    this.mouseX += (this.mouseTX - this.mouseX) * 0.028;
+    this.mouseY = 0;
     this.scrollProgress += (this.scrollTarget - this.scrollProgress) * 0.07;
 
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
@@ -670,41 +572,56 @@ class RockScene {
     const nebulaYaw   = this.nebulaYawDelayed;
     const nebulaPitch = this.nebulaPitchDelayed;
 
-    /* Mouse trail ring buffer — long finger-streak line */
-    this._mouseRingIdx = (this._mouseRingIdx + 1) % 12;
-    this._mouseRing[this._mouseRingIdx] = { x: this.mouseX, y: this.mouseY };
-    const tailSlot = (this._mouseRingIdx - MOUSE_TRAIL_LAG + 12) % 12;
-    const tail = this._mouseRing[tailSlot];
+    const layers   = layerVisibility();
+    const behindOp = behindOpacity();
+    const frontOp  = frontOpacity();
+    const frontOn  = layers.front || layers.frontInspect;
 
-    if (this.nebulaUni) {
-      this.nebulaUni.time.value         = nebulaTime;
-      this.nebulaUni.rockYaw.value      = nebulaYaw;
-      this.nebulaUni.rockPitch.value    = nebulaPitch;
-      this.nebulaUni.nebulaInertia.value = this.nebulaAngleAccum;
+    if (this.nebulaUni && layers.behind) {
+      this.nebulaUni.alphaScale.value       = behindOp;
+      this.nebulaUni.time.value             = nebulaTime;
+      this.nebulaUni.rockYaw.value          = nebulaYaw;
+      this.nebulaUni.rockPitch.value        = nebulaPitch;
+      this.nebulaUni.nebulaInertia.value    = this.nebulaAngleAccum;
       this.nebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
-      this.nebulaUni.mousePrevXY.value.set(prevMX, prevMY);
-      this.nebulaUni.mouseTailXY.value.set(tail.x, tail.y);
     }
-    if (this.fgNebulaUni) {
-      this.fgNebulaUni.time.value         = nebulaTime;
-      this.fgNebulaUni.rockYaw.value      = nebulaYaw;
-      this.fgNebulaUni.rockPitch.value    = nebulaPitch;
-      this.fgNebulaUni.nebulaInertia.value = this.nebulaAngleAccum;
+    if (this.fgNebulaUni && frontOn) {
+      this.fgNebulaUni.alphaScale.value     = frontOp;
+      this.fgNebulaUni.time.value           = nebulaTime;
+      this.fgNebulaUni.rockYaw.value        = nebulaYaw;
+      this.fgNebulaUni.rockPitch.value      = nebulaPitch;
+      this.fgNebulaUni.nebulaInertia.value  = this.nebulaAngleAccum;
       this.fgNebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
-      this.fgNebulaUni.mousePrevXY.value.set(prevMX, prevMY);
-      this.fgNebulaUni.mouseTailXY.value.set(tail.x, tail.y);
     }
 
-    this._mousePrevX = this.mouseX;
-    this._mousePrevY = this.mouseY;
+    if (this.rockGroup) this.rockGroup.visible = layers.rock;
 
-    /* ── Three-pass render: bg nebula → rock → fg nebula ─────────────────── */
+    /* ── Three-pass render: behind FG → rock → front FG ──────────────────── */
     this.renderer.clear();
-    this.renderer.render(this.bgScene, this.bgCamera);
-    this.renderer.clearDepth();
-    this.renderer.render(this.scene, this.camera);
-    this.renderer.clearDepth();
-    this.renderer.render(this.fgScene, this.fgCamera);
+    if (layers.behind) {
+      this.renderer.render(this.bgScene, this.bgCamera);
+    }
+    if (layers.rock) {
+      this.renderer.clearDepth();
+      this.renderer.render(this.scene, this.camera);
+    }
+    if (frontOn) {
+      this.renderer.clearDepth();
+      this.renderer.render(this.fgScene, this.fgCamera);
+    }
+
+    const dbg = document.getElementById('ltf-layer-debug');
+    if (dbg) {
+      const behindLabel = layers.behind
+        ? 'Behind FG: ON @' + Math.round(behindOp * 100) + '%'
+        : 'Behind FG: OFF';
+      const rockLabel = 'Rock: ' + (layers.rock ? 'ON' : 'OFF');
+      const frontLabel = frontOn
+        ? 'Front FG: ' + (layers.frontInspect && !layers.front ? 'INSPECT @' : 'ON @')
+          + Math.round(frontOp * 100) + '%'
+        : 'Front FG: OFF';
+      dbg.textContent = behindLabel + '  |  ' + rockLabel + '  |  ' + frontLabel;
+    }
 
     this.raf = requestAnimationFrame(this._frameBound);
   }
@@ -744,4 +661,4 @@ if (document.readyState === 'loading') {
 }
 window.addEventListener('load', boot);
 
-window.LtfRockScene = { init, RockScene };
+window.LtfRockScene = { init, RockScene, layerVisibility, behindOpacity, frontOpacity };

@@ -84,6 +84,7 @@
       --ltf-accent-green:     #0B8050;
       --ltf-accent-purple:    #4D259D;
       --ltf-accent-med-navy:  #263350;
+      --ltf-shadow-50:        0 5px 14px rgba(0, 0, 0, 0.5);
 
       /* Typography stacks — Webflow loads acumin-pro via Typekit */
       /* Stamp — Acumin Ultra Condensed Black, Impact-style fallbacks */
@@ -120,8 +121,6 @@
     .ltf-rock-stage {
       position: absolute;
       inset: 0;
-      top: -400px;
-      height: calc(100% + 400px);
       z-index: 0;
       pointer-events: none;
     }
@@ -157,6 +156,11 @@
       pointer-events: none;
     }
 
+    /* Distortion test — H1 hidden unless ?header=1 */
+    body.ltf-hide-header .ltf-hero-headline {
+      visibility: hidden;
+    }
+
     .ltf-main-header {
       display: inline-block;
       font-family: var(--ltf-font-stamp);
@@ -169,7 +173,7 @@
       color: var(--ltf-text-pure);
       transform: scaleX(0.88);
       transform-origin: center center;
-      text-shadow: 0 5px 14px rgba(0, 0, 0, 0.5);
+      text-shadow: var(--ltf-shadow-50);
       -webkit-font-smoothing: antialiased;
     }
 
@@ -209,7 +213,7 @@
     .ltf-hero-logo {
       height: 128px;
       width: auto;
-      filter: drop-shadow(0 5px 14px rgba(0, 0, 0, 0.5));
+      filter: drop-shadow(var(--ltf-shadow-50));
     }
 
     /* ltf-body-text — mirrors Webflow class */
@@ -313,9 +317,9 @@
     }
 
     /* ── Debug overlay ────────────────────────────────────────────────── */
+    #ltf-layer-debug,
     #ltf-debug {
       position: fixed;
-      bottom: 14px;
       right: 14px;
       z-index: 200;
       font-size: 10px;
@@ -326,6 +330,8 @@
       border-radius: 3px;
       pointer-events: none;
     }
+    #ltf-layer-debug { bottom: 44px; color: rgba(255,180,80,0.9); }
+    #ltf-debug       { bottom: 14px; }
   </style>
 </head>
 <body>
@@ -398,6 +404,7 @@
     </p>
   </div>
 
+  <div id="ltf-layer-debug">Behind FG: —  |  Rock: —  |  Front FG: —</div>
   <div id="ltf-debug">scroll: 0%  |  mouse: (0, 0)</div>
 
 
@@ -422,10 +429,15 @@
   }
   </script>
 
-  <script type="module" src="../js/rock-scene.js"></script>
+  <script type="module" src="../js/rock-scene.js?v=rock-test-11-organic"></script>
 
   <script>
     (function () {
+      var q = new URLSearchParams(location.search);
+      if (!q.has('header') || q.get('header') === '0') {
+        document.body.classList.add('ltf-hide-header');
+      }
+
       var el = document.getElementById('ltf-debug');
       var mx = 0, my = 0;
       window.addEventListener('pointermove', function (e) {
@@ -435,7 +447,8 @@
       (function tick() {
         var max = document.documentElement.scrollHeight - window.innerHeight;
         var pct = max > 0 ? Math.round(window.scrollY / max * 100) : 0;
-        el.textContent = 'scroll: ' + pct + '%  |  mouse: (' + mx + ', ' + my + ')';
+        el.textContent = 'scroll: ' + pct + '%  |  mouse: (' + mx + ', ' + my + ')'
+          + (document.body.classList.contains('ltf-hide-header') ? '  |  header: OFF' : '  |  header: ON');
         requestAnimationFrame(tick);
       })();
     })();
