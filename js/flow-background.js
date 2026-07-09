@@ -142,6 +142,10 @@
 
   FlowBackground.prototype.resize = function () {
     var rect = this.container.getBoundingClientRect();
+    var parent = this.container.parentElement;
+    if ((rect.width < 2 || rect.height < 2) && parent) {
+      rect = parent.getBoundingClientRect();
+    }
     var dpr = Math.min(window.devicePixelRatio || 1, this.isMobile ? 1.5 : 2);
 
     this.w = Math.max(rect.width, 1);
@@ -239,6 +243,17 @@
 
   function init() {
     var nodes = document.querySelectorAll("[data-ltf-flow-bg], .ltf-flow-bg");
+    if (!nodes.length) {
+      var hero = document.querySelector(".ltf-dev-hero");
+      if (hero && !hero.querySelector(".ltf-flow-bg")) {
+        var fallback = document.createElement("div");
+        fallback.className = "ltf-flow-bg";
+        fallback.setAttribute("data-ltf-flow-bg", "");
+        fallback.setAttribute("aria-hidden", "true");
+        hero.insertBefore(fallback, hero.firstChild);
+        nodes = document.querySelectorAll(".ltf-flow-bg");
+      }
+    }
     for (var i = 0; i < nodes.length; i++) {
       if (!nodes[i].__ltfFlow) {
         nodes[i].__ltfFlow = new FlowBackground(nodes[i]);
@@ -246,11 +261,18 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
+  function boot() {
     init();
+    window.setTimeout(init, 250);
+    window.setTimeout(init, 1000);
   }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+  window.addEventListener("load", boot);
 
   window.LtfFlowBackground = { init: init, FlowBackground: FlowBackground };
 })();
