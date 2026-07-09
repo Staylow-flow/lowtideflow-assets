@@ -57,10 +57,11 @@
       src: local('AcuminProExtraCond-Black'),
            local('Acumin Pro ExtraCondensed Black'),
            local('Acumin Pro ExtraCond Black'),
-           local('AcuminProExtraCond-Semibold'),
-           local('Acumin Pro ExtraCondensed');
+           local('AcuminProExtraCond-Black'),
+           local('Acumin Pro ExtraCond Black');
       font-weight: 900;
       font-style: normal;
+      font-stretch: ultra-condensed;
     }
     @font-face {
       font-family: 'acumin-pro-extra-condensed';
@@ -85,7 +86,8 @@
       --ltf-accent-med-navy:  #263350;
 
       /* Typography stacks — Webflow loads acumin-pro via Typekit */
-      --ltf-font-stamp:    'acumin-pro-extra-condensed', 'Arial Narrow', 'Impact', sans-serif;
+      /* Stamp — Acumin Ultra Condensed Black, Impact-style fallbacks */
+      --ltf-font-stamp:    'acumin-pro-extra-condensed', 'Impact', 'Haettenschweiler', 'Arial Narrow', sans-serif;
       --ltf-font-substamp: 'acumin-pro-extra-condensed', 'Arial Narrow', sans-serif;
       --ltf-font-tech:     'acumin-pro-condensed',       'Arial Narrow', sans-serif;
       --ltf-font-body:     'acumin-pro',                 'Arial',        sans-serif;
@@ -112,13 +114,14 @@
       height: 100vh;
       min-height: 640px;
       overflow: hidden;
-      isolation: isolate;
     }
 
     /* ── Layer 0: Three.js canvas (rock + nebula) ─────────────────────── */
     .ltf-rock-stage {
       position: absolute;
       inset: 0;
+      top: -400px;
+      height: calc(100% + 400px);
       z-index: 0;
       pointer-events: none;
     }
@@ -145,53 +148,85 @@
     /* ── Layer 2: H1 stamp — left-biased centre, overlaps rock ──────── */
     .ltf-hero-headline {
       position: absolute;
-      top: 50%;
-      left: 42%;        /* sits slightly left of true centre, over the rock */
+      top: calc(50% - 125px);
+      left: 50%;
       transform: translate(-50%, -50%);
       z-index: 2;
+      width: 100%;
       text-align: center;
       pointer-events: none;
     }
 
     .ltf-main-header {
+      display: inline-block;
       font-family: var(--ltf-font-stamp);
-      font-size: clamp(64px, 9.5vw, 140px);
+      font-size: clamp(44px, 6.8vw, 88px);
       font-weight: 900;
-      line-height: 0.86;
-      letter-spacing: -0.01em;
+      font-stretch: ultra-condensed;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
       text-transform: uppercase;
       color: var(--ltf-text-pure);
-      text-shadow:
-        0 2px 40px rgba(0,0,0,0.65),
-        0 0 100px rgba(0,0,0,0.4);
+      transform: scaleX(0.88);
+      transform-origin: center center;
+      text-shadow: 0 5px 14px rgba(0, 0, 0, 0.5);
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Layer 3: Bottom bar — left-aligned vertical column ──────────── */
-    .ltf-hero-bottom-bar {
+    /* ── Layer 3: Bottom bar — mirrors Webflow div-block-37 ─────────── */
+    .ltf-hero-bottom-bar,
+    .div-block-37 {
       position: absolute;
-      bottom: 48px;
-      left: 64px;
+      bottom: 28px;
+      left: 10%;
       z-index: 3;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 18px;
-      max-width: 750px;
+      justify-content: flex-end;
+      gap: 16px;
+      width: 30vw;
+      min-width: 280px;
+      max-width: 520px;
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      mix-blend-mode: normal;
+      pointer-events: none;
+    }
+
+    .ltf-hero-bottom-bar::before,
+    .ltf-hero-bottom-bar::after,
+    .div-block-37::before,
+    .div-block-37::after {
+      content: none !important;
+      display: none !important;
     }
 
     .ltf-hero-logo {
-      height: 64px;      /* enlarged per Webflow design note */
+      height: 128px;
       width: auto;
+      filter: drop-shadow(0 5px 14px rgba(0, 0, 0, 0.5));
     }
 
     /* ltf-body-text — mirrors Webflow class */
     .ltf-body-text {
       font-family: var(--ltf-font-body);
-      font-size: 15.5px;
+      font-size: clamp(18px, 1.35vw, 24px);
       font-weight: 300;
-      line-height: 1.70;
+      line-height: 1.42;
       color: var(--ltf-text-secondary);
-      max-width: 750px;  /* per Webflow design note */
+      max-width: 100%;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-primary,
+    .div-block-37 .ltf-btn-primary {
+      pointer-events: auto;
+      margin-top: 4px;
+      flex-shrink: 0;
     }
 
     /* ltf-btn-primary — solid navy, grey text */
@@ -326,13 +361,12 @@
     <div class="ltf-hero-headline" aria-hidden="true">
       <h1 class="ltf-main-header">
         Rugged Apparel<br>
-        For The<br>
-        Real World
+        For the Real World
       </h1>
     </div>
 
-    <!-- Layer 3 — Bottom-left column: logo + copy + CTA -->
-    <div class="ltf-hero-bottom-bar">
+    <!-- Layer 3 — Webflow div-block-37: logo + copy + CTA (no bg overlay) -->
+    <div class="ltf-hero-bottom-bar div-block-37">
       <img
         class="ltf-hero-logo"
         src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6cfaa5cc5d2af05d28a_LTF%20Logo%20Mark%20-%20White.png"
@@ -376,7 +410,8 @@
       python3 -m http.server 3000
       npx serve .
 
-    Then open: http://localhost:3000/demo/hero-preview.html
+    Then open: http://127.0.0.1:5500/demo/hero-preview.html  (Live Server)
+    Or:        python3 -m http.server 8080  →  http://localhost:8080/demo/hero-preview.html
   -->
   <script type="importmap">
   {
