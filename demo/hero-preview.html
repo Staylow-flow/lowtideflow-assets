@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lowtideflow — Rock Hero Preview</title>
 
-  <!-- Flow-bg blob layer -->
-  <link rel="stylesheet" href="../css/flow-background.css" />
 
   <style>
     /* ── Reset ─────────────────────────────────────────────────────────── */
@@ -31,19 +29,11 @@
       isolation: isolate;
     }
 
-    /* Layer 0 — animated blob gradient (flow-background.js) */
-    .ltf-flow-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      background: #00001C;
-    }
-
-    /* Layer 1 — Three.js WebGL rock + particles canvas */
+    /* Layer 0 — Three.js WebGL rock + particles canvas */
     .ltf-rock-stage {
       position: absolute;
       inset: 0;
-      z-index: 1;
+      z-index: 0;
       pointer-events: none;
     }
 
@@ -53,11 +43,11 @@
       height: 100% !important;
     }
 
-    /* Layer 2 — hero text content */
+    /* Layer 1 — hero text content */
     .hero-content {
       position: absolute;
       inset: 0;
-      z-index: 2;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -201,16 +191,12 @@
   <!-- ═══════════════════════════════════════════════════════════════════════
        HERO SECTION
        Layer order (back → front):
-         0. .ltf-flow-bg       — 2D canvas blob gradient (flow-background.js)
-         1. .ltf-rock-stage    — Three.js WebGL rock + particle cloud (rock-scene.js)
-         2. .hero-content      — H1, body copy, CTA
+         0. .ltf-rock-stage    — Three.js WebGL rock + particle cloud (rock-scene.js)
+         1. .hero-content      — H1, body copy, CTA
   ══════════════════════════════════════════════════════════════════════════ -->
   <section class="ltf-hero-demo" id="hero">
 
-    <!-- Layer 0: Animated gradient blobs -->
-    <div class="ltf-flow-bg" data-ltf-flow-bg aria-hidden="true"></div>
-
-    <!-- Layer 1: Three.js rock + iridescent particles
+    <!-- Layer 0: Three.js rock + iridescent particles
          data-model-url: path to the .glb relative to the HTML page
          For Webflow production, swap to the Webflow CDN URL -->
     <div
@@ -220,7 +206,7 @@
       aria-hidden="true"
     ></div>
 
-    <!-- Layer 2: Hero copy -->
+    <!-- Layer 1: Hero copy -->
     <div class="hero-content">
       <p class="hero-sublabel">Low Tide Flow Co. &nbsp;//&nbsp; Since 2014</p>
       <h1 class="hero-h1">Rugged Apparel<br>For The<br>Real World</h1>
@@ -267,16 +253,22 @@
        Then open: http://localhost:3000/demo/hero-preview.html
   ══════════════════════════════════════════════════════════════════════ -->
 
-  <!-- Three.js r152 — last version with non-module GLTFLoader (UMD global) -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <!-- GLTFLoader: adds THREE.GLTFLoader to the THREE global -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
+  <!--
+    Import map — resolves 'three' and 'three/addons/' for ES module imports.
+    rock-scene.js uses:  import * as THREE from 'three';
+                         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three":          "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+      "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+    }
+  }
+  </script>
 
-  <!-- Existing 2D blob flow background (kept for Layer 0) -->
-  <script src="../js/flow-background.js"></script>
-
-  <!-- New Three.js rock scene (Layer 1) -->
-  <script src="../js/rock-scene.js"></script>
+  <!-- Three.js rock scene — ES module; importmap resolves Three.js + GLTFLoader -->
+  <script type="module" src="../js/rock-scene.js"></script>
 
   <!-- Debug overlay updater -->
   <script>
