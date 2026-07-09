@@ -330,8 +330,87 @@
       border-radius: 3px;
       pointer-events: none;
     }
-    #ltf-layer-debug { bottom: 44px; color: rgba(255,180,80,0.9); }
-    #ltf-debug       { bottom: 14px; }
+    #ltf-layer-debug { bottom: 168px; color: rgba(255,180,80,0.9); }
+    #ltf-debug       { bottom: 138px; }
+
+    /* ── Gas tuner (preview only) ─────────────────────────────────────── */
+    #ltf-tuner {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 250;
+      padding: 10px 14px 12px;
+      background: rgba(0, 0, 0, 0.82);
+      border-top: 1px solid rgba(255, 180, 80, 0.35);
+      font-family: monospace;
+      font-size: 11px;
+      color: rgba(255, 220, 180, 0.95);
+    }
+
+    #ltf-tuner h2 {
+      margin: 0 0 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255, 180, 80, 0.95);
+    }
+
+    .ltf-tuner-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 6px 16px;
+      align-items: center;
+    }
+
+    .ltf-tuner-row {
+      display: grid;
+      grid-template-columns: 72px 1fr 44px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ltf-tuner-row label {
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .ltf-tuner-row input[type="range"] {
+      width: 100%;
+      accent-color: #ffb450;
+    }
+
+    .ltf-tuner-row output {
+      text-align: right;
+      color: rgba(255, 180, 80, 0.9);
+    }
+
+    #ltf-tuner-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    #ltf-tuner-copy {
+      padding: 4px 10px;
+      font-size: 10px;
+      font-family: monospace;
+      background: rgba(255, 180, 80, 0.15);
+      border: 1px solid rgba(255, 180, 80, 0.45);
+      color: rgba(255, 220, 180, 0.95);
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    #ltf-tuner-out {
+      margin: 0;
+      font-size: 10px;
+      color: rgba(31, 119, 129, 0.85);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -407,6 +486,15 @@
   <div id="ltf-layer-debug">Behind FG: —  |  Rock: —  |  Front FG: —</div>
   <div id="ltf-debug">scroll: 0%  |  mouse: (0, 0)</div>
 
+  <div id="ltf-tuner">
+    <h2>Behind FG Tuner</h2>
+    <div class="ltf-tuner-grid" id="ltf-tuner-sliders"></div>
+    <div id="ltf-tuner-actions">
+      <button type="button" id="ltf-tuner-copy">Copy values</button>
+      <pre id="ltf-tuner-out"></pre>
+    </div>
+  </div>
+
 
   <!-- ── Scripts ────────────────────────────────────────────────────────── -->
   <!--
@@ -417,7 +505,7 @@
       python3 -m http.server 3000
       npx serve .
 
-    Then open: http://127.0.0.1:5500/demo/hero-preview.html  (Live Server)
+    Then open: http://127.0.0.1:5500/demo/hero-preview.html?tune=1  (Live Server)
     Or:        python3 -m http.server 8080  →  http://localhost:8080/demo/hero-preview.html
   -->
   <script type="importmap">
@@ -429,13 +517,89 @@
   }
   </script>
 
-  <script type="module" src="../js/rock-scene.js?v=rock-test-11-organic"></script>
+  <script type="module" src="../js/rock-scene.js?v=rock-test-16-flow"></script>
+
+  <script type="module">
+    import { GAS_TUNING_DEFAULTS, applyGasTuning, readGasTuning, getPrimaryRockScene } from '../js/rock-scene.js?v=rock-test-16-flow';
+
+    const SLIDERS = [
+      { key: 'rockLiftPx',  label: 'Rock Y', min: -80, max: 350, step: 1, def: GAS_TUNING_DEFAULTS.rockLiftPx, fmt: 0 },
+      { key: 'gasStretchX', label: 'Width',  min: 0.45, max: 2.0,  step: 0.01, def: GAS_TUNING_DEFAULTS.gasStretchX },
+      { key: 'gasStretchY', label: 'Height', min: 0.45, max: 1.5,  step: 0.01, def: GAS_TUNING_DEFAULTS.gasStretchY },
+      { key: 'gasReach',    label: 'Reach',  min: 0.22, max: 0.85, step: 0.01, def: GAS_TUNING_DEFAULTS.gasReach },
+      { key: 'gasInner',    label: 'Core',   min: 0.0,  max: 0.35, step: 0.01, def: GAS_TUNING_DEFAULTS.gasInner },
+      { key: 'edgeWarp',    label: 'Wisp',   min: 0.0,  max: 0.25, step: 0.01, def: GAS_TUNING_DEFAULTS.edgeWarp },
+      { key: 'alphaScale',  label: 'Alpha',  min: 0.1,  max: 1.0,  step: 0.01, def: GAS_TUNING_DEFAULTS.alphaScale },
+      { key: 'gasCenterX',  label: 'Center X', min: 0.20, max: 0.75, step: 0.01, def: GAS_TUNING_DEFAULTS.gasCenterX },
+      { key: 'gasCenterY',  label: 'Center Y', min: 0.30, max: 0.80, step: 0.01, def: GAS_TUNING_DEFAULTS.gasCenterY },
+    ];
+
+    function waitScene(cb) {
+      const t = setInterval(() => {
+        const scene = getPrimaryRockScene();
+        if (scene?.nebulaUni) {
+          clearInterval(t);
+          cb(scene);
+        }
+      }, 40);
+    }
+
+    function syncOutputs() {
+      const t = readGasTuning();
+      if (!t) return;
+      SLIDERS.forEach((s) => {
+        const out = document.querySelector('[data-out="' + s.key + '"]');
+        if (out) out.textContent = Number(t[s.key]).toFixed(s.fmt ?? 2);
+      });
+      document.getElementById('ltf-tuner-out').textContent = JSON.stringify(t, null, 2);
+    }
+
+    waitScene((scene) => {
+      const grid = document.getElementById('ltf-tuner-sliders');
+      const u = scene.nebulaUni;
+
+      SLIDERS.forEach((s) => {
+        const row = document.createElement('div');
+        row.className = 'ltf-tuner-row';
+        row.innerHTML =
+          '<label for="t-' + s.key + '">' + s.label + '</label>' +
+          '<input type="range" id="t-' + s.key + '" min="' + s.min + '" max="' + s.max + '" step="' + s.step + '">' +
+          '<output data-out="' + s.key + '">—</output>';
+        grid.appendChild(row);
+
+        const input = row.querySelector('input');
+        const start = s.key === 'rockLiftPx'
+          ? scene.rockLiftPx
+          : (u[s.key]?.value ?? s.def);
+        input.value = start;
+
+        input.addEventListener('input', () => {
+          applyGasTuning({ [s.key]: parseFloat(input.value) });
+          syncOutputs();
+        });
+      });
+
+      syncOutputs();
+
+      document.getElementById('ltf-tuner-copy').addEventListener('click', () => {
+        const json = JSON.stringify(readGasTuning(), null, 2);
+        navigator.clipboard.writeText(json).catch(() => {});
+        document.getElementById('ltf-tuner-out').textContent = 'Copied!\n' + json;
+      });
+    });
+  </script>
 
   <script>
     (function () {
       var q = new URLSearchParams(location.search);
-      if (!q.has('header') || q.get('header') === '0') {
+      /* Header visible by default — hide only with ?header=0 */
+      if (q.get('header') === '0') {
         document.body.classList.add('ltf-hide-header');
+      }
+
+      /* Tuner visible by default on preview; hide with ?tune=0 */
+      if (q.get('tune') === '0') {
+        document.getElementById('ltf-tuner').style.display = 'none';
       }
 
       var el = document.getElementById('ltf-debug');

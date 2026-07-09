@@ -39,11 +39,13 @@ const NEBULA_FRAG = /* glsl */`
   uniform float aspect;
   uniform float alphaScale;
   uniform float nebulaInertia;
-  uniform float gasLiftY;     /* pairs bounds center with lifted rock */
+  uniform float gasCenterX;   /* bounds anchor X (UV) */
+  uniform float gasCenterY;   /* bounds anchor Y (UV) */
   uniform float gasReach;     /* outer soft fade (UV units) */
   uniform float gasInner;     /* inner full-strength radius */
   uniform float edgeWarp;     /* FBM wobble on boundary */
-  uniform float gasStretchY;  /* vertical ellipse (<1 taller cloud) */
+  uniform float gasStretchX;  /* horizontal scale (>1 wider) */
+  uniform float gasStretchY;  /* vertical scale (<1 taller cloud) */
   uniform vec2  mouseXY;
   varying vec2 vUv;
 
@@ -135,28 +137,65 @@ const NEBULA_FRAG = /* glsl */`
     float f2 = fbm(uv * 2.0 + 4.0 * r + t * 0.04 + vec2(0.18, 0.11));
 
     vec3 col = mix(nebulaColor(f, uv), nebulaColor(f2, uv), 0.28);
-    col = mix(col, PURPLE, clamp(length(q) * 0.55 - 0.32, 0.0, 0.38));
-    col = mix(col, NAVY,   clamp(0.55 - f * 0.45, 0.0, 0.14));
+    col = mix(col, PURPLE, clamp(length(q) * 0.58 - 0.28, 0.0, 0.44));
+    col = mix(col, NAVY,   clamp(0.58 - f * 0.42, 0.0, 0.155));
     col = mix(col, TEALL,  clamp(r.x - 0.5, 0.0, 0.22));
 
-    /* Gas density from screen-space noise */
     float gas = pow(clamp(f * 1.65 - 0.30, 0.0, 1.0), 1.35);
 
-    /* Soft organic bounds — warped distance only, never angle (no starburst) */
-    vec2  rockUV = vec2(0.48, 0.50 + gasLiftY);
-    vec2  p      = vUv - rockUV;
-    p.x *= aspect;
+    /* Constraint field — slider width/height/reach define the volume */
+    vec2  rockUV  = vec2(gasCenterX, gasCenterY);
+    vec2  p       = vUv - rockUV;
+    p.x *= aspect * gasStretchX;
     p.y *= gasStretchY;
 
-    vec2  warpUV = p * 2.8 + vec2(t * 0.042, t * 0.031) + vec2(yaw * 0.12, pitch * 0.07);
-    float edgeN1   = (fbm(warpUV) - 0.5) * edgeWarp;
-    float edgeN2   = (fbm(warpUV * 1.55 + vec2(t * 0.022, -t * 0.018)) - 0.5) * edgeWarp * 0.42;
-    float dist     = length(p) + edgeN1 + edgeN2;
+    float distRaw = length(p);
+    float ang     = atan(p.y, p.x);
 
-    float contain  = 1.0 - smoothstep(gasInner, gasReach, dist);
-    contain        = pow(max(contain, 0.0), 0.72);
+    vec2  warpUV  = p * 2.8 + vec2(t * 0.042, t * 0.031) + vec2(yaw * 0.12, pitch * 0.07);
+    float edgeN1  = (fbm(warpUV) - 0.5) * edgeWarp;
+    float edgeN2  = (fbm(warpUV * 1.55 + vec2(t * 0.022, -t * 0.018)) - 0.5) * edgeWarp * 0.42;
+    float dist    = distRaw + edgeN1 + edgeN2;
 
-    float alpha = gas * contain * alphaScale;
+    /* S-curve streaks — curved flow lines, color interest not void cuts */
+    float flowCurve = sin(p.x * 6.8 + t * 0.09 + yaw * 0.2) * 0.022
+                    + sin(p.x * 3.2 - t * 0.06 + pitch * 0.15) * 0.012;
+    float sParam    = p.x * 1.12 + sin((p.y + flowCurve) * 5.5 + t * 0.07) * 0.036;
+    float streakSeed = fbm(vec2(sParam * 0.35 + t * 0.04, distRaw * 4.0));
+    float streakWave = sin(sParam * 12.0 + streakSeed * 6.0 + t * 0.08) * 0.5 + 0.5;
+    float streak    = pow(streakWave, 3.4);
+    streak *= smoothstep(gasInner * 0.55, gasReach * 0.90, distRaw);
+    streak *= 1.0 - smoothstep(gasReach * 0.86, gasReach * 1.10, distRaw);
+    col = mix(col, PURPLEM, streak * 0.20);
+    col = mix(col, TEALL,  streak * 0.14);
+    col = mix(col, PURPLE, streak * 0.10);
+    gas += streak * 0.06;
+
+    /* Octopus arms — curl at boundary band, extend gas outward (additive) */
+    float armField = fbm(vec2(ang * 2.1 + t * 0.065 + yaw * 0.35, distRaw * 3.2 + pitch * 0.25));
+    float armCurl  = fbm(vec2(ang * 3.8 - t * 0.095 + nebulaInertia * 0.4, distRaw * 5.5 + t * 0.04));
+    float armBand  = smoothstep(gasInner + 0.05, gasReach * 0.50, distRaw)
+                   * (1.0 - smoothstep(gasReach * 0.80, gasReach * 1.12, distRaw));
+
+    float armPush  = (armField - 0.48) * 0.11 * armBand;
+    float curlLift = pow(clamp(armCurl, 0.0, 1.0), 1.35) * armBand * 0.075;
+    float distFlow = dist - armPush - curlLift;
+
+    float body = 1.0 - smoothstep(gasInner, gasReach, distFlow);
+    body = pow(max(body, 0.0), 0.68);
+
+    float armPhase = sin(ang * 3.0 + armField * 6.28 + t * 0.14) * 0.5 + 0.5;
+    float tendril  = pow(armPhase, 2.1) * armCurl * armBand;
+    tendril *= smoothstep(gasReach * 0.55, gasReach * 1.04, distRaw);
+    float armGas   = tendril * gas * (0.50 + armField * 0.50);
+
+    col = mix(col, PURPLE, tendril * 0.26);
+    col = mix(col, NAVY,   tendril * 0.16);
+    col = mix(col, PURPLEM, armGas * 0.12);
+    col  = clamp(col, 0.0, 1.0);
+
+    /* Body volume + flowing arm wisps — not a flat opacity mask at edge */
+    float alpha = (gas * body + armGas * 0.88) * alphaScale;
 
     gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
   }
@@ -173,17 +212,34 @@ const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no 
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
 const ROCK_LIFT_PX         = 150;
-const ROCK_LIFT_Y          = 1.15;
-const GAS_REACH_BEHIND     = 0.56;  // outer fade — wider = gas reaches further
+const ROCK_SCALE_BASE      = 12.936 * 1.25;  /* +25% rock size */
+const CAMERA_Z             = 24;
+const CAMERA_FOV           = 45;
+const GAS_REACH_BEHIND     = 0.56;
 const GAS_REACH_FRONT      = 0.48;
 const GAS_INNER            = 0.10;
 const GAS_EDGE_WARP        = 0.11;
-const GAS_STRETCH_Y        = 0.86;  // <1 = taller elliptical cloud
+const GAS_CENTER_X         = 0.48;
+const GAS_CENTER_Y         = 0.50;
+const GAS_STRETCH_X        = 1.0;
+const GAS_STRETCH_Y        = 0.86;
 const BEHIND_FG_VISIBLE    = true;  // override with ?behind=0
 const ROCK_VISIBLE         = true;  // override with ?rock=0
 const FRONT_FG_VISIBLE     = false; // off by default — behind layer carries the gas field
 const BEHIND_FG_OPACITY    = 1.0;
 const FRONT_FG_OPACITY     = 0.45;  // optional second pass — ?front=1
+
+const GAS_TUNING_DEFAULTS = {
+  gasCenterX:  GAS_CENTER_X,
+  gasCenterY:  GAS_CENTER_Y,
+  gasStretchX: GAS_STRETCH_X,
+  gasStretchY: GAS_STRETCH_Y,
+  gasReach:    GAS_REACH_BEHIND,
+  gasInner:    GAS_INNER,
+  edgeWarp:    GAS_EDGE_WARP,
+  alphaScale:  BEHIND_FG_OPACITY,
+  rockLiftPx:  ROCK_LIFT_PX,
+};
 
 function parsePassOn(q, keys, defaultOn) {
   for (let i = 0; i < keys.length; i++) {
@@ -229,8 +285,14 @@ function frontOpacity() {
   return Number.isFinite(n) ? clamp(n, 0, 1) : FRONT_FG_OPACITY;
 }
 
-function rockLiftUV(viewportH) {
-  return (ROCK_LIFT_PX / viewportH) * 0.95;
+function rockLiftWorld(viewportH, px = ROCK_LIFT_PX) {
+  const fovRad   = (CAMERA_FOV * Math.PI) / 180;
+  const visibleH = 2 * CAMERA_Z * Math.tan(fovRad / 2);
+  return (px / viewportH) * visibleH;
+}
+
+function rockLiftUV(viewportH, px = ROCK_LIFT_PX) {
+  return (px / viewportH) * 0.95;
 }
 
 /** Exponential smoothing factor for a time constant in ms. */
@@ -283,6 +345,8 @@ class RockScene {
     this.nebulaPitchDelayed = 0;
     this._prevPitch         = 0;
     this._prevDelayedPitch  = 0;
+    this._gasCenterYManual  = false;
+    this.rockLiftPx         = ROCK_LIFT_PX;
 
     this._initRenderer();
     this._initScenes();
@@ -328,8 +392,17 @@ class RockScene {
     this.camera.lookAt(0, 0, 0);
 
     this.rockGroup = new THREE.Group();
-    this.rockGroup.position.set(0, ROCK_LIFT_Y, 0);
+    this.rockGroup.position.set(0, 0, 0);
     this.scene.add(this.rockGroup);
+  }
+
+  _applyRockLift() {
+    if (this.rockGroup) {
+      this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx);
+    }
+    if (this.nebulaUni && !this._gasCenterYManual) {
+      this.nebulaUni.gasCenterY.value = GAS_CENTER_Y + rockLiftUV(this.h, this.rockLiftPx);
+    }
   }
 
   /* ── Nebula background quad ─────────────────────────────────────────────── */
@@ -345,10 +418,12 @@ class RockScene {
         aspect:        { value: 1.0 },
         alphaScale:    { value: alphaScale },
         nebulaInertia: { value: 0.0 },
-        gasLiftY:      { value: 0.0 },
+        gasCenterX:    { value: GAS_CENTER_X },
+        gasCenterY:    { value: GAS_CENTER_Y },
         gasReach:      { value: gasReach },
         gasInner:      { value: GAS_INNER },
         edgeWarp:      { value: GAS_EDGE_WARP },
+        gasStretchX:   { value: GAS_STRETCH_X },
         gasStretchY:   { value: GAS_STRETCH_Y },
         mouseXY:       { value: new THREE.Vector2(0, 0) },
       };
@@ -413,7 +488,7 @@ class RockScene {
         const center = box.getCenter(new THREE.Vector3());
 
         const longestDim = Math.max(size.x, size.y, size.z, 0.001);
-        const scale = 12.936 / longestDim;  /* +10% from 11.76 */
+        const scale = ROCK_SCALE_BASE / longestDim;
         model.scale.setScalar(scale);
 
         /* Re-centre the model on the group origin */
@@ -488,13 +563,12 @@ class RockScene {
     this.renderer.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.updateProjectionMatrix();
+    this._applyRockLift();
     if (this.nebulaUni) {
       this.nebulaUni.aspect.value = this.w / this.h;
-      this.nebulaUni.gasLiftY.value = rockLiftUV(this.h);
     }
     if (this.fgNebulaUni) {
       this.fgNebulaUni.aspect.value = this.w / this.h;
-      this.fgNebulaUni.gasLiftY.value = rockLiftUV(this.h);
     }
   }
 
@@ -641,6 +715,49 @@ class RockScene {
   }
 }
 
+function getPrimaryRockScene() {
+  const node = document.querySelector('[data-ltf-rock]');
+  return node?.__ltfRock ?? null;
+}
+
+function readGasTuning() {
+  const scene = getPrimaryRockScene();
+  const u = scene?.nebulaUni;
+  if (!u) return null;
+  return {
+    gasCenterX:  u.gasCenterX.value,
+    gasCenterY:  u.gasCenterY.value,
+    gasStretchX: u.gasStretchX.value,
+    gasStretchY: u.gasStretchY.value,
+    gasReach:    u.gasReach.value,
+    gasInner:    u.gasInner.value,
+    edgeWarp:    u.edgeWarp.value,
+    alphaScale:  u.alphaScale.value,
+    rockLiftPx:  scene.rockLiftPx,
+  };
+}
+
+function applyGasTuning(tuning) {
+  const scene = getPrimaryRockScene();
+  const u = scene?.nebulaUni;
+  if (!u || !tuning) return;
+  if (tuning.gasCenterX  != null) u.gasCenterX.value  = tuning.gasCenterX;
+  if (tuning.gasCenterY  != null) {
+    scene._gasCenterYManual = true;
+    u.gasCenterY.value = tuning.gasCenterY;
+  }
+  if (tuning.gasStretchX != null) u.gasStretchX.value = tuning.gasStretchX;
+  if (tuning.gasStretchY != null) u.gasStretchY.value = tuning.gasStretchY;
+  if (tuning.gasReach    != null) u.gasReach.value    = tuning.gasReach;
+  if (tuning.gasInner    != null) u.gasInner.value    = tuning.gasInner;
+  if (tuning.edgeWarp    != null) u.edgeWarp.value    = tuning.edgeWarp;
+  if (tuning.alphaScale  != null) u.alphaScale.value  = tuning.alphaScale;
+  if (tuning.rockLiftPx  != null) {
+    scene.rockLiftPx = tuning.rockLiftPx;
+    scene._applyRockLift();
+  }
+}
+
 /* ─── Auto-init ─────────────────────────────────────────────────────────── */
 function init() {
   document.querySelectorAll('[data-ltf-rock]').forEach((node) => {
@@ -661,4 +778,12 @@ if (document.readyState === 'loading') {
 }
 window.addEventListener('load', boot);
 
-window.LtfRockScene = { init, RockScene, layerVisibility, behindOpacity, frontOpacity };
+window.LtfRockScene = {
+  init, RockScene, layerVisibility, behindOpacity, frontOpacity,
+  GAS_TUNING_DEFAULTS, getPrimaryRockScene, readGasTuning, applyGasTuning,
+};
+
+export {
+  init, RockScene, layerVisibility, behindOpacity, frontOpacity,
+  GAS_TUNING_DEFAULTS, getPrimaryRockScene, readGasTuning, applyGasTuning,
+};
