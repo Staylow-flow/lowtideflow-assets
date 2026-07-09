@@ -244,7 +244,7 @@
   function init() {
     var nodes = document.querySelectorAll("[data-ltf-flow-bg], .ltf-flow-bg");
     if (!nodes.length) {
-      var hero = document.querySelector(".ltf-dev-hero");
+      var hero = document.querySelector(".ltf-flow-hero");
       if (hero && !hero.querySelector(".ltf-flow-bg")) {
         var fallback = document.createElement("div");
         fallback.className = "ltf-flow-bg";
