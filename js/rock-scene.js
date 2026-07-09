@@ -1,53 +1,242 @@
 /**
  * Lowtideflow — Rock Scene  (ES Module)
- * Three.js WebGL rock (soapstone.glb) + nebula gas particle cloud for the hero.
  *
- * Loaded as <script type="module"> — importmap in HTML resolves 'three' and 'three/addons/'.
- * Auto-inits on every [data-ltf-rock] container in the DOM.
- * Model URL is read from the container's data-model-url attribute.
+ * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
+ *             palette with transparent dark voids, wispy tendrils, dense cores.
+ * Foreground: soapstone.glb rock — centered, autonomous idle oscillation,
+ *             scroll tumble, minimal mouse nudge.
  *
- * Interactions:
- *   Scroll     → rock tumbles forward on the X axis
- *   Mouse move → rock yaws + gas cloud counter-rotates (parallax depth)
- *   Idle       → slow sinusoidal oscillation pivoting back to rest
+ * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
  */
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-/* ─── Brand palette ──────────────────────────────────────────────────────── */
-const PALETTE = [
-  new THREE.Color(0x1f7781),  // teal
-  new THREE.Color(0x4d259d),  // purple
-  new THREE.Color(0x0b8050),  // green
-  new THREE.Color(0x2a4070),  // navy
-  new THREE.Color(0x2aaab8),  // teal-light
-  new THREE.Color(0x7040c0),  // purple-mid
-];
+/* ─────────────────────────────────────────────────────────────────────────────
+   NEBULA SHADER — FBM Domain Warping
 
-/*
- * Nebula gas zones — 6 color blobs anchored around the scene.
- * Each zone produces a cluster of particles seeded near (cx, cy, cz)
- * with the given spread radius. Blobs intentionally overlap so colors
- * bleed into each other like a gradient collage.
- */
-const GAS_ZONES = [
-  { ci: 0, cx: -4.5,  cy:  1.8, cz: -1.2, spread: 3.8 },  // teal   — left upper
-  { ci: 1, cx:  4.0,  cy: -1.5, cz:  0.8, spread: 3.2 },  // purple — right mid
-  { ci: 2, cx: -2.8,  cy: -3.5, cz:  1.8, spread: 3.0 },  // green  — lower left
-  { ci: 3, cx:  0.5,  cy:  4.0, cz: -2.8, spread: 4.5 },  // navy   — upper centre
-  { ci: 4, cx:  3.5,  cy:  3.0, cz:  0.2, spread: 2.8 },  // teal-l — upper right
-  { ci: 5, cx: -1.5,  cy: -4.5, cz: -0.8, spread: 3.5 },  // pur-m  — lower centre
-];
+   Technique: Inigo Quilez "domain warping" — fbm(fbm(fbm(p)))
+   This creates the organic swirling tendrils seen in real nebula photos.
 
-const PARTICLE_COUNT = 6000;
+   Alpha channel drives gas density: thick gas = opaque, void = transparent.
+   The dark #00001C HTML background bleeds through thin regions naturally.
+───────────────────────────────────────────────────────────────────────────── */
+const NEBULA_VERT = /* glsl */`
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+  }
+`;
 
-/* ─── Tiny utilities ─────────────────────────────────────────────────────── */
-function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
+const NEBULA_FRAG = /* glsl */`
+  precision highp float;
+
+  uniform float time;
+  uniform float timeOffset;   /* phase shift so fg/bg layers don't overlap */
+  uniform float rockYaw;
+  uniform float rockPitch;
+  uniform float aspect;
+  uniform float alphaScale;      /* 0.90 bg, 0.38 fg */
+  uniform float haloOuter;       /* smoothstep outer radius */
+  uniform float tentacleStrength;/* warp amplitude: 0.26 bg, 0.48 fg */
+  uniform float rockExclusion;   /* opacity hole at rock centre: 0.0 bg, 1.0 fg */
+  uniform float edgeOnly;        /* 0 = bg volume, 1 = fg edge tentacles only */
+  uniform float nebulaInertia;   /* momentum-driven swirl offset accumulator */
+  uniform vec2  mouseXY;         /* smoothed -1..1 mouse, shared both layers */
+  varying vec2 vUv;
+
+  /* ── Brand palette ────────────────────────────────────────────── */
+  const vec3 TEAL    = vec3(0.122, 0.467, 0.506);  /* #1f7781 */
+  const vec3 PURPLE  = vec3(0.302, 0.145, 0.616);  /* #4d259d */
+  const vec3 GREEN   = vec3(0.043, 0.502, 0.314);  /* #0b8050 */
+  const vec3 TEALL   = vec3(0.165, 0.667, 0.722);  /* #2aaab8 */
+  const vec3 PURPLEM = vec3(0.439, 0.251, 0.753);  /* #7040c0 */
+
+  /* ── Value noise ─────────────────────────────────────────────── */
+  float hash(vec2 p) {
+    p = fract(p * vec2(127.1, 311.7));
+    p += dot(p, p + 17.5);
+    return fract(p.x * p.y);
+  }
+
+  float vnoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);  /* smoothstep */
+    return mix(
+      mix(hash(i),              hash(i + vec2(1.0, 0.0)), u.x),
+      mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+      u.y
+    );
+  }
+
+  /* ── Fractal Brownian Motion — 5 octaves ─────────────────────── */
+  float fbm(vec2 p) {
+    float val = 0.0;
+    float amp = 0.52;
+    float freq = 1.0;
+    for (int i = 0; i < 5; i++) {
+      val += amp * vnoise(p * freq);
+      freq *= 2.07;
+      amp  *= 0.50;
+      p    += vec2(1.74, 9.14);  /* offset each octave to break periodicity */
+    }
+    return val;
+  }
+
+  /* ── Smooth color palette indexed 0→1 ───────────────────────── */
+  vec3 nebulaColor(float t, vec2 pos) {
+    /* 5-stop gradient through brand colors */
+    vec3 c;
+    if      (t < 0.20) c = mix(PURPLE,  TEAL,    t * 5.0);
+    else if (t < 0.40) c = mix(TEAL,    TEALL,   (t - 0.20) * 5.0);
+    else if (t < 0.60) c = mix(TEALL,   GREEN,   (t - 0.40) * 5.0);
+    else if (t < 0.80) c = mix(GREEN,   PURPLEM, (t - 0.60) * 5.0);
+    else               c = mix(PURPLEM, PURPLE,  (t - 0.80) * 5.0);
+    return c;
+  }
+
+  void main() {
+    /* Aspect-correct UV */
+    vec2 uv = vec2((vUv.x - 0.5) * aspect + 0.5, vUv.y);
+
+    float t     = time + timeOffset;
+    float yaw   = rockYaw;
+    float pitch = rockPitch;
+
+    /* Swirl rotation — rock axes + scroll inertia only (no global mouse) */
+    vec2  center = vec2(0.5 * aspect + 0.5 * (aspect - 1.0) * 0.5, 0.5);
+    vec2  ruv    = uv - center;
+    float angle  = t * 0.014 + yaw * 0.28 + pitch * 0.14 + nebulaInertia;
+    float ca = cos(angle), sa = sin(angle);
+    uv = vec2(ruv.x * ca - ruv.y * sa, ruv.x * sa + ruv.y * ca) + center;
+
+    /* ── Localized mouse flow — wide soft aperture, loose drift ────
+       ~16.5% radius (+10% spread), gradual falloff, gentle stir only. */
+    /* Nebula mouse: horizontal stir only (matches rock input philosophy) */
+    vec2  mouseV   = vec2(mouseXY.x * 0.5 + 0.5, 0.5);
+    vec2  mouseA   = vec2((mouseV.x - 0.5) * aspect + 0.5, 0.5);
+    float mouseDist = distance(vUv, mouseV);
+    float mouseMask = pow(1.0 - smoothstep(0.03, 0.165, mouseDist), 1.15);
+
+    vec2  toMouse = uv - mouseA;
+    float localSpin = mouseMask * mouseXY.x * 0.12;
+    float lca = cos(localSpin), lsa = sin(localSpin);
+    vec2  uvTwist = vec2(
+      toMouse.x * lca - toMouse.y * lsa,
+      toMouse.x * lsa + toMouse.y * lca
+    ) + mouseA;
+    uv = mix(uv, uvTwist, mouseMask * 0.28);
+
+    /* Very soft push — broad drift, not a sharp tug */
+    vec2 pushDir = normalize(toMouse + vec2(0.0001));
+    uv += pushDir * mouseMask * dot(mouseXY, pushDir) * 0.016;
+
+    /* ── Domain warp layer 1 ────────────────────────────────────── */
+    vec2 q = vec2(
+      fbm(uv * 2.2 + vec2(0.00, 0.00) + t * 0.10),
+      fbm(uv * 2.2 + vec2(5.20, 1.30) + t * 0.09)
+    );
+
+    /* ── Domain warp layer 2 ────────────────────────────────────── */
+    vec2 r = vec2(
+      fbm(uv * 2.6 + 3.0 * q + vec2(1.70, 9.20) + t * 0.07),
+      fbm(uv * 2.6 + 3.0 * q + vec2(8.30, 2.80) + t * 0.06)
+    );
+
+    /* ── Final noise ────────────────────────────────────────────── */
+    float f  = fbm(uv * 2.0 + 4.0 * r + t * 0.04);
+    /* Second nearby sample — blending the two meshes the color transitions */
+    float f2 = fbm(uv * 2.0 + 4.0 * r + t * 0.04 + vec2(0.18, 0.11));
+
+    /* Dual-sample color blend: softens hard color borders into gradient mesh */
+    vec3 col = mix(nebulaColor(f, uv), nebulaColor(f2, uv), 0.28);
+    col = mix(col, PURPLE, clamp(length(q) * 0.5 - 0.4, 0.0, 0.28));
+    col = mix(col, TEALL,  clamp(r.x - 0.5,             0.0, 0.22));
+
+    /* ── Density — moderate threshold ──────────────────────────── */
+    float density = pow(clamp(f * 1.8 - 0.35, 0.0, 1.0), 1.6);
+
+    /* Glow on dense cores */
+    col += col * density * 0.65;
+    col  = clamp(col, 0.0, 1.0);
+
+    /* ── Organic tentacle halo ────────────────────────────────────
+       Instead of a clean circle, the boundary is FBM-warped along
+       the angular direction — this creates swirling arm-like tendrils
+       that poke out in some directions while staying concave in others.
+       The tentacles rotate slowly and react to the rock's pitch axis.   */
+    /* ── Halo center — fixed on rock; mouse no longer drags whole field ─ */
+    vec2 rockUV = vec2(0.48, 0.50);
+
+    vec2  dv        = vUv - rockUV;
+    float baseDist  = length(dv);
+    float baseAngle = atan(dv.y, dv.x);
+
+    /* Angular FBM: tentacleStrength controls arm amplitude (fg > bg) */
+    float tentacleField = fbm(vec2(
+      baseAngle * 1.6 + t * 0.07 + yaw * 0.6,
+      baseDist  * 3.0 + pitch * 0.4
+    ));
+    float tentacleWarp = (tentacleField - 0.48) * tentacleStrength;
+
+    /* FG layer: narrow rim band for long sharp curling tentacles */
+    float warpBand = edgeOnly > 0.5
+      ? smoothstep(0.18, 0.26, baseDist) * smoothstep(0.72, 0.34, baseDist)
+      : smoothstep(0.08, 0.22, baseDist) * smoothstep(0.55, 0.28, baseDist);
+    float warpedDist = baseDist - tentacleWarp * warpBand;
+
+    /* Halo fade — outer radius from uniform */
+    float halo = 1.0 - smoothstep(0.15, haloOuter, warpedDist);
+    halo = pow(halo, 1.05);
+
+    /* Screen-edge safety — 20% border kills all gas near viewport edges */
+    float edgeSafe = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+    halo *= smoothstep(0.0, 0.20, edgeSafe);
+
+    density *= halo;
+
+    /* Local mouse stir — skip on fg edge layer (tentacles only) */
+    if (edgeOnly < 0.5) {
+      density *= 1.0 + mouseMask * 0.05;
+      col += col * mouseMask * 0.035;
+      col  = clamp(col, 0.0, 1.0);
+    }
+
+    if (edgeOnly > 0.5) {
+      /* FG: thin rim curl — zero saturation over rock face, sharp long arms */
+      float innerR = 0.26;
+      float outerR = 0.72;
+      float edgeRing = smoothstep(innerR, innerR + 0.025, baseDist)
+                     * (1.0 - smoothstep(outerR - 0.08, outerR, warpedDist));
+      float tentacleAccent = pow(clamp(abs(tentacleWarp) * 5.0, 0.0, 1.0), 0.38);
+      float rimMask = edgeRing * (0.04 + tentacleAccent * 1.15);
+
+      /* Hard void over rock — color only curls at silhouette edge */
+      rimMask *= smoothstep(0.01, innerR + 0.015, baseDist);
+
+      density *= rimMask;
+      col *= 0.58 + tentacleAccent * 0.42;
+      col  = clamp(col, 0.0, 1.0);
+    } else {
+      /* BG: soft exclusion near rock centre */
+      float rockCore = 1.0 - smoothstep(0.04, 0.30, baseDist);
+      density *= (1.0 - rockCore * rockExclusion);
+    }
+
+    gl_FragColor = vec4(col, clamp(density * alphaScale, 0.0, 1.0));
+  }
+`;
+
+/* ─── Constants ──────────────────────────────────────────────────────────── */
+const MAX_HSCROLL_YAW = (5 * Math.PI) / 180;  // ±5° from horizontal trackpad scroll
+
+/* ─── Utility ────────────────────────────────────────────────────────────── */
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   RockScene — one instance per [data-ltf-rock] container
+   RockScene
 ═══════════════════════════════════════════════════════════════════════════ */
 class RockScene {
   constructor(container) {
@@ -63,27 +252,31 @@ class RockScene {
     this.time     = 0;
     this._lastNow = 0;
 
-    this.scene     = null;
-    this.camera    = null;
-    this.renderer  = null;
-    this.rockGroup = null;
-    this.gasGroup  = null;  // wrapper group — counter-rotates vs rock
-    this.particles = null;
+    this.scene      = null;
+    this.bgScene    = null;
+    this.bgCamera   = null;
+    this.fgScene    = null;
+    this.fgCamera   = null;
+    this.camera     = null;
+    this.renderer   = null;
+    this.rockGroup  = null;
+    this.nebulaUni  = null;
+    this.fgNebulaUni = null;
 
-    this.pPositions = null;
-    this.pPhases    = null;
-    this.pSpeeds    = null;
-    this.pBaseX     = null;
-    this.pBaseY     = null;
-    this.pBaseZ     = null;
-
-    this.running = false;
-    this.raf     = 0;
+    this.running          = false;
+    this.raf              = 0;
+    this.rockPitchAccum   = 0;
+    this.scrollPitchOffset = 0;
+    this.hScrollYawTarget  = 0;   // horizontal wheel → rock Y tilt target
+    this.hScrollYaw        = 0;   // smoothed Y tilt from h-scroll
+    this.nebulaVelocity   = 0;
+    this.nebulaAngleAccum = 0;   // accumulated inertia swirl offset
+    this._prevPitch       = 0;   // previous frame pitch for derivative
 
     this._initRenderer();
-    this._initScene();
+    this._initScenes();
+    this._initNebula();
     this._initLights();
-    this._initParticles();
     this._loadModel();
     this._bindEvents();
     this._onResize();
@@ -105,113 +298,106 @@ class RockScene {
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping      = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.0;
+    this.renderer.autoClear = false;
     this.container.appendChild(this.renderer.domElement);
   }
 
-  /* ── Scene + camera ────────────────────────────────────────────────────── */
-  _initScene() {
+  /* ── Scenes + cameras ──────────────────────────────────────────────────── */
+  _initScenes() {
+    this.bgScene  = new THREE.Scene();
+    this.bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    this.fgScene  = new THREE.Scene();
+    this.fgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
     this.scene  = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 150);
+    this.camera.position.set(0, 0, 24);
+    this.camera.lookAt(0, 0, 0);
 
-    /* Camera pulled back to accommodate 4× rock scale */
-    this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 120);
-    this.camera.position.set(0, 0.5, 18);
-    this.camera.lookAt(0, 0.5, 0);
-
-    /* Rock group — offset right + up 15% of visible scene height */
     this.rockGroup = new THREE.Group();
-    this.rockGroup.position.set(0.4, 1.8, 0);
+    this.rockGroup.position.set(0, 0, 0);
     this.scene.add(this.rockGroup);
-
-    /* Gas group — separate so it can counter-rotate independently */
-    this.gasGroup = new THREE.Group();
-    this.scene.add(this.gasGroup);
   }
 
-  /* ── Iridescent lighting — all intensities −10% ──────────────────────── */
+  /* ── Nebula background quad ─────────────────────────────────────────────── */
+  _initNebula() {
+    const geo = new THREE.PlaneGeometry(2, 2);
+
+    /* ── Background layer — behind rock, tighter halo, full opacity ── */
+    const bgMat = new THREE.ShaderMaterial({
+      vertexShader:   NEBULA_VERT,
+      fragmentShader: NEBULA_FRAG,
+      uniforms: {
+        time:             { value: 0.0 },
+        timeOffset:       { value: 0.0 },
+        rockYaw:          { value: 0.0 },
+        rockPitch:        { value: 0.0 },
+        aspect:           { value: 1.0 },
+        alphaScale:       { value: 0.90 },
+        haloOuter:        { value: 0.50 },
+        tentacleStrength: { value: 0.26 },
+        rockExclusion:    { value: 0.0  },
+        edgeOnly:         { value: 0.0  },
+        nebulaInertia:    { value: 0.0  },
+        mouseXY:          { value: new THREE.Vector2(0, 0) },
+      },
+      transparent: true,
+      depthWrite:  false,
+      depthTest:   false,
+    });
+    this.bgScene.add(new THREE.Mesh(geo, bgMat));
+    this.nebulaUni = bgMat.uniforms;
+
+    /* ── Foreground — edge-curl tentacles only (in front of rock) ── */
+    const fgMat = new THREE.ShaderMaterial({
+      vertexShader:   NEBULA_VERT,
+      fragmentShader: NEBULA_FRAG,
+      uniforms: {
+        time:             { value: 0.0 },
+        timeOffset:       { value: 3.7 },
+        rockYaw:          { value: 0.0 },
+        rockPitch:        { value: 0.0 },
+        aspect:           { value: 1.0 },
+        alphaScale:       { value: 0.36 },
+        haloOuter:        { value: 0.82 },
+        tentacleStrength: { value: 0.78 },
+        rockExclusion:    { value: 1.0  },
+        edgeOnly:         { value: 1.0  },
+        nebulaInertia:    { value: 0.0  },
+        mouseXY:          { value: new THREE.Vector2(0, 0) },
+      },
+      transparent: true,
+      depthWrite:  false,
+      depthTest:   false,
+    });
+    this.fgScene.add(new THREE.Mesh(geo, fgMat));
+    this.fgNebulaUni = fgMat.uniforms;
+  }
+
+  /* ── Iridescent rock lighting ─────────────────────────────────────────── */
   _initLights() {
-    this.scene.add(new THREE.AmbientLight(0x0d1520, 0.495));
+    this.scene.add(new THREE.AmbientLight(0x0d1520, 0.50));
 
     const key = new THREE.DirectionalLight(0xd8e0f0, 1.35);
     key.position.set(3, 5, 4);
     this.scene.add(key);
 
-    const teal = new THREE.PointLight(0x1f7781, 3.15, 18);
-    teal.position.set(-5, 1.5, 5);
+    const teal = new THREE.PointLight(0x1f7781, 3.15, 24);
+    teal.position.set(-7, 2, 6);
     this.scene.add(teal);
 
-    const purple = new THREE.PointLight(0x4d259d, 2.7, 16);
-    purple.position.set(5, -0.5, -5);
+    const purple = new THREE.PointLight(0x4d259d, 2.70, 20);
+    purple.position.set(7, -1, -6);
     this.scene.add(purple);
 
-    const green = new THREE.PointLight(0x0b8050, 1.8, 12);
-    green.position.set(-1.5, -6, 2.5);
+    const green = new THREE.PointLight(0x0b8050, 1.80, 16);
+    green.position.set(-2, -8, 3);
     this.scene.add(green);
   }
 
-  /* ── Nebula gas cloud ───────────────────────────────────────────────────── */
-  _initParticles() {
-    const n = PARTICLE_COUNT;
-    const positions = new Float32Array(n * 3);
-    const colors    = new Float32Array(n * 3);
-
-    this.pPhases = new Float32Array(n);
-    this.pSpeeds = new Float32Array(n);
-    this.pBaseX  = new Float32Array(n);
-    this.pBaseY  = new Float32Array(n);
-    this.pBaseZ  = new Float32Array(n);
-
-    const zoneCount = GAS_ZONES.length;
-
-    for (let i = 0; i < n; i++) {
-      const zone = GAS_ZONES[i % zoneCount];
-      const s    = zone.spread;
-
-      /* Seed each particle within its zone using a stretched box distribution
-         (flatter on Y and Z so gas reads as wide, not spherical) */
-      const bx = zone.cx + rand(-s,       s      );
-      const by = zone.cy + rand(-s * 0.55, s * 0.55);
-      const bz = zone.cz + rand(-s * 0.45, s * 0.45);
-
-      positions[i * 3]     = bx;
-      positions[i * 3 + 1] = by;
-      positions[i * 3 + 2] = bz;
-
-      this.pBaseX[i] = bx;
-      this.pBaseY[i] = by;
-      this.pBaseZ[i] = bz;
-
-      /* Color: zone hue + brightness scatter for depth illusion */
-      const col    = PALETTE[zone.ci];
-      const bright = 0.65 + Math.random() * 0.55;
-      colors[i * 3]     = clamp(col.r * bright, 0, 1);
-      colors[i * 3 + 1] = clamp(col.g * bright, 0, 1);
-      colors[i * 3 + 2] = clamp(col.b * bright, 0, 1);
-
-      this.pPhases[i] = Math.random() * Math.PI * 2;
-      this.pSpeeds[i] = rand(0.00010, 0.00028);  // per-particle drift variation
-    }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color',    new THREE.BufferAttribute(colors,    3));
-
-    const mat = new THREE.PointsMaterial({
-      size: 1.5,              // screen-space pixels
-      vertexColors: true,
-      blending: THREE.AdditiveBlending,
-      transparent: true,
-      opacity: 0.55,
-      sizeAttenuation: false, // true single-pixel feel at any distance
-      depthWrite: false,
-    });
-
-    this.particles  = new THREE.Points(geo, mat);
-    this.pPositions = positions;
-    this.gasGroup.add(this.particles);
-  }
-
-  /* ── GLB loader — 4× scale ───────────────────────────────────────────── */
+  /* ── GLB loader ──────────────────────────────────────────────────────────── */
   _loadModel() {
     const loader = new GLTFLoader();
     loader.load(
@@ -220,14 +406,23 @@ class RockScene {
       (gltf) => {
         const model = gltf.scene;
 
+        /* Scale to target size */
         const box    = new THREE.Box3().setFromObject(model);
         const size   = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
 
         const longestDim = Math.max(size.x, size.y, size.z, 0.001);
-        const scale = 11.2 / longestDim;   // 4× original (was 2.8)
+        const scale = 16.8 / longestDim;
         model.scale.setScalar(scale);
+
+        /* Re-centre the model on the group origin */
         model.position.copy(center.negate().multiplyScalar(scale));
+
+        /* After centering, apply a corrective X offset to counter any visual
+           asymmetry in the soapstone mesh (boulder heavier on one side).
+           Adjust ROCK_X_CORRECT if rock still drifts left/right. */
+        const ROCK_X_CORRECT = -0.6;
+        model.position.x += ROCK_X_CORRECT;
 
         model.traverse((child) => {
           if (!child.isMesh || !child.material) return;
@@ -250,7 +445,7 @@ class RockScene {
     );
   }
 
-  /* ── Event bindings ─────────────────────────────────────────────────────── */
+  /* ── Events ─────────────────────────────────────────────────────────────── */
   _bindEvents() {
     this._onResizeFn = () => this._onResize();
     window.addEventListener('resize', this._onResizeFn);
@@ -262,10 +457,22 @@ class RockScene {
     window.addEventListener('scroll', this._onScrollFn, { passive: true });
 
     this._onMouseFn = (e) => {
+      /* Horizontal only — drives nebula local stir, not rock */
       this.mouseTX = (e.clientX / window.innerWidth  - 0.5) * 2;
-      this.mouseTY = (e.clientY / window.innerHeight - 0.5) * 2;
+      this.mouseTY = 0;
     };
     window.addEventListener('pointermove', this._onMouseFn, { passive: true });
+
+    /* Mac trackpad / mouse horizontal scroll → rock Y-axis tilt ±5° */
+    this._onWheelFn = (e) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) * 0.55) return;
+      this.hScrollYawTarget = clamp(
+        this.hScrollYawTarget + e.deltaX * 0.00055,
+        -MAX_HSCROLL_YAW,
+        MAX_HSCROLL_YAW
+      );
+    };
+    window.addEventListener('wheel', this._onWheelFn, { passive: true });
   }
 
   /* ── Resize ─────────────────────────────────────────────────────────────── */
@@ -279,6 +486,8 @@ class RockScene {
     this.renderer.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.updateProjectionMatrix();
+    if (this.nebulaUni) this.nebulaUni.aspect.value = this.w / this.h;
+    if (this.fgNebulaUni) this.fgNebulaUni.aspect.value = this.w / this.h;
   }
 
   /* ── Per-frame tick ──────────────────────────────────────────────────────── */
@@ -291,65 +500,79 @@ class RockScene {
 
     const t = this.time;
 
-    /* Smooth mouse */
-    this.mouseX += (this.mouseTX - this.mouseX) * 0.055;
-    this.mouseY += (this.mouseTY - this.mouseY) * 0.055;
-
-    /* Smooth scroll */
+    this.mouseX += (this.mouseTX - this.mouseX) * 0.028;
+    this.mouseY = 0;
     this.scrollProgress += (this.scrollTarget - this.scrollProgress) * 0.07;
 
-    /* ── Rock: scroll tumble + mouse yaw + idle oscillation ─────────────── */
+    /* Horizontal wheel tilt — spring toward target, clamped ±5° */
+    this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
+
+    /* ── Rock rotation ────────────────────────────────────────────────────
+       X: slow auto-spin + vertical page scroll spring (down 100%, up 25%).
+       Y: idle wobble + horizontal trackpad scroll tilt (±5°).
+       Z: subtle idle nod only.                                           */
     if (this.rockGroup) {
-      /* Scroll → X tumble */
-      const targetRotX = -0.15 + this.scrollProgress * Math.PI * 2.5;
-      this.rockGroup.rotation.x += (targetRotX - this.rockGroup.rotation.x) * 0.07;
+      /* Slow continuous tumble — ~1 full rotation per 140 s */
+      this.rockPitchAccum += 0.0000225 * dt;
 
-      /* Idle oscillation — slow sine pivot, returns to zero naturally.
-         Mouse overrides: adds on top of idle so it feels responsive. */
-      const idleYaw   = Math.sin(t * 0.00022) * 0.13;   // ±7.5° slow rock
-      const idlePitch = Math.sin(t * 0.00016 + 1.1) * 0.045; // subtle nod
+      /* Scroll down = 100%, scroll up = 25% of down rate */
+      const scrollTarget = this.scrollProgress * Math.PI * 2.2;
+      const scrollDiff   = scrollTarget - this.scrollPitchOffset;
+      const scrollRate   = scrollDiff > 0 ? 0.055 : 0.01375;
+      this.scrollPitchOffset += scrollDiff * scrollRate;
 
-      /* Y: mouse + idle rest */
-      const targetY = this.mouseX * 0.40 + idleYaw;
-      this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * 0.050;
+      this.rockGroup.rotation.x = this.rockPitchAccum + this.scrollPitchOffset;
 
-      /* Z: mouse tilt + idle pitch */
-      const targetZ = -this.mouseY * 0.06 + idlePitch;
-      this.rockGroup.rotation.z += (targetZ - this.rockGroup.rotation.z) * 0.040;
+      /* Idle wobble + horizontal-scroll Y tilt */
+      const idleYaw = Math.sin(t * 0.00020) * 0.07 + Math.sin(t * 0.00039) * 0.03;
+      const idleNod = Math.sin(t * 0.00015 + 1.4) * 0.025;
+      const targetY = idleYaw + this.hScrollYaw;
+
+      this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * 0.036;
+      this.rockGroup.rotation.z += (idleNod - this.rockGroup.rotation.z) * 0.030;
     }
 
-    /* ── Nebula gas: turbulence drift ──────────────────────────────────────── */
-    if (this.particles) {
-      const pos = this.pPositions;
+    /* ── Nebula momentum ──────────────────────────────────────────────────── */
+    if (this.rockGroup) {
+      const currentPitch = this.rockGroup.rotation.x;
+      const pitchDelta   = (currentPitch - this._prevPitch) / dt;
+      this._prevPitch    = currentPitch;
 
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const phase = this.pPhases[i];
-        /* s: per-particle speed multiplier, range ~1.2–1.56 */
-        const s = 1.0 + this.pSpeeds[i] * 2000;
-
-        /* Layered turbulence: primary slow wave + faster harmonic per particle */
-        pos[i * 3]     = this.pBaseX[i]
-          + 0.48 * Math.sin(t * 0.000195 * s + phase)
-          + 0.20 * Math.sin(t * 0.000420       + phase * 2.3);
-
-        pos[i * 3 + 1] = this.pBaseY[i]
-          + 0.40 * Math.cos(t * 0.000155 * s + phase * 1.3)
-          + 0.16 * Math.cos(t * 0.000330       + phase * 1.7);
-
-        pos[i * 3 + 2] = this.pBaseZ[i]
-          + 0.30 * Math.sin(t * 0.000120 * s + phase * 0.8);
-      }
-
-      this.particles.geometry.attributes.position.needsUpdate = true;
-
-      /* Gas counter-rotates gently vs rock — creates depth separation */
-      if (this.rockGroup) {
-        const counterY = -this.rockGroup.rotation.y * 0.10;
-        this.gasGroup.rotation.y += (counterY - this.gasGroup.rotation.y) * 0.022;
-      }
+      /* Drive velocity from pitch change, then coast with very slow decay */
+      const nebulaTarget  = pitchDelta * 0.22;           // stronger coupling to rock spin
+      this.nebulaVelocity += (nebulaTarget - this.nebulaVelocity) * 0.08;
+      this.nebulaVelocity *= Math.pow(0.9985, dt);        // very slow decay ≈ 10s coast
+      this.nebulaAngleAccum += this.nebulaVelocity * dt;
     }
 
+    /* ── Nebula uniforms ──────────────────────────────────────────────────── */
+    const nebulaTime  = t * 0.00042;
+    const nebulaYaw   = this.rockGroup ? this.rockGroup.rotation.y : 0;
+    const nebulaPitch = this.rockGroup ? this.rockGroup.rotation.x : 0;
+
+    if (this.nebulaUni) {
+      this.nebulaUni.time.value         = nebulaTime;
+      this.nebulaUni.rockYaw.value      = nebulaYaw;
+      this.nebulaUni.rockPitch.value    = nebulaPitch;
+      this.nebulaUni.nebulaInertia.value = this.nebulaAngleAccum;
+      this.nebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
+    }
+    if (this.fgNebulaUni) {
+      this.fgNebulaUni.time.value         = nebulaTime;
+      this.fgNebulaUni.rockYaw.value      = nebulaYaw;
+      this.fgNebulaUni.rockPitch.value    = nebulaPitch;
+      this.fgNebulaUni.nebulaInertia.value = this.nebulaAngleAccum;
+      this.fgNebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
+    }
+
+    /* ── Three-pass render: bg nebula → rock → fg nebula ─────────────────── */
+    this.renderer.clear();
+    this.renderer.render(this.bgScene, this.bgCamera);
+    this.renderer.clearDepth();
     this.renderer.render(this.scene, this.camera);
+    this.renderer.clearDepth();
+    this.renderer.render(this.fgScene, this.fgCamera);
+
     this.raf = requestAnimationFrame(this._frameBound);
   }
 
@@ -360,6 +583,7 @@ class RockScene {
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);
     window.removeEventListener('pointermove', this._onMouseFn);
+    window.removeEventListener('wheel',       this._onWheelFn);
     const el = this.renderer.domElement;
     if (el.parentNode) el.parentNode.removeChild(el);
     this.renderer.dispose();

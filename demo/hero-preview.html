@@ -3,202 +3,310 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lowtideflow — Rock Hero Preview</title>
+  <title>Lowtideflow — Hero Preview</title>
 
+  <!--
+    Acumin Pro local font references — maps Adobe CC PostScript names to the
+    same family identifiers Webflow uses ('acumin-pro', 'acumin-pro-condensed',
+    'acumin-pro-extra-condensed'). Requires Acumin Pro to be activated in Adobe CC.
+  -->
 
   <style>
-    /* ── Reset ─────────────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── Local Acumin Pro via Adobe CC installed fonts ──────────────────── */
 
+    /* acumin-pro  (body / weight 300) */
+    @font-face {
+      font-family: 'acumin-pro';
+      src: local('AcuminPro-Light'),
+           local('Acumin Pro Light'),
+           local('Acumin Pro');
+      font-weight: 300;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'acumin-pro';
+      src: local('AcuminPro-Regular'),
+           local('Acumin Pro');
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    /* acumin-pro-condensed  (UI / weight 500 + 800) */
+    @font-face {
+      font-family: 'acumin-pro-condensed';
+      src: local('AcuminProCond-Medium'),
+           local('AcuminProCond-Regular'),
+           local('Acumin Pro Condensed Medium'),
+           local('Acumin Pro Condensed');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'acumin-pro-condensed';
+      src: local('AcuminProCond-ExtraBold'),
+           local('AcuminProCond-Bold'),
+           local('Acumin Pro Condensed ExtraBold'),
+           local('Acumin Pro Condensed Bold');
+      font-weight: 800;
+      font-style: normal;
+    }
+
+    /* acumin-pro-extra-condensed  (stamp H1 / weight 900) */
+    @font-face {
+      font-family: 'acumin-pro-extra-condensed';
+      src: local('AcuminProExtraCond-Black'),
+           local('Acumin Pro ExtraCondensed Black'),
+           local('Acumin Pro ExtraCond Black'),
+           local('AcuminProExtraCond-Semibold'),
+           local('Acumin Pro ExtraCondensed');
+      font-weight: 900;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'acumin-pro-extra-condensed';
+      src: local('AcuminProExtraCond-Bold'),
+           local('Acumin Pro ExtraCondensed Bold'),
+           local('Acumin Pro ExtraCondensed');
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       LTF DESIGN TOKENS  (mirrors Webflow :root variables)
+    ═══════════════════════════════════════════════════════════════════════ */
+    :root {
+      --ltf-canvas-dark:      #00001C;
+      --ltf-bg-secondary:     #06142E;
+      --ltf-text-pure:        #FFFFFF;
+      --ltf-text-secondary:   #E5E5E5;
+      --ltf-accent-teal:      #1F7781;
+      --ltf-accent-green:     #0B8050;
+      --ltf-accent-purple:    #4D259D;
+      --ltf-accent-med-navy:  #263350;
+
+      /* Typography stacks — Webflow loads acumin-pro via Typekit */
+      --ltf-font-stamp:    'acumin-pro-extra-condensed', 'Arial Narrow', 'Impact', sans-serif;
+      --ltf-font-substamp: 'acumin-pro-extra-condensed', 'Arial Narrow', sans-serif;
+      --ltf-font-tech:     'acumin-pro-condensed',       'Arial Narrow', sans-serif;
+      --ltf-font-body:     'acumin-pro',                 'Arial',        sans-serif;
+    }
+
+    /* ── Reset ──────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'acumin-pro-extra-condensed', system-ui, sans-serif;
-      color: #e5e5e5;
-      background: #00001C;
+      background: var(--ltf-canvas-dark);
+      color: var(--ltf-text-secondary);
+      font-family: var(--ltf-font-body);
       overflow-x: hidden;
     }
 
-    /* ── Hero section — full viewport ──────────────────────────────────── */
-    .ltf-hero-demo {
+    /* ═══════════════════════════════════════════════════════════════════════
+       ltf-hero — full-viewport hero section
+       Matches Webflow ltf-hero class structure
+    ═══════════════════════════════════════════════════════════════════════ */
+    .ltf-hero {
       position: relative;
       width: 100%;
       height: 100vh;
-      min-height: 600px;
+      min-height: 640px;
       overflow: hidden;
       isolation: isolate;
     }
 
-    /* Layer 0 — Three.js WebGL rock + particles canvas */
+    /* ── Layer 0: Three.js canvas (rock + nebula) ─────────────────────── */
     .ltf-rock-stage {
       position: absolute;
       inset: 0;
       z-index: 0;
       pointer-events: none;
     }
-
     .ltf-rock-stage canvas {
       display: block;
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Layer 1 — hero text content */
-    .hero-content {
+    /* ── Layer 1: Orange shirt figure — right side ────────────────────── */
+    .ltf-hero-figure {
       position: absolute;
-      inset: 0;
+      right: 0;
+      bottom: 0;
       z-index: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 0 80px;
+      height: 82vh;
+      max-height: 780px;
+      width: auto;
+      pointer-events: none;
+      transform: translateX(2%);
+      filter: drop-shadow(-28px 0 56px rgba(0,0,0,0.6));
+    }
+
+    /* ── Layer 2: H1 stamp — left-biased centre, overlaps rock ──────── */
+    .ltf-hero-headline {
+      position: absolute;
+      top: 50%;
+      left: 42%;        /* sits slightly left of true centre, over the rock */
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      text-align: center;
       pointer-events: none;
     }
 
-    .hero-content > * {
-      pointer-events: auto;
-    }
-
-    .hero-sublabel {
-      font-family: 'acumin-pro-condensed', system-ui, sans-serif;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: #1F7781;
-      margin-bottom: 16px;
-    }
-
-    .hero-h1 {
-      font-size: clamp(72px, 9vw, 130px);
+    .ltf-main-header {
+      font-family: var(--ltf-font-stamp);
+      font-size: clamp(64px, 9.5vw, 140px);
       font-weight: 900;
-      line-height: 0.88;
+      line-height: 0.86;
+      letter-spacing: -0.01em;
       text-transform: uppercase;
-      color: #ffffff;
-      max-width: 620px;
-      margin-bottom: 32px;
+      color: var(--ltf-text-pure);
+      text-shadow:
+        0 2px 40px rgba(0,0,0,0.65),
+        0 0 100px rgba(0,0,0,0.4);
     }
 
-    .hero-body {
-      font-family: 'acumin-pro', system-ui, sans-serif;
-      font-size: 17px;
-      font-weight: 300;
-      line-height: 1.65;
-      color: #e5e5e5;
-      max-width: 460px;
-      margin-bottom: 40px;
-    }
-
-    .hero-cta {
-      display: inline-block;
-      padding: 14px 32px;
-      background: #06142E;
-      color: #e5e5e5;
-      font-family: 'acumin-pro-condensed', system-ui, sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: background 0.3s ease;
-      align-self: flex-start;
-    }
-
-    .hero-cta:hover {
-      background: linear-gradient(135deg, #1F7781, #4D259D);
-    }
-
-    /* ── Scroll hint — arrow at bottom of hero ──────────────────────────── */
-    .scroll-hint {
+    /* ── Layer 3: Bottom bar — left-aligned vertical column ──────────── */
+    .ltf-hero-bottom-bar {
       position: absolute;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 48px;
+      left: 64px;
       z-index: 3;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      opacity: 0.5;
-      font-family: 'acumin-pro-condensed', system-ui, sans-serif;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.2em;
+      align-items: flex-start;
+      gap: 18px;
+      max-width: 750px;
+    }
+
+    .ltf-hero-logo {
+      height: 64px;      /* enlarged per Webflow design note */
+      width: auto;
+    }
+
+    /* ltf-body-text — mirrors Webflow class */
+    .ltf-body-text {
+      font-family: var(--ltf-font-body);
+      font-size: 15.5px;
+      font-weight: 300;
+      line-height: 1.70;
+      color: var(--ltf-text-secondary);
+      max-width: 750px;  /* per Webflow design note */
+    }
+
+    /* ltf-btn-primary — solid navy, grey text */
+    .ltf-btn-primary {
+      display: inline-block;
+      padding: 13px 30px;
+      background: var(--ltf-bg-secondary);
+      color: var(--ltf-text-secondary);
+      font-family: var(--ltf-font-tech);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: #e5e5e5;
-      animation: bounce 2s ease-in-out infinite;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 3px;
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+    .ltf-btn-primary:hover {
+      background: var(--ltf-accent-teal);
+      border-color: var(--ltf-accent-teal);
+      color: #fff;
     }
 
-    .scroll-hint svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateX(-50%) translateY(0); }
-      50%       { transform: translateX(-50%) translateY(6px); }
-    }
-
-    /* ── Below-fold scroll track (gives scroll interaction room to play) ── */
-    .scroll-track {
-      width: 100%;
-      min-height: 250vh;
-      background: linear-gradient(to bottom, #00001C 0%, #06142E 40%, #00001C 100%);
+    /* ── Scroll indicator ─────────────────────────────────────────────── */
+    .ltf-scroll-hint {
+      position: absolute;
+      bottom: 28px;
+      right: 36px;
+      z-index: 4;
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.35;
+      font-family: var(--ltf-font-tech);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--ltf-text-secondary);
+      animation: ltf-bounce 2.2s ease-in-out infinite;
+    }
+    .ltf-scroll-hint svg { width: 16px; height: 16px; }
+    @keyframes ltf-bounce {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(5px); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       BELOW-FOLD  — scroll track for testing rock rotation
+    ═══════════════════════════════════════════════════════════════════════ */
+    .ltf-scroll-track {
+      width: 100%;
+      min-height: 220vh;
+      background: linear-gradient(to bottom, var(--ltf-canvas-dark) 0%, var(--ltf-bg-secondary) 50%, var(--ltf-canvas-dark) 100%);
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 32px;
       padding: 80px;
     }
 
-    .scroll-track-label {
-      font-size: clamp(14px, 2vw, 18px);
-      font-weight: 300;
-      color: rgba(255,255,255,0.25);
-      text-align: center;
-      letter-spacing: 0.1em;
+    .ltf-track-label {
+      font-family: var(--ltf-font-tech);
+      font-size: clamp(11px, 1.4vw, 14px);
+      font-weight: 500;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      font-family: 'acumin-pro-condensed', system-ui, sans-serif;
+      color: rgba(255,255,255,0.18);
+      text-align: center;
     }
 
-    .scroll-track-label strong {
+    .ltf-track-label span {
       display: block;
-      font-size: clamp(32px, 5vw, 60px);
-      font-weight: 700;
-      color: rgba(255,255,255,0.08);
-      margin-top: 12px;
+      font-family: var(--ltf-font-stamp);
+      font-size: clamp(28px, 5vw, 64px);
+      font-weight: 900;
+      color: rgba(255,255,255,0.05);
+      margin-top: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
-    /* ── Debug overlay (remove before pushing to Webflow) ──────────────── */
-    #debug-info {
+    /* ── Debug overlay ────────────────────────────────────────────────── */
+    #ltf-debug {
       position: fixed;
-      bottom: 16px;
-      right: 16px;
-      z-index: 100;
-      font-size: 11px;
+      bottom: 14px;
+      right: 14px;
+      z-index: 200;
+      font-size: 10px;
       font-family: monospace;
-      color: rgba(31,119,129,0.7);
-      background: rgba(0,0,0,0.5);
-      padding: 8px 12px;
-      border-radius: 4px;
+      color: rgba(31,119,129,0.65);
+      background: rgba(0,0,0,0.55);
+      padding: 6px 10px;
+      border-radius: 3px;
       pointer-events: none;
-      line-height: 1.6;
     }
   </style>
 </head>
 <body>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
-       HERO SECTION
-       Layer order (back → front):
-         0. .ltf-rock-stage    — Three.js WebGL rock + particle cloud (rock-scene.js)
-         1. .hero-content      — H1, body copy, CTA
-  ══════════════════════════════════════════════════════════════════════════ -->
-  <section class="ltf-hero-demo" id="hero">
+       ltf-hero
+       Layer stack (back → front):
+         0  .ltf-rock-stage       Three.js nebula + soapstone.glb
+         1  .ltf-hero-figure      Orange long-sleeve figure (right)
+         2  .ltf-hero-headline    Big H1 stamp (centred over rock)
+         3  .ltf-hero-bottom-bar  Logo / body copy / CTA (bottom-left column)
+         4  .ltf-scroll-hint      Scroll arrow (bottom-right)
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="ltf-hero" id="hero">
 
-    <!-- Layer 0: Three.js rock + iridescent particles
-         data-model-url: path to the .glb relative to the HTML page
-         For Webflow production, swap to the Webflow CDN URL -->
+    <!-- Layer 0 — Three.js rock + nebula -->
     <div
       class="ltf-rock-stage"
       data-ltf-rock
@@ -206,20 +314,40 @@
       aria-hidden="true"
     ></div>
 
-    <!-- Layer 1: Hero copy -->
-    <div class="hero-content">
-      <p class="hero-sublabel">Low Tide Flow Co. &nbsp;//&nbsp; Since 2014</p>
-      <h1 class="hero-h1">Rugged Apparel<br>For The<br>Real World</h1>
-      <p class="hero-body">
+    <!-- Layer 1 — Product figure (orange long-sleeve) -->
+    <img
+      class="ltf-hero-figure"
+      src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6165484aa8ee200d460_Hi-fi-Orange-Long-Sleeve.png"
+      alt=""
+      aria-hidden="true"
+    />
+
+    <!-- Layer 2 — H1 stamp centred over the rock -->
+    <div class="ltf-hero-headline" aria-hidden="true">
+      <h1 class="ltf-main-header">
+        Rugged Apparel<br>
+        For The<br>
+        Real World
+      </h1>
+    </div>
+
+    <!-- Layer 3 — Bottom-left column: logo + copy + CTA -->
+    <div class="ltf-hero-bottom-bar">
+      <img
+        class="ltf-hero-logo"
+        src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6cfaa5cc5d2af05d28a_LTF%20Logo%20Mark%20-%20White.png"
+        alt="Low Tide Flow Co."
+      />
+      <p class="ltf-body-text">
         LowTideFlow.co is built on a foundation of culture, art, and technology.
         For over a decade, we have engineered heavy-duty custom apparel and brand
         identities for operations within SoCal, and across the country.
       </p>
-      <a class="hero-cta" href="#">Estimate Your Run</a>
+      <a class="ltf-btn-primary" href="#">Estimate Your Run</a>
     </div>
 
-    <!-- Scroll hint -->
-    <div class="scroll-hint" aria-hidden="true">
+    <!-- Layer 4 — Scroll nudge -->
+    <div class="ltf-scroll-hint" aria-hidden="true">
       <span>Scroll</span>
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M10 3v14M4 11l6 6 6-6"/>
@@ -228,64 +356,53 @@
 
   </section>
 
-  <!-- Below-fold content — gives the scroll-driven rock rotation room to animate -->
-  <div class="scroll-track">
-    <div class="scroll-track-label">
+  <!-- Below-fold — room for scroll-driven rock rotation -->
+  <div class="ltf-scroll-track">
+    <p class="ltf-track-label">
       Scroll to see the rock rotate
-      <strong>← the rock rolls as you scroll →</strong>
-    </div>
+      <span>Low Tide Flow Co.</span>
+    </p>
   </div>
 
-  <!-- Debug overlay: shows scroll + mouse state in real-time -->
-  <div id="debug-info">scroll: 0% &nbsp;|&nbsp; mouse: (0, 0)</div>
+  <div id="ltf-debug">scroll: 0%  |  mouse: (0, 0)</div>
 
 
-  <!-- ══════════════════════════════════════════════════════════════════════
-       Scripts
-       NOTE: This demo requires a local HTTP server (file:// won't work
-       because GLTFLoader uses fetch(), which is blocked by CORS on file://).
-
-       Run from the project ROOT:
-         npm start            (uses "serve" — added in package.json)
-         npx serve .          (no install needed)
-         python3 -m http.server 8080
-
-       Then open: http://localhost:3000/demo/hero-preview.html
-  ══════════════════════════════════════════════════════════════════════ -->
-
+  <!-- ── Scripts ────────────────────────────────────────────────────────── -->
   <!--
-    Import map — resolves 'three' and 'three/addons/' for ES module imports.
-    rock-scene.js uses:  import * as THREE from 'three';
-                         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    Import map — resolves ES module imports for Three.js + GLTFLoader.
+    Requires a local HTTP server (CORS blocks fetch on file://).
+
+    Run from project root:
+      python3 -m http.server 3000
+      npx serve .
+
+    Then open: http://localhost:3000/demo/hero-preview.html
   -->
   <script type="importmap">
   {
     "imports": {
-      "three":          "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-      "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+      "three":         "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
     }
   }
   </script>
 
-  <!-- Three.js rock scene — ES module; importmap resolves Three.js + GLTFLoader -->
   <script type="module" src="../js/rock-scene.js"></script>
 
-  <!-- Debug overlay updater -->
   <script>
     (function () {
-      var el = document.getElementById('debug-info');
+      var el = document.getElementById('ltf-debug');
       var mx = 0, my = 0;
       window.addEventListener('pointermove', function (e) {
         mx = ((e.clientX / window.innerWidth  - 0.5) * 2).toFixed(2);
         my = ((e.clientY / window.innerHeight - 0.5) * 2).toFixed(2);
       }, { passive: true });
-      function updateDebug() {
+      (function tick() {
         var max = document.documentElement.scrollHeight - window.innerHeight;
         var pct = max > 0 ? Math.round(window.scrollY / max * 100) : 0;
         el.textContent = 'scroll: ' + pct + '%  |  mouse: (' + mx + ', ' + my + ')';
-        requestAnimationFrame(updateDebug);
-      }
-      updateDebug();
+        requestAnimationFrame(tick);
+      })();
     })();
   </script>
 
