@@ -39,8 +39,9 @@ Key width constraints from preview:
 **Footer** — paste manually (`webflow/clean-slate-footer.html`):
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@05ea94c/js/rock-scene.js"></script>
-<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@05ea94c/js/ltf-btn-gradient.js"></script>
+<!-- Pin a commit hash — @main on jsDelivr can serve stale rock-scene.js -->
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@3900fb4/js/rock-scene.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@3900fb4/js/ltf-btn-gradient.js"></script>
 ```
 
 ## Fine-tuning in Designer
