@@ -1,0 +1,241 @@
+<!--
+  CLEAN SLATE — Page Head Custom Code
+  Paste into: Page Settings → Custom Code → Inside <head> tag
+
+  SPLIT OF RESPONSIBILITIES (Webflow-native + minimal custom code):
+
+  WEBFLOW DESIGNER (editable in Style panel):
+  - ltf-nav-btn / ltf-nav-btn-quote — default: white fill, navy text
+  - Same classes → Hover pseudo: navy fill (#06142E), white text
+  - Padding, font, radius, transitions — all in Webflow
+
+  WEBFLOW DESIGNER — nav text links (ltf-nav-link):
+  - Default + Hover opacity — Style panel
+  - Gradient text fill + letter glow on hover — head CSS (below)
+
+  THIS FILE ONLY (Webflow cannot do keyframes / animated gradients):
+  - @keyframes + gradient ring on .ltf-btn-gradient-wrap:hover
+  - Nav text link gradient fill via background-clip: text
+  - Hero CTA ring mask (transparent → navy on hover)
+  - Click-pulse mirror (.ltf-btn-gradient-active) for JS footer script
+-->
+<style>
+  @keyframes ltf-nebula-gradient-shift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+  .ltf-nav-actions .ltf-btn-gradient-wrap {
+    pointer-events: auto;
+  }
+
+  .ltf-body-text,
+  .ltf-btn-primary.is-hero-cta,
+  .ltf-nav-link,
+  .ltf-nav-btn,
+  .ltf-nav-btn-quote {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+  }
+
+  /* Gradient ring + outer glow — wrapper only; button colors live in Webflow */
+  .ltf-btn-gradient-wrap {
+    position: relative;
+    display: inline-block;
+    padding: 2px;
+    border-radius: 5px;
+    background: transparent;
+    transition: box-shadow 0.35s ease;
+  }
+
+  .ltf-btn-gradient-wrap:hover,
+  .ltf-btn-gradient-wrap:focus-within,
+  .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+    background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+    background-size: 200% 200%;
+    animation: ltf-nebula-gradient-shift 3s linear infinite;
+    box-shadow:
+      0 0 16px rgba(77, 37, 157, 0.45),
+      0 0 28px rgba(31, 119, 129, 0.28);
+  }
+
+  .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+    animation-duration: 1.8s;
+  }
+
+  /* Nav text links — gradient text fill + soft glow (plain text, not button boxes) */
+  .ltf-nav-links .ltf-nav-link {
+    background-image: none;
+    background-clip: border-box;
+    -webkit-background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
+    -webkit-text-stroke: 0 transparent;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+  }
+
+  .ltf-nav-links .ltf-nav-link:hover,
+  .ltf-nav-links .ltf-nav-link:focus-visible {
+    opacity: 1;
+    background-image: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+    background-size: 200% 200%;
+    animation: ltf-nebula-gradient-shift 3s linear infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter:
+      drop-shadow(0 0 5px rgba(77, 37, 157, 0.21))
+      drop-shadow(0 0 12px rgba(42, 170, 184, 0.14))
+      drop-shadow(0 0 20px rgba(31, 119, 129, 0.09));
+  }
+
+  /* Click pulse — mirrors Webflow hover colors (JS adds .ltf-btn-gradient-active) */
+  .ltf-nav-actions .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn,
+  .ltf-nav-actions .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn-quote {
+    background-color: #06142E;
+    color: #FFFFFF;
+  }
+
+  /* Hero CTA — special case: transparent at rest, navy masks center on hover */
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary.is-hero-cta {
+    display: inline-flex;
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #FFFFFF !important;
+    border: 1px solid #FFFFFF !important;
+    border-radius: 3px !important;
+  }
+
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover > .ltf-btn-primary.is-hero-cta,
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary.is-hero-cta,
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary.is-hero-cta {
+    background: #06142E !important;
+    background-color: #06142E !important;
+    background-image: none !important;
+    border-color: transparent !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Mobile nav — hamburger toggle + slide-down panel (≤991px) */
+  .ltf-nav-toggle {
+    flex-shrink: 0;
+    border: none;
+    -webkit-appearance: none;
+    appearance: none;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .ltf-nav-toggle:focus-visible {
+    outline: 2px solid rgba(42, 170, 184, 0.85);
+    outline-offset: 3px;
+  }
+
+  .ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .ltf-nav-toggle-bar {
+    transition: transform 0.25s ease, opacity 0.2s ease;
+  }
+
+  body.ltf-nav-open {
+    overflow: hidden;
+  }
+
+  @media (max-width: 991px) {
+    .ltf-nav-logo {
+      display: none !important;
+    }
+
+    .ltf-nav-inner {
+      justify-content: flex-end;
+    }
+
+    .ltf-hero .hero-canvas-wrapper {
+      overflow: hidden;
+    }
+
+    .ltf-nav-toggle {
+      display: flex !important;
+    }
+
+    .ltf-nav-mobile-panel {
+      display: none;
+      position: fixed;
+      top: 52px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 99;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 28px clamp(20px, 5vw, 32px) 32px;
+      overflow-y: auto;
+      background: rgba(6, 20, 46, 0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ltf-site-nav.is-nav-open .ltf-nav-mobile-panel {
+      display: flex;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-links {
+      position: static;
+      left: auto;
+      top: auto;
+      transform: none;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+      width: 100%;
+      margin: 0 0 28px;
+      padding: 0;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-link {
+      font-size: 16px;
+      letter-spacing: 0.14em;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-actions {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      height: auto;
+      gap: 12px;
+      margin: 0;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
+      display: block;
+      width: 100%;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-btn,
+    .ltf-nav-mobile-panel .ltf-nav-btn-quote {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+  }
+</style>
