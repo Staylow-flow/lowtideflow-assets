@@ -9,8 +9,8 @@
  * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
  */
 
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
