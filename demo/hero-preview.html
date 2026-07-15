@@ -84,6 +84,17 @@
       --ltf-accent-green:     #0B8050;
       --ltf-accent-purple:    #4D259D;
       --ltf-accent-med-navy:  #263350;
+      --ltf-accent-teal-light:#2AAAB8;
+      --ltf-accent-purple-mid:#7040C0;
+      --ltf-nebula-gradient:  linear-gradient(
+        45deg,
+        var(--ltf-accent-purple),
+        var(--ltf-accent-teal-light),
+        var(--ltf-accent-teal),
+        var(--ltf-accent-green),
+        var(--ltf-accent-purple-mid),
+        var(--ltf-accent-purple)
+      );
       --ltf-shadow-50:        0 5px 14px rgba(0, 0, 0, 0.5);
 
       /* Typography stacks — Webflow loads acumin-pro via Typekit */
@@ -122,7 +133,7 @@
       position: absolute;
       inset: 0;
       z-index: 0;
-      pointer-events: none;
+      pointer-events: auto;
     }
     .ltf-rock-stage canvas {
       display: block;
@@ -136,9 +147,8 @@
       right: 0;
       bottom: 0;
       z-index: 1;
-      height: 82vh;
-      max-height: 780px;
-      width: auto;
+      width: clamp(200px, 33.75vw, 488px);
+      height: auto;
       pointer-events: none;
       transform: translateX(2%);
       filter: drop-shadow(-28px 0 56px rgba(0,0,0,0.6));
@@ -181,17 +191,18 @@
     .ltf-hero-bottom-bar,
     .div-block-37 {
       position: absolute;
-      bottom: 28px;
-      left: 10%;
+      bottom: 48px;
+      left: 58px;
       z-index: 3;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       justify-content: flex-end;
-      gap: 16px;
-      width: 30vw;
+      gap: 28px;
+      width: 500px;
+      max-width: calc(100vw - 96px);
       min-width: 280px;
-      max-width: 520px;
+      padding-bottom: 8px;
       background: transparent !important;
       background-color: transparent !important;
       background-image: none !important;
@@ -226,11 +237,81 @@
       max-width: 100%;
     }
 
+    .ltf-hero-bottom-bar .ltf-body-text,
+    .div-block-37 .ltf-body-text {
+      font-size: clamp(20px, 1.15vw, 22px);
+      line-height: 1.45;
+    }
     .ltf-hero-bottom-bar .ltf-btn-primary,
     .div-block-37 .ltf-btn-primary {
       pointer-events: auto;
-      margin-top: 4px;
+      margin-top: 0;
       flex-shrink: 0;
+    }
+
+    /* Nebula gradient ring — wrapper reveals animated gas palette on hover/click */
+    .ltf-btn-gradient-wrap {
+      position: relative;
+      display: inline-block;
+      padding: 2px;
+      border-radius: 5px;
+      background: transparent;
+      flex-shrink: 0;
+      transition: box-shadow 0.35s ease;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+    .ltf-nav-actions .ltf-btn-gradient-wrap {
+      pointer-events: auto;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+      margin-top: 8px;
+    }
+
+    .ltf-btn-gradient-wrap:hover,
+    .ltf-btn-gradient-wrap:focus-within,
+    .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+      background: var(--ltf-nebula-gradient);
+      background-size: 200% 200%;
+      animation: ltf-nebula-gradient-shift 3s linear infinite;
+      box-shadow:
+        0 0 16px rgba(77, 37, 157, 0.45),
+        0 0 28px rgba(31, 119, 129, 0.28);
+    }
+
+    .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+      animation-duration: 1.8s;
+    }
+
+    @keyframes ltf-nebula-gradient-shift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .ltf-btn-gradient-wrap > .ltf-nav-btn-contact,
+    .ltf-btn-gradient-wrap > .ltf-nav-btn-quote {
+      display: inline-flex;
+      border: none;
+    }
+
+    .ltf-btn-gradient-wrap > .ltf-btn-primary {
+      display: inline-flex;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary,
+    .div-block-37 .ltf-btn-gradient-wrap > .ltf-btn-primary {
+      border: 1px solid var(--ltf-text-pure);
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover > .ltf-btn-primary,
+    .div-block-37 .ltf-btn-gradient-wrap:hover > .ltf-btn-primary,
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary,
+    .div-block-37 .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary,
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary,
+    .div-block-37 .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary {
+      border-color: transparent;
     }
 
     /* ltf-btn-primary — solid navy, grey text */
@@ -240,18 +321,22 @@
       background: var(--ltf-bg-secondary);
       color: var(--ltf-text-secondary);
       font-family: var(--ltf-font-tech);
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 500;
       letter-spacing: 0.14em;
       text-transform: uppercase;
       text-decoration: none;
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 3px;
-      transition: background 0.25s ease, border-color 0.25s ease;
+      transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+    .ltf-btn-gradient-wrap:hover > .ltf-btn-primary,
+    .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary,
+    .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary {
+      background: var(--ltf-bg-secondary);
+      color: var(--ltf-text-pure);
     }
     .ltf-btn-primary:hover {
-      background: var(--ltf-accent-teal);
-      border-color: var(--ltf-accent-teal);
       color: #fff;
     }
 
@@ -316,104 +401,160 @@
       text-transform: uppercase;
     }
 
-    /* ── Debug overlay ────────────────────────────────────────────────── */
-    #ltf-layer-debug,
-    #ltf-debug {
-      position: fixed;
-      right: 14px;
-      z-index: 200;
-      font-size: 10px;
-      font-family: monospace;
-      color: rgba(31,119,129,0.65);
-      background: rgba(0,0,0,0.55);
-      padding: 6px 10px;
-      border-radius: 3px;
-      pointer-events: none;
-    }
-    #ltf-layer-debug { bottom: 168px; color: rgba(255,180,80,0.9); }
-    #ltf-debug       { bottom: 138px; }
-
-    /* ── Gas tuner (preview only) ─────────────────────────────────────── */
-    #ltf-tuner {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 250;
-      padding: 10px 14px 12px;
-      background: rgba(0, 0, 0, 0.82);
-      border-top: 1px solid rgba(255, 180, 80, 0.35);
-      font-family: monospace;
-      font-size: 11px;
-      color: rgba(255, 220, 180, 0.95);
-    }
-
-    #ltf-tuner h2 {
-      margin: 0 0 8px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: rgba(255, 180, 80, 0.95);
-    }
-
-    .ltf-tuner-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 6px 16px;
-      align-items: center;
-    }
-
-    .ltf-tuner-row {
-      display: grid;
-      grid-template-columns: 72px 1fr 44px;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .ltf-tuner-row label {
-      color: rgba(255, 255, 255, 0.65);
-    }
-
-    .ltf-tuner-row input[type="range"] {
+    /* ═══════════════════════════════════════════════════════════════════════
+       ltf-site-nav — sticky frosted glass top bar (preview)
+    ═══════════════════════════════════════════════════════════════════════ */
+    .ltf-site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
       width: 100%;
-      accent-color: #ffb450;
+      height: 52px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .ltf-tuner-row output {
-      text-align: right;
-      color: rgba(255, 180, 80, 0.9);
-    }
-
-    #ltf-tuner-actions {
-      margin-top: 8px;
+    .ltf-nav-inner {
+      position: relative;
       display: flex;
-      gap: 10px;
       align-items: center;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      height: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 clamp(20px, 3vw, 48px);
     }
 
-    #ltf-tuner-copy {
-      padding: 4px 10px;
-      font-size: 10px;
-      font-family: monospace;
-      background: rgba(255, 180, 80, 0.15);
-      border: 1px solid rgba(255, 180, 80, 0.45);
-      color: rgba(255, 220, 180, 0.95);
+    .ltf-nav-brand {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      text-decoration: none;
+      opacity: 0.95;
+      transition: opacity 0.2s ease;
+    }
+
+    .ltf-nav-brand:hover { opacity: 1; }
+
+    .ltf-nav-brand img {
+      height: 28px;
+      width: auto;
+      display: block;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+    }
+
+    .ltf-nav-links {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: clamp(20px, 3vw, 40px);
+      height: auto;
+    }
+
+    .ltf-nav-link {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--ltf-font-tech);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--ltf-text-pure);
+      opacity: 0.88;
+      white-space: nowrap;
+      transition: opacity 0.2s ease;
+    }
+
+    .ltf-nav-link:hover { opacity: 1; }
+
+    .ltf-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+      height: 100%;
+    }
+
+    .ltf-nav-btn-contact,
+    .ltf-nav-btn-quote {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 26px;
+      background: var(--ltf-text-pure);
+      color: var(--ltf-bg-secondary);
+      font-family: var(--ltf-font-tech);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.22);
       border-radius: 3px;
+      white-space: nowrap;
       cursor: pointer;
+      transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, opacity 0.25s ease;
     }
 
-    #ltf-tuner-out {
-      margin: 0;
-      font-size: 10px;
-      color: rgba(31, 119, 129, 0.85);
-      white-space: pre-wrap;
-      word-break: break-all;
+    .ltf-nav-btn-contact:hover,
+    .ltf-nav-btn-quote:hover {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--ltf-bg-secondary);
+    }
+
+    .ltf-btn-gradient-wrap:hover > .ltf-nav-btn-contact,
+    .ltf-btn-gradient-wrap:hover > .ltf-nav-btn-quote,
+    .ltf-btn-gradient-wrap:focus-within > .ltf-nav-btn-contact,
+    .ltf-btn-gradient-wrap:focus-within > .ltf-nav-btn-quote,
+    .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn-contact,
+    .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn-quote {
+      background: var(--ltf-text-pure);
+      border-color: transparent;
+    }
+
+    /* Pull hero under nav — full-viewport canvas, no layout shift */
+    .ltf-hero {
+      margin-top: -52px;
     }
   </style>
 </head>
 <body>
+
+  <header class="ltf-site-nav" role="banner">
+    <div class="ltf-nav-inner">
+      <a class="ltf-nav-brand" href="#" aria-label="Low Tide Flow Co. home">
+        <img
+          src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6789f4edaae5c8cfcfd404bd_LTF%20-%20URL%20Logo%20-%20White.png"
+          alt="Low Tide Flow Co."
+        />
+      </a>
+
+      <nav class="ltf-nav-links" aria-label="Primary">
+        <a class="ltf-nav-link" href="#">Production</a>
+        <a class="ltf-nav-link" href="#">Tech Spec</a>
+        <a class="ltf-nav-link" href="#">Squad</a>
+        <a class="ltf-nav-link" href="#">Brand Identity</a>
+      </nav>
+
+      <div class="ltf-nav-actions">
+        <span class="ltf-btn-gradient-wrap">
+          <a class="ltf-nav-btn-contact" href="#">Contact</a>
+        </span>
+        <span class="ltf-btn-gradient-wrap">
+          <a class="ltf-nav-btn-quote" href="#">Instant Quote</a>
+        </span>
+      </div>
+    </div>
+  </header>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        ltf-hero
@@ -445,8 +586,8 @@
     <!-- Layer 2 — H1 stamp centred over the rock -->
     <div class="ltf-hero-headline" aria-hidden="true">
       <h1 class="ltf-main-header">
-        Rugged Apparel<br>
-        For the Real World
+        Tough Apparel<br>
+        To Withstand The World
       </h1>
     </div>
 
@@ -458,11 +599,13 @@
         alt="Low Tide Flow Co."
       />
       <p class="ltf-body-text">
-        LowTideFlow.co is built on a foundation of culture, art, and technology.
-        For over a decade, we have engineered heavy-duty custom apparel and brand
+        Built on a foundation of Art, Culture, and Technology. LowTideFlow.co has
+        spent over a decade developing cutting-edge apparel designs and brand
         identities for operations within SoCal, and across the country.
       </p>
-      <a class="ltf-btn-primary" href="#">Estimate Your Run</a>
+      <span class="ltf-btn-gradient-wrap">
+        <a class="ltf-btn-primary" href="#">Equip Your Crew</a>
+      </span>
     </div>
 
     <!-- Layer 4 — Scroll nudge -->
@@ -483,19 +626,6 @@
     </p>
   </div>
 
-  <div id="ltf-layer-debug">Behind FG: —  |  Rock: —  |  Front FG: —</div>
-  <div id="ltf-debug">scroll: 0%  |  mouse: (0, 0)</div>
-
-  <div id="ltf-tuner">
-    <h2>Behind FG Tuner</h2>
-    <div class="ltf-tuner-grid" id="ltf-tuner-sliders"></div>
-    <div id="ltf-tuner-actions">
-      <button type="button" id="ltf-tuner-copy">Copy values</button>
-      <pre id="ltf-tuner-out"></pre>
-    </div>
-  </div>
-
-
   <!-- ── Scripts ────────────────────────────────────────────────────────── -->
   <!--
     Import map — resolves ES module imports for Three.js + GLTFLoader.
@@ -505,7 +635,7 @@
       python3 -m http.server 3000
       npx serve .
 
-    Then open: http://127.0.0.1:5500/demo/hero-preview.html?tune=1  (Live Server)
+    Then open: http://127.0.0.1:5500/demo/hero-preview.html  (Live Server)
     Or:        python3 -m http.server 8080  →  http://localhost:8080/demo/hero-preview.html
   -->
   <script type="importmap">
@@ -517,104 +647,25 @@
   }
   </script>
 
-  <script type="module" src="../js/rock-scene.js?v=rock-test-16-flow"></script>
-
-  <script type="module">
-    import { GAS_TUNING_DEFAULTS, applyGasTuning, readGasTuning, getPrimaryRockScene } from '../js/rock-scene.js?v=rock-test-16-flow';
-
-    const SLIDERS = [
-      { key: 'rockLiftPx',  label: 'Rock Y', min: -80, max: 350, step: 1, def: GAS_TUNING_DEFAULTS.rockLiftPx, fmt: 0 },
-      { key: 'gasStretchX', label: 'Width',  min: 0.45, max: 2.0,  step: 0.01, def: GAS_TUNING_DEFAULTS.gasStretchX },
-      { key: 'gasStretchY', label: 'Height', min: 0.45, max: 1.5,  step: 0.01, def: GAS_TUNING_DEFAULTS.gasStretchY },
-      { key: 'gasReach',    label: 'Reach',  min: 0.22, max: 0.85, step: 0.01, def: GAS_TUNING_DEFAULTS.gasReach },
-      { key: 'gasInner',    label: 'Core',   min: 0.0,  max: 0.35, step: 0.01, def: GAS_TUNING_DEFAULTS.gasInner },
-      { key: 'edgeWarp',    label: 'Wisp',   min: 0.0,  max: 0.25, step: 0.01, def: GAS_TUNING_DEFAULTS.edgeWarp },
-      { key: 'alphaScale',  label: 'Alpha',  min: 0.1,  max: 1.0,  step: 0.01, def: GAS_TUNING_DEFAULTS.alphaScale },
-      { key: 'gasCenterX',  label: 'Center X', min: 0.20, max: 0.75, step: 0.01, def: GAS_TUNING_DEFAULTS.gasCenterX },
-      { key: 'gasCenterY',  label: 'Center Y', min: 0.30, max: 0.80, step: 0.01, def: GAS_TUNING_DEFAULTS.gasCenterY },
-    ];
-
-    function waitScene(cb) {
-      const t = setInterval(() => {
-        const scene = getPrimaryRockScene();
-        if (scene?.nebulaUni) {
-          clearInterval(t);
-          cb(scene);
-        }
-      }, 40);
-    }
-
-    function syncOutputs() {
-      const t = readGasTuning();
-      if (!t) return;
-      SLIDERS.forEach((s) => {
-        const out = document.querySelector('[data-out="' + s.key + '"]');
-        if (out) out.textContent = Number(t[s.key]).toFixed(s.fmt ?? 2);
-      });
-      document.getElementById('ltf-tuner-out').textContent = JSON.stringify(t, null, 2);
-    }
-
-    waitScene((scene) => {
-      const grid = document.getElementById('ltf-tuner-sliders');
-      const u = scene.nebulaUni;
-
-      SLIDERS.forEach((s) => {
-        const row = document.createElement('div');
-        row.className = 'ltf-tuner-row';
-        row.innerHTML =
-          '<label for="t-' + s.key + '">' + s.label + '</label>' +
-          '<input type="range" id="t-' + s.key + '" min="' + s.min + '" max="' + s.max + '" step="' + s.step + '">' +
-          '<output data-out="' + s.key + '">—</output>';
-        grid.appendChild(row);
-
-        const input = row.querySelector('input');
-        const start = s.key === 'rockLiftPx'
-          ? scene.rockLiftPx
-          : (u[s.key]?.value ?? s.def);
-        input.value = start;
-
-        input.addEventListener('input', () => {
-          applyGasTuning({ [s.key]: parseFloat(input.value) });
-          syncOutputs();
-        });
-      });
-
-      syncOutputs();
-
-      document.getElementById('ltf-tuner-copy').addEventListener('click', () => {
-        const json = JSON.stringify(readGasTuning(), null, 2);
-        navigator.clipboard.writeText(json).catch(() => {});
-        document.getElementById('ltf-tuner-out').textContent = 'Copied!\n' + json;
-      });
-    });
-  </script>
+  <script type="module" src="../js/rock-scene.js?v=rock-test-35-roll-tune"></script>
 
   <script>
     (function () {
       var q = new URLSearchParams(location.search);
-      /* Header visible by default — hide only with ?header=0 */
       if (q.get('header') === '0') {
         document.body.classList.add('ltf-hide-header');
       }
 
-      /* Tuner visible by default on preview; hide with ?tune=0 */
-      if (q.get('tune') === '0') {
-        document.getElementById('ltf-tuner').style.display = 'none';
-      }
-
-      var el = document.getElementById('ltf-debug');
-      var mx = 0, my = 0;
-      window.addEventListener('pointermove', function (e) {
-        mx = ((e.clientX / window.innerWidth  - 0.5) * 2).toFixed(2);
-        my = ((e.clientY / window.innerHeight - 0.5) * 2).toFixed(2);
-      }, { passive: true });
-      (function tick() {
-        var max = document.documentElement.scrollHeight - window.innerHeight;
-        var pct = max > 0 ? Math.round(window.scrollY / max * 100) : 0;
-        el.textContent = 'scroll: ' + pct + '%  |  mouse: (' + mx + ', ' + my + ')'
-          + (document.body.classList.contains('ltf-hide-header') ? '  |  header: OFF' : '  |  header: ON');
-        requestAnimationFrame(tick);
-      })();
+      document.querySelectorAll('.ltf-btn-gradient-wrap').forEach(function (wrap) {
+        function pulseGradient() {
+          wrap.classList.add('ltf-btn-gradient-active');
+          clearTimeout(wrap._ltfGradientTimer);
+          wrap._ltfGradientTimer = setTimeout(function () {
+            wrap.classList.remove('ltf-btn-gradient-active');
+          }, 1400);
+        }
+        wrap.addEventListener('click', pulseGradient);
+      });
     })();
   </script>
 
