@@ -576,6 +576,36 @@ const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1;
 const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1;
 const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1;
 
+/** Tighter mobile layout — nebula/rock bleed ≤ ~15% past viewport edges */
+const GAS_MOBILE_OVERRIDES = Object.freeze({
+  gasStretchX:      0.62,
+  gasStretchY:      1.42,
+  gasReach:         0.58,
+  gasInner:         0.24,
+  widthTighten:     1.08,
+  purpleFarMult:    1.55,
+  streakReachMult:  1.18,
+  tentacleExtend:   1.05,
+  purpleReachBoost: 1.0,
+  flareReachMult:   1.70,
+});
+
+const MOBILE_LAYOUT_MAX_W = 991;
+const MOBILE_CAMERA_Z     = 27;
+
+function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  return w <= MOBILE_LAYOUT_MAX_W;
+}
+
+function activeGasBounds(viewportW) {
+  if (!isMobileLayout(viewportW)) return GAS_LOCKED_BOUNDS;
+  return { ...GAS_LOCKED_BOUNDS, ...GAS_MOBILE_OVERRIDES };
+}
+
+function mobileCameraZ(viewportW) {
+  return isMobileLayout(viewportW) ? MOBILE_CAMERA_Z : CAMERA_Z;
+}
+
 /** Single source of truth — gas volume, layout, and rock lift */
 const GAS_LOCKED_BOUNDS = Object.freeze({
   gasCenterX:       0.50,
@@ -779,6 +809,43 @@ class RockScene {
     }
   }
 
+  _applyGasUniforms(uni, b) {
+    if (!uni) return;
+    uni.gasCenterX.value           = b.gasCenterX;
+    uni.gasCenterY.value           = b.gasCenterY;
+    uni.gasReach.value             = b.gasReach;
+    uni.gasInner.value             = b.gasInner;
+    uni.edgeWarp.value             = b.edgeWarp;
+    uni.gasStretchX.value          = b.gasStretchX;
+    uni.gasStretchY.value          = b.gasStretchY;
+    uni.widthTighten.value         = b.widthTighten;
+    uni.topYFactor.value           = b.topYFactor;
+    uni.topFadeStart.value         = b.topFadeStart;
+    uni.topFadeEnd.value           = b.topFadeEnd;
+    uni.streakReachMult.value      = b.streakReachMult;
+    uni.purpleFarMult.value        = b.purpleFarMult;
+    uni.purpleReachBoost.value     = b.purpleReachBoost;
+    uni.flareReachMult.value       = b.flareReachMult;
+    uni.flareSpeed.value           = b.flareSpeed;
+    uni.purpleFlareStrength.value  = b.purpleFlareStrength;
+    uni.blueSpikeStrength.value    = b.blueSpikeStrength;
+    if (uni.tentacleExtend) uni.tentacleExtend.value = b.tentacleExtend;
+  }
+
+  /** Mobile ≤991px: tighten nebula bleed (~15% past viewport) + pull camera back */
+  _syncLayoutProfile() {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : this.w;
+    const mobile = isMobileLayout(vw);
+    const b = activeGasBounds(vw);
+    this._applyGasUniforms(this.nebulaUni, b);
+    this._applyGasUniforms(this.fgNebulaUni, b);
+    if (this.camera) {
+      this.camera.position.z = mobileCameraZ(vw);
+    }
+    this.rockLiftPx = mobile ? 72 : GAS_LOCKED_BOUNDS.rockLiftPx;
+    this._applyRockLift();
+  }
+
   /* ── Nebula background quad ─────────────────────────────────────────────── */
   _initNebula() {
     const geo = new THREE.PlaneGeometry(2, 2);
@@ -965,6 +1032,7 @@ class RockScene {
     if (this.fgNebulaUni) {
       this.fgNebulaUni.aspect.value = this.w / this.h;
     }
+    this._syncLayoutProfile();
   }
 
   /* ── Per-frame tick ──────────────────────────────────────────────────────── */
