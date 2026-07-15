@@ -12,6 +12,9 @@
 import * as THREE from 'https://esm.sh/three@0.165.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
+const DEFAULT_MODEL_URL =
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/soapstone.glb';
+
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
 
@@ -672,7 +675,7 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 class RockScene {
   constructor(container) {
     this.container = container;
-    this.modelUrl  = container.getAttribute('data-model-url') || '/soapstone.glb';
+    this.modelUrl  = container.getAttribute('data-model-url') || DEFAULT_MODEL_URL;
 
     this.w = 1; this.h = 1;
 
@@ -728,18 +731,28 @@ class RockScene {
   /* ── Renderer ──────────────────────────────────────────────────────────── */
   _initRenderer() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.renderer = new THREE.WebGLRenderer({
+    const existingCanvas =
+      this.container.querySelector('#canvas3d, canvas')
+      || (this.container.id === 'canvas3d' ? this.container : null)
+      || document.getElementById('canvas3d');
+    const rendererOpts = {
       alpha: true,
       antialias: true,
       powerPreference: 'high-performance',
-    });
+    };
+    if (existingCanvas instanceof HTMLCanvasElement) {
+      rendererOpts.canvas = existingCanvas;
+    }
+    this.renderer = new THREE.WebGLRenderer(rendererOpts);
     this.renderer.setPixelRatio(dpr);
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping      = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.autoClear = false;
-    this.container.appendChild(this.renderer.domElement);
+    if (!rendererOpts.canvas) {
+      this.container.appendChild(this.renderer.domElement);
+    }
   }
 
   /* ── Scenes + cameras ──────────────────────────────────────────────────── */
@@ -915,21 +928,12 @@ class RockScene {
     window.addEventListener('scroll', this._onScrollFn, { passive: true });
 
     this._onMouseFn = (e) => {
-      if (!this._pointerOver) return;
       const rect = this.container.getBoundingClientRect();
       if (rect.width < 1 || rect.height < 1) return;
       this.mouseTX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
       this.mouseTY = ((e.clientY - rect.top)  / rect.height - 0.5) * 2;
     };
-    this._onPointerEnterFn = () => { this._pointerOver = true; };
-    this._onPointerLeaveFn = () => {
-      this._pointerOver = false;
-      this.mouseTX = 0;
-      this.mouseTY = 0;
-    };
-    this.container.addEventListener('pointerenter', this._onPointerEnterFn, { passive: true });
-    this.container.addEventListener('pointerleave', this._onPointerLeaveFn, { passive: true });
-    this.container.addEventListener('pointermove', this._onMouseFn, { passive: true });
+    window.addEventListener('mousemove', this._onMouseFn, { passive: true });
 
     /* Mac trackpad / mouse horizontal scroll → rock Y-axis tilt ±5° */
     this._onWheelFn = (e) => {
@@ -1104,9 +1108,7 @@ class RockScene {
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);
     window.removeEventListener('wheel',       this._onWheelFn);
-    this.container.removeEventListener('pointerenter', this._onPointerEnterFn);
-    this.container.removeEventListener('pointerleave', this._onPointerLeaveFn);
-    this.container.removeEventListener('pointermove', this._onMouseFn);
+    window.removeEventListener('mousemove', this._onMouseFn);
     const el = this.renderer.domElement;
     if (el.parentNode) el.parentNode.removeChild(el);
     this.renderer.dispose();
@@ -1114,14 +1116,37 @@ class RockScene {
   }
 }
 
+function resolveRockContainers() {
+  const seen = new Set();
+  const nodes = [];
+  for (const sel of ['.hero-canvas-wrapper', '[data-ltf-rock]']) {
+    document.querySelectorAll(sel).forEach((node) => {
+      if (seen.has(node)) return;
+      seen.add(node);
+      nodes.push(node);
+    });
+  }
+  const canvas = document.getElementById('canvas3d');
+  if (canvas) {
+    const wrapper = canvas.closest('.hero-canvas-wrapper') || canvas.parentElement;
+    if (wrapper && !seen.has(wrapper)) {
+      seen.add(wrapper);
+      nodes.push(wrapper);
+    }
+  }
+  return nodes;
+}
+
 function getPrimaryRockScene() {
-  const node = document.querySelector('[data-ltf-rock]');
-  return node?.__ltfRock ?? null;
+  for (const node of resolveRockContainers()) {
+    if (node.__ltfRock) return node.__ltfRock;
+  }
+  return null;
 }
 
 /* ─── Auto-init ─────────────────────────────────────────────────────────── */
 function init() {
-  document.querySelectorAll('[data-ltf-rock]').forEach((node) => {
+  resolveRockContainers().forEach((node) => {
     if (!node.__ltfRock) node.__ltfRock = new RockScene(node);
   });
 }
