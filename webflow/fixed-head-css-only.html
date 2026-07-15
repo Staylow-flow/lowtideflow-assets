@@ -1,0 +1,162 @@
+<style>
+:root {
+  --ltf-canvas-dark: #00001C;
+  --ltf-text-pure: #FFFFFF;
+  --ltf-bg-secondary: #06142E;
+  --ltf-text-secondary: #E5E5E5;
+  --ltf-accent-med-navy: #263350;
+  --ltf-accent-teal: #1F7781;
+  --ltf-accent-green: #0B8050;
+  --ltf-accent-purple: #4D259D;
+  --ltf-accent-teal-light: #2AAAB8;
+  --ltf-accent-purple-mid: #7040C0;
+  --ltf-nebula-gradient: linear-gradient(45deg, var(--ltf-accent-purple), var(--ltf-accent-teal-light), var(--ltf-accent-teal), var(--ltf-accent-green), var(--ltf-accent-purple-mid), var(--ltf-accent-purple));
+}
+
+/* ── Rock canvas — NO blur on WebGL container ── */
+.ltf-3d-canvas-wrapper:not([data-ltf-rock]) { background: radial-gradient(ellipse at center, #1F7781 0%, #4D259D 50%, transparent 72%); filter: blur(90px); }
+.ltf-3d-canvas-wrapper[data-ltf-rock] { filter: none !important; background: transparent !important; position: absolute !important; inset: 0 !important; z-index: 0 !important; pointer-events: auto !important; overflow: visible !important; min-height: 100% !important; }
+.ltf-3d-canvas-wrapper[data-ltf-rock] canvas { display: block !important; width: 100% !important; height: 100% !important; }
+
+/* ── Hero section shell ── */
+.ltf-hero { position: relative !important; width: 100% !important; height: 100vh !important; min-height: 640px !important; margin-top: -52px; overflow: hidden !important; background: var(--ltf-canvas-dark) !important; }
+
+/* ── Layer 1: figure ── */
+.ltf-hero-figure-img { position: absolute !important; right: 0 !important; bottom: 0 !important; z-index: 1 !important; width: clamp(200px, 33.75vw, 488px) !important; height: auto !important; pointer-events: none !important; transform: translateX(2%) !important; }
+
+/* ── Layer 2: H1 stamp — centred, two lines, selectable ── */
+.ltf-hero-content, .ltf-hero-headline { position: absolute !important; top: calc(50% - 125px) !important; left: 50% !important; transform: translate(-50%, -50%) !important; z-index: 2 !important; width: min(920px, 88vw) !important; text-align: center !important; pointer-events: auto !important; user-select: text !important; }
+.ltf-main-header { display: block !important; max-width: 100% !important; white-space: pre-line !important; line-height: 1.08 !important; text-align: center !important; user-select: text !important; pointer-events: auto !important; transform: scaleX(0.88) !important; transform-origin: center center !important; margin: 0 auto !important; }
+
+/* ── Layer 3: bottom-left copy + CTA ── */
+.div-block-37, [class*="div-block-37"], [class*="Div Block 37"] {
+  position: absolute !important;
+  inset: auto auto 48px 58px !important;
+  top: auto !important;
+  bottom: 48px !important;
+  left: 58px !important;
+  right: auto !important;
+  z-index: 3 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 28px !important;
+  width: 500px !important;
+  max-width: calc(100vw - 96px) !important;
+  min-width: 280px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  transform: none !important;
+}
+.ltf-hero-logo-div { display: none !important; }
+.ltf-hero-text-div {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+.ltf-hero-footer-copy, .ltf-body-text, .div-block-37 p, [class*="div-block-37"] p {
+  font-size: clamp(20px, 1.15vw, 22px) !important; line-height: 1.45 !important; color: var(--ltf-text-secondary) !important;
+  max-width: 100% !important; width: 100% !important; margin: 0 !important;
+  user-select: text !important; pointer-events: auto !important; cursor: text !important;
+}
+
+/* ── Hero CTA — transparent fill, white border, gradient ring on hover ── */
+.ltf-hero-bottom-bar .ltf-btn-primary,
+.div-block-37 .ltf-btn-primary,
+[class*="div-block-37"] .ltf-btn-primary,
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary,
+.div-block-37 .ltf-btn-gradient-wrap > .ltf-btn-primary {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: var(--ltf-text-pure) !important;
+  border: 1px solid var(--ltf-text-pure) !important;
+  pointer-events: auto !important;
+}
+.div-block-37 .ltf-btn-gradient-wrap,
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+[class*="div-block-37"] .ltf-btn-gradient-wrap { pointer-events: auto !important; margin-top: 0 !important; }
+.div-block-37 .ltf-btn-gradient-wrap:hover > .ltf-btn-primary,
+.div-block-37 .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary,
+.div-block-37 .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary,
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover > .ltf-btn-primary,
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary {
+  background: var(--ltf-bg-secondary) !important;
+  border-color: transparent !important;
+  background-image: none !important;
+}
+.ltf-btn-primary:hover { background-image: none !important; }
+
+/* ── Nav — fallback if class missing on inner div ── */
+.ltf-site-nav, header[role="banner"] { position: sticky; top: 0; z-index: 100; width: 100%; height: 52px; background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.1); }
+.ltf-nav-inner, header[role="banner"] > div { position: relative; display: flex; align-items: center; justify-content: space-between; height: 100%; max-width: 1440px; margin: 0 auto; padding: 0 clamp(20px, 3vw, 48px); width: 100%; }
+.ltf-nav-brand { display: flex; align-items: center; text-decoration: none; opacity: 0.95; flex-shrink: 0; }
+.ltf-nav-brand img { height: 28px; width: auto; display: block; }
+.ltf-nav-links, header[role="banner"] nav { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); margin: 0; padding: 0; }
+.ltf-nav-link { font-family: acumin-pro-condensed, Arial Narrow, sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none; color: var(--ltf-text-pure); opacity: 0.88; white-space: nowrap; }
+.ltf-nav-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+.ltf-nav-btn-contact, .ltf-nav-btn-quote { display: inline-flex; align-items: center; padding: 7px 26px; background: var(--ltf-text-pure); color: var(--ltf-bg-secondary); font-family: acumin-pro-condensed, Arial Narrow, sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none; border-radius: 3px; white-space: nowrap; border: none; }
+.ltf-btn-gradient-wrap { display: inline-block; padding: 2px; border-radius: 5px; pointer-events: auto; background: transparent; }
+.ltf-btn-gradient-wrap:hover, .ltf-btn-gradient-wrap.ltf-btn-gradient-active { background: var(--ltf-nebula-gradient); background-size: 200% 200%; animation: ltf-nebula-shift 3s linear infinite; }
+@keyframes ltf-nebula-shift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+/* ── Rest of page sections (unchanged) ── */
+.ltf-gallery-item-bg { background: linear-gradient(135deg, #263350 0%, rgba(31,119,129,0.12) 100%); }
+.ltf-gallery-item-tag { background: linear-gradient(to top, rgba(0,0,28,0.85), transparent); }
+.ltf-funnel-cta-glow { background: radial-gradient(ellipse at center, #4D259D 0%, #1F7781 45%, transparent 72%); filter: blur(110px); }
+.ltf-upsell-list-item::before { content: '\25AA'; color: #1F7781; font-size: 12px; flex-shrink: 0; margin-right: 16px; }
+.ltf-btn-secondary:hover { background-color: rgba(31,119,109,0.1); color: #FFFFFF; }
+.ltf-funnel-cta:hover .ltf-funnel-cta-glow { opacity: 0.2; }
+.ltf-funnel-cta:hover .ltf-funnel-cta-inner { border-color: rgba(31,119,129,0.45); }
+.ltf-upsell-list-item:hover { background: rgba(31,119,129,0.08); }
+.ltf-gallery-item:hover { border-color: rgba(31,119,129,0.4); }
+.ltf-specs-vault-sticky::after { content: ''; position: absolute; bottom: 32px; right: 80px; width: 1px; height: 48px; background: linear-gradient(to bottom, rgba(31,119,129,0.6), transparent); animation: ltf-scroll-pulse 2s ease-in-out infinite; }
+@keyframes ltf-scroll-pulse { 0%, 100% { opacity: 0.4; transform: scaleY(1); } 50% { opacity: 1; transform: scaleY(1.2); } }
+.ltf-authority-text-box { transition: background 0.35s ease, border-color 0.4s ease; }
+.ltf-authority-text-box::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle 300px at var(--ax, 50%) var(--ay, 50%), rgba(31,119,129,0.14), rgba(77,37,157,0.07) 55%, transparent 75%); opacity: 0; transition: opacity 0.4s ease; pointer-events: none; z-index: 0; }
+.ltf-authority-text-box:hover { background: rgba(31,119,129,0.05); border-color: rgba(31,119,129,0.28); }
+.ltf-authority-text-box:hover::before { opacity: 1; }
+.ltf-authority-text-box > * { position: relative; z-index: 1; }
+.ltf-authority-image-box { transition: border-color 0.4s ease; }
+.ltf-authority-image-box:hover { border-color: rgba(31,119,129,0.28); }
+@media screen and (max-width: 991px) {
+  .ltf-spec-card { left: 32px; right: 32px; padding-left: 52px; padding-right: 52px; }
+  .ltf-gallery-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+  .ltf-gallery-item { min-height: 240px; }
+  .ltf-gallery-item:first-child { grid-column: 1 / 3; }
+  .ltf-authority-inner { grid-template-columns: 1fr; gap: 48px; }
+  .ltf-upsell-grid { grid-template-columns: 1fr; gap: 48px; }
+  .ltf-funnel-cta-inner { padding: 64px 44px; }
+}
+@media screen and (max-width: 767px) {
+  .ltf-hero, .ltf-gallery, .ltf-authority, .ltf-upsell, .ltf-funnel-cta { padding-left: 24px; padding-right: 24px; }
+  .ltf-spec-card { left: 16px; right: 16px; top: 16px; bottom: 16px; padding-left: 32px; padding-right: 32px; padding-top: 48px; padding-bottom: 48px; }
+  .ltf-gallery-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .ltf-gallery-item { min-height: 220px; }
+  .ltf-gallery-item:first-child { grid-column: 1; }
+  .ltf-funnel-cta-inner { padding: 52px 32px; }
+  .div-block-37, [class*="div-block-37"] { left: 24px !important; width: calc(100vw - 48px) !important; }
+}
+@media screen and (max-width: 479px) {
+  .ltf-hero, .ltf-gallery, .ltf-authority, .ltf-upsell, .ltf-funnel-cta { padding-left: 20px; padding-right: 20px; }
+  .ltf-spec-card { left: 12px; right: 12px; top: 12px; bottom: 12px; padding-left: 24px; padding-right: 24px; padding-top: 36px; padding-bottom: 36px; }
+  .ltf-funnel-cta-inner { padding: 40px 24px; }
+  .ltf-upsell-list-item { font-size: 13px; padding-top: 16px; padding-bottom: 16px; padding-left: 18px; padding-right: 18px; }
+}
+</style>
