@@ -1,0 +1,156 @@
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  Instant Quote — WEBFLOW DESIGNER SPEC
+  Build all visual layout in Designer. Do NOT paste this file into the site.
+  Use as a checklist while scaffolding /instant-quote.
+  ═══════════════════════════════════════════════════════════════════════════
+
+  PAGE HEAD (Custom Code → Inside <head>):
+  → Paste contents of instant-quote-embed.css inside <style>...</style>
+
+  PAGE FOOTER (later):
+  → js/instant-quote.js (calc + headless routing — not built yet)
+
+  ─────────────────────────────────────────────────────────────────────────
+  GLOBAL TOKENS (set once, reuse everywhere)
+  ─────────────────────────────────────────────────────────────────────────
+  Background:     #00001c
+  Border/text:    #FFFFFF
+  Font:           Acumin Pro Condensed (Typekit)
+  Font weight:    700 (labels), 700 (values)
+  Border radius:  6px (small boxes), 10px (toggle/total inner), 14px (total outer)
+  Border width:   1px solid (boxes), 1px dashed (toggle track, total wrapper)
+
+  ─────────────────────────────────────────────────────────────────────────
+  ELEMENT TREE + DESIGNER SETTINGS
+  ─────────────────────────────────────────────────────────────────────────
+
+  Section                    class: iq-page
+    BG #00001c, min-height 100vh, font Acumin Pro Condensed, color #FFF
+
+  └─ Div Block                class: iq-container
+       Display: Flex, Direction: Vertical
+       Max-width: 1180px, Margin: 0 auto
+       Padding: 64px 48px (desktop) — tune in Designer per breakpoint
+       Gap: 40px
+
+     ├─ Div Block              class: iq-quality-toggle
+     │    Display: Flex, Align: Center, Justify: Center
+     │  └─ Div Block          class: iq-toggle-track
+     │       Display: Flex, Direction: Horizontal
+     │       Border: 1px dashed #FFF, Radius: 10px, Padding: 4px
+     │       Max-width: 420px (or width auto)
+     │     ├─ Button/Link      class: iq-toggle-btn
+     │     │    Text: "High-Quality"
+     │     │    Flex: 1, Padding: 12px 20px, Radius: 8px
+     │     │    BG: transparent, Text: #FFF, Font: 19px / 700
+     │     └─ Button/Link      class: iq-toggle-btn  +  combo: is-active
+     │          Text: "Premium-Quality"  ← default selected
+     │          BG: #FFF, Text: #00001c
+     │          (Create combo class is-active on Designer for active state)
+
+     ├─ Div Block              class: iq-sliders-block
+     │    Display: Flex, Direction: Vertical, Gap: 20px, Width: 100%
+     │
+     │    ┌─ REPEAT 3× slider row below ─────────────────────────────────
+     │    │
+     │    └─ Div Block        class: iq-slider-row
+     │         Display: Grid
+     │         Columns: 168px | 1fr | 88px  (or Flex with fixed side widths)
+     │         Gap: 24px, Align: Center, Width: 100%
+     │       ├─ Div Block      class: iq-slider-label
+     │       │    Border: 1px solid #FFF, Radius: 6px
+     │       │    Padding: 14px 10px, Min-height: 48px
+     │       │    Display: Flex, Align+Justify: Center
+     │       │    Text: "Ink Colors" / "Print Locations" / "Final Quantity"
+     │       │    Font: 20px / 700
+     │       ├─ Embed          ← paste matching slider embed file (input only)
+     │       │    Width: 100%, Display: Block
+     │       └─ Div Block      class: iq-slider-value
+     │            Border: 1px solid #FFF, Radius: 6px
+     │            Padding: 14px 10px, Min-height: 48px, Align: Center
+     │            Text Block ID: iq-val-ink-colors | iq-val-print-locations | iq-val-final-quantity
+     │            Default text: 4 | 4 | 500
+
+     ├─ Div Block              class: iq-apparel-section
+     │    Width: 100%
+     │  └─ Div Block          class: iq-apparel-row
+     │       Display: Grid, Columns: 168px | 1fr, Gap: 24px
+     │     ├─ Div Block        class: iq-apparel-label-box
+     │     │    Border: 1px solid #FFF, Radius: 6px, Padding: 14px 12px
+     │     │    Min-height: 120px, Flex column, Space between
+     │     │  ├─ Text          class: iq-apparel-label-title  →  "Apparel Style"
+     │     │  └─ Div           class: iq-split-checkbox-wrapper  (Flex, center, gap 8px)
+     │     │       ├─ Checkbox  class: iq-check  ID: iq-split-toggle
+     │     │       └─ Text: "50/50 Split"
+     │     └─ Div Block        class: iq-style-grid  ID: iq-style-row-1
+     │          Display: Grid, 4 columns, Gap: 14px × 12px
+     │          (8× iq-style-option rows — see option table below)
+
+     │  └─ Div Block          ID: split-row-wrapper  (hidden via embed CSS until JS)
+     │       Width: 100%
+     │     ├─ Div Block        class: iq-split-divider  (empty)
+     │     │    Height: 0, Border-top: 1px dashed #FFF, Margin: 18px 0
+     │     └─ Div Block        class: iq-apparel-row iq-apparel-row--split
+     │          Same grid as row 1: 168px | 1fr
+     │        ├─ Div Block      class: iq-apparel-label-spacer  (empty, same width as label col)
+     │        └─ Div Block      class: iq-style-grid  ID: iq-style-row-2
+     │             Duplicate 8 options, name="style-row-2"
+
+     └─ Div Block              class: iq-receipt
+          Display: Grid, Columns: 220px | 1fr, Gap: 40px, Align: End
+        ├─ Div Block            class: iq-receipt-left  (Flex column, gap 18px)
+        │  ├─ Div Block          class: iq-unit-cost  ID: iq-unit-cost-1
+        │  │    Flex column, gap 8px
+        │  │  ├─ Text            class: iq-unit-cost-label  →  "#1 Per Unit Cost:"
+        │  │  └─ Div Block        class: iq-price-box  ID: iq-price-unit-1  →  "$13.54"
+        │  └─ Div Block          class: iq-unit-cost  ID: iq-unit-cost-2
+        │       (hidden by default — embed CSS)
+        │     ├─ Text: "#2 Per Unit Cost:"
+        │     └─ Div ID: iq-price-unit-2  →  "$9.99"
+        └─ Div Block            class: iq-receipt-right
+          └─ Div Block            class: iq-total-wrapper
+               Border: 1px dashed #FFF, Radius: 14px, Padding: 28px
+               Flex column, Align: Center, Gap: 18px, Min-height: 140px, Width: 100%
+             ├─ Text              class: iq-total-label  →  "Total Cost Est."
+             └─ Div Block          class: iq-total-price  ID: iq-total-price
+                  Border: 2px solid #FFF, Radius: 10px, Padding: 24px 32px
+                  Font: 64px / 700, Text-align: Center, Width: 100%, Max-width: 520px
+                  Text: "$2,389.58"
+
+  ─────────────────────────────────────────────────────────────────────────
+  STYLE OPTIONS (build 8× in row 1, duplicate for row 2)
+  ─────────────────────────────────────────────────────────────────────────
+  class: iq-style-option  →  Flex, Align: Center, Gap: 10px, Min-height: 44px
+  class: iq-check + class: iq-style-option-label
+
+  Row 1 name="style-row-1"          Row 2 name="style-row-2"
+  ─────────────────────────         ─────────────────────────
+  iq-style-r1-tshirts  T-Shirts     iq-style-r2-tshirts
+  iq-style-r1-longsleeves           iq-style-r2-longsleeves
+  iq-style-r1-polos                 iq-style-r2-polos
+  iq-style-r1-hats                  iq-style-r2-hats
+  iq-style-r1-quarterzips           iq-style-r2-quarterzips
+  iq-style-r1-windbreakers          iq-style-r2-windbreakers
+  iq-style-r1-crewnecks             iq-style-r2-crewnecks
+  iq-style-r1-hoodies               iq-style-r2-hoodies
+
+  Default checked: T-Shirts in row 1 only.
+
+  ─────────────────────────────────────────────────────────────────────────
+  SLIDER EMBEDS (one Embed per row — paste from repo)
+  ─────────────────────────────────────────────────────────────────────────
+  webflow/instant-quote-slider-ink-colors.html
+  webflow/instant-quote-slider-print-locations.html
+  webflow/instant-quote-slider-quantity.html
+
+  Each embed sits in the CENTER column of iq-slider-row only.
+  Label + value boxes are native Webflow elements on either side.
+
+  ─────────────────────────────────────────────────────────────────────────
+  RESPONSIVE (set in Webflow breakpoints, not Git CSS)
+  ─────────────────────────────────────────────────────────────────────────
+  Tablet (≤991):  slider rows → 1 column stack; apparel grid → 2 cols; receipt → 1 col
+  Mobile (≤479):  toggle track → stack vertical; style grid → 1 col
+
+-->

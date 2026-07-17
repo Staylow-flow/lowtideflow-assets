@@ -1,0 +1,18 @@
+<!--
+  Instant Quote — Page Footer (UI bridge only, no calc yet)
+  /instant-quote → Page Settings → Custom Code → Before </body>
+
+  PREFERRED: Register + apply via Webflow Scripts API (Site Settings → Custom Code)
+  1. register_inline_script from js/instant-quote-ui.js (source hosted by Webflow CDN)
+  2. add_page_script → script_id: instantquoteui, location: footer, version: 1.0.0
+
+  FALLBACK (if add_page_script returns 404 on this page): paste ONE of these:
+
+  Option A — Webflow-hosted registered script (recommended):
+  <script src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751%2F689e5ba67671442434f3ca35%2F6a59f93495b38ce02534146c%2Finstantquoteui-1.0.0.js" defer></script>
+
+  Option B — Inline (dev only, sync from js/instant-quote-ui.js):
+  <script>/* paste minified instant-quote-ui.js */</script>
+
+  Do NOT use /js/instant-quote-ui.js — that path is not served on the Webflow publish domain.
+-->

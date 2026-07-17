@@ -1,0 +1,53 @@
+<!--
+  Instant Quote Calculator — Build Status
+  Page: /instant-quote (Webflow ID 6a59f0368e92a3bd60940ad9)
+  Site: LowTideFlow.co (6789f449bbb1a21245706751)
+  Last updated: 2026-07-17
+-->
+
+<!--
+  ═══ WEBFLOW DESIGNER (Navigator) ═══
+  ✅ Section iq-page
+  ✅ Div iq-container
+  ✅ Div iq-quality-toggle → iq-toggle-track → Link iq-toggle-btn (High-Quality)
+  ✅ Link iq-toggle-btn is-active (Premium-Quality)
+  ✅ Div iq-sliders-block → 3× iq-slider-row (label Paragraph + HtmlEmbed + value Paragraph)
+  ✅ Div iq-apparel-section → iq-apparel-row (label box + iq-style-grid #iq-style-row-1)
+  ✅ #split-row-wrapper → divider + split row (#iq-style-row-2)
+  ✅ Div iq-receipt → unit costs + total wrapper
+
+  ═══ WEBFLOW GLOBAL STYLES (30 iq-* + is-active combo) ═══
+  iq-page, iq-container, iq-quality-toggle, iq-toggle-track, iq-toggle-btn,
+  is-active (combo), iq-sliders-block, iq-slider-row, iq-slider-label, iq-slider-value,
+  iq-apparel-section, iq-apparel-row, iq-apparel-row--split, iq-apparel-label-box,
+  iq-apparel-label-title, iq-split-checkbox-wrapper, iq-style-grid, iq-style-option,
+  iq-style-option-label, iq-check, iq-split-divider, iq-apparel-label-spacer,
+  iq-receipt, iq-receipt-left, iq-receipt-right, iq-unit-cost, iq-unit-cost-label,
+  iq-price-box, iq-total-wrapper, iq-total-label, iq-total-price
+
+  ═══ DOM IDs ═══
+  ✅ split-row-wrapper, iq-style-row-1, iq-style-row-2
+  ✅ iq-split-toggle, iq-val-ink-colors, iq-val-print-locations, iq-val-final-quantity
+  ✅ iq-unit-cost-1, iq-unit-cost-2, iq-price-unit-1, iq-price-unit-2, iq-total-price
+  ✅ Style radios: iq-style-r1-* / iq-style-r2-* (T-Shirts checked row 1)
+
+  ═══ CUSTOM CODE ═══
+  ✅ Head: instant-quote-embed.css in <style> (set_page_freeform_code)
+  ✅ Footer: instant-quote-ui.js inline OR Webflow CDN script instantquoteui@1.0.0
+  ⚠️  add_page_script API returns 404 for this page — use freeform footer fallback
+
+  ═══ REPO FILES ═══
+  webflow/instant-quote-embed.css          — embed-only CSS (sliders, .iq-check, visibility)
+  webflow/instant-quote-designer-spec.html — Designer checklist
+  webflow/instant-quote-slider-*.html      — 3 HtmlEmbed payloads
+  webflow/instant-quote-head-snippet.html  — head paste reminder
+  webflow/instant-quote-footer-snippet.html — footer script options
+  js/instant-quote-ui.js                   — slider value sync (no pricing yet)
+
+  ═══ NOT YET BUILT ═══
+  ⬜ js/instant-quote.js — pricing / headless calc routing
+  ⬜ 50/50 split toggle JS (show #split-row-wrapper + #iq-unit-cost-2)
+  ⬜ Quality toggle interaction (swap is-active)
+  ⬜ Responsive breakpoint tuning in Designer
+  ⬜ Publish + visual QA on staging
+-->

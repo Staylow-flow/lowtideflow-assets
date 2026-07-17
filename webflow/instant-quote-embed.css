@@ -1,0 +1,188 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Instant Quote — EMBED-ONLY CSS (Git / Page Head)
+   Paste into: /instant-quote → Page Settings → Custom Code → Inside <head>
+
+   Webflow Designer owns layout, typography, borders, padding, and colors.
+   This file only covers what Webflow cannot style natively:
+   - Custom range slider thumb + track
+   - Tick marks behind sliders
+   - Circular checkbox/radio appearance
+   - JS-driven visibility hooks
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --iq-bg: #00001c;
+  --iq-border: #ffffff;
+  --iq-border-dim: rgba(255, 255, 255, 0.55);
+  --iq-track: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Slider embed shell (inside Webflow Embed element) ──────────────────── */
+.iq-slider-control {
+  position: relative;
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.iq-slider-ticks {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 14px;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 11px;
+}
+
+.iq-slider-ticks::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--iq-track);
+}
+
+.iq-slider-tick {
+  position: relative;
+  z-index: 1;
+  width: 2px;
+  height: 10px;
+  background: var(--iq-border-dim);
+  flex: 0 0 2px;
+}
+
+/* Range input — industrial white pill thumb */
+.iq-range {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 56px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.iq-range:focus {
+  outline: none;
+}
+
+.iq-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+.iq-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+.iq-range::-webkit-slider-runnable-track {
+  height: 2px;
+  background: transparent;
+  border: 0;
+}
+
+.iq-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 44px;
+  margin-top: -21px;
+  border: 2px solid var(--iq-border);
+  border-radius: 8px;
+  background: var(--iq-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease;
+}
+
+.iq-range:active::-webkit-slider-thumb {
+  transform: scaleY(1.04);
+}
+
+.iq-range::-moz-range-track {
+  height: 2px;
+  background: transparent;
+  border: 0;
+}
+
+.iq-range::-moz-range-thumb {
+  width: 22px;
+  height: 44px;
+  border: 2px solid var(--iq-border);
+  border-radius: 8px;
+  background: var(--iq-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.iq-range::-moz-range-progress {
+  background: transparent;
+}
+
+/* ── Form controls Webflow cannot match to mockup ───────────────────────── */
+.iq-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--iq-border);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.iq-style-option .iq-check {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.iq-check:checked {
+  background: var(--iq-border);
+}
+
+.iq-check:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 9px;
+  border: solid var(--iq-bg);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -58%) rotate(45deg);
+}
+
+/* ── Headless JS visibility hooks (default hidden) ──────────────────────── */
+#split-row-wrapper {
+  display: none;
+}
+
+#split-row-wrapper.is-visible {
+  display: block;
+}
+
+#iq-unit-cost-2 {
+  display: none;
+}
+
+#iq-unit-cost-2.is-visible {
+  display: flex;
+}
