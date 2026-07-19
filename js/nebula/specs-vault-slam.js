@@ -3,7 +3,7 @@
  *
  * • Cards runway = full sticky height (not cage clip)
  * • Gradient locked on white border (above card)
- * • Gas bloom above card fill (was hidden behind opaque bg), border-frame clipped
+ * • Gas bloom above card fill — soft inner blur, no thick frame band
  */
 (function () {
   'use strict';
@@ -19,9 +19,11 @@
   var RESET_AT = 0.06;
   var RING_W = 6;
   var GAS_PAD = 28;
-  var GAS_FRAME = 40;
+  var GAS_INSET = 4;
   var GAS_DELAY = 0.07;
   var INT = 1.5;
+  var FX_OPACITY = 0.5;
+  var SETTLE_FADE_MS = 2400;
   var IDLE_MS = 180;
   var BLEND_LERP = 0.1;
 
@@ -239,53 +241,45 @@
     drawBorderStroke(ctx, m, len, alpha, 0, dashOffset, 'source-over');
   }
 
-  /** Clip to inner border band so gas stays inside the card, not over content. */
-  function clipToBorderFrame(ctx, box, frameDepth) {
-    var outer = {
-      x: box.x + 1,
-      y: box.y + 1,
-      w: box.w - 2,
-      h: box.h - 2,
-      r: Math.max(0, box.r - 1),
-    };
-    var inset = frameDepth + box.bw;
-    var inner = {
-      x: outer.x + inset,
-      y: outer.y + inset,
-      w: outer.w - inset * 2,
-      h: outer.h - inset * 2,
-      r: Math.max(0, outer.r - inset),
-    };
-    ctx.beginPath();
-    roundRectPath(ctx, outer.x, outer.y, outer.w, outer.h, outer.r);
-    roundRectPath(ctx, inner.x, inner.y, inner.w, inner.h, inner.r);
-    ctx.clip('evenodd');
+  /** Clip to card interior — soft bloom bleeds inward from border, no thick frame band. */
+  function clipToCardInterior(ctx, box) {
+    var inset = box.bw + GAS_INSET;
+    roundRectPath(
+      ctx,
+      box.x + inset,
+      box.y + inset,
+      box.w - inset * 2,
+      box.h - inset * 2,
+      Math.max(0, box.r - inset)
+    );
+    ctx.clip();
   }
 
-  /** Inner gas bloom — above card fill, clipped to border frame. */
+  /** Inner gas bloom — soft gradient blur hugging the white border. */
   function drawGasBloom(ctx, box, sweep, alpha, dashOffset) {
     if (sweep < 0.015 || alpha < 0.02) return;
 
     ctx.save();
-    clipToBorderFrame(ctx, box, GAS_FRAME);
+    clipToCardInterior(ctx, box);
 
-    var m = borderMetrics(box, RING_W + 14);
+    var m = borderMetrics(box, RING_W + 8);
     var len = sweep * m.peri;
-    drawBorderStroke(ctx, m, len, alpha * 0.95, 18, dashOffset, 'screen');
-    drawBorderStroke(ctx, m, len, alpha * 0.72, 28, dashOffset, 'screen');
-    drawBorderStroke(ctx, m, len, alpha * 0.48, 38, dashOffset, 'screen');
-
-    ctx.globalCompositeOperation = 'screen';
-    var fill = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
-    fill.addColorStop(0, rgba(C.purple, alpha * 0.14));
-    fill.addColorStop(0.35, rgba(C.teal, alpha * 0.18));
-    fill.addColorStop(0.65, rgba(C.green, alpha * 0.12));
-    fill.addColorStop(1, rgba(C.purpleM, alpha * 0.1));
-    ctx.fillStyle = fill;
-    roundRectPath(ctx, box.x + 1, box.y + 1, box.w - 2, box.h - 2, Math.max(0, box.r - 1));
-    ctx.fill();
-
+    drawBorderStroke(ctx, m, len, alpha * 0.44, 14, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.3, 22, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.18, 30, dashOffset, 'screen');
     ctx.restore();
+  }
+
+  /** Slow fade once a card's slam beat has finished (t → 1). */
+  function settleFade(state, cardKey, beatT, now) {
+    if (beatT < 0.995) {
+      state.cardSettledAt[cardKey] = 0;
+      return 1;
+    }
+    if (!state.cardSettledAt[cardKey]) state.cardSettledAt[cardKey] = now;
+    var elapsed = now - state.cardSettledAt[cardKey];
+    var t = clamp(elapsed / SETTLE_FADE_MS, 0, 1);
+    return 1 - t * t;
   }
 
   function applyCards(cards, travels, progress, pinned) {
@@ -354,6 +348,7 @@
       syncBlend: 1,
       scrollSweep: {},
       idleSweep: {},
+      cardSettledAt: {},
       lastT: 0,
     };
 
@@ -375,10 +370,15 @@
     function paintFx(fxItem, card, scrollSweep, idleSweep, scrollAlpha, idleAlpha, idleDrift) {
     var showScroll = scrollAlpha > 0.02;
     var showIdle = idleAlpha > 0.02;
-    if (!showScroll && !showIdle) return;
 
     syncLayerToCard(cardsHost, fxItem.gas, card, GAS_PAD);
     syncLayerToCard(cardsHost, fxItem.ring, card);
+
+    if (!showScroll && !showIdle) {
+      if (fxItem.gas.cssW) fxItem.gas.ctx.clearRect(0, 0, fxItem.gas.cssW, fxItem.gas.cssH);
+      if (fxItem.ring.cssW) fxItem.ring.ctx.clearRect(0, 0, fxItem.ring.cssW, fxItem.ring.cssH);
+      return;
+    }
 
     var gasScroll = clamp(scrollSweep - GAS_DELAY, 0, 1);
     var gasIdle = clamp(idleSweep - GAS_DELAY, 0, 1);
@@ -421,6 +421,7 @@
       if (state.target < RESET_AT) {
         state.scrollSweep = {};
         state.idleSweep = {};
+        state.cardSettledAt = {};
       }
 
       var pinned = isPinned(section);
@@ -445,7 +446,8 @@
         if (scrolling || REDUCE.matches) state.scrollSweep[key] = t;
         state.idleSweep[key] = lerp(state.idleSweep[key], t, scrolling ? 0.2 : 0.1);
 
-        var baseAlpha = clamp(t * 1.15 * INT, 0, 1);
+        var fade = settleFade(state, key, t, now);
+        var baseAlpha = clamp(t * 1.15 * INT * FX_OPACITY * fade, 0, 1);
         var idleOffset = state.idleDrift * 0.18;
 
         paintFx(
