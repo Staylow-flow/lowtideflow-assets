@@ -3,7 +3,7 @@
  *
  * • Cards runway = full sticky height (not cage clip)
  * • Gradient locked on white border (above card)
- * • Gas bloom inside card, per-card layers (covered by next card)
+ * • Gas bloom above card fill (was hidden behind opaque bg), border-frame clipped
  */
 (function () {
   'use strict';
@@ -18,6 +18,8 @@
   var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)');
   var RESET_AT = 0.06;
   var RING_W = 6;
+  var GAS_PAD = 28;
+  var GAS_FRAME = 40;
   var GAS_DELAY = 0.07;
   var INT = 1.5;
   var IDLE_MS = 180;
@@ -92,7 +94,11 @@
     layer.setAttribute('aria-hidden', 'true');
     layer.setAttribute('data-ltf-card-fx', kind);
     layer.style.cssText =
-      'position:absolute;pointer-events:none;overflow:hidden;z-index:' + zIndex + ';';
+      'position:absolute;pointer-events:none;overflow:' +
+      (kind === 'gas' ? 'visible' : 'hidden') +
+      ';z-index:' +
+      zIndex +
+      ';';
 
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'display:block;width:100%;height:100%;';
@@ -130,19 +136,20 @@
       cards[i].style.zIndex = String(cardZ);
       cards[i].style.backgroundClip = 'padding-box';
       if (fx[i]) {
-        fx[i].gas.wrap.style.zIndex = String(cardZ - 1);
-        fx[i].ring.wrap.style.zIndex = String(cardZ + 1);
+        fx[i].gas.wrap.style.zIndex = String(cardZ + 1);
+        fx[i].ring.wrap.style.zIndex = String(cardZ + 2);
       }
     }
   }
 
-  function syncLayerToCard(host, layer, card) {
+  function syncLayerToCard(host, layer, card, pad) {
     var hr = host.getBoundingClientRect();
     var r = card.getBoundingClientRect();
-    layer.wrap.style.left = r.left - hr.left + 'px';
-    layer.wrap.style.top = r.top - hr.top + 'px';
-    layer.wrap.style.width = r.width + 'px';
-    layer.wrap.style.height = r.height + 'px';
+    var p = pad || 0;
+    layer.wrap.style.left = r.left - hr.left - p + 'px';
+    layer.wrap.style.top = r.top - hr.top - p + 'px';
+    layer.wrap.style.width = r.width + p * 2 + 'px';
+    layer.wrap.style.height = r.height + p * 2 + 'px';
   }
 
   function resizeLayer(layer) {
@@ -158,12 +165,13 @@
     return true;
   }
 
-  function cardDrawBox(layer, card) {
+  function cardDrawBox(layer, card, pad) {
+    var p = pad || 0;
     return {
-      x: 0,
-      y: 0,
-      w: layer.cssW,
-      h: layer.cssH,
+      x: p,
+      y: p,
+      w: layer.cssW - p * 2,
+      h: layer.cssH - p * 2,
       r: cardRadius(card),
       bw: cardBorderW(card),
     };
@@ -231,18 +239,52 @@
     drawBorderStroke(ctx, m, len, alpha, 0, dashOffset, 'source-over');
   }
 
-  /** Inner gas bloom — clipped inside the card, behind fill. */
+  /** Clip to inner border band so gas stays inside the card, not over content. */
+  function clipToBorderFrame(ctx, box, frameDepth) {
+    var outer = {
+      x: box.x + 1,
+      y: box.y + 1,
+      w: box.w - 2,
+      h: box.h - 2,
+      r: Math.max(0, box.r - 1),
+    };
+    var inset = frameDepth + box.bw;
+    var inner = {
+      x: outer.x + inset,
+      y: outer.y + inset,
+      w: outer.w - inset * 2,
+      h: outer.h - inset * 2,
+      r: Math.max(0, outer.r - inset),
+    };
+    ctx.beginPath();
+    roundRectPath(ctx, outer.x, outer.y, outer.w, outer.h, outer.r);
+    roundRectPath(ctx, inner.x, inner.y, inner.w, inner.h, inner.r);
+    ctx.clip('evenodd');
+  }
+
+  /** Inner gas bloom — above card fill, clipped to border frame. */
   function drawGasBloom(ctx, box, sweep, alpha, dashOffset) {
     if (sweep < 0.015 || alpha < 0.02) return;
 
     ctx.save();
-    roundRectPath(ctx, box.x + 2, box.y + 2, box.w - 4, box.h - 4, Math.max(0, box.r - 2));
-    ctx.clip();
+    clipToBorderFrame(ctx, box, GAS_FRAME);
 
-    var m = borderMetrics(box, RING_W + 8);
+    var m = borderMetrics(box, RING_W + 14);
     var len = sweep * m.peri;
-    drawBorderStroke(ctx, m, len, alpha * 0.5, 14, dashOffset, 'screen');
-    drawBorderStroke(ctx, m, len, alpha * 0.32, 20, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.95, 18, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.72, 28, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.48, 38, dashOffset, 'screen');
+
+    ctx.globalCompositeOperation = 'screen';
+    var fill = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
+    fill.addColorStop(0, rgba(C.purple, alpha * 0.14));
+    fill.addColorStop(0.35, rgba(C.teal, alpha * 0.18));
+    fill.addColorStop(0.65, rgba(C.green, alpha * 0.12));
+    fill.addColorStop(1, rgba(C.purpleM, alpha * 0.1));
+    ctx.fillStyle = fill;
+    roundRectPath(ctx, box.x + 1, box.y + 1, box.w - 2, box.h - 2, Math.max(0, box.r - 1));
+    ctx.fill();
+
     ctx.restore();
   }
 
@@ -294,8 +336,8 @@
         travels[i] = measureSlamTravel(cardsHost, cards[i]);
         var cardZ = (i + 1) * 3;
         fx[i] = {
-          gas: createFxLayer(cardsHost, cardZ - 1, 'gas'),
-          ring: createFxLayer(cardsHost, cardZ + 1, 'ring'),
+          gas: createFxLayer(cardsHost, cardZ + 1, 'gas'),
+          ring: createFxLayer(cardsHost, cardZ + 2, 'ring'),
         };
       } else {
         travels[i] = 0;
@@ -335,7 +377,7 @@
     var showIdle = idleAlpha > 0.02;
     if (!showScroll && !showIdle) return;
 
-    syncLayerToCard(cardsHost, fxItem.gas, card);
+    syncLayerToCard(cardsHost, fxItem.gas, card, GAS_PAD);
     syncLayerToCard(cardsHost, fxItem.ring, card);
 
     var gasScroll = clamp(scrollSweep - GAS_DELAY, 0, 1);
@@ -351,7 +393,7 @@
     }
 
     if (resizeLayer(fxItem.gas)) {
-      box = cardDrawBox(fxItem.gas, card);
+      box = cardDrawBox(fxItem.gas, card, GAS_PAD);
       var gctx = fxItem.gas.ctx;
       gctx.clearRect(0, 0, fxItem.gas.cssW, fxItem.gas.cssH);
       if (showScroll && gasScroll > 0.02) drawGasBloom(gctx, box, gasScroll, scrollAlpha, 0);
