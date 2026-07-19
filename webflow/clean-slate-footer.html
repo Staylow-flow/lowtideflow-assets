@@ -1,13 +1,14 @@
 <!--
   CLEAN SLATE — Footer custom code (Before </body>)
 
-  Nebula gas: js/nebula/nebula-slam-gas.js (IX-friendly — does NOT move cards)
-  Replace COMMIT_SHA after push, or use the pinned SHA once committed.
+  Specs vault: js/nebula/specs-vault-slam.js
+  - Replaces Webflow "Specs Card Reveal" IX
+  - Scroll-mapped card slam + nebula gas (rAF + lerp)
+  - DELETE / disable Specs Card Reveal interaction in Designer so it cannot fight
 -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@32c9413/js/rock-scene.js"></script>
 <script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@32c9413/js/ltf-btn-gradient.js"></script>
-<!-- GAS ONLY — paste/update this line after pushing js/nebula/nebula-slam-gas.js -->
-<script defer src="https://raw.githubusercontent.com/Staylow-flow/lowtideflow-assets/COMMIT_SHA/js/nebula/nebula-slam-gas.js"></script>
+<script defer src="https://raw.githubusercontent.com/Staylow-flow/lowtideflow-assets/COMMIT_SHA/js/nebula/specs-vault-slam.js"></script>
 <script defer>
 (function(){'use strict';var MQ=window.matchMedia('(max-width: 991px)');function init(){var nav=document.querySelector('.ltf-site-nav');var toggle=document.querySelector('.ltf-nav-toggle');var panel=document.querySelector('.ltf-nav-mobile-panel');if(!nav||!toggle||!panel)return;function setOpen(open){nav.classList.toggle('is-nav-open',open);toggle.setAttribute('aria-expanded',open?'true':'false');toggle.setAttribute('aria-label',open?'Close menu':'Open menu');document.body.classList.toggle('ltf-nav-open',open);}function close(){setOpen(false);}toggle.addEventListener('click',function(e){e.preventDefault();setOpen(!nav.classList.contains('is-nav-open'));});toggle.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();setOpen(!nav.classList.contains('is-nav-open'));}});panel.querySelectorAll('a').forEach(function(link){link.addEventListener('click',close);});document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});MQ.addEventListener('change',function(){if(!MQ.matches)close();});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}})();
 </script>
