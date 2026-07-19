@@ -3,7 +3,8 @@
  *
  * • Cards runway = full sticky height (not cage clip)
  * • Gradient locked on white border (above card)
- * • Gas bloom above card fill — soft inner blur, no thick frame band
+ * • Title card (01) gets same ring + gas on scroll 0–14%
+ * • Gas clip overlaps border inner edge — no navy gap before gradient
  */
 (function () {
   'use strict';
@@ -19,19 +20,19 @@
   var RESET_AT = 0.06;
   var RING_W = 6;
   var GAS_PAD = 28;
-  var GAS_INSET = 4;
+  var GAS_CLIP_OVERLAP = 1;
   var GAS_DELAY = 0.07;
   var INT = 1.5;
-  var FX_OPACITY = 0.5;
+  var FX_OPACITY = 0.625;
   var SETTLE_FADE_MS = 2400;
   var IDLE_MS = 180;
   var BLEND_LERP = 0.1;
 
   var BEATS = [
-    null,
-    { start: 0, end: 0.35, restY: 0 },
-    { start: 0.35, end: 0.66, restY: 0 },
-    { start: 0.66, end: 1, restY: 0 },
+    { start: 0, end: 0.14, slam: false },
+    { start: 0, end: 0.35, slam: true, restY: 0 },
+    { start: 0.35, end: 0.66, slam: true, restY: 0 },
+    { start: 0.66, end: 1, slam: true, restY: 0 },
   ];
 
   function clamp(n, a, b) {
@@ -61,10 +62,14 @@
   }
 
   function localBeat(progress, beat) {
-    if (!beat) return 1;
+    if (!beat) return 0;
     var span = beat.end - beat.start;
     if (span <= 0) return progress >= beat.end ? 1 : 0;
     return clamp((progress - beat.start) / span, 0, 1);
+  }
+
+  function beatSlams(beat) {
+    return beat && beat.slam !== false;
   }
 
   function cardRadius(card) {
@@ -241,9 +246,9 @@
     drawBorderStroke(ctx, m, len, alpha, 0, dashOffset, 'source-over');
   }
 
-  /** Clip to card interior — soft bloom bleeds inward from border, no thick frame band. */
+  /** Clip flush to inner border edge — bloom sits on the white highlight, no navy gap. */
   function clipToCardInterior(ctx, box) {
-    var inset = box.bw + GAS_INSET;
+    var inset = Math.max(0, box.bw - GAS_CLIP_OVERLAP);
     roundRectPath(
       ctx,
       box.x + inset,
@@ -255,18 +260,18 @@
     ctx.clip();
   }
 
-  /** Inner gas bloom — soft gradient blur hugging the white border. */
+  /** Inner gas bloom — aligned to border path, blurred inward from white edge. */
   function drawGasBloom(ctx, box, sweep, alpha, dashOffset) {
     if (sweep < 0.015 || alpha < 0.02) return;
 
     ctx.save();
     clipToCardInterior(ctx, box);
 
-    var m = borderMetrics(box, RING_W + 8);
+    var m = borderMetrics(box, RING_W + 10);
     var len = sweep * m.peri;
-    drawBorderStroke(ctx, m, len, alpha * 0.44, 14, dashOffset, 'screen');
-    drawBorderStroke(ctx, m, len, alpha * 0.3, 22, dashOffset, 'screen');
-    drawBorderStroke(ctx, m, len, alpha * 0.18, 30, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.52, 10, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.38, 18, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.24, 26, dashOffset, 'screen');
     ctx.restore();
   }
 
@@ -288,10 +293,10 @@
     for (i = 0; i < cards.length; i++) {
       var beat = BEATS[i];
       var t = localBeat(progress, beat);
-      var e = beat ? (t === 0 || t === 1 ? t : easeOutCubic(t)) : 0;
+      var e = beatSlams(beat) ? (t === 0 || t === 1 ? t : easeOutCubic(t)) : 0;
       beats[i] = t;
 
-      if (!beat) {
+      if (!beatSlams(beat)) {
         cards[i].style.transform = 'translate3d(0,0,0)';
       } else {
         var travel = travels[i];
@@ -326,17 +331,18 @@
     var travels = [];
     var i;
     for (i = 0; i < cards.length; i++) {
-      if (BEATS[i]) {
-        travels[i] = measureSlamTravel(cardsHost, cards[i]);
-        var cardZ = (i + 1) * 3;
-        fx[i] = {
-          gas: createFxLayer(cardsHost, cardZ + 1, 'gas'),
-          ring: createFxLayer(cardsHost, cardZ + 2, 'ring'),
-        };
-      } else {
+      if (!BEATS[i]) {
         travels[i] = 0;
         fx[i] = null;
+        continue;
       }
+      if (beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
+      else travels[i] = 0;
+      var cardZ = (i + 1) * 3;
+      fx[i] = {
+        gas: createFxLayer(cardsHost, cardZ + 1, 'gas'),
+        ring: createFxLayer(cardsHost, cardZ + 2, 'ring'),
+      };
     }
     prepCards(cards, fx);
 
@@ -355,7 +361,7 @@
     function remeasure() {
       prepHost(cardsHost, sticky);
       for (i = 0; i < cards.length; i++) {
-        if (BEATS[i]) travels[i] = measureSlamTravel(cardsHost, cards[i]);
+        if (BEATS[i] && beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
     }
 
