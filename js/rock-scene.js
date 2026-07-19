@@ -4,7 +4,7 @@
  * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
  *             palette with transparent dark voids, wispy tendrils, dense cores.
  * Foreground: soapstone.glb rock — centered, autonomous idle oscillation,
- *             scroll tumble, hover mouse nudge (±10.5° yaw, ±16° roll on X).
+ *             scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
  * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
  */
@@ -760,7 +760,10 @@ class RockScene {
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
   _initRenderer() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    /* render-resolution-scale=1 — lock DPR for large displays (27" iMac etc.) */
+    const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
+    const scale = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : 1;
+    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, 2)) : 1;
     const existingCanvas =
       this.container.querySelector('#canvas3d, canvas')
       || (this.container.id === 'canvas3d' ? this.container : null)
@@ -772,6 +775,7 @@ class RockScene {
     };
     if (existingCanvas instanceof HTMLCanvasElement) {
       rendererOpts.canvas = existingCanvas;
+      existingCanvas.setAttribute('loading', 'eager');
     }
     this.renderer = new THREE.WebGLRenderer(rendererOpts);
     this.renderer.setPixelRatio(dpr);
@@ -994,13 +998,10 @@ class RockScene {
     };
     window.addEventListener('scroll', this._onScrollFn, { passive: true });
 
-    this._onMouseFn = (e) => {
-      const rect = this.container.getBoundingClientRect();
-      if (rect.width < 1 || rect.height < 1) return;
-      this.mouseTX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      this.mouseTY = ((e.clientY - rect.top)  / rect.height - 0.5) * 2;
-    };
-    window.addEventListener('mousemove', this._onMouseFn, { passive: true });
+    /* Mouse hover tracking removed — idle + scroll only (perf on large displays). */
+    this.mouseTX = 0;
+    this.mouseTY = 0;
+    this._onMouseFn = null;
 
     /* Mac trackpad / mouse horizontal scroll → rock Y-axis tilt ±5° */
     this._onWheelFn = (e) => {
@@ -1045,16 +1046,16 @@ class RockScene {
 
     const t = this.time;
 
-    this.mouseX += (this.mouseTX - this.mouseX) * ROCK_MOTION_BASELINE.mouseLerp;
-    this.mouseY += (this.mouseTY - this.mouseY) * ROCK_MOTION_BASELINE.mouseLerp;
+    this.mouseX = 0;
+    this.mouseY = 0;
     this.scrollProgress += (this.scrollTarget - this.scrollProgress) * 0.07;
 
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
     this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
 
     /* ── Rock rotation ────────────────────────────────────────────────────
-       X: auto-spin + scroll + mouse roll (vertical hover, ±16°).
-       Y: idle wobble + horizontal scroll tilt + mouse yaw (±10.5° cap).
+       X: auto-spin + scroll coast only (no mouse hover roll).
+       Y: idle wobble + horizontal scroll tilt (no mouse yaw).
        Z: subtle idle nod only.                                           */
     if (this.rockGroup) {
       /* Slow continuous tumble — ~1 full rotation per 140 s */
@@ -1074,16 +1075,14 @@ class RockScene {
       this.scrollPitchOffset  += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
 
       const basePitch = this.rockPitchAccum + this.scrollPitchOffset;
-      const mouseRollTarget = clamp(this.mouseY * MAX_MOUSE_ROLL, -MAX_MOUSE_ROLL, MAX_MOUSE_ROLL);
-      this.mouseRollOffset += (mouseRollTarget - this.mouseRollOffset) * ROCK_MOTION_BASELINE.mouseLerp;
-      this.rockGroup.rotation.x = basePitch + this.mouseRollOffset;
+      this.mouseRollOffset = 0;
+      this.rockGroup.rotation.x = basePitch;
 
-      /* Idle wobble (+10% natural drift) + scroll Y tilt + hover mouse nudge */
+      /* Idle wobble (+10% natural drift) + scroll Y tilt — no mouse nudge */
       const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
                     + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
       const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
-      const mouseYaw = clamp(this.mouseX * MAX_MOUSE_YAW, -MAX_MOUSE_YAW, MAX_MOUSE_YAW);
-      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS + mouseYaw;
+      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
       const targetZ = idleNod;
 
       this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * ROCK_MOTION_BASELINE.idleYawLerp;
@@ -1176,7 +1175,7 @@ class RockScene {
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);
     window.removeEventListener('wheel',       this._onWheelFn);
-    window.removeEventListener('mousemove', this._onMouseFn);
+    if (this._onMouseFn) window.removeEventListener('mousemove', this._onMouseFn);
     const el = this.renderer.domElement;
     if (el.parentNode) el.parentNode.removeChild(el);
     this.renderer.dispose();
