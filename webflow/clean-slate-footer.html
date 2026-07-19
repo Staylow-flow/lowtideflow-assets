@@ -1,14 +1,14 @@
 <!--
-  CLEAN SLATE — Footer custom code (Before </body>)
+  CLEAN SLATE — Full Page Footer (Before </body>)
 
-  IMPORTANT:
-  - Must include specs-vault-slam.js via jsDelivr (application/javascript MIME)
-  - Do NOT use raw.githubusercontent.com (text/plain + nosniff = browser blocks script)
-  - Do NOT keep Gemini #sliding-section-2 snippet (that id does not exist)
+  REPLACE everything in Page Settings → Custom Code → Footer with this block.
+  Do NOT keep the Gemini #sliding-section-2 script.
+
+  specs-vault-slam.js = card slam + nebula gas together (one file).
 -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@32c9413/js/rock-scene.js"></script>
 <script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@32c9413/js/ltf-btn-gradient.js"></script>
-<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@3abba49/js/nebula/specs-vault-slam.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@1b8e05c/js/nebula/specs-vault-slam.js"></script>
 <script defer>
 (function(){'use strict';var MQ=window.matchMedia('(max-width: 991px)');function init(){var nav=document.querySelector('.ltf-site-nav');var toggle=document.querySelector('.ltf-nav-toggle');var panel=document.querySelector('.ltf-nav-mobile-panel');if(!nav||!toggle||!panel)return;function setOpen(open){nav.classList.toggle('is-nav-open',open);toggle.setAttribute('aria-expanded',open?'true':'false');toggle.setAttribute('aria-label',open?'Close menu':'Open menu');document.body.classList.toggle('ltf-nav-open',open);}function close(){setOpen(false);}toggle.addEventListener('click',function(e){e.preventDefault();setOpen(!nav.classList.contains('is-nav-open'));});toggle.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();setOpen(!nav.classList.contains('is-nav-open'));}});panel.querySelectorAll('a').forEach(function(link){link.addEventListener('click',close);});document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});MQ.addEventListener('change',function(){if(!MQ.matches)close();});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}})();
 </script>
