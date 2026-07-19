@@ -1,9 +1,9 @@
 /**
- * Lowtideflow — Specs Vault Slam + Gemini edge ring + soft gas bloom
+ * Lowtideflow — Specs Vault Slam + Gemini edge ring + inner gas bloom
  *
- * • Crisp gradient ring on white border (above card)
- * • Soft blurred gas bloom behind card (slightly delayed, no hard clip)
- * • Scroll-synced sweep crossfades into idle drift
+ * • Cards runway = full sticky height (not cage clip)
+ * • Gradient locked on white border (above card)
+ * • Gas bloom inside card, per-card layers (covered by next card)
  */
 (function () {
   'use strict';
@@ -18,8 +18,6 @@
   var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)');
   var RESET_AT = 0.06;
   var RING_W = 6;
-  var RING_PAD = 14;
-  var GAS_PAD = 48;
   var GAS_DELAY = 0.07;
   var INT = 1.5;
   var IDLE_MS = 180;
@@ -71,22 +69,21 @@
     return isFinite(r) && r > 0 ? r : 12;
   }
 
-  function offsetTopWithin(el, ancestor) {
-    var top = 0;
-    var node = el;
-    while (node && node !== ancestor) {
-      top += node.offsetTop || 0;
-      node = node.offsetParent;
-    }
-    return node === ancestor ? top : null;
+  function cardBorderW(card) {
+    var cs = getComputedStyle(card);
+    var bw = parseFloat(cs.borderTopWidth);
+    return isFinite(bw) && bw > 0 ? bw : 3;
   }
 
-  function measureSlamTravel(sticky, cardsHost, card) {
-    var stickyH = sticky.clientHeight || window.innerHeight || 800;
+  /** Measure Y travel so card starts below the cards runway (full sticky height). */
+  function measureSlamTravel(cardsHost, card) {
+    var saved = card.style.transform;
+    card.style.transform = 'translate3d(0,0,0)';
+    var hostH = cardsHost.clientHeight;
+    var relTop = card.offsetTop || 0;
     var cardH = card.offsetHeight || 280;
-    var relTop = offsetTopWithin(card, sticky);
-    if (relTop == null) relTop = offsetTopWithin(cardsHost, sticky) + (card.offsetTop || 0);
-    return Math.max(stickyH - relTop + cardH + 96, cardH + 160);
+    card.style.transform = saved;
+    return Math.max(hostH - relTop + cardH + 48, hostH * 0.85);
   }
 
   function createFxLayer(host, zIndex, kind) {
@@ -95,7 +92,7 @@
     layer.setAttribute('aria-hidden', 'true');
     layer.setAttribute('data-ltf-card-fx', kind);
     layer.style.cssText =
-      'position:absolute;pointer-events:none;overflow:visible;z-index:' + zIndex + ';';
+      'position:absolute;pointer-events:none;overflow:hidden;z-index:' + zIndex + ';';
 
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'display:block;width:100%;height:100%;';
@@ -111,19 +108,14 @@
     };
   }
 
-  function prepSticky(sticky) {
-    if (getComputedStyle(sticky).position === 'static') sticky.style.position = 'relative';
-    sticky.style.overflow = 'visible';
-    sticky.querySelectorAll('.ltf-nebula-gas-layer').forEach(function (el) {
-      el.remove();
-    });
-  }
-
-  function prepHost(host) {
+  function prepHost(host, sticky) {
+    var runway = sticky.clientHeight || window.innerHeight || 800;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     host.style.isolation = 'isolate';
     host.style.overflow = 'hidden';
-    host.querySelectorAll('.ltf-nebula-ring-layer').forEach(function (el) {
+    host.style.minHeight = runway + 'px';
+    host.style.height = runway + 'px';
+    host.querySelectorAll('.ltf-nebula-gas-layer, .ltf-nebula-ring-layer').forEach(function (el) {
       el.remove();
     });
   }
@@ -131,25 +123,26 @@
   function prepCards(cards, fx) {
     var i;
     for (i = 0; i < cards.length; i++) {
-      var cardZ = (i + 1) * 4;
+      var cardZ = (i + 1) * 3;
       cards[i].style.willChange = 'transform';
       cards[i].style.transition = 'none';
       cards[i].style.position = 'absolute';
       cards[i].style.zIndex = String(cardZ);
+      cards[i].style.backgroundClip = 'padding-box';
       if (fx[i]) {
-        if (fx[i].gas) fx[i].gas.wrap.style.zIndex = String(cardZ - 1);
-        if (fx[i].ring) fx[i].ring.wrap.style.zIndex = String(cardZ + 1);
+        fx[i].gas.wrap.style.zIndex = String(cardZ - 1);
+        fx[i].ring.wrap.style.zIndex = String(cardZ + 1);
       }
     }
   }
 
-  function syncLayerBox(host, layer, card, pad) {
+  function syncLayerToCard(host, layer, card) {
     var hr = host.getBoundingClientRect();
     var r = card.getBoundingClientRect();
-    layer.wrap.style.left = r.left - hr.left - pad + 'px';
-    layer.wrap.style.top = r.top - hr.top - pad + 'px';
-    layer.wrap.style.width = r.width + pad * 2 + 'px';
-    layer.wrap.style.height = r.height + pad * 2 + 'px';
+    layer.wrap.style.left = r.left - hr.left + 'px';
+    layer.wrap.style.top = r.top - hr.top + 'px';
+    layer.wrap.style.width = r.width + 'px';
+    layer.wrap.style.height = r.height + 'px';
   }
 
   function resizeLayer(layer) {
@@ -165,13 +158,14 @@
     return true;
   }
 
-  function ringBox(layer, card, pad) {
+  function cardDrawBox(layer, card) {
     return {
-      x: pad,
-      y: pad,
-      w: Math.max(8, layer.cssW - pad * 2),
-      h: Math.max(8, layer.cssH - pad * 2),
+      x: 0,
+      y: 0,
+      w: layer.cssW,
+      h: layer.cssH,
       r: cardRadius(card),
+      bw: cardBorderW(card),
     };
   }
 
@@ -190,19 +184,20 @@
     ctx.closePath();
   }
 
-  function ringMetrics(box, lineW) {
-    var inset = lineW * 0.5;
+  /** Path centered on the white border edge. */
+  function borderMetrics(box, lineW) {
+    var inset = box.bw * 0.5;
     var x = box.x + inset;
     var y = box.y + inset;
     var w = box.w - inset * 2;
     var h = box.h - inset * 2;
     var rad = Math.max(0, box.r - inset);
     var peri = 2 * (w + h) - 8 * rad + 2 * Math.PI * rad;
-    return { x: x, y: y, w: w, h: h, rad: rad, peri: peri };
+    return { x: x, y: y, w: w, h: h, rad: rad, peri: peri, lineW: lineW };
   }
 
-  function drawRingStroke(ctx, m, len, alpha, lineW, blur, dashOffset, composite) {
-    if (len < 1.5 || alpha < 0.02) return;
+  function drawBorderStroke(ctx, m, len, alpha, blur, dashOffset, composite) {
+    if (len < 1.5 || alpha < 0.02 || m.peri < 8) return;
 
     var g = ctx.createLinearGradient(m.x, m.y, m.x + m.w, m.y + m.h);
     g.addColorStop(0, rgba(C.purple, clamp(0.92 * alpha * INT, 0, 1)));
@@ -212,16 +207,14 @@
     g.addColorStop(1, rgba(C.greenD, clamp(0.85 * alpha * INT, 0, 1)));
 
     ctx.save();
-    roundRectPath(ctx, m.x, m.y, m.w, m.h, m.rad);
-    ctx.clip();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = g;
     ctx.globalCompositeOperation = composite || 'source-over';
+    ctx.lineWidth = m.lineW;
     try {
       ctx.filter = blur ? 'blur(' + blur + 'px)' : 'none';
     } catch (e) {}
-    ctx.lineWidth = lineW;
     roundRectPath(ctx, m.x, m.y, m.w, m.h, m.rad);
     ctx.setLineDash([len, m.peri + 2]);
     ctx.lineDashOffset = -dashOffset;
@@ -233,20 +226,24 @@
 
   function drawRing(ctx, box, sweep, alpha, dashOffset) {
     if (sweep < 0.015 || alpha < 0.02) return;
-    var m = ringMetrics(box, RING_W);
-    if (m.peri < 8) return;
+    var m = borderMetrics(box, RING_W);
     var len = sweep * m.peri;
-    drawRingStroke(ctx, m, len, alpha, RING_W + 1.5, 2, dashOffset, 'source-over');
-    drawRingStroke(ctx, m, len, alpha, RING_W, 0, dashOffset, 'source-over');
+    drawBorderStroke(ctx, m, len, alpha, 0, dashOffset, 'source-over');
   }
 
+  /** Inner gas bloom — clipped inside the card, behind fill. */
   function drawGasBloom(ctx, box, sweep, alpha, dashOffset) {
     if (sweep < 0.015 || alpha < 0.02) return;
-    var m = ringMetrics(box, RING_W + 10);
-    if (m.peri < 8) return;
+
+    ctx.save();
+    roundRectPath(ctx, box.x + 2, box.y + 2, box.w - 4, box.h - 4, Math.max(0, box.r - 2));
+    ctx.clip();
+
+    var m = borderMetrics(box, RING_W + 8);
     var len = sweep * m.peri;
-    drawRingStroke(ctx, m, len, alpha * 0.55, RING_W + 14, 22, dashOffset, 'screen');
-    drawRingStroke(ctx, m, len, alpha * 0.35, RING_W + 22, 32, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.5, 14, dashOffset, 'screen');
+    drawBorderStroke(ctx, m, len, alpha * 0.32, 20, dashOffset, 'screen');
+    ctx.restore();
   }
 
   function applyCards(cards, travels, progress, pinned) {
@@ -287,24 +284,23 @@
     }
     if (cards.length < 2) return;
 
-    prepSticky(sticky);
-    prepHost(cardsHost);
-    section.style.overflow = 'visible';
+    prepHost(cardsHost, sticky);
 
     var fx = [];
     var travels = [];
     var i;
     for (i = 0; i < cards.length; i++) {
-      travels[i] = BEATS[i] ? measureSlamTravel(sticky, cardsHost, cards[i]) : 0;
-      if (!BEATS[i]) {
+      if (BEATS[i]) {
+        travels[i] = measureSlamTravel(cardsHost, cards[i]);
+        var cardZ = (i + 1) * 3;
+        fx[i] = {
+          gas: createFxLayer(cardsHost, cardZ - 1, 'gas'),
+          ring: createFxLayer(cardsHost, cardZ + 1, 'ring'),
+        };
+      } else {
+        travels[i] = 0;
         fx[i] = null;
-        continue;
       }
-      var cardZ = (i + 1) * 4;
-      fx[i] = {
-        gas: createFxLayer(sticky, cardZ - 1, 'gas'),
-        ring: createFxLayer(cardsHost, cardZ + 1, 'ring'),
-      };
     }
     prepCards(cards, fx);
 
@@ -319,9 +315,10 @@
       lastT: 0,
     };
 
-    function remeasureTravels() {
+    function remeasure() {
+      prepHost(cardsHost, sticky);
       for (i = 0; i < cards.length; i++) {
-        if (BEATS[i]) travels[i] = measureSlamTravel(sticky, cardsHost, cards[i]);
+        if (BEATS[i]) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
     }
 
@@ -333,9 +330,49 @@
       }
     }
 
+    function paintFx(fxItem, card, scrollSweep, idleSweep, scrollAlpha, idleAlpha, idleDrift) {
+    var showScroll = scrollAlpha > 0.02;
+    var showIdle = idleAlpha > 0.02;
+    if (!showScroll && !showIdle) return;
+
+    syncLayerToCard(cardsHost, fxItem.gas, card);
+    syncLayerToCard(cardsHost, fxItem.ring, card);
+
+    var gasScroll = clamp(scrollSweep - GAS_DELAY, 0, 1);
+    var gasIdle = clamp(idleSweep - GAS_DELAY, 0, 1);
+    var box;
+    var peri = 1;
+    var idleOffset = idleDrift;
+
+    if (resizeLayer(fxItem.ring)) {
+      box = cardDrawBox(fxItem.ring, card);
+      peri = borderMetrics(box, RING_W).peri || 1;
+      idleOffset = idleDrift * peri;
+    }
+
+    if (resizeLayer(fxItem.gas)) {
+      box = cardDrawBox(fxItem.gas, card);
+      var gctx = fxItem.gas.ctx;
+      gctx.clearRect(0, 0, fxItem.gas.cssW, fxItem.gas.cssH);
+      if (showScroll && gasScroll > 0.02) drawGasBloom(gctx, box, gasScroll, scrollAlpha, 0);
+      if (showIdle && gasIdle > 0.02) drawGasBloom(gctx, box, gasIdle, idleAlpha, idleOffset);
+    }
+
+    if (fxItem.ring.cssW) {
+      box = cardDrawBox(fxItem.ring, card);
+      var rctx = fxItem.ring.ctx;
+      rctx.clearRect(0, 0, fxItem.ring.cssW, fxItem.ring.cssH);
+      if (showScroll && scrollSweep > 0.02 && scrollSweep < 0.995) {
+        drawRing(rctx, box, scrollSweep, scrollAlpha, 0);
+      }
+      if (showIdle && idleSweep > 0.02 && idleSweep < 0.995) {
+        drawRing(rctx, box, idleSweep, idleAlpha, idleOffset);
+      }
+    }
+  }
+
     function frame(now) {
       if (!state.lastT) state.lastT = now;
-      var dt = clamp((now - state.lastT) / 1000, 0.001, 0.05);
       state.lastT = now;
 
       sampleTarget();
@@ -363,46 +400,21 @@
         if (state.scrollSweep[key] == null) state.scrollSweep[key] = 0;
         if (state.idleSweep[key] == null) state.idleSweep[key] = 0;
 
-        if (scrolling || REDUCE.matches) {
-          state.scrollSweep[key] = t;
-        }
+        if (scrolling || REDUCE.matches) state.scrollSweep[key] = t;
         state.idleSweep[key] = lerp(state.idleSweep[key], t, scrolling ? 0.2 : 0.1);
 
-        var scrollSweep = state.scrollSweep[key];
-        var idleSweep = state.idleSweep[key];
-        var gasScrollSweep = clamp(scrollSweep - GAS_DELAY, 0, 1);
-        var gasIdleSweep = clamp(idleSweep - GAS_DELAY, 0, 1);
         var baseAlpha = clamp(t * 1.15 * INT, 0, 1);
-        var scrollAlpha = baseAlpha * state.syncBlend;
-        var idleAlpha = baseAlpha * (1 - state.syncBlend);
-        var idleOffset = state.idleDrift * (ringMetrics(ringBox(fx[i].ring, cards[i], RING_PAD), RING_W).peri || 1) * 0.18;
+        var idleOffset = state.idleDrift * 0.18;
 
-        syncLayerBox(sticky, fx[i].gas, cards[i], GAS_PAD);
-        syncLayerBox(cardsHost, fx[i].ring, cards[i], RING_PAD);
-
-        if (resizeLayer(fx[i].gas)) {
-          var gasBox = ringBox(fx[i].gas, cards[i], GAS_PAD);
-          var gctx = fx[i].gas.ctx;
-          gctx.clearRect(0, 0, fx[i].gas.cssW, fx[i].gas.cssH);
-          if (scrollAlpha > 0.02 && gasScrollSweep > 0.02) {
-            drawGasBloom(gctx, gasBox, gasScrollSweep, scrollAlpha, 0);
-          }
-          if (idleAlpha > 0.02 && gasIdleSweep > 0.02) {
-            drawGasBloom(gctx, gasBox, gasIdleSweep, idleAlpha, idleOffset);
-          }
-        }
-
-        if (resizeLayer(fx[i].ring)) {
-          var ringBoxData = ringBox(fx[i].ring, cards[i], RING_PAD);
-          var rctx = fx[i].ring.ctx;
-          rctx.clearRect(0, 0, fx[i].ring.cssW, fx[i].ring.cssH);
-          if (scrollAlpha > 0.02 && scrollSweep > 0.02 && scrollSweep < 0.995) {
-            drawRing(rctx, ringBoxData, scrollSweep, scrollAlpha, 0);
-          }
-          if (idleAlpha > 0.02 && idleSweep > 0.02 && idleSweep < 0.995) {
-            drawRing(rctx, ringBoxData, idleSweep, idleAlpha, idleOffset);
-          }
-        }
+        paintFx(
+          fx[i],
+          cards[i],
+          state.scrollSweep[key],
+          state.idleSweep[key],
+          baseAlpha * state.syncBlend,
+          baseAlpha * (1 - state.syncBlend),
+          idleOffset
+        );
       }
 
       section.style.setProperty('--ltf-vault-progress', state.target.toFixed(4));
@@ -413,7 +425,7 @@
     window.addEventListener(
       'resize',
       function () {
-        remeasureTravels();
+        remeasure();
         for (i = 0; i < fx.length; i++) {
           if (!fx[i]) continue;
           fx[i].gas.cssW = 0;
