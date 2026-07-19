@@ -1,34 +1,35 @@
 /**
- * Lowtideflow — Specs Vault Slam + Edge Nebula Leak
+ * Lowtideflow — Specs Vault Slam + Nebula Gradient Rim Leak
  *
- * Scroll-mapped card stack + gas that explodes BEHIND the slamming card,
- * leaks from white/edge perimeter, soft smoke + whirl, fades out ~1.7s.
- * Resets when you scroll back to the top of the vault.
+ * Card slam (scroll) + slam FX:
+ *   - Animated nebula gradient RING just outside the white card border
+ *     (same idea as gradient-input-wrapper padding reveal)
+ *   - Vibrant gas particles expelling OUT past the white border
+ *   - Card faces punched out so text stays clean (effect behind/around)
+ *   - Clipped inside the cards column — never touches section edges
+ *   - Fades ~1.8s then gone; resets when scrolling back to vault top
  *
- * Reusable on any section:
- *   data-ltf-specs-slam
- *   data-ltf-slam-threshold="0.88"   (optional)
- *   children: .ltf-spec-card-01…04  (or .ltf-spec-card)
+ * Nebula tones: #4D259D #2AAAB8 #1F7781 #0B8050 #7040C0
  *
- * Depot (jsDelivr — do not use raw.githubusercontent):
- *   <script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@SHA/js/nebula/specs-vault-slam.js"></script>
+ * Wire: data-ltf-specs-slam on section
+ * Depot: jsDelivr @commit …/js/nebula/specs-vault-slam.js
  */
 (function () {
   'use strict';
 
-  var TEAL = [31, 119, 129];
-  var TEALL = [42, 170, 184];
-  var PURPLE = [77, 37, 157];
-  var PURPLEM = [112, 64, 192];
-  var GREEN = [11, 128, 80];
-  var WHITE = [230, 236, 245];
-  var PALETTE = [TEAL, TEALL, PURPLE, PURPLEM, GREEN];
+  var TEAL = [31, 119, 129]; // #1F7781
+  var TEALL = [42, 170, 184]; // #2AAAB8
+  var PURPLE = [77, 37, 157]; // #4D259D
+  var PURPLEM = [112, 64, 192]; // #7040C0
+  var GREEN = [11, 128, 80]; // #0B8050
+  var WHITE = [229, 229, 229]; // card border #e5e5e5
+  var PALETTE = [PURPLE, TEALL, TEAL, GREEN, PURPLEM];
   var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)');
   var LERP = REDUCE.matches ? 1 : 0.16;
-  var BURST_LIFE = 1.75; // seconds — then totally gone
+  var BURST_LIFE = 1.85;
   var RESET_PROGRESS = 0.06;
+  var RING_PAD = 4; // px outside white border (like wrapper padding)
 
-  // Card 1 = base. Cards 2–4 slam on Gemini-style beats.
   var BEATS = [
     null,
     { start: 0, end: 0.35, restY: 0 },
@@ -39,15 +40,12 @@
   function clamp(n, a, b) {
     return Math.max(a, Math.min(b, n));
   }
-
   function lerp(a, b, t) {
     return a + (b - a) * t;
   }
-
   function easeOutCubic(t) {
     return 1 - Math.pow(1 - t, 3);
   }
-
   function mixRgb(a, b, t) {
     return [
       Math.round(lerp(a[0], b[0], t)),
@@ -55,7 +53,6 @@
       Math.round(lerp(a[2], b[2], t)),
     ];
   }
-
   function rgba(rgb, a) {
     return 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
   }
@@ -76,11 +73,6 @@
     return clamp((progress - beat.start) / span, 0, 1);
   }
 
-  /**
-   * Gas layer MUST sit behind cards. Use z-index:-1 under an isolated stack host.
-   * After drawing particles we punch opaque card rectangles out so gas never
-   * covers titles (edge-leak only).
-   */
   function createOverlay(cardsHost) {
     var existing = cardsHost.querySelector('.ltf-nebula-gas-layer');
     if (existing) existing.remove();
@@ -88,8 +80,9 @@
     var wrap = document.createElement('div');
     wrap.className = 'ltf-nebula-gas-layer';
     wrap.setAttribute('aria-hidden', 'true');
+    // Stay inside cards column — no bleed to section edges
     wrap.style.cssText =
-      'position:absolute;inset:-64px;pointer-events:none;overflow:visible;z-index:-1;';
+      'position:absolute;inset:8px;pointer-events:none;overflow:hidden;z-index:0;border-radius:4px;';
 
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'display:block;width:100%;height:100%;';
@@ -97,40 +90,11 @@
 
     var pos = window.getComputedStyle(cardsHost).position;
     if (pos === 'static' || !pos) cardsHost.style.position = 'relative';
-    // Keep host stacking so negative z-index stays behind card siblings
     cardsHost.style.isolation = 'isolate';
+    cardsHost.style.overflow = 'hidden';
     cardsHost.insertBefore(wrap, cardsHost.firstChild);
 
-    return { wrap: wrap, canvas: canvas, ctx: canvas.getContext('2d'), pad: 64 };
-  }
-
-  /** Cut card faces out of the canvas so glow cannot sit on text. */
-  function punchCardFaces(state, cards) {
-    var ctx = state.ctx;
-    var hr = state.wrap.getBoundingClientRect();
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = '#000';
-    var i;
-    for (i = 0; i < cards.length; i++) {
-      var r = cards[i].getBoundingClientRect();
-      var x = r.left - hr.left;
-      var y = r.top - hr.top;
-      roundRect(ctx, x, y, r.width, r.height, 12);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  function roundRect(ctx, x, y, w, h, r) {
-    var rr = Math.min(r, w / 2, h / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + rr, y);
-    ctx.arcTo(x + w, y, x + w, y + h, rr);
-    ctx.arcTo(x + w, y + h, x, y + h, rr);
-    ctx.arcTo(x, y + h, x, y, rr);
-    ctx.arcTo(x, y, x + w, y, rr);
-    ctx.closePath();
+    return { wrap: wrap, canvas: canvas, ctx: canvas.getContext('2d') };
   }
 
   function resizeCanvas(state) {
@@ -146,8 +110,7 @@
     return true;
   }
 
-  function cardFrame(host, card, pad) {
-    pad = pad == null ? 64 : pad;
+  function cardFrame(host, card) {
     var hr = host.getBoundingClientRect();
     var r = card.getBoundingClientRect();
     return {
@@ -157,76 +120,83 @@
       h: r.height,
       cx: r.left + r.width * 0.5 - hr.left,
       cy: r.top + r.height * 0.5 - hr.top,
-      pad: pad,
+      radius: 12,
     };
   }
 
+  function roundRectPath(ctx, x, y, w, h, r) {
+    var rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
   /**
-   * Edge-biased spawn: particles born on the card perimeter and push OUTWARD
-   * (white-edge gas leak + soft whirl / solar-flare tangents).
+   * Spawn: rim leak + outward expulsion (past white border).
+   * Gradient ring is drawn separately each frame while burst lives.
    */
   function spawnEdgeBurst(state, frame, intensity) {
     intensity = intensity == null ? 1 : intensity;
-    var count = Math.round((REDUCE.matches ? 36 : 90) * intensity);
+    var count = Math.round((REDUCE.matches ? 48 : 110) * intensity);
     var particles = [];
-    var i;
     var hw = frame.w * 0.5;
     var hh = frame.h * 0.5;
+    var i;
 
     for (i = 0; i < count; i++) {
       var kind = Math.random();
-      // sample ellipse rim
       var ang = Math.random() * Math.PI * 2;
-      var rimX = frame.cx + Math.cos(ang) * hw * (0.92 + Math.random() * 0.12);
-      var rimY = frame.cy + Math.sin(ang) * hh * (0.92 + Math.random() * 0.12);
-      // outward normal + whirl tangent
+      // Birth just OUTSIDE white border
+      var rimScale = 1.02 + Math.random() * 0.06;
+      var rimX = frame.cx + Math.cos(ang) * hw * rimScale;
+      var rimY = frame.cy + Math.sin(ang) * hh * rimScale;
       var nx = Math.cos(ang);
       var ny = Math.sin(ang);
       var tx = -ny;
       var ty = nx;
-      var outSpeed = (90 + Math.random() * 220) * intensity;
-      var whirl = (40 + Math.random() * 120) * (Math.random() < 0.5 ? -1 : 1) * intensity;
+      var outSpeed = (160 + Math.random() * 320) * intensity;
+      var whirl = (60 + Math.random() * 160) * (Math.random() < 0.5 ? -1 : 1);
 
-      var life, r, type, colorA, colorB, alpha;
-      if (kind < 0.35) {
-        // soft smoke bloom
+      var type, life, r, colorA, colorB, alpha;
+      if (kind < 0.3) {
         type = 'smoke';
-        life = 1.1 + Math.random() * 0.65;
-        r = 28 + Math.random() * 48;
+        life = 1.15 + Math.random() * 0.6;
+        r = 22 + Math.random() * 42;
         colorA = mixRgb(PURPLE, TEAL, Math.random());
-        colorB = mixRgb(TEALL, WHITE, 0.35);
-        alpha = 0.22;
-        outSpeed *= 0.55;
-      } else if (kind < 0.7) {
-        // gas leak along edge → white rim
+        colorB = mixRgb(TEALL, PURPLEM, Math.random());
+        alpha = 0.28;
+        outSpeed *= 0.5;
+      } else if (kind < 0.72) {
         type = 'gas';
-        life = 0.9 + Math.random() * 0.7;
-        r = 10 + Math.random() * 22;
-        colorA = mixRgb(TEALL, WHITE, 0.45 + Math.random() * 0.35);
-        colorB = mixRgb(PURPLEM, GREEN, Math.random());
-        alpha = 0.42;
+        life = 0.85 + Math.random() * 0.7;
+        r = 8 + Math.random() * 20;
+        colorA = mixRgb(TEALL, WHITE, 0.2 + Math.random() * 0.35);
+        colorB = mixRgb(PURPLE, GREEN, Math.random());
+        alpha = 0.55;
       } else {
-        // flare / spark whirl
         type = 'flare';
-        life = 0.55 + Math.random() * 0.55;
-        r = 3 + Math.random() * 9;
-        colorA = mixRgb(WHITE, TEALL, Math.random() * 0.5);
+        life = 0.5 + Math.random() * 0.55;
+        r = 2 + Math.random() * 8;
+        colorA = mixRgb(WHITE, TEALL, 0.35);
         colorB = PALETTE[(Math.random() * PALETTE.length) | 0];
-        alpha = 0.7;
-        outSpeed *= 1.25;
-        whirl *= 1.4;
+        alpha = 0.85;
+        outSpeed *= 1.35;
       }
 
       particles.push({
         type: type,
         x: rimX,
         y: rimY,
-        vx: nx * outSpeed * (0.55 + Math.random() * 0.7) + tx * whirl * 0.35,
-        vy: ny * outSpeed * (0.55 + Math.random() * 0.7) + ty * whirl * 0.35,
+        vx: nx * outSpeed * (0.65 + Math.random() * 0.6) + tx * whirl * 0.4,
+        vy: ny * outSpeed * (0.65 + Math.random() * 0.6) + ty * whirl * 0.4,
         r: r,
         life: life,
         age: 0,
-        spin: whirl * 0.02,
+        spin: whirl * 0.025,
         wobble: ang,
         colorA: colorA,
         colorB: colorB,
@@ -237,62 +207,69 @@
     state.bursts.push({
       particles: particles,
       started: performance.now(),
-      ox: frame.cx,
-      oy: frame.cy,
-      hw: hw,
-      hh: hh,
+      frame: {
+        x: frame.x,
+        y: frame.y,
+        w: frame.w,
+        h: frame.h,
+        cx: frame.cx,
+        cy: frame.cy,
+        radius: frame.radius,
+      },
       life: BURST_LIFE,
+      hueShift: Math.random(),
     });
   }
 
-  function drawEdgeHalo(ctx, burst, fade) {
-    if (fade < 0.02) return;
-    // soft white-edge ring leaking outward
-    var g = ctx.createRadialGradient(
-      burst.ox,
-      burst.oy,
-      Math.min(burst.hw, burst.hh) * 0.55,
-      burst.ox,
-      burst.oy,
-      Math.max(burst.hw, burst.hh) * 1.35
+  /** Moving nebula gradient ring just outside white border (wrapper-padding idea). */
+  function drawGradientRing(ctx, burst, fade, now) {
+    var f = burst.frame;
+    var t = (now * 0.0004 + burst.hueShift) % 1;
+    var g = ctx.createLinearGradient(f.x, f.y, f.x + f.w, f.y + f.h);
+    g.addColorStop(0, rgba(mixRgb(PURPLE, TEALL, t), 0.95 * fade));
+    g.addColorStop(0.28, rgba(mixRgb(TEALL, TEAL, t), 0.95 * fade));
+    g.addColorStop(0.52, rgba(mixRgb(TEAL, GREEN, t), 0.95 * fade));
+    g.addColorStop(0.76, rgba(mixRgb(GREEN, PURPLEM, t), 0.95 * fade));
+    g.addColorStop(1, rgba(mixRgb(PURPLEM, PURPLE, t), 0.95 * fade));
+
+    ctx.save();
+    ctx.shadowColor = rgba(PURPLEM, 0.5 * fade);
+    ctx.shadowBlur = 16 * fade;
+    ctx.strokeStyle = g;
+    ctx.lineWidth = RING_PAD + 2; // ~gradient border thickness
+    ctx.lineJoin = 'round';
+    roundRectPath(
+      ctx,
+      f.x - RING_PAD * 0.5,
+      f.y - RING_PAD * 0.5,
+      f.w + RING_PAD,
+      f.h + RING_PAD,
+      f.radius + RING_PAD * 0.5
     );
-    g.addColorStop(0, rgba(WHITE, 0));
-    g.addColorStop(0.45, rgba(TEALL, 0.18 * fade));
-    g.addColorStop(0.7, rgba(PURPLE, 0.22 * fade));
-    g.addColorStop(1, rgba(PURPLEM, 0));
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.ellipse(
-      burst.ox,
-      burst.oy,
-      burst.hw * 1.25,
-      burst.hh * 1.25,
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 
-  function drawBursts(state, dt) {
+  function drawBursts(state, dt, now) {
     var ctx = state.ctx;
     var next = [];
     var b;
+
     for (b = 0; b < state.bursts.length; b++) {
       var burst = state.bursts[b];
-      var elapsed = (performance.now() - burst.started) / 1000;
+      var elapsed = (now - burst.started) / 1000;
       var lifeT = clamp(elapsed / burst.life, 0, 1);
-      // hold briefly, then ease out — fully gone by BURST_LIFE
       var fade =
-        lifeT < 0.18
-          ? lifeT / 0.18
-          : lifeT > 0.55
-            ? 1 - (lifeT - 0.55) / 0.45
+        lifeT < 0.12
+          ? lifeT / 0.12
+          : lifeT > 0.5
+            ? 1 - (lifeT - 0.5) / 0.5
             : 1;
       fade = clamp(fade, 0, 1);
       if (lifeT >= 1) continue;
 
-      drawEdgeHalo(ctx, burst, fade);
+      // Draw ring into a temp pass: use main canvas then punch faces later
+      drawGradientRing(ctx, burst, fade, now);
 
       var alive = 0;
       var i;
@@ -303,29 +280,26 @@
         if (t >= 1) continue;
         alive++;
 
-        // drag + slight lift (smoke rises)
-        var drag = p.type === 'smoke' ? 0.94 : p.type === 'flare' ? 0.88 : 0.91;
+        var drag = p.type === 'smoke' ? 0.93 : p.type === 'flare' ? 0.87 : 0.9;
         p.vx *= Math.pow(drag, dt * 60);
         p.vy *= Math.pow(drag, dt * 60);
-        if (p.type === 'smoke') p.vy -= 18 * dt;
-        else p.vy += 8 * dt;
+        if (p.type === 'smoke') p.vy -= 22 * dt;
+        else p.vy += 6 * dt;
 
-        // mini whirl around burst center
-        var dx = p.x - burst.ox;
-        var dy = p.y - burst.oy;
-        p.vx += -dy * p.spin * dt * 8;
-        p.vy += dx * p.spin * dt * 8;
-        p.wobble += p.spin * dt * 4;
-        p.x += (p.vx + Math.cos(p.wobble) * (p.type === 'flare' ? 18 : 10)) * dt;
-        p.y += (p.vy + Math.sin(p.wobble * 1.15) * (p.type === 'flare' ? 14 : 8)) * dt;
+        var dx = p.x - burst.frame.cx;
+        var dy = p.y - burst.frame.cy;
+        p.vx += -dy * p.spin * dt * 10;
+        p.vy += dx * p.spin * dt * 10;
+        p.wobble += p.spin * dt * 5;
+        p.x += (p.vx + Math.cos(p.wobble) * 12) * dt;
+        p.y += (p.vy + Math.sin(p.wobble * 1.2) * 10) * dt;
 
-        var pfade = t < 0.1 ? t / 0.1 : 1 - (t - 0.1) / 0.9;
+        var pfade = t < 0.08 ? t / 0.08 : 1 - (t - 0.08) / 0.92;
         pfade = clamp(pfade * fade, 0, 1);
         var rgb = mixRgb(p.colorA, p.colorB, t);
-        // edge-white bias mid-life
-        if (p.type === 'gas') rgb = mixRgb(rgb, WHITE, 0.25 * (1 - t));
+        if (p.type === 'gas') rgb = mixRgb(rgb, WHITE, 0.2 * (1 - t));
 
-        var radius = p.r * (p.type === 'smoke' ? 0.7 + t * 1.8 : 0.55 + t * 1.2);
+        var radius = p.r * (p.type === 'smoke' ? 0.75 + t * 1.7 : 0.55 + t * 1.15);
         ctx.beginPath();
         ctx.fillStyle = rgba(rgb, p.alpha * pfade);
         ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
@@ -333,8 +307,8 @@
 
         if (p.type !== 'smoke') {
           ctx.beginPath();
-          ctx.fillStyle = rgba(mixRgb(rgb, WHITE, 0.5), p.alpha * 1.4 * pfade);
-          ctx.arc(p.x, p.y, radius * 0.28, 0, Math.PI * 2);
+          ctx.fillStyle = rgba(mixRgb(rgb, WHITE, 0.55), Math.min(1, p.alpha * 1.5 * pfade));
+          ctx.arc(p.x, p.y, radius * 0.3, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -344,13 +318,28 @@
     state.bursts = next;
   }
 
+  function punchCardFaces(state, cards) {
+    var ctx = state.ctx;
+    var hr = state.wrap.getBoundingClientRect();
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#000';
+    var i;
+    for (i = 0; i < cards.length; i++) {
+      var r = cards[i].getBoundingClientRect();
+      roundRectPath(ctx, r.left - hr.left, r.top - hr.top, r.width, r.height, 12);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function prepCards(cards) {
     var i;
     for (i = 0; i < cards.length; i++) {
       var card = cards[i];
       card.style.willChange = 'transform';
       card.style.transition = 'none';
-      card.style.zIndex = String(10 + i);
+      card.style.zIndex = String(20 + i);
       card.style.position = 'absolute';
     }
   }
@@ -383,20 +372,17 @@
       section.querySelector('.ltf-spec-card-03'),
       section.querySelector('.ltf-spec-card-04'),
     ].filter(Boolean);
-
     if (cards.length < 4) {
       cards = Array.prototype.slice.call(section.querySelectorAll('.ltf-spec-card'));
     }
     if (cards.length < 2) return;
 
     prepCards(cards);
-
     var overlay = createOverlay(cardsHost);
     var state = {
       wrap: overlay.wrap,
       canvas: overlay.canvas,
       ctx: overlay.ctx,
-      pad: overlay.pad,
       cssW: 0,
       cssH: 0,
       bursts: [],
@@ -413,9 +399,7 @@
     function hardReset() {
       state.fired = {};
       state.bursts = [];
-      if (state.ctx && state.cssW) {
-        state.ctx.clearRect(0, 0, state.cssW, state.cssH);
-      }
+      if (state.ctx && state.cssW) state.ctx.clearRect(0, 0, state.cssW, state.cssH);
     }
 
     function fireIfNeeded(beats) {
@@ -425,8 +409,7 @@
         if (beats[i] < threshold || state.fired[i]) continue;
         state.fired[i] = true;
         resizeCanvas(state);
-        var frame = cardFrame(state.wrap, cards[i]);
-        spawnEdgeBurst(state, frame, i === cards.length - 1 ? 1.35 : 1);
+        spawnEdgeBurst(state, cardFrame(state.wrap, cards[i]), i === cards.length - 1 ? 1.4 : 1.1);
       }
     }
 
@@ -439,7 +422,6 @@
       state.current = lerp(state.current, state.target, LERP);
       if (Math.abs(state.current - state.target) < 0.0004) state.current = state.target;
 
-      // Scroll back to top → clear FX and allow full replay
       if (state.current < RESET_PROGRESS) {
         if (Object.keys(state.fired).length || state.bursts.length) hardReset();
       }
@@ -452,7 +434,7 @@
       if (resizeCanvas(state)) {
         state.ctx.clearRect(0, 0, state.cssW, state.cssH);
         if (state.bursts.length) {
-          drawBursts(state, dt);
+          drawBursts(state, dt, now);
           punchCardFaces(state, cards);
         }
       }
@@ -479,17 +461,13 @@
 
   function init() {
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
-    if (!nodes.length) return;
-
     Array.prototype.forEach.call(nodes, function (el) {
       var cs = window.getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') return;
       if (!el.querySelector('.ltf-spec-card-02, .ltf-spec-card')) return;
       if (el.dataset.ltfSlamBound === '1') return;
       el.dataset.ltfSlamBound = '1';
-      if (!el.hasAttribute('data-ltf-specs-slam')) {
-        el.setAttribute('data-ltf-specs-slam', '');
-      }
+      if (!el.hasAttribute('data-ltf-specs-slam')) el.setAttribute('data-ltf-specs-slam', '');
       bindSection(el);
     });
   }
