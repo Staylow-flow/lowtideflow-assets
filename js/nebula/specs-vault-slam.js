@@ -77,8 +77,9 @@
   }
 
   /**
-   * Gas layer sits BEHIND cards (z-index 0) inside the cards stack host.
-   * Cards keep z-index 10+ so the slam sits on top of the leak.
+   * Gas layer MUST sit behind cards. Use z-index:-1 under an isolated stack host.
+   * After drawing particles we punch opaque card rectangles out so gas never
+   * covers titles (edge-leak only).
    */
   function createOverlay(cardsHost) {
     var existing = cardsHost.querySelector('.ltf-nebula-gas-layer');
@@ -88,7 +89,7 @@
     wrap.className = 'ltf-nebula-gas-layer';
     wrap.setAttribute('aria-hidden', 'true');
     wrap.style.cssText =
-      'position:absolute;inset:-48px;pointer-events:none;overflow:visible;z-index:0;isolation:isolate;';
+      'position:absolute;inset:-64px;pointer-events:none;overflow:visible;z-index:-1;';
 
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'display:block;width:100%;height:100%;';
@@ -96,9 +97,40 @@
 
     var pos = window.getComputedStyle(cardsHost).position;
     if (pos === 'static' || !pos) cardsHost.style.position = 'relative';
+    // Keep host stacking so negative z-index stays behind card siblings
+    cardsHost.style.isolation = 'isolate';
     cardsHost.insertBefore(wrap, cardsHost.firstChild);
 
-    return { wrap: wrap, canvas: canvas, ctx: canvas.getContext('2d') };
+    return { wrap: wrap, canvas: canvas, ctx: canvas.getContext('2d'), pad: 64 };
+  }
+
+  /** Cut card faces out of the canvas so glow cannot sit on text. */
+  function punchCardFaces(state, cards) {
+    var ctx = state.ctx;
+    var hr = state.wrap.getBoundingClientRect();
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#000';
+    var i;
+    for (i = 0; i < cards.length; i++) {
+      var r = cards[i].getBoundingClientRect();
+      var x = r.left - hr.left;
+      var y = r.top - hr.top;
+      roundRect(ctx, x, y, r.width, r.height, 12);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    var rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
   }
 
   function resizeCanvas(state) {
@@ -114,16 +146,18 @@
     return true;
   }
 
-  function cardFrame(host, card) {
+  function cardFrame(host, card, pad) {
+    pad = pad == null ? 64 : pad;
     var hr = host.getBoundingClientRect();
     var r = card.getBoundingClientRect();
     return {
-      x: r.left - hr.left + 48, // compensate inset:-48
-      y: r.top - hr.top + 48,
+      x: r.left - hr.left,
+      y: r.top - hr.top,
       w: r.width,
       h: r.height,
-      cx: r.left + r.width * 0.5 - hr.left + 48,
-      cy: r.top + r.height * 0.5 - hr.top + 48,
+      cx: r.left + r.width * 0.5 - hr.left,
+      cy: r.top + r.height * 0.5 - hr.top,
+      pad: pad,
     };
   }
 
@@ -362,6 +396,7 @@
       wrap: overlay.wrap,
       canvas: overlay.canvas,
       ctx: overlay.ctx,
+      pad: overlay.pad,
       cssW: 0,
       cssH: 0,
       bursts: [],
@@ -416,7 +451,10 @@
 
       if (resizeCanvas(state)) {
         state.ctx.clearRect(0, 0, state.cssW, state.cssH);
-        if (state.bursts.length) drawBursts(state, dt);
+        if (state.bursts.length) {
+          drawBursts(state, dt);
+          punchCardFaces(state, cards);
+        }
       }
 
       requestAnimationFrame(frame);
