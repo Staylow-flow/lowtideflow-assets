@@ -1,32 +1,31 @@
 /**
- * Lowtideflow — Specs Vault Slam + Perimeter Gas Mist Trail
+ * Lowtideflow — Specs Vault Slam + Gemini-style edge wrap
  *
- * Card slam from scroll (unchanged beats).
- * Slam FX: HTML5 canvas overlay glides a soft nebula mist core around the
- * slamming card perimeter (soft clear trail + screen + blur). Not CSS borders.
+ * Simple, tight FX (behind cards, max ~20px past white border):
+ *   • While a card reveals on scroll → nebula gradient sweeps around the perimeter
+ *   • When it slams shut → small gas puff, fades ~0.9s
  *
- * Nebula tones: #4D259D #2AAAB8 #1F7781 #0B8050 #7040C0
- *
- * Wire: data-ltf-specs-slam on section
- * Depot: jsDelivr …/js/nebula/specs-vault-slam.js
+ * Nebula: #4D259D #2AAAB8 #1F7781 #0B8050 #7040C0
+ * Wire: data-ltf-specs-slam on .ltf-specs-vault
  */
 (function () {
   'use strict';
 
-  // Nebula palette (LTF)
-  var CORE = [42, 170, 184]; // #2AAAB8 hard core
-  var BLEED_A = [77, 37, 157]; // #4D259D
-  var BLEED_B = [112, 64, 192]; // #7040C0
-  var BLEED_C = [31, 119, 129]; // #1F7781
-  var BLEED_D = [11, 128, 80]; // #0B8050
-
+  var C = {
+    teal: [42, 170, 184],
+    purple: [77, 37, 157],
+    purpleM: [112, 64, 192],
+    green: [31, 119, 129],
+    greenD: [11, 128, 80],
+  };
   var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var LERP = REDUCE.matches ? 1 : 0.14;
-  var RESET_PROGRESS = 0.06;
-  var TRAIL_LOOPS = 1.15; // how many perimeter circuits
-  var TRAIL_SPEED = REDUCE.matches ? 0.028 : 0.012; // progress per frame toward target
-  var FADE_TAIL = 0.12; // soft clear alpha (lower = longer mist trail)
-  var OVERLAY_PAD = 12; // canvas overhang around cards host (kept inside sticky clip)
+  var SCROLL_LERP = REDUCE.matches ? 1 : 0.16;
+  var FX_LERP = REDUCE.matches ? 1 : 0.18;
+  var RESET_AT = 0.06;
+  var SLAM_AT = 0.92;
+  var EDGE_OUT = 20; // max px past white border
+  var RING_W = 3.5;
+  var PUFF_LIFE = 0.85;
 
   var BEATS = [
     null,
@@ -53,8 +52,7 @@
     var vh = window.innerHeight || 1;
     var scrollable = section.offsetHeight - vh;
     if (scrollable > 8) return clamp(-rect.top / scrollable, 0, 1);
-    var h = Math.max(rect.height, 1);
-    return clamp((vh - rect.top) / (vh + h), 0, 1);
+    return clamp((vh - rect.top) / (vh + Math.max(rect.height, 1)), 0, 1);
   }
 
   function localBeat(progress, beat) {
@@ -64,41 +62,26 @@
     return clamp((progress - beat.start) / span, 0, 1);
   }
 
-  /**
-   * Canvas sits over the cards stack (like gas-border-canvas over textarea).
-   * z-index under cards so mist wraps the border without covering copy.
-   */
-  function createOverlay(cardsHost) {
-    var existing = cardsHost.querySelector('.ltf-nebula-gas-layer');
-    if (existing) existing.remove();
+  function createOverlay(host) {
+    var old = host.querySelector('.ltf-nebula-gas-layer');
+    if (old) old.remove();
 
     var wrap = document.createElement('div');
     wrap.className = 'ltf-nebula-gas-layer';
     wrap.setAttribute('aria-hidden', 'true');
     wrap.style.cssText =
-      'position:absolute;top:-' +
-      OVERLAY_PAD +
-      'px;left:-' +
-      OVERLAY_PAD +
-      'px;width:calc(100% + ' +
-      OVERLAY_PAD * 2 +
-      'px);height:calc(100% + ' +
-      OVERLAY_PAD * 2 +
-      'px);pointer-events:none;overflow:hidden;z-index:1;border-radius:16px;';
+      'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;';
 
     var canvas = document.createElement('canvas');
-    canvas.className = 'ltf-gas-border-canvas';
     canvas.style.cssText = 'display:block;width:100%;height:100%;';
     wrap.appendChild(canvas);
 
-    var pos = window.getComputedStyle(cardsHost).position;
-    if (pos === 'static' || !pos) cardsHost.style.position = 'relative';
-    cardsHost.style.isolation = 'isolate';
-    cardsHost.style.overflow = 'hidden';
-    cardsHost.insertBefore(wrap, cardsHost.firstChild);
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    host.style.isolation = 'isolate';
+    host.style.overflow = 'hidden';
+    host.insertBefore(wrap, host.firstChild);
 
-    // Cards must stack above the mist canvas
-    return { wrap: wrap, canvas: canvas, ctx: canvas.getContext('2d'), pad: OVERLAY_PAD };
+    return { wrap: wrap, canvas: canvas, ctx: canvas.getContext('2d') };
   }
 
   function resizeCanvas(state) {
@@ -106,56 +89,167 @@
     var h = state.wrap.clientHeight;
     if (w < 2 || h < 2) return false;
     if (state.cssW === w && state.cssH === h) return true;
-    state.canvas.width = Math.floor(w);
-    state.canvas.height = Math.floor(h);
+    state.canvas.width = w;
+    state.canvas.height = h;
     state.ctx.setTransform(1, 0, 0, 1, 0, 0);
     state.cssW = w;
     state.cssH = h;
     return true;
   }
 
-  /** Card rect in canvas space (accounts for overlay pad). */
   function cardBox(state, card) {
     var hr = state.wrap.getBoundingClientRect();
     var r = card.getBoundingClientRect();
     return {
       x: r.left - hr.left,
       y: r.top - hr.top,
-      w: Math.max(8, r.width),
-      h: Math.max(8, r.height),
+      w: r.width,
+      h: r.height,
+      r: 12,
     };
   }
 
-  /**
-   * Map progress 0→1 along rounded-rect perimeter (clockwise from top-left).
-   * Returns {x,y} for the hard mist core.
-   */
-  function perimeterPoint(box, progress) {
-    var pad = 2; // ride just outside the white border
-    var x0 = box.x - pad;
-    var y0 = box.y - pad;
-    var w = box.w + pad * 2;
-    var h = box.h + pad * 2;
-    var peri = (w + h) * 2;
-    var d = ((progress % 1) + 1) % 1 * peri;
+  function roundRectPath(ctx, x, y, w, h, rad) {
+    var rr = Math.min(rad, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
 
-    if (d < w) return { x: x0 + d, y: y0 };
-    d -= w;
-    if (d < h) return { x: x0 + w, y: y0 + d };
-    d -= h;
-    if (d < w) return { x: x0 + w - d, y: y0 + h };
-    d -= w;
-    return { x: x0, y: y0 + h - d };
+  /** Gemini-style sweep: gradient arc grows with reveal progress. */
+  function drawWrap(ctx, box, sweep, now, alpha) {
+    if (sweep < 0.02 || alpha < 0.02) return;
+
+    var out = 6; // ring sits just outside white border; glow bleeds to ~20px
+    var x = box.x - out;
+    var y = box.y - out;
+    var w = box.w + out * 2;
+    var h = box.h + out * 2;
+    var peri = (w + h) * 2;
+    var len = sweep * peri;
+    if (len < 2) return;
+
+    var shift = (now * 0.00025) % 1;
+    var g = ctx.createLinearGradient(x, y, x + w, y + h);
+    g.addColorStop(0, rgba(C.purple, 0.95 * alpha));
+    g.addColorStop(0.25, rgba(C.teal, 0.95 * alpha));
+    g.addColorStop(0.5, rgba(C.green, 0.9 * alpha));
+    g.addColorStop(0.75, rgba(C.purpleM, 0.95 * alpha));
+    g.addColorStop(1, rgba(C.greenD, 0.85 * alpha));
+
+    ctx.save();
+    try {
+      ctx.filter = 'blur(6px)';
+    } catch (e) {}
+    ctx.globalCompositeOperation = 'screen';
+    ctx.strokeStyle = g;
+    ctx.lineWidth = RING_W;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    roundRectPath(ctx, x, y, w, h, box.r + out);
+    ctx.setLineDash([len, peri + 1]);
+    ctx.lineDashOffset = -shift * peri * 0.15;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Tight inner ring (crisper edge)
+    ctx.filter = 'none';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = alpha * 0.85;
+    roundRectPath(ctx, x + 1, y + 1, w - 2, h - 2, box.r + out - 1);
+    ctx.setLineDash([len, peri + 1]);
+    ctx.lineDashOffset = -shift * peri * 0.15;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Soft outer halo capped at ~20px
+    var cx = box.x + box.w * 0.5;
+    var cy = box.y + box.h * 0.5;
+    var hg = ctx.createRadialGradient(cx, cy, Math.min(box.w, box.h) * 0.35, cx, cy, Math.max(box.w, box.h) * 0.55 + EDGE_OUT);
+    hg.addColorStop(0, rgba(C.teal, 0));
+    hg.addColorStop(0.55, rgba(C.purple, 0.08 * alpha * sweep));
+    hg.addColorStop(1, rgba(C.purpleM, 0));
+    ctx.fillStyle = hg;
+    ctx.fillRect(box.x - EDGE_OUT, box.y - EDGE_OUT, box.w + EDGE_OUT * 2, box.h + EDGE_OUT * 2);
+  }
+
+  function spawnPuff(state, box) {
+    var cx = box.x + box.w * 0.5;
+    var cy = box.y + box.h * 0.5;
+    var hw = box.w * 0.5;
+    var hh = box.h * 0.5;
+    var n = REDUCE.matches ? 10 : 22;
+    var parts = [];
+    var i;
+    for (i = 0; i < n; i++) {
+      var ang = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+      var rimX = cx + Math.cos(ang) * hw * 1.02;
+      var rimY = cy + Math.sin(ang) * hh * 1.02;
+      var nx = Math.cos(ang);
+      var ny = Math.sin(ang);
+      var spd = 40 + Math.random() * 90;
+      parts.push({
+        x: rimX,
+        y: rimY,
+        vx: nx * spd,
+        vy: ny * spd,
+        r: 4 + Math.random() * 10,
+        life: 0.35 + Math.random() * 0.45,
+        age: 0,
+        rgb: i % 2 ? C.teal : C.purple,
+      });
+    }
+    state.puffs.push({ parts: parts, started: performance.now() });
+  }
+
+  function drawPuffs(ctx, state, dt) {
+    var next = [];
+    var p;
+    for (p = 0; p < state.puffs.length; p++) {
+      var puff = state.puffs[p];
+      var elapsed = (performance.now() - puff.started) / 1000;
+      if (elapsed > PUFF_LIFE) continue;
+
+      var fade = elapsed < 0.08 ? elapsed / 0.08 : 1 - (elapsed - 0.08) / (PUFF_LIFE - 0.08);
+      fade = clamp(fade, 0, 1);
+
+      var alive = 0;
+      var i;
+      for (i = 0; i < puff.parts.length; i++) {
+        var pt = puff.parts[i];
+        pt.age += dt;
+        if (pt.age >= pt.life) continue;
+        alive++;
+        pt.vx *= 0.92;
+        pt.vy *= 0.92;
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        var t = pt.age / pt.life;
+        var a = (1 - t) * fade;
+        ctx.beginPath();
+        ctx.fillStyle = rgba(pt.rgb, 0.45 * a);
+        ctx.arc(pt.x, pt.y, pt.r * (1 + t * 0.6), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (alive > 0 || fade > 0.05) next.push(puff);
+    }
+    state.puffs = next;
   }
 
   function prepCards(cards) {
     var i;
     for (i = 0; i < cards.length; i++) {
-      var card = cards[i];
-      card.style.willChange = 'transform';
-      card.style.transition = 'none';
-      card.style.zIndex = String(10 + i);
-      card.style.position = 'absolute';
+      cards[i].style.willChange = 'transform';
+      cards[i].style.transition = 'none';
+      cards[i].style.position = 'absolute';
+      cards[i].style.zIndex = String(20 + i);
     }
   }
 
@@ -163,51 +257,48 @@
     var beats = [];
     var i;
     for (i = 0; i < cards.length; i++) {
-      var beat = BEATS[i] || null;
+      var beat = BEATS[i];
       var t = localBeat(progress, beat);
-      var e = t === 0 || t === 1 ? t : easeOutCubic(t);
+      var e = beat ? (t === 0 || t === 1 ? t : easeOutCubic(t)) : 0;
       beats[i] = t;
-      var y = beat ? lerp(vh, beat.restY, e) : 0;
-      cards[i].style.transform = 'translate3d(0,' + y.toFixed(2) + 'px,0)';
+      cards[i].style.transform = beat
+        ? 'translate3d(0,' + lerp(vh, beat.restY, e).toFixed(2) + 'px,0)'
+        : 'translate3d(0,0,0)';
     }
-    return { beats: beats };
+    return beats;
   }
 
   function bindSection(section) {
-    var threshold = parseFloat(section.getAttribute('data-ltf-slam-threshold') || '0.88');
-    if (!isFinite(threshold)) threshold = 0.88;
-
     var cardsHost =
       section.querySelector('.ltf-specs-vault-cards') ||
-      section.querySelector('[data-ltf-slam-cards]') ||
-      section;
+      section.querySelector('[data-ltf-slam-cards]');
+    if (!cardsHost) return;
+
     var cards = [
       section.querySelector('.ltf-spec-card-01'),
       section.querySelector('.ltf-spec-card-02'),
       section.querySelector('.ltf-spec-card-03'),
       section.querySelector('.ltf-spec-card-04'),
     ].filter(Boolean);
-    if (cards.length < 4) {
+    if (cards.length < 2) {
       cards = Array.prototype.slice.call(section.querySelectorAll('.ltf-spec-card'));
     }
     if (cards.length < 2) return;
 
     prepCards(cards);
     var overlay = createOverlay(cardsHost);
-
     var state = {
       wrap: overlay.wrap,
       canvas: overlay.canvas,
       ctx: overlay.ctx,
-      pad: overlay.pad,
       cssW: 0,
       cssH: 0,
       target: 0,
       current: 0,
-      lastT: 0,
+      fx: {}, // per-card smoothed sweep 0-1
       fired: {},
-      // active mist trails: { cardIndex, progress, targetProgress, box, strength }
-      trails: [],
+      puffs: [],
+      lastT: 0,
     };
 
     function sampleTarget() {
@@ -216,141 +307,63 @@
 
     function hardReset() {
       state.fired = {};
-      state.trails = [];
-      if (state.ctx && state.cssW) {
-        state.ctx.globalCompositeOperation = 'source-over';
-        state.ctx.filter = 'none';
-        state.ctx.clearRect(0, 0, state.cssW, state.cssH);
-      }
-    }
-
-    function triggerGasTrail(cardIndex) {
-      if (!resizeCanvas(state)) return;
-      var box = cardBox(state, cards[cardIndex]);
-      state.trails.push({
-        cardIndex: cardIndex,
-        progress: 0,
-        targetProgress: TRAIL_LOOPS,
-        box: box,
-        strength: cardIndex === cards.length - 1 ? 1.25 : 1,
-      });
-    }
-
-    function fireIfNeeded(beats) {
-      var i;
-      for (i = 0; i < beats.length; i++) {
-        if (!BEATS[i]) continue;
-        if (beats[i] < threshold || state.fired[i]) continue;
-        state.fired[i] = true;
-        triggerGasTrail(i);
-      }
-    }
-
-    function softClear(ctx) {
-      ctx.filter = 'none';
-      // Fade existing pixels (works on light grey vault — no painted slab)
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.fillStyle = 'rgba(0, 0, 0, ' + FADE_TAIL + ')';
-      ctx.fillRect(0, 0, state.cssW, state.cssH);
-      ctx.globalCompositeOperation = 'source-over';
-    }
-
-    function drawMistCore(ctx, x, y, strength, lifeFade) {
-      var a = strength * lifeFade;
-      ctx.globalCompositeOperation = 'screen';
-      try {
-        ctx.filter = 'blur(14px)';
-      } catch (e) {
-        /* older Safari */
-      }
-
-      // Layered volumetric mist — nebula tones
-      var g1 = ctx.createRadialGradient(x, y, 1.5, x, y, 42 * strength);
-      g1.addColorStop(0, rgba(CORE, 1 * a));
-      g1.addColorStop(0.22, rgba(BLEED_A, 0.7 * a));
-      g1.addColorStop(0.5, rgba(BLEED_B, 0.45 * a));
-      g1.addColorStop(0.75, rgba(BLEED_C, 0.22 * a));
-      g1.addColorStop(1, rgba(BLEED_D, 0));
-      ctx.fillStyle = g1;
-      ctx.beginPath();
-      ctx.arc(x, y, 52 * strength, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Secondary soft green/teal bleed
-      var g2 = ctx.createRadialGradient(x, y, 4, x, y, 70 * strength);
-      g2.addColorStop(0, rgba(BLEED_D, 0.35 * a));
-      g2.addColorStop(0.4, rgba(BLEED_C, 0.2 * a));
-      g2.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g2;
-      ctx.beginPath();
-      ctx.arc(x, y, 74 * strength, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.filter = 'none';
-    }
-
-    function updateTrails() {
-      if (!state.trails.length) return false;
-      var ctx = state.ctx;
-      softClear(ctx);
-
-      var next = [];
-      var i;
-      for (i = 0; i < state.trails.length; i++) {
-        var trail = state.trails[i];
-        // Refresh box each frame so slam transform stays aligned
-        trail.box = cardBox(state, cards[trail.cardIndex]);
-
-        // LERP glide along perimeter
-        trail.progress = lerp(trail.progress, trail.targetProgress, TRAIL_SPEED);
-        if (trail.targetProgress - trail.progress < 0.002) {
-          trail.progress = trail.targetProgress;
-        }
-
-        var lifeFade = 1;
-        if (trail.progress > trail.targetProgress - 0.25) {
-          lifeFade = clamp((trail.targetProgress - trail.progress) / 0.25, 0, 1);
-        }
-
-        var pt = perimeterPoint(trail.box, trail.progress);
-        drawMistCore(ctx, pt.x, pt.y, trail.strength, lifeFade);
-
-        if (trail.progress < trail.targetProgress - 0.0005 || lifeFade > 0.02) {
-          next.push(trail);
-        }
-      }
-      state.trails = next;
-
-      // When trails finish, fully clear residual mist
-      if (!state.trails.length) {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.filter = 'none';
-        ctx.clearRect(0, 0, state.cssW, state.cssH);
-      }
-      return true;
+      state.puffs = [];
+      state.fx = {};
+      if (state.ctx && state.cssW) state.ctx.clearRect(0, 0, state.cssW, state.cssH);
     }
 
     function frame(now) {
       if (!state.lastT) state.lastT = now;
+      var dt = clamp((now - state.lastT) / 1000, 0.001, 0.05);
       state.lastT = now;
 
       sampleTarget();
-      state.current = lerp(state.current, state.target, LERP);
-      if (Math.abs(state.current - state.target) < 0.0004) state.current = state.target;
+      state.current = lerp(state.current, state.target, SCROLL_LERP);
 
-      if (state.current < RESET_PROGRESS) {
-        if (Object.keys(state.fired).length || state.trails.length) hardReset();
+      if (state.current < RESET_AT) hardReset();
+
+      var beats = applyCards(cards, state.current, window.innerHeight || 800);
+
+      if (!resizeCanvas(state)) {
+        requestAnimationFrame(frame);
+        return;
       }
 
-      var vh = window.innerHeight || 800;
-      var applied = applyCards(cards, state.current, vh);
-      fireIfNeeded(applied.beats);
+      var ctx = state.ctx;
+      ctx.clearRect(0, 0, state.cssW, state.cssH);
+
+      var i;
+      for (i = 0; i < cards.length; i++) {
+        if (!BEATS[i]) continue;
+        var t = beats[i];
+        var key = String(i);
+        if (state.fx[key] == null) state.fx[key] = 0;
+        state.fx[key] = lerp(state.fx[key], t, FX_LERP);
+
+        var box = cardBox(state, cards[i]);
+        var sweep = state.fx[key];
+        var wrapAlpha = clamp(sweep * 1.2, 0, 1);
+        if (sweep > 0.03 && sweep < 0.98) {
+          drawWrap(ctx, box, sweep, now, wrapAlpha * 0.75);
+        }
+
+        if (t >= SLAM_AT && !state.fired[key]) {
+          state.fired[key] = true;
+          spawnPuff(state, box);
+        }
+      }
+
+      if (state.puffs.length) {
+        ctx.globalCompositeOperation = 'screen';
+        try {
+          ctx.filter = 'blur(8px)';
+        } catch (e) {}
+        drawPuffs(ctx, state, dt);
+        ctx.filter = 'none';
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
       section.style.setProperty('--ltf-vault-progress', state.current.toFixed(4));
-
-      if (resizeCanvas(state)) {
-        if (state.trails.length) updateTrails();
-      }
-
       requestAnimationFrame(frame);
     }
 
@@ -367,14 +380,13 @@
 
     sampleTarget();
     state.current = state.target;
-    applyCards(cards, state.current, window.innerHeight || 800);
     requestAnimationFrame(frame);
   }
 
   function init() {
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
     Array.prototype.forEach.call(nodes, function (el) {
-      var cs = window.getComputedStyle(el);
+      var cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') return;
       if (!el.querySelector('.ltf-spec-card-02, .ltf-spec-card')) return;
       if (el.dataset.ltfSlamBound === '1') return;
@@ -384,9 +396,6 @@
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
