@@ -41,10 +41,10 @@ On the **visible** Specs vault section:
 Replace the old `nebula-scroll-engine.js` line with:
 
 ```html
-<script defer src="https://raw.githubusercontent.com/Staylow-flow/lowtideflow-assets/COMMIT_SHA/js/nebula/nebula-slam-gas.js"></script>
+<script defer src="https://raw.githubusercontent.com/Staylow-flow/lowtideflow-assets/d1b2b99069d02a37a968e4e411db0df4c508ca47/js/nebula/nebula-slam-gas.js"></script>
 ```
 
-Use the latest commit SHA after this file is pushed (see repo `webflow/clean-slate-footer.html`).
+Pinned commit: `d1b2b99` (also mirrored in `webflow/clean-slate-footer.html`).
 
 ### 4) Dead space under Hero
 

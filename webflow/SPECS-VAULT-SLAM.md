@@ -10,8 +10,10 @@ The snippet looked for `#sliding-section-2`. That id **does not exist** on Clean
 **Pinned footer:**
 
 ```html
-<script defer src="https://raw.githubusercontent.com/Staylow-flow/lowtideflow-assets/3abba4969abd07292cdc23bd1fbd363d03d0280e/js/nebula/specs-vault-slam.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@1b8e05c/js/nebula/specs-vault-slam.js"></script>
 ```
+
+Pinned: `1b8e05c` (jsDelivr — do not use raw.githubusercontent; MIME blocks execution).
 
 ### Behavior
 - Progress 0→1 from Specs vault sticky scroll (`500vh` track)
@@ -19,7 +21,7 @@ The snippet looked for `#sliding-section-2`. That id **does not exist** on Clean
 - Card 02 slams in **0–35%**
 - Card 03 slams in **35–66%**
 - Card 04 slams in **66–100%**
-- Nebula gas bloom + particle burst when each card crosses slam threshold (~0.88 of its local beat)
+- Edge nebula leak behind the slamming card; fades ~1.7s; resets at vault top
 - Passive scroll + `requestAnimationFrame` + lerp (no per-pixel thrash)
 
 ### Vault attrs (already set)

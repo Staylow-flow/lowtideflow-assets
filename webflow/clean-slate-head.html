@@ -20,6 +20,46 @@
   - Click-pulse mirror (.ltf-btn-gradient-active) for JS footer script
 -->
 <style>
+  :root {
+    --site-max-width: 1400px;
+    --fluid-h1: clamp(2.5rem, 5vw, 4.5rem);
+    --fluid-padding: clamp(2rem, 4vw, 5rem);
+  }
+
+  /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
+  .ltf-site-cage,
+  .section-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: var(--site-max-width);
+    margin-right: auto;
+    margin-left: auto;
+    padding-left: var(--fluid-padding);
+    padding-right: var(--fluid-padding);
+    box-sizing: border-box;
+  }
+
+  .ltf-main-header,
+  .hero-h1 {
+    font-size: var(--fluid-h1);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Rock stays absolute inside the relative 1400px hero cage */
+  .ltf-hero > .ltf-site-cage {
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .ltf-site-cage > .hero-canvas-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+  }
+
   @keyframes ltf-nebula-gradient-shift {
     0%   { background-position: 0% 50%; }
     50%  { background-position: 100% 50%; }
@@ -151,6 +191,22 @@
 
   .ltf-nav-toggle-bar {
     transition: transform 0.25s ease, opacity 0.2s ease;
+    width: 22px;
+    height: 2px;
+    background-color: #FFFFFF;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .ltf-nav-inner > .ltf-nav-toggle.w-button {
+    padding: 0 !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #FFFFFF !important;
+    line-height: 1 !important;
+    font-size: 0 !important;
+    min-height: 44px !important;
+    box-shadow: none !important;
   }
 
   body.ltf-nav-open {
@@ -158,20 +214,112 @@
   }
 
   @media (max-width: 991px) {
-    .ltf-nav-logo {
+    .ltf-nav-inner {
+      display: grid !important;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      justify-content: unset;
+    }
+
+    .ltf-nav-toggle .ltf-nav-toggle-bar {
+      display: block !important;
+      flex-shrink: 0;
+      width: 22px !important;
+      height: 2px !important;
+      background-color: #FFFFFF !important;
+      border-radius: 1px !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .ltf-nav-inner > .ltf-nav-toggle {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+    }
+
+    /* Toggle must live OUTSIDE .ltf-nav-mobile-panel — panel is display:none when closed */
+    .ltf-nav-mobile-panel .ltf-nav-toggle {
       display: none !important;
     }
 
-    .ltf-nav-inner {
-      justify-content: flex-end;
+    .ltf-nav-toggle {
+      display: flex !important;
+      position: relative;
+      z-index: 102 !important;
+      grid-column: 3;
+      grid-row: 1;
+      justify-self: end;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      pointer-events: auto;
+    }
+
+    .ltf-nav-toggle .ltf-nav-toggle-bar {
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .ltf-nav-logo {
+      display: block !important;
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: center;
+      z-index: 1;
+      height: 21px;
+      width: auto;
+      max-width: 56.25vw;
+      object-fit: contain;
+      pointer-events: auto;
     }
 
     .ltf-hero .hero-canvas-wrapper {
       overflow: hidden;
     }
 
-    .ltf-nav-toggle {
-      display: flex !important;
+    .ltf-hero-logo {
+      display: none !important;
+    }
+
+    .ltf-hero-headline {
+      padding-left: 5% !important;
+      padding-right: 5% !important;
+      box-sizing: border-box !important;
+    }
+
+    .ltf-main-header {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    /* Hero CTA — keep gradient ring + filled state always active on mobile */
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+      background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+      background-size: 200% 200%;
+      animation: ltf-nebula-gradient-shift 3s linear infinite;
+      box-shadow:
+        0 0 16px rgba(77, 37, 157, 0.45),
+        0 0 28px rgba(31, 119, 129, 0.28);
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary.is-hero-cta {
+      background: #06142E !important;
+      background-color: #06142E !important;
+      border-color: transparent !important;
+      color: #FFFFFF !important;
+    }
+
+    .ltf-hero-bottom-bar {
+      text-align: center;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .ltf-nav-mobile-panel {
@@ -180,17 +328,22 @@
       top: 52px;
       left: 0;
       right: 0;
-      bottom: 0;
+      bottom: auto;
       z-index: 99;
       flex-direction: column;
       align-items: stretch;
+      justify-content: flex-start;
       gap: 0;
+      width: 100%;
+      height: auto;
+      max-height: none;
       padding: 28px clamp(20px, 5vw, 32px) 32px;
-      overflow-y: auto;
+      overflow: hidden;
       background: rgba(6, 20, 46, 0.97);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .ltf-site-nav.is-nav-open .ltf-nav-mobile-panel {
@@ -208,10 +361,11 @@
       width: 100%;
       margin: 0 0 28px;
       padding: 0;
+      flex-shrink: 0;
     }
 
     .ltf-nav-mobile-panel .ltf-nav-link {
-      font-size: 16px;
+      font-size: 19px;
       letter-spacing: 0.14em;
     }
 
@@ -224,6 +378,7 @@
       margin: 0;
       padding-top: 8px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
     }
 
     .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {

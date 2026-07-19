@@ -113,8 +113,17 @@
 
 /* ── Hero layout sync with preview ───────────────────────────────────── */
 .ltf-hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 640px;
   margin-top: -52px;
   overflow: hidden;
+}
+
+.ltf-3d-canvas-wrapper[data-ltf-rock] {
+  filter: none !important;
+  background: transparent !important;
 }
 
 .ltf-rock-stage,
