@@ -1,8 +1,8 @@
 /**
  * Lowtideflow — Specs Vault Slam + Gemini-style edge wrap
  *
- * Simple, tight FX (behind cards, max ~20px past white border):
- *   • While a card reveals on scroll → nebula gradient sweeps around the perimeter
+ * Per-card FX layer (behind that card only, max ~20px past white border):
+ *   • While a card reveals → nebula gradient sweeps around its perimeter
  *   • When it slams shut → small gas puff, fades ~0.9s
  *
  * Nebula: #4D259D #2AAAB8 #1F7781 #0B8050 #7040C0
@@ -23,9 +23,10 @@
   var FX_LERP = REDUCE.matches ? 1 : 0.18;
   var RESET_AT = 0.06;
   var SLAM_AT = 0.92;
-  var EDGE_OUT = 20; // max px past white border
-  var RING_W = 3.5;
+  var EDGE_OUT = 20;
+  var RING_W = 5.25; // +50% vs prior 3.5
   var PUFF_LIFE = 0.85;
+  var INT = 1.5; // depth / intensity boost
 
   var BEATS = [
     null,
@@ -62,49 +63,83 @@
     return clamp((progress - beat.start) / span, 0, 1);
   }
 
-  function createOverlay(host) {
-    var old = host.querySelector('.ltf-nebula-gas-layer');
-    if (old) old.remove();
-
-    var wrap = document.createElement('div');
-    wrap.className = 'ltf-nebula-gas-layer';
-    wrap.setAttribute('aria-hidden', 'true');
-    wrap.style.cssText =
-      'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;';
+  /** One canvas layer per animating card — sits directly under that card in the stack. */
+  function createCardLayer(host, layerZ) {
+    var layer = document.createElement('div');
+    layer.className = 'ltf-nebula-gas-layer';
+    layer.setAttribute('aria-hidden', 'true');
+    layer.setAttribute('data-ltf-card-fx', '');
+    layer.style.cssText =
+      'position:absolute;pointer-events:none;overflow:visible;z-index:' +
+      layerZ +
+      ';';
 
     var canvas = document.createElement('canvas');
     canvas.style.cssText = 'display:block;width:100%;height:100%;';
-    wrap.appendChild(canvas);
+    layer.appendChild(canvas);
+    host.appendChild(layer);
 
+    return {
+      wrap: layer,
+      canvas: canvas,
+      ctx: canvas.getContext('2d'),
+      cssW: 0,
+      cssH: 0,
+      puffs: [],
+    };
+  }
+
+  function prepHost(host) {
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     host.style.isolation = 'isolate';
     host.style.overflow = 'hidden';
-    host.insertBefore(wrap, host.firstChild);
-
-    return { wrap: wrap, canvas: canvas, ctx: canvas.getContext('2d') };
+    host.querySelectorAll('.ltf-nebula-gas-layer').forEach(function (el) {
+      el.remove();
+    });
   }
 
-  function resizeCanvas(state) {
-    var w = state.wrap.clientWidth;
-    var h = state.wrap.clientHeight;
+  function prepCards(cards, layers) {
+    var i;
+    for (i = 0; i < cards.length; i++) {
+      var cardZ = (i + 1) * 2;
+      cards[i].style.willChange = 'transform';
+      cards[i].style.transition = 'none';
+      cards[i].style.position = 'absolute';
+      cards[i].style.zIndex = String(cardZ);
+      if (layers[i]) layers[i].wrap.style.zIndex = String(cardZ - 1);
+    }
+  }
+
+  function syncLayer(host, layer, card) {
+    var hr = host.getBoundingClientRect();
+    var r = card.getBoundingClientRect();
+    var pad = EDGE_OUT;
+    layer.wrap.style.left = r.left - hr.left - pad + 'px';
+    layer.wrap.style.top = r.top - hr.top - pad + 'px';
+    layer.wrap.style.width = r.width + pad * 2 + 'px';
+    layer.wrap.style.height = r.height + pad * 2 + 'px';
+  }
+
+  function resizeLayer(layer) {
+    var w = layer.wrap.clientWidth;
+    var h = layer.wrap.clientHeight;
     if (w < 2 || h < 2) return false;
-    if (state.cssW === w && state.cssH === h) return true;
-    state.canvas.width = w;
-    state.canvas.height = h;
-    state.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    state.cssW = w;
-    state.cssH = h;
+    if (layer.cssW === w && layer.cssH === h) return true;
+    layer.canvas.width = w;
+    layer.canvas.height = h;
+    layer.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    layer.cssW = w;
+    layer.cssH = h;
     return true;
   }
 
-  function cardBox(state, card) {
-    var hr = state.wrap.getBoundingClientRect();
-    var r = card.getBoundingClientRect();
+  function localBox(layer) {
+    var pad = EDGE_OUT;
     return {
-      x: r.left - hr.left,
-      y: r.top - hr.top,
-      w: r.width,
-      h: r.height,
+      x: pad,
+      y: pad,
+      w: Math.max(8, layer.cssW - pad * 2),
+      h: Math.max(8, layer.cssH - pad * 2),
       r: 12,
     };
   }
@@ -120,11 +155,10 @@
     ctx.closePath();
   }
 
-  /** Gemini-style sweep: gradient arc grows with reveal progress. */
   function drawWrap(ctx, box, sweep, now, alpha) {
     if (sweep < 0.02 || alpha < 0.02) return;
 
-    var out = 6; // ring sits just outside white border; glow bleeds to ~20px
+    var out = 6;
     var x = box.x - out;
     var y = box.y - out;
     var w = box.w + out * 2;
@@ -135,15 +169,15 @@
 
     var shift = (now * 0.00025) % 1;
     var g = ctx.createLinearGradient(x, y, x + w, y + h);
-    g.addColorStop(0, rgba(C.purple, 0.95 * alpha));
-    g.addColorStop(0.25, rgba(C.teal, 0.95 * alpha));
-    g.addColorStop(0.5, rgba(C.green, 0.9 * alpha));
-    g.addColorStop(0.75, rgba(C.purpleM, 0.95 * alpha));
-    g.addColorStop(1, rgba(C.greenD, 0.85 * alpha));
+    g.addColorStop(0, rgba(C.purple, clamp(0.95 * alpha * INT, 0, 1)));
+    g.addColorStop(0.25, rgba(C.teal, clamp(0.95 * alpha * INT, 0, 1)));
+    g.addColorStop(0.5, rgba(C.green, clamp(0.9 * alpha * INT, 0, 1)));
+    g.addColorStop(0.75, rgba(C.purpleM, clamp(0.95 * alpha * INT, 0, 1)));
+    g.addColorStop(1, rgba(C.greenD, clamp(0.85 * alpha * INT, 0, 1)));
 
     ctx.save();
     try {
-      ctx.filter = 'blur(6px)';
+      ctx.filter = 'blur(9px)';
     } catch (e) {}
     ctx.globalCompositeOperation = 'screen';
     ctx.strokeStyle = g;
@@ -157,10 +191,9 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Tight inner ring (crisper edge)
     ctx.filter = 'none';
-    ctx.lineWidth = 2;
-    ctx.globalAlpha = alpha * 0.85;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = clamp(alpha * 0.85 * INT, 0, 1);
     roundRectPath(ctx, x + 1, y + 1, w - 2, h - 2, box.r + out - 1);
     ctx.setLineDash([len, peri + 1]);
     ctx.lineDashOffset = -shift * peri * 0.15;
@@ -169,18 +202,24 @@
     ctx.globalAlpha = 1;
     ctx.restore();
 
-    // Soft outer halo capped at ~20px
     var cx = box.x + box.w * 0.5;
     var cy = box.y + box.h * 0.5;
-    var hg = ctx.createRadialGradient(cx, cy, Math.min(box.w, box.h) * 0.35, cx, cy, Math.max(box.w, box.h) * 0.55 + EDGE_OUT);
+    var hg = ctx.createRadialGradient(
+      cx,
+      cy,
+      Math.min(box.w, box.h) * 0.35,
+      cx,
+      cy,
+      Math.max(box.w, box.h) * 0.55 + EDGE_OUT
+    );
     hg.addColorStop(0, rgba(C.teal, 0));
-    hg.addColorStop(0.55, rgba(C.purple, 0.08 * alpha * sweep));
+    hg.addColorStop(0.55, rgba(C.purple, clamp(0.12 * alpha * sweep * INT, 0, 0.35)));
     hg.addColorStop(1, rgba(C.purpleM, 0));
     ctx.fillStyle = hg;
     ctx.fillRect(box.x - EDGE_OUT, box.y - EDGE_OUT, box.w + EDGE_OUT * 2, box.h + EDGE_OUT * 2);
   }
 
-  function spawnPuff(state, box) {
+  function spawnPuff(layer, box) {
     var cx = box.x + box.w * 0.5;
     var cy = box.y + box.h * 0.5;
     var hw = box.w * 0.5;
@@ -206,14 +245,14 @@
         rgb: i % 2 ? C.teal : C.purple,
       });
     }
-    state.puffs.push({ parts: parts, started: performance.now() });
+    layer.puffs.push({ parts: parts, started: performance.now() });
   }
 
-  function drawPuffs(ctx, state, dt) {
+  function drawPuffs(ctx, layer, dt) {
     var next = [];
     var p;
-    for (p = 0; p < state.puffs.length; p++) {
-      var puff = state.puffs[p];
+    for (p = 0; p < layer.puffs.length; p++) {
+      var puff = layer.puffs[p];
       var elapsed = (performance.now() - puff.started) / 1000;
       if (elapsed > PUFF_LIFE) continue;
 
@@ -234,23 +273,13 @@
         var t = pt.age / pt.life;
         var a = (1 - t) * fade;
         ctx.beginPath();
-        ctx.fillStyle = rgba(pt.rgb, 0.45 * a);
+        ctx.fillStyle = rgba(pt.rgb, clamp(0.675 * a, 0, 1));
         ctx.arc(pt.x, pt.y, pt.r * (1 + t * 0.6), 0, Math.PI * 2);
         ctx.fill();
       }
       if (alive > 0 || fade > 0.05) next.push(puff);
     }
-    state.puffs = next;
-  }
-
-  function prepCards(cards) {
-    var i;
-    for (i = 0; i < cards.length; i++) {
-      cards[i].style.willChange = 'transform';
-      cards[i].style.transition = 'none';
-      cards[i].style.position = 'absolute';
-      cards[i].style.zIndex = String(20 + i);
-    }
+    layer.puffs = next;
   }
 
   function applyCards(cards, progress, vh) {
@@ -285,19 +314,21 @@
     }
     if (cards.length < 2) return;
 
-    prepCards(cards);
-    var overlay = createOverlay(cardsHost);
+    prepHost(cardsHost);
+
+    var layers = [];
+    var i;
+    for (i = 0; i < cards.length; i++) {
+      layers[i] = BEATS[i] ? createCardLayer(cardsHost, (i + 1) * 2 - 1) : null;
+    }
+    prepCards(cards, layers);
+
     var state = {
-      wrap: overlay.wrap,
-      canvas: overlay.canvas,
-      ctx: overlay.ctx,
-      cssW: 0,
-      cssH: 0,
+      host: cardsHost,
       target: 0,
       current: 0,
-      fx: {}, // per-card smoothed sweep 0-1
+      fx: {},
       fired: {},
-      puffs: [],
       lastT: 0,
     };
 
@@ -307,9 +338,12 @@
 
     function hardReset() {
       state.fired = {};
-      state.puffs = [];
       state.fx = {};
-      if (state.ctx && state.cssW) state.ctx.clearRect(0, 0, state.cssW, state.cssH);
+      for (i = 0; i < layers.length; i++) {
+        if (!layers[i]) continue;
+        layers[i].puffs = [];
+        if (layers[i].cssW) layers[i].ctx.clearRect(0, 0, layers[i].cssW, layers[i].cssH);
+      }
     }
 
     function frame(now) {
@@ -319,48 +353,46 @@
 
       sampleTarget();
       state.current = lerp(state.current, state.target, SCROLL_LERP);
-
       if (state.current < RESET_AT) hardReset();
 
       var beats = applyCards(cards, state.current, window.innerHeight || 800);
 
-      if (!resizeCanvas(state)) {
-        requestAnimationFrame(frame);
-        return;
-      }
-
-      var ctx = state.ctx;
-      ctx.clearRect(0, 0, state.cssW, state.cssH);
-
-      var i;
       for (i = 0; i < cards.length; i++) {
-        if (!BEATS[i]) continue;
+        var layer = layers[i];
+        if (!layer || !BEATS[i]) continue;
+
+        syncLayer(cardsHost, layer, cards[i]);
+        if (!resizeLayer(layer)) continue;
+
         var t = beats[i];
         var key = String(i);
         if (state.fx[key] == null) state.fx[key] = 0;
         state.fx[key] = lerp(state.fx[key], t, FX_LERP);
 
-        var box = cardBox(state, cards[i]);
+        var ctx = layer.ctx;
+        ctx.clearRect(0, 0, layer.cssW, layer.cssH);
+
+        var box = localBox(layer);
         var sweep = state.fx[key];
-        var wrapAlpha = clamp(sweep * 1.2, 0, 1);
+        var wrapAlpha = clamp(sweep * 1.2 * INT, 0, 1);
         if (sweep > 0.03 && sweep < 0.98) {
-          drawWrap(ctx, box, sweep, now, wrapAlpha * 0.75);
+          drawWrap(ctx, box, sweep, now, wrapAlpha);
         }
 
         if (t >= SLAM_AT && !state.fired[key]) {
           state.fired[key] = true;
-          spawnPuff(state, box);
+          spawnPuff(layer, box);
         }
-      }
 
-      if (state.puffs.length) {
-        ctx.globalCompositeOperation = 'screen';
-        try {
-          ctx.filter = 'blur(8px)';
-        } catch (e) {}
-        drawPuffs(ctx, state, dt);
-        ctx.filter = 'none';
-        ctx.globalCompositeOperation = 'source-over';
+        if (layer.puffs.length) {
+          ctx.globalCompositeOperation = 'screen';
+          try {
+            ctx.filter = 'blur(12px)';
+          } catch (e) {}
+          drawPuffs(ctx, layer, dt);
+          ctx.filter = 'none';
+          ctx.globalCompositeOperation = 'source-over';
+        }
       }
 
       section.style.setProperty('--ltf-vault-progress', state.current.toFixed(4));
@@ -371,8 +403,12 @@
     window.addEventListener(
       'resize',
       function () {
-        state.cssW = 0;
-        state.cssH = 0;
+        for (i = 0; i < layers.length; i++) {
+          if (layers[i]) {
+            layers[i].cssW = 0;
+            layers[i].cssH = 0;
+          }
+        }
         sampleTarget();
       },
       { passive: true }
