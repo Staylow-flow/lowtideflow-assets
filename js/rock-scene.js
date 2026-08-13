@@ -3,8 +3,9 @@
  *
  * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
  *             palette with transparent dark voids, wispy tendrils, dense cores.
- * Foreground: boulder-hematite-spline-v1.gltf — centered, autonomous idle oscillation,
- *             scroll tumble + idle oscillation only (mouse hover nudge disabled).
+ * Foreground: boulder-hematite-optimized-v2.glb — quantized geometry, GPU triplanar
+ *             hematite texture, and a Three.js light rig standing in for Spline's.
+ *             Scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
  * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
  */
@@ -13,13 +14,17 @@ import * as THREE from 'https://esm.sh/three@0.165.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@0fd4582/boulder-3d-assets/boulder-hematite-spline-v1.gltf';
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-hematite-optimized-v2.glb';
 const DEFAULT_TEXTURE_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@0fd4582/boulder-3d-assets/boulder-texture-raw-02.avif';
-const ROCK_TEXTURE_REPEAT = 2.4;
-const ROCK_BUMP_SCALE     = 0.045;
-const ROCK_ROUGHNESS      = 0.38;
-const ROCK_METALNESS      = 0.24;
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-texture-raw-02.avif';
+
+/* Triplanar tiling is expressed in repeats across the rock's longest axis. */
+const ROCK_TEXTURE_REPEAT   = 2.4;
+/* Blend exponent — higher keeps each projection flatter and shrinks the seam band. */
+const ROCK_TRIPLANAR_SHARPNESS = 6.0;
+const ROCK_BUMP_SCALE       = 0.9;
+const ROCK_ROUGHNESS        = 0.52;
+const ROCK_METALNESS        = 0.22;
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
@@ -729,17 +734,91 @@ function configureRockTexture(tex) {
   return tex;
 }
 
-/** PBR finish — diffuse + subtle bump from same map for divot highlights. */
-function finishRockMaterial(material, tex) {
-  const mats = Array.isArray(material) ? material : [material];
+/**
+ * Blend all three world-axis projections of the map in the fragment shader.
+ *
+ * The Spline export carries no UVs. Choosing one projection axis per vertex (the
+ * previous approach) smears the texture across every triangle whose vertices
+ * disagree about the dominant axis, which is what made the rock look plastic.
+ * Sampling all three and weighting by the normal removes those seams entirely.
+ *
+ * Coordinates are object-space so the grain stays locked to the rock as it tumbles.
+ * `axisScale` undoes KHR_mesh_quantization: quantized positions arrive in int16
+ * units stretched differently per axis, so both the sample coordinates and the
+ * blend normal have to be returned to model units before projecting.
+ */
+function applyTriplanarMapping(material, axisScale, repeatScale) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTriAxisScale = { value: axisScale };
+    shader.uniforms.uTriScale     = { value: repeatScale };
+    shader.uniforms.uTriSharpness = { value: ROCK_TRIPLANAR_SHARPNESS };
+    shader.uniforms.uTriBumpScale = { value: ROCK_BUMP_SCALE };
+
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vTriPos;
+        varying vec3 vTriNrm;
+        uniform vec3 uTriAxisScale;`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vTriPos = position * uTriAxisScale;
+        vTriNrm = normalize(normal / uTriAxisScale);`);
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vTriPos;
+        varying vec3 vTriNrm;
+        uniform float uTriScale;
+        uniform float uTriSharpness;
+        uniform float uTriBumpScale;
+        float ltfTriHeight;
+        vec2 ltfTriDHdxy() {
+          return vec2(dFdx(ltfTriHeight), dFdy(ltfTriHeight)) * uTriBumpScale;
+        }`)
+      .replace('#include <map_fragment>', `
+        #ifdef USE_MAP
+          vec3 triW = pow(abs(normalize(vTriNrm)), vec3(uTriSharpness));
+          triW /= max(triW.x + triW.y + triW.z, 1e-4);
+          vec4 triCol = texture2D(map, vTriPos.zy * uTriScale) * triW.x
+                      + texture2D(map, vTriPos.xz * uTriScale) * triW.y
+                      + texture2D(map, vTriPos.xy * uTriScale) * triW.z;
+          ltfTriHeight = dot(triCol.rgb, vec3(0.2126, 0.7152, 0.0722));
+          diffuseColor *= triCol;
+        #endif`)
+      /* Reuse Three's own chunk rather than replacing it, so perturbNormalArb and
+         the clearcoat branches survive; only the height source is swapped for the
+         triplanar one blended above. */
+      .replace(
+        '#include <normal_fragment_maps>',
+        THREE.ShaderChunk.normal_fragment_maps.replaceAll('dHdxy_fwd()', 'ltfTriDHdxy()'),
+      );
+  };
+  /* Keep these injections in their own program slot. */
+  material.customProgramCacheKey = () => 'ltf-rock-triplanar';
+}
+
+/** PBR finish — diffuse + bump driven by the same triplanar sample. */
+function finishRockMaterial(mesh, tex) {
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+
+  const s = mesh.scale;
+  const axisScale = new THREE.Vector3(
+    Math.abs(s.x) > 1e-9 ? s.x : 1,
+    Math.abs(s.y) > 1e-9 ? s.y : 1,
+    Math.abs(s.z) > 1e-9 ? s.z : 1,
+  );
+
+  mesh.geometry.computeBoundingBox();
+  const size = mesh.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(axisScale);
+  const longest = Math.max(Math.abs(size.x), Math.abs(size.y), Math.abs(size.z), 1e-6);
+
   for (const m of mats) {
     if (!m) continue;
     solidifyRockMaterial(m);
-    if (tex) {
-      m.map = tex;
-      m.bumpMap = tex;
-      m.bumpScale = ROCK_BUMP_SCALE;
-    }
+    if (!tex) continue;
+    m.map       = tex;
+    m.bumpMap   = tex;
+    m.bumpScale = ROCK_BUMP_SCALE;
+    applyTriplanarMapping(m, axisScale, ROCK_TEXTURE_REPEAT / longest);
     m.needsUpdate = true;
   }
 }
@@ -770,48 +849,11 @@ function buildRockModelFromGltf(gltf) {
   return model;
 }
 
-/** Spline exports often omit UVs — project world-space triplanar coords for external textures. */
-function ensureTriplanarUVs(geometry, repeat = ROCK_TEXTURE_REPEAT) {
-  if (geometry.getAttribute('uv')) return;
-  const pos = geometry.getAttribute('position');
-  const normal = geometry.getAttribute('normal');
-  if (!pos || !normal) return;
-
-  geometry.computeBoundingBox();
-  const size = new THREE.Vector3();
-  geometry.boundingBox.getSize(size);
-  const invMax = repeat / Math.max(size.x, size.y, size.z, 0.001);
-
-  const uvs = new Float32Array(pos.count * 2);
-  for (let i = 0; i < pos.count; i++) {
-    const nx = Math.abs(normal.getX(i));
-    const ny = Math.abs(normal.getY(i));
-    const nz = Math.abs(normal.getZ(i));
-    let u;
-    let v;
-    if (nx >= ny && nx >= nz) {
-      u = pos.getZ(i) * invMax;
-      v = pos.getY(i) * invMax;
-    } else if (ny >= nz) {
-      u = pos.getX(i) * invMax;
-      v = pos.getZ(i) * invMax;
-    } else {
-      u = pos.getX(i) * invMax;
-      v = pos.getY(i) * invMax;
-    }
-    uvs[i * 2] = u;
-    uvs[i * 2 + 1] = v;
-  }
-  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-}
-
 function applyRockTexture(root, tex) {
-  if (!tex) return;
-  configureRockTexture(tex);
+  if (tex) configureRockTexture(tex);
   root.traverse((child) => {
     if (!child.isMesh || !child.geometry || !child.material) return;
-    ensureTriplanarUVs(child.geometry);
-    finishRockMaterial(child.material, tex);
+    finishRockMaterial(child, tex);
   });
 }
 
@@ -821,9 +863,6 @@ function applyRockTexture(root, tex) {
 class RockScene {
   constructor(container) {
     this.container = container;
-    this.useSplineRock = container.hasAttribute('data-spline-scene');
-    this._splineYaw = 0;
-    this._splinePitch = 0;
     this.modelUrl  = container.getAttribute('data-model-url') || DEFAULT_MODEL_URL;
     this.textureUrl = container.getAttribute('data-rock-texture-url') || DEFAULT_TEXTURE_URL;
 
@@ -868,18 +907,8 @@ class RockScene {
     this._initRenderer();
     this._initScenes();
     this._initNebula();
-    if (this.useSplineRock) {
-      this._onSplineMotion = (e) => {
-        this._splineYaw = e.detail?.yaw ?? 0;
-        this._splinePitch = e.detail?.pitch ?? 0;
-      };
-      window.addEventListener('ltf-spline-rock-motion', this._onSplineMotion);
-      this._bootSplineLayer();
-      this._scheduleSplineFallback();
-    } else {
-      this._initLights();
-      this._loadModel();
-    }
+    this._initLights();
+    this._loadModel();
     this._bindEvents();
     this._onResize();
 
@@ -889,26 +918,6 @@ class RockScene {
     this._active = false;
     this._observeVisibility();
     this._syncActive();
-  }
-
-  /* ── Spline runtime bootstrap (data-spline-scene heroes) ───────────────── */
-  _bootSplineLayer() {
-    const url = new URL('./spline-boulder.js', import.meta.url).href;
-    import(url).catch((err) => {
-      console.error('[LTF Rock] spline-boulder.js failed to load — boulder will be empty.', url, err);
-    });
-  }
-
-  _scheduleSplineFallback() {
-    this._splineFallbackTimer = window.setTimeout(() => {
-      const hasSpline = this.container.__ltfSpline
-        || this.container.querySelector('canvas.ltf-spline-canvas');
-      if (hasSpline || !this.useSplineRock) return;
-      console.warn('[LTF Rock] Spline boulder did not load — falling back to GLTF.');
-      this.useSplineRock = false;
-      this._initLights();
-      this._loadModel();
-    }, 4500);
   }
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
@@ -1069,19 +1078,62 @@ class RockScene {
     this.fgNebulaUni = fgMat.uniforms;
   }
 
-  /* ── Rock lighting — key top-left, 25% rim behind, teal fill bottom-right ─ */
-  _initLights() {
-    this.scene.add(new THREE.AmbientLight(0xf4f6fa, 0.42));
+  /**
+   * Hematite is semi-metallic, and a metal with nothing to reflect renders black —
+   * that is what made earlier GLTF builds look dead next to the Spline scene.
+   * Bake a small sky/horizon/ground gradient into an IBL so the rock has an
+   * environment to pick up. 32x16 costs nothing to build and never hits the network.
+   */
+  _initEnvironment() {
+    const W = 32;
+    const H = 16;
+    const sky     = new THREE.Color(0x9db9d6);
+    const horizon = new THREE.Color(0x2b3550);
+    const ground  = new THREE.Color(0x0b0a12);
 
-    const key = new THREE.DirectionalLight(0xffffff, 2.85);
+    const data = new Float32Array(W * H * 4);
+    const c = new THREE.Color();
+    for (let y = 0; y < H; y++) {
+      const t = y / (H - 1);
+      if (t < 0.5) c.copy(sky).lerp(horizon, t / 0.5);
+      else         c.copy(horizon).lerp(ground, (t - 0.5) / 0.5);
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        data[i] = c.r; data[i + 1] = c.g; data[i + 2] = c.b; data[i + 3] = 1;
+      }
+    }
+
+    const src = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType);
+    src.mapping = THREE.EquirectangularReflectionMapping;
+    src.needsUpdate = true;
+
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this._envMap = pmrem.fromEquirectangular(src).texture;
+    this.scene.environment = this._envMap;
+    this.scene.environmentIntensity = 0.9;
+    pmrem.dispose();
+    src.dispose();
+  }
+
+  /* ── Rock lighting — cool key top-left, rim behind, teal bounce bottom-right ─ */
+  _initLights() {
+    this._initEnvironment();
+
+    /* Sky/ground wash on top of the IBL, keeping shadowed faces from crushing. */
+    this.scene.add(new THREE.HemisphereLight(0xbcd2e8, 0x14101c, 0.45));
+
+    /* Key — Spline's export favoured a cool blue-white, so match that tone. */
+    const key = new THREE.DirectionalLight(0xdbe5f2, 3.0);
     key.position.set(-5.5, 7.5, 5.5);
     this.scene.add(key);
 
-    const rim = new THREE.DirectionalLight(0xffffff, 0.72);
-    rim.position.set(0.5, 3.0, -7.5);
+    /* Rim from behind — separates the silhouette from the nebula. */
+    const rim = new THREE.DirectionalLight(0xffffff, 1.15);
+    rim.position.set(1.2, 2.6, -7.5);
     this.scene.add(rim);
 
-    const fill = new THREE.DirectionalLight(0x3ecfb8, 0.48);
+    /* Brand teal bounce from the lower right. */
+    const fill = new THREE.DirectionalLight(0x3ecfb8, 0.55);
     fill.position.set(6.5, -4.5, 5.0);
     this.scene.add(fill);
   }
@@ -1117,12 +1169,7 @@ class RockScene {
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
 
-        model.traverse((child) => {
-          if (!child.isMesh || !child.geometry || !child.material) return;
-          ensureTriplanarUVs(child.geometry);
-          if (tex) finishRockMaterial(child.material, tex);
-          else solidifyRockMaterial(child.material);
-        });
+        applyRockTexture(model, tex);
 
         model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
@@ -1272,10 +1319,9 @@ class RockScene {
     }
 
     /* ── Nebula — lags rock 0.3 s, coasts 2–4 s with ease-out ───────────── */
-    const motionSource = this.rockGroup || this.useSplineRock;
-    if (motionSource) {
-      const rockYaw   = this.rockGroup ? this.rockGroup.rotation.y : this._splineYaw;
-      const rockPitch = this.rockGroup ? this.rockGroup.rotation.x : this._splinePitch;
+    if (this.rockGroup) {
+      const rockYaw   = this.rockGroup.rotation.y;
+      const rockPitch = this.rockGroup.rotation.x;
       const gasLag    = lagAlpha(dt, GAS_FOLLOW_DELAY_MS);
 
       this.nebulaYawDelayed   += (rockYaw   - this.nebulaYawDelayed)   * gasLag;
@@ -1319,14 +1365,14 @@ class RockScene {
       this.fgNebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
     }
 
-    if (this.rockGroup) this.rockGroup.visible = layers.rock && !this.useSplineRock;
+    if (this.rockGroup) this.rockGroup.visible = layers.rock;
 
     /* ── Three-pass render: behind FG → rock → front FG ──────────────────── */
     this.renderer.clear();
     if (layers.behind) {
       this.renderer.render(this.bgScene, this.bgCamera);
     }
-    if (layers.rock && !this.useSplineRock) {
+    if (layers.rock) {
       this.renderer.clearDepth();
       this.renderer.render(this.scene, this.camera);
     }
@@ -1361,13 +1407,10 @@ class RockScene {
     if (this._onVisibilityFn) {
       document.removeEventListener('visibilitychange', this._onVisibilityFn);
     }
-    if (this._splineFallbackTimer) clearTimeout(this._splineFallbackTimer);
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);
     window.removeEventListener('wheel',       this._onWheelFn);
-    if (this._onSplineMotion) {
-      window.removeEventListener('ltf-spline-rock-motion', this._onSplineMotion);
-    }
+    this._envMap?.dispose();
     if (this._onMouseFn) window.removeEventListener('mousemove', this._onMouseFn);
     const el = this.renderer.domElement;
     if (el.parentNode) el.parentNode.removeChild(el);
