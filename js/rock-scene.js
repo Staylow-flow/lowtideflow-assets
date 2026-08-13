@@ -17,6 +17,9 @@ const DEFAULT_MODEL_URL =
 const DEFAULT_TEXTURE_URL =
   'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@0fd4582/boulder-3d-assets/boulder-texture-raw-02.avif';
 const ROCK_TEXTURE_REPEAT = 2.4;
+const ROCK_BUMP_SCALE     = 0.045;
+const ROCK_ROUGHNESS      = 0.38;
+const ROCK_METALNESS      = 0.24;
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
@@ -711,10 +714,46 @@ function solidifyRockMaterial(material) {
     m.opacity = 1;
     m.depthWrite = true;
     m.alphaTest = 0;
-    if (m.color) m.color.setRGB(m.color.r, m.color.g, m.color.b);
-    m.roughness = clamp((m.roughness ?? 0.8) - 0.12, 0.05, 1.0);
-    m.metalness = clamp((m.metalness ?? 0.0) + 0.18, 0.0, 1.0);
+    if (m.color) m.color.setRGB(1, 1, 1);
+    m.roughness = ROCK_ROUGHNESS;
+    m.metalness = ROCK_METALNESS;
     m.needsUpdate = true;
+  }
+}
+
+function configureRockTexture(tex) {
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+/** PBR finish — diffuse + subtle bump from same map for divot highlights. */
+function finishRockMaterial(material, tex) {
+  const mats = Array.isArray(material) ? material : [material];
+  for (const m of mats) {
+    if (!m) continue;
+    solidifyRockMaterial(m);
+    if (tex) {
+      m.map = tex;
+      m.bumpMap = tex;
+      m.bumpScale = ROCK_BUMP_SCALE;
+    }
+    m.needsUpdate = true;
+  }
+}
+
+function preloadRockAssets(modelUrl, textureUrl) {
+  if (typeof document === 'undefined') return;
+  for (const [url, as] of [[modelUrl, 'fetch'], [textureUrl, 'image']]) {
+    if (!url) continue;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = as;
+    link.href = url;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
   }
 }
 
@@ -766,25 +805,13 @@ function ensureTriplanarUVs(geometry, repeat = ROCK_TEXTURE_REPEAT) {
   geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 }
 
-function applyRockTexture(root, url) {
-  if (!url) return Promise.resolve();
-  const loader = new THREE.TextureLoader();
-  return loader.loadAsync(url).then((tex) => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    root.traverse((child) => {
-      if (!child.isMesh || !child.geometry || !child.material) return;
-      ensureTriplanarUVs(child.geometry);
-      const mats = Array.isArray(child.material) ? child.material : [child.material];
-      for (const m of mats) {
-        m.map = tex;
-        if (m.color) m.color.setRGB(1, 1, 1);
-        m.needsUpdate = true;
-      }
-    });
-  }).catch((err) => {
-    console.error('[LTF Rock] Failed to load rock texture:', url, err);
+function applyRockTexture(root, tex) {
+  if (!tex) return;
+  configureRockTexture(tex);
+  root.traverse((child) => {
+    if (!child.isMesh || !child.geometry || !child.material) return;
+    ensureTriplanarUVs(child.geometry);
+    finishRockMaterial(child.material, tex);
   });
 }
 
@@ -872,7 +899,7 @@ class RockScene {
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping      = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
+    this.renderer.toneMappingExposure = 1.18;
     this.renderer.autoClear = false;
     if (!rendererOpts.canvas) {
       this.container.appendChild(this.renderer.domElement);
@@ -1006,37 +1033,42 @@ class RockScene {
     this.fgNebulaUni = fgMat.uniforms;
   }
 
-  /* ── Iridescent rock lighting ─────────────────────────────────────────── */
+  /* ── Rock lighting — key top-left, 25% rim behind, teal fill bottom-right ─ */
   _initLights() {
-    this.scene.add(new THREE.AmbientLight(0x0d1520, 0.50));
+    this.scene.add(new THREE.AmbientLight(0xf4f6fa, 0.42));
 
-    const key = new THREE.DirectionalLight(0xd8e0f0, 1.35);
-    key.position.set(3, 5, 4);
+    const key = new THREE.DirectionalLight(0xffffff, 2.85);
+    key.position.set(-5.5, 7.5, 5.5);
     this.scene.add(key);
 
-    const teal = new THREE.PointLight(0x1f7781, 3.15, 24);
-    teal.position.set(-7, 2, 6);
-    this.scene.add(teal);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.72);
+    rim.position.set(0.5, 3.0, -7.5);
+    this.scene.add(rim);
 
-    const purple = new THREE.PointLight(0x4d259d, 2.70, 20);
-    purple.position.set(7, -1, -6);
-    this.scene.add(purple);
-
-    const green = new THREE.PointLight(0x0b8050, 1.80, 16);
-    green.position.set(-2, -8, 3);
-    this.scene.add(green);
+    const fill = new THREE.DirectionalLight(0x3ecfb8, 0.48);
+    fill.position.set(6.5, -4.5, 5.0);
+    this.scene.add(fill);
   }
 
-  /* ── GLTF/GLB loader ─────────────────────────────────────────────────────── */
+  /* ── GLTF/GLB loader — parallel mesh + texture, reveal when both ready ─── */
   _loadModel() {
-    const loader = new GLTFLoader();
-    loader.load(
-      this.modelUrl,
+    preloadRockAssets(this.modelUrl, this.textureUrl);
 
-      (gltf) => {
+    const gltfLoader = new GLTFLoader();
+    const texLoader = new THREE.TextureLoader();
+    texLoader.setCrossOrigin('anonymous');
+
+    const gltfP = new Promise((resolve, reject) => {
+      gltfLoader.load(this.modelUrl, resolve, undefined, reject);
+    });
+    const texP = this.textureUrl
+      ? texLoader.loadAsync(this.textureUrl)
+      : Promise.resolve(null);
+
+    Promise.all([gltfP, texP])
+      .then(([gltf, tex]) => {
         const model = buildRockModelFromGltf(gltf);
 
-        /* Scale to target size */
         const box    = new THREE.Box3().setFromObject(model);
         const size   = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
@@ -1044,37 +1076,28 @@ class RockScene {
         const longestDim = Math.max(size.x, size.y, size.z, 0.001);
         const scale = ROCK_SCALE_BASE / longestDim;
         model.scale.setScalar(scale);
-
-        /* Re-centre the model on the group origin */
         model.position.copy(center.negate().multiplyScalar(scale));
 
-        /* After centering, apply a corrective X offset to counter visual
-           asymmetry in the boulder mesh. Adjust ROCK_X_CORRECT if needed. */
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
 
         model.traverse((child) => {
-          if (!child.isMesh || !child.material) return;
-          solidifyRockMaterial(child.material);
+          if (!child.isMesh || !child.geometry || !child.material) return;
+          ensureTriplanarUVs(child.geometry);
+          if (tex) finishRockMaterial(child.material, tex);
+          else solidifyRockMaterial(child.material);
         });
 
         model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
         this.rockGroup.visible = layerVisibility().rock;
 
-        const textureUrl = this.textureUrl;
-        applyRockTexture(model, textureUrl);
-
         const lv = layerVisibility();
-        console.log('[LTF Rock] loaded | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front, '| model:', this.modelUrl);
-      },
-
-      undefined,
-
-      (err) => {
-        console.error('[LTF Rock] Failed to load model:', this.modelUrl, err);
-      }
-    );
+        console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
+      })
+      .catch((err) => {
+        console.error('[LTF Rock] Failed to load model/texture:', err);
+      });
   }
 
   /* ── Events ─────────────────────────────────────────────────────────────── */
