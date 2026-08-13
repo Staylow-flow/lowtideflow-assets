@@ -120,11 +120,13 @@ class SplineBoulder {
       const { Application } = await import(`${this.baseUrl}/runtime.js`);
       this.app = new Application(this.canvas);
       await this.app.load(this.sceneUrl);
-      this.app.setBackgroundColor('transparent');
+      this.app.setBackgroundColor('rgba(0,0,0,0)');
 
       this.rock = findRockObject(this.app);
       if (!this.rock) {
         console.warn('[LTF Spline] No rock object found. Expected one of:', ROCK_OBJECT_NAMES.join(', '));
+      } else {
+        console.log('[LTF Spline] rock object:', this.rock.name || '(unnamed)');
       }
 
       this.canvas.style.transition = 'opacity 0.45s ease';

@@ -874,6 +874,7 @@ class RockScene {
         this._splinePitch = e.detail?.pitch ?? 0;
       };
       window.addEventListener('ltf-spline-rock-motion', this._onSplineMotion);
+      this._bootSplineLayer();
     } else {
       this._initLights();
       this._loadModel();
@@ -884,6 +885,14 @@ class RockScene {
     this._frameBound = this._tick.bind(this);
     this.running = true;
     this.raf = requestAnimationFrame(this._frameBound);
+  }
+
+  /* ── Spline runtime bootstrap (data-spline-scene heroes) ───────────────── */
+  _bootSplineLayer() {
+    const url = new URL('./spline-boulder.js', import.meta.url).href;
+    import(url).catch((err) => {
+      console.error('[LTF Rock] spline-boulder.js failed to load — boulder will be empty.', url, err);
+    });
   }
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
