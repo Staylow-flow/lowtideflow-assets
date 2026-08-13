@@ -13,7 +13,7 @@ import * as THREE from 'https://esm.sh/three@0.165.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/boulder-hematite-spline-v1.glb';
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@b97b4fc/boulder-hematite-spline-v1.glb';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
