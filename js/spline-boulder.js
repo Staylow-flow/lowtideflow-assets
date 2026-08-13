@@ -6,7 +6,7 @@
  */
 
 const DEFAULT_SPLINE_BASE =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/boulder-3d-assets/spline-bundle';
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@6cb901e/boulder-3d-assets/spline-bundle';
 
 const ROCK_OBJECT_NAMES = ['Dodecahedron', 'Boulder', 'Rock'];
 const SCROLL_ROT_DOWN = 0.42;
