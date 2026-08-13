@@ -557,7 +557,7 @@ const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
-const ROCK_SCALE_BASE      = 12.936 * 1.25;  /* +25% rock size */
+const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15;  /* +25% base, +15% hero tune */
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
@@ -622,7 +622,7 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   gasInner:         0.26,   /* soft full-body halo, not tight core blob */
   edgeWarp:         0.20,
   alphaScale:       1.0,
-  rockLiftPx:       100,
+  rockLiftPx:       150,
   widthTighten:     0.96,   /* stop squeezing width — let glow spread */
   topYFactor:       0.94,   /* extend above rock for nav clearance */
   topFadeStart:     0.80,
@@ -875,6 +875,7 @@ class RockScene {
       };
       window.addEventListener('ltf-spline-rock-motion', this._onSplineMotion);
       this._bootSplineLayer();
+      this._scheduleSplineFallback();
     } else {
       this._initLights();
       this._loadModel();
@@ -893,6 +894,18 @@ class RockScene {
     import(url).catch((err) => {
       console.error('[LTF Rock] spline-boulder.js failed to load — boulder will be empty.', url, err);
     });
+  }
+
+  _scheduleSplineFallback() {
+    this._splineFallbackTimer = window.setTimeout(() => {
+      const hasSpline = this.container.__ltfSpline
+        || this.container.querySelector('canvas.ltf-spline-canvas');
+      if (hasSpline || !this.useSplineRock) return;
+      console.warn('[LTF Rock] Spline boulder did not load — falling back to GLTF.');
+      this.useSplineRock = false;
+      this._initLights();
+      this._loadModel();
+    }, 4500);
   }
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
@@ -983,7 +996,7 @@ class RockScene {
     if (this.camera) {
       this.camera.position.z = mobileCameraZ(vw);
     }
-    this.rockLiftPx = mobile ? 72 : GAS_LOCKED_BOUNDS.rockLiftPx;
+    this.rockLiftPx = mobile ? 122 : GAS_LOCKED_BOUNDS.rockLiftPx;
     this._applyRockLift();
   }
 
@@ -1306,6 +1319,7 @@ class RockScene {
   destroy() {
     this.running = false;
     cancelAnimationFrame(this.raf);
+    if (this._splineFallbackTimer) clearTimeout(this._splineFallbackTimer);
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);
     window.removeEventListener('wheel',       this._onWheelFn);

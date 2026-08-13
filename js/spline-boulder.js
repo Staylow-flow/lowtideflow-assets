@@ -9,16 +9,21 @@ const DEFAULT_SPLINE_BASE =
   'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@6cb901e/boulder-3d-assets/spline-bundle';
 
 const ROCK_OBJECT_NAMES = ['Dodecahedron', 'Boulder', 'Rock'];
-const SCROLL_ROT_DOWN = 0.42;
-const SCROLL_IMPULSE_GAIN = 1.0;
-const ROCK_SCROLL_COAST = 1.0;
-const ROCK_SPIN_DECAY = 0.992;
-const SCROLL_VEL_SCALE = 0.00115;
-const IDLE_YAW_AMP1 = 0.052;
-const IDLE_YAW_AMP2 = 0.028;
-const IDLE_NOD_AMP = 0.018;
-const HSCROLL_Y_BIAS = -0.04;
-const MAX_HSCROLL_YAW = 0.087;
+
+/* Match rock-scene.js scroll + idle physics */
+const MAX_HSCROLL_YAW      = (5 * Math.PI) / 180;
+const HSCROLL_Y_BIAS       = -0.125;
+const SCROLL_ROT_DOWN      = Math.PI * 2 * 2 * 0.7 * 4;
+const ROCK_SCROLL_COAST    = 1.30;
+const ROCK_SPIN_DECAY      = 0.9984;
+const SCROLL_IMPULSE_GAIN  = 0.135;
+const SCROLL_VEL_SCALE     = 0.0055;
+const IDLE_YAW_AMP1        = 0.07 * 1.1;
+const IDLE_YAW_AMP2        = 0.03 * 1.1;
+const IDLE_NOD_AMP         = 0.025 * 1.1;
+
+const ROCK_LIFT_PX_DEFAULT = 50;
+const ROCK_SCALE_MULT      = 1.15;
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -127,6 +132,7 @@ class SplineBoulder {
         console.warn('[LTF Spline] No rock object found. Expected one of:', ROCK_OBJECT_NAMES.join(', '));
       } else {
         console.log('[LTF Spline] rock object:', this.rock.name || '(unnamed)');
+        this._applyRockLayout();
       }
 
       this.canvas.style.transition = 'opacity 0.45s ease';
@@ -139,6 +145,20 @@ class SplineBoulder {
     } catch (err) {
       console.error('[LTF Spline] Failed to load bundled scene:', err);
       if (this.canvas) this.canvas.style.opacity = '0';
+    }
+  }
+
+  _applyRockLayout() {
+    const liftPx = Number(this.container.getAttribute('data-rock-lift-px')) || ROCK_LIFT_PX_DEFAULT;
+    if (this.canvas && liftPx) {
+      this.canvas.style.transform = `translateY(${-liftPx}px)`;
+    }
+
+    const scaleMult = Number(this.container.getAttribute('data-rock-scale')) || ROCK_SCALE_MULT;
+    if (this.rock?.scale && scaleMult !== 1) {
+      this.rock.scale.x *= scaleMult;
+      this.rock.scale.y *= scaleMult;
+      this.rock.scale.z *= scaleMult;
     }
   }
 
