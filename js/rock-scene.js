@@ -885,7 +885,10 @@ class RockScene {
 
     this._frameBound = this._tick.bind(this);
     this.running = true;
-    this.raf = requestAnimationFrame(this._frameBound);
+    this.inView = true;
+    this._active = false;
+    this._observeVisibility();
+    this._syncActive();
   }
 
   /* ── Spline runtime bootstrap (data-spline-scene heroes) ───────────────── */
@@ -1182,9 +1185,42 @@ class RockScene {
     this._syncLayoutProfile();
   }
 
+  /* ── Visibility gating — no frames while offscreen or backgrounded ──────── */
+  _observeVisibility() {
+    if (typeof IntersectionObserver === 'function') {
+      this._io = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          this.inView = entry.isIntersecting;
+        }
+        this._syncActive();
+      }, { rootMargin: '200px' });
+      this._io.observe(this.container);
+    }
+
+    this._onVisibilityFn = () => this._syncActive();
+    document.addEventListener('visibilitychange', this._onVisibilityFn);
+  }
+
+  _syncActive() {
+    const shouldRun = this.running && this.inView && !document.hidden;
+    if (shouldRun === this._active) return;
+    this._active = shouldRun;
+
+    if (shouldRun) {
+      this._lastNow = 0;
+      this.raf = requestAnimationFrame(this._frameBound);
+    } else if (this.raf) {
+      cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    }
+  }
+
   /* ── Per-frame tick ──────────────────────────────────────────────────────── */
   _tick(now) {
-    if (!this.running) return;
+    if (!this.running || !this._active) {
+      this.raf = 0;
+      return;
+    }
 
     const dt = this._lastNow ? Math.min(now - this._lastNow, 50) : 16;
     this._lastNow = now;
@@ -1312,13 +1348,19 @@ class RockScene {
       dbg.textContent = behindLabel + '  |  ' + rockLabel + '  |  ' + frontLabel;
     }
 
-    this.raf = requestAnimationFrame(this._frameBound);
+    this.raf = this._active ? requestAnimationFrame(this._frameBound) : 0;
   }
 
   /* ── Cleanup ──────────────────────────────────────────────────────────── */
   destroy() {
     this.running = false;
+    this._active = false;
     cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    this._io?.disconnect();
+    if (this._onVisibilityFn) {
+      document.removeEventListener('visibilitychange', this._onVisibilityFn);
+    }
     if (this._splineFallbackTimer) clearTimeout(this._splineFallbackTimer);
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);

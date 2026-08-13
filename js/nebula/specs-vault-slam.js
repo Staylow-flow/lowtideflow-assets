@@ -420,6 +420,10 @@
   }
 
     function frame(now) {
+      if (!state.active) {
+        state.raf = 0;
+        return;
+      }
       if (!state.lastT) state.lastT = now;
       state.lastT = now;
 
@@ -468,7 +472,21 @@
       }
 
       section.style.setProperty('--ltf-vault-progress', state.target.toFixed(4));
-      requestAnimationFrame(frame);
+      state.raf = state.active ? requestAnimationFrame(frame) : 0;
+    }
+
+    /* Freeze the vault canvases whenever the section is offscreen. */
+    function syncActive() {
+      var shouldRun = state.inView && !document.hidden;
+      if (shouldRun === state.active) return;
+      state.active = shouldRun;
+      if (shouldRun) {
+        state.lastT = 0;
+        state.raf = requestAnimationFrame(frame);
+      } else if (state.raf) {
+        cancelAnimationFrame(state.raf);
+        state.raf = 0;
+      }
     }
 
     window.addEventListener('scroll', sampleTarget, { passive: true });
@@ -489,7 +507,23 @@
     );
 
     sampleTarget();
-    requestAnimationFrame(frame);
+
+    state.inView = true;
+    state.active = false;
+    state.raf = 0;
+
+    if (typeof IntersectionObserver === 'function') {
+      state.inView = false;
+      new IntersectionObserver(function (entries) {
+        for (var e = 0; e < entries.length; e++) {
+          state.inView = entries[e].isIntersecting;
+        }
+        syncActive();
+      }, { rootMargin: '200px' }).observe(section);
+    }
+
+    document.addEventListener('visibilitychange', syncActive);
+    syncActive();
   }
 
   function init() {

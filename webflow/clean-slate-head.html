@@ -81,9 +81,12 @@
     font-synthesis: none;
   }
 
-  /* Gradient ring + outer glow — wrapper only; button colors live in Webflow */
+  /* Gradient ring + outer glow — wrapper only; button colors live in Webflow.
+     Ring lives on ::before and fades via opacity so it composites on the GPU
+     instead of repainting a background-position animation every frame. */
   .ltf-btn-gradient-wrap {
     position: relative;
+    isolation: isolate;
     display: inline-block;
     padding: 2px;
     border-radius: 5px;
@@ -91,19 +94,35 @@
     transition: box-shadow 0.35s ease;
   }
 
+  .ltf-btn-gradient-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  /* Keep the button above the ring so only the 2px padding shows gradient */
+  .ltf-btn-gradient-wrap > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ltf-btn-gradient-wrap:hover::before,
+  .ltf-btn-gradient-wrap:focus-within::before,
+  .ltf-btn-gradient-wrap.ltf-btn-gradient-active::before {
+    opacity: 1;
+  }
+
   .ltf-btn-gradient-wrap:hover,
   .ltf-btn-gradient-wrap:focus-within,
   .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
-    background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
-    background-size: 200% 200%;
-    animation: ltf-nebula-gradient-shift 3s linear infinite;
     box-shadow:
       0 0 16px rgba(77, 37, 157, 0.45),
       0 0 28px rgba(31, 119, 129, 0.28);
-  }
-
-  .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
-    animation-duration: 1.8s;
   }
 
   /* Nav text links — gradient text fill + soft glow (plain text, not button boxes) */
@@ -296,11 +315,12 @@
       padding-right: 0;
     }
 
-    /* Hero CTA — keep gradient ring + filled state always active on mobile */
+    /* Hero CTA — gradient ring always on for mobile, static (no repaint loop) */
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap::before {
+      opacity: 1;
+    }
+
     .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
-      background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
-      background-size: 200% 200%;
-      animation: ltf-nebula-gradient-shift 3s linear infinite;
       box-shadow:
         0 0 16px rgba(77, 37, 157, 0.45),
         0 0 28px rgba(31, 119, 129, 0.28);

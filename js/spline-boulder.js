@@ -25,6 +25,10 @@ const IDLE_NOD_AMP         = 0.025 * 1.1;
 const ROCK_LIFT_PX_DEFAULT = 200;
 const ROCK_SCALE_MULT      = 1.15;
 
+/* Spline defaults to window.devicePixelRatio (2 on Retina = 4× the fragments). */
+const MAX_DPR       = 1.5;
+const IO_ROOT_MARGIN = '200px';
+
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 function injectSplineCanvasStyles() {
@@ -78,6 +82,15 @@ function dispatchMotion(yaw, pitch) {
   }));
 }
 
+/** Defer heavy work past first paint without blocking interaction. */
+function whenIdle(fn) {
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(fn, { timeout: 1200 });
+  } else {
+    setTimeout(fn, 200);
+  }
+}
+
 class SplineBoulder {
   constructor(container) {
     this.container = container;
@@ -104,10 +117,58 @@ class SplineBoulder {
     this.basePitch = 0.05;
     this.baseRoll = 0.03;
 
+    this.inView = false;
+    this.booted = false;
+    this._active = false;
+
     injectSplineCanvasStyles();
-    preloadSplineScene(this.sceneUrl);
     this._bindEvents();
-    this._boot();
+    this._observeVisibility();
+  }
+
+  /**
+   * Drives both lazy boot and offscreen pause: the 1.7 MB runtime is only
+   * fetched once the hero is near the viewport, and the rAF loop stops
+   * entirely whenever the hero scrolls away or the tab is backgrounded.
+   */
+  _observeVisibility() {
+    if (typeof IntersectionObserver !== 'function') {
+      this.inView = true;
+      preloadSplineScene(this.sceneUrl);
+      whenIdle(() => this._boot());
+      return;
+    }
+
+    this._io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        this.inView = entry.isIntersecting;
+      }
+      if (this.inView && !this.booted) {
+        this.booted = true;
+        preloadSplineScene(this.sceneUrl);
+        whenIdle(() => this._boot());
+      }
+      this._syncActive();
+    }, { rootMargin: IO_ROOT_MARGIN });
+    this._io.observe(this.container);
+
+    this._onVisibilityFn = () => this._syncActive();
+    document.addEventListener('visibilitychange', this._onVisibilityFn);
+  }
+
+  /** Only burn frames when the hero is on screen and the tab is foregrounded. */
+  _syncActive() {
+    const shouldRun = this.running && this.inView && !document.hidden;
+    if (shouldRun === this._active) return;
+    this._active = shouldRun;
+
+    if (shouldRun) {
+      this._lastNow = 0;
+      this.raf = requestAnimationFrame(this._frameBound);
+    } else if (this.raf) {
+      cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    }
   }
 
   async _boot() {
@@ -135,17 +196,36 @@ class SplineBoulder {
       }
       this._applyRockLayout();
 
+      this._applyPixelRatio();
+
       this.canvas.style.transition = 'opacity 0.45s ease';
       this.canvas.style.opacity = '1';
       this._onResize();
       this.running = true;
       this._frameBound = this._tick.bind(this);
-      this.raf = requestAnimationFrame(this._frameBound);
+      this._active = false;
+      this._syncActive();
       console.log('[LTF Spline] ready | scene:', this.sceneUrl);
     } catch (err) {
       console.error('[LTF Spline] Failed to load bundled scene:', err);
       if (this.canvas) this.canvas.style.opacity = '0';
     }
+  }
+
+  /**
+   * Spline reads window.devicePixelRatio from the scene's publish settings,
+   * so a Retina display renders 4× the fragments. Clamp it on the renderer.
+   */
+  _applyPixelRatio() {
+    const attr = this.container.getAttribute('data-max-dpr');
+    const maxDpr = attr != null && attr !== '' ? Number(attr) : MAX_DPR;
+    if (!Number.isFinite(maxDpr) || maxDpr <= 0) return;
+
+    const target = Math.min(window.devicePixelRatio || 1, maxDpr);
+    const renderer = this.app?._renderer;
+    if (typeof renderer?.setPixelRatio !== 'function') return;
+    if (renderer.getPixelRatio?.() === target) return;
+    renderer.setPixelRatio(target);
   }
 
   /** Lift moves the rendered canvas; scale multiplies the mesh once. */
@@ -199,11 +279,15 @@ class SplineBoulder {
     const h = Math.max(rect.height, 100);
     if (typeof this.app?.setSize === 'function') {
       this.app.setSize(w, h);
+      this._applyPixelRatio();
     }
   }
 
   _tick(now) {
-    if (!this.running) return;
+    if (!this.running || !this._active) {
+      this.raf = 0;
+      return;
+    }
     const dt = this._lastNow ? Math.min(now - this._lastNow, 50) : 16;
     this._lastNow = now;
     this.time += dt;
@@ -237,12 +321,18 @@ class SplineBoulder {
     }
 
     dispatchMotion(yaw, pitch);
-    this.raf = requestAnimationFrame(this._frameBound);
+    this.raf = this._active ? requestAnimationFrame(this._frameBound) : 0;
   }
 
   destroy() {
     this.running = false;
+    this._active = false;
     cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    this._io?.disconnect();
+    if (this._onVisibilityFn) {
+      document.removeEventListener('visibilitychange', this._onVisibilityFn);
+    }
     window.removeEventListener('scroll', this._onScrollFn);
     window.removeEventListener('wheel', this._onWheelFn);
     window.removeEventListener('resize', this._onResizeFn);
