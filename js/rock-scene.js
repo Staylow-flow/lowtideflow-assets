@@ -3,7 +3,7 @@
  *
  * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
  *             palette with transparent dark voids, wispy tendrils, dense cores.
- * Foreground: soapstone.glb rock — centered, autonomous idle oscillation,
+ * Foreground: boulder-hematite-spline-v1.glb — centered, autonomous idle oscillation,
  *             scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
  * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
@@ -13,7 +13,7 @@ import * as THREE from 'https://esm.sh/three@0.165.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@3900fb4/soapstone.glb';
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/boulder-hematite-spline-v1.glb';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
@@ -958,9 +958,8 @@ class RockScene {
         /* Re-centre the model on the group origin */
         model.position.copy(center.negate().multiplyScalar(scale));
 
-        /* After centering, apply a corrective X offset to counter any visual
-           asymmetry in the soapstone mesh (boulder heavier on one side).
-           Adjust ROCK_X_CORRECT if rock still drifts left/right. */
+        /* After centering, apply a corrective X offset to counter visual
+           asymmetry in the boulder mesh. Adjust ROCK_X_CORRECT if needed. */
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
 
