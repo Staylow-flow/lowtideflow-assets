@@ -13,7 +13,10 @@ import * as THREE from 'https://esm.sh/three@0.165.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@35028b0/boulder-hematite-spline-v1.gltf';
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/boulder-3d-assets/boulder-hematite-spline-v1.gltf';
+const DEFAULT_TEXTURE_URL =
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/boulder-3d-assets/boulder-texture-raw-02.avif';
+const ROCK_TEXTURE_REPEAT = 2.4;
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
@@ -728,25 +731,58 @@ function buildRockModelFromGltf(gltf) {
   return model;
 }
 
+/** Spline exports often omit UVs — project world-space triplanar coords for external textures. */
+function ensureTriplanarUVs(geometry, repeat = ROCK_TEXTURE_REPEAT) {
+  if (geometry.getAttribute('uv')) return;
+  const pos = geometry.getAttribute('position');
+  const normal = geometry.getAttribute('normal');
+  if (!pos || !normal) return;
+
+  geometry.computeBoundingBox();
+  const size = new THREE.Vector3();
+  geometry.boundingBox.getSize(size);
+  const invMax = repeat / Math.max(size.x, size.y, size.z, 0.001);
+
+  const uvs = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const nx = Math.abs(normal.getX(i));
+    const ny = Math.abs(normal.getY(i));
+    const nz = Math.abs(normal.getZ(i));
+    let u;
+    let v;
+    if (nx >= ny && nx >= nz) {
+      u = pos.getZ(i) * invMax;
+      v = pos.getY(i) * invMax;
+    } else if (ny >= nz) {
+      u = pos.getX(i) * invMax;
+      v = pos.getZ(i) * invMax;
+    } else {
+      u = pos.getX(i) * invMax;
+      v = pos.getY(i) * invMax;
+    }
+    uvs[i * 2] = u;
+    uvs[i * 2 + 1] = v;
+  }
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+}
+
 function applyRockTexture(root, url) {
   if (!url) return Promise.resolve();
   const loader = new THREE.TextureLoader();
   return loader.loadAsync(url).then((tex) => {
     tex.colorSpace = THREE.SRGBColorSpace;
-    let hasUV = false;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
     root.traverse((child) => {
-      if (!child.isMesh || !child.geometry) return;
-      if (child.geometry.getAttribute('uv')) hasUV = true;
-      if (!child.material) return;
+      if (!child.isMesh || !child.geometry || !child.material) return;
+      ensureTriplanarUVs(child.geometry);
       const mats = Array.isArray(child.material) ? child.material : [child.material];
       for (const m of mats) {
         m.map = tex;
+        if (m.color) m.color.setRGB(1, 1, 1);
         m.needsUpdate = true;
       }
     });
-    if (!hasUV) {
-      console.warn('[LTF Rock] Texture loaded but mesh has no UVs — re-export from Spline with UVs/baked map.');
-    }
   }).catch((err) => {
     console.error('[LTF Rock] Failed to load rock texture:', url, err);
   });
@@ -759,7 +795,7 @@ class RockScene {
   constructor(container) {
     this.container = container;
     this.modelUrl  = container.getAttribute('data-model-url') || DEFAULT_MODEL_URL;
-    this.textureUrl = container.getAttribute('data-rock-texture-url') || '';
+    this.textureUrl = container.getAttribute('data-rock-texture-url') || DEFAULT_TEXTURE_URL;
 
     this.w = 1; this.h = 1;
 
@@ -1027,7 +1063,7 @@ class RockScene {
         this.rockGroup.visible = layerVisibility().rock;
 
         const textureUrl = this.textureUrl;
-        if (textureUrl) applyRockTexture(model, textureUrl);
+        applyRockTexture(model, textureUrl);
 
         const lv = layerVisibility();
         console.log('[LTF Rock] loaded | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front, '| model:', this.modelUrl);
