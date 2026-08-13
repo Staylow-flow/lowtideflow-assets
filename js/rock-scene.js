@@ -3,7 +3,7 @@
  *
  * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
  *             palette with transparent dark voids, wispy tendrils, dense cores.
- * Foreground: boulder-hematite-spline-v1.glb — centered, autonomous idle oscillation,
+ * Foreground: boulder-hematite-spline-v1.gltf — centered, autonomous idle oscillation,
  *             scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
  * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
@@ -13,7 +13,7 @@ import * as THREE from 'https://esm.sh/three@0.165.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@b97b4fc/boulder-hematite-spline-v1.glb';
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/boulder-hematite-spline-v1.gltf';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
@@ -699,7 +699,7 @@ function lagAlpha(dt, tauMs) {
 /* ─── Utility ────────────────────────────────────────────────────────────── */
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-/** Spline GLB exports often use BLEND + baseColorFactor alpha ≪ 1 — force solid rock. */
+/** Spline GLB/GLTF exports often use BLEND + baseColorFactor alpha ≪ 1 — force solid rock. */
 function solidifyRockMaterial(material) {
   const mats = Array.isArray(material) ? material : [material];
   for (const m of mats) {
@@ -715,6 +715,43 @@ function solidifyRockMaterial(material) {
   }
 }
 
+/** Spline GLTF exports include lights/camera — keep only mesh geometry for the rock group. */
+function buildRockModelFromGltf(gltf) {
+  const model = new THREE.Group();
+  const meshes = [];
+  gltf.scene.updateMatrixWorld(true);
+  gltf.scene.traverse((child) => {
+    if (child.isMesh) meshes.push(child);
+  });
+  if (!meshes.length) return gltf.scene;
+  for (const mesh of meshes) model.attach(mesh);
+  return model;
+}
+
+function applyRockTexture(root, url) {
+  if (!url) return Promise.resolve();
+  const loader = new THREE.TextureLoader();
+  return loader.loadAsync(url).then((tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    let hasUV = false;
+    root.traverse((child) => {
+      if (!child.isMesh || !child.geometry) return;
+      if (child.geometry.getAttribute('uv')) hasUV = true;
+      if (!child.material) return;
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      for (const m of mats) {
+        m.map = tex;
+        m.needsUpdate = true;
+      }
+    });
+    if (!hasUV) {
+      console.warn('[LTF Rock] Texture loaded but mesh has no UVs — re-export from Spline with UVs/baked map.');
+    }
+  }).catch((err) => {
+    console.error('[LTF Rock] Failed to load rock texture:', url, err);
+  });
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    RockScene
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -722,6 +759,7 @@ class RockScene {
   constructor(container) {
     this.container = container;
     this.modelUrl  = container.getAttribute('data-model-url') || DEFAULT_MODEL_URL;
+    this.textureUrl = container.getAttribute('data-rock-texture-url') || '';
 
     this.w = 1; this.h = 1;
 
@@ -953,14 +991,14 @@ class RockScene {
     this.scene.add(green);
   }
 
-  /* ── GLB loader ──────────────────────────────────────────────────────────── */
+  /* ── GLTF/GLB loader ─────────────────────────────────────────────────────── */
   _loadModel() {
     const loader = new GLTFLoader();
     loader.load(
       this.modelUrl,
 
       (gltf) => {
-        const model = gltf.scene;
+        const model = buildRockModelFromGltf(gltf);
 
         /* Scale to target size */
         const box    = new THREE.Box3().setFromObject(model);
@@ -987,8 +1025,12 @@ class RockScene {
         model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
         this.rockGroup.visible = layerVisibility().rock;
+
+        const textureUrl = this.textureUrl;
+        if (textureUrl) applyRockTexture(model, textureUrl);
+
         const lv = layerVisibility();
-        console.log('[LTF Rock] loaded | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front, '| url:', location.href);
+        console.log('[LTF Rock] loaded | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front, '| model:', this.modelUrl);
       },
 
       undefined,
