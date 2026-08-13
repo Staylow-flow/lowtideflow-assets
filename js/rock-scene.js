@@ -699,6 +699,22 @@ function lagAlpha(dt, tauMs) {
 /* ─── Utility ────────────────────────────────────────────────────────────── */
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
+/** Spline GLB exports often use BLEND + baseColorFactor alpha ≪ 1 — force solid rock. */
+function solidifyRockMaterial(material) {
+  const mats = Array.isArray(material) ? material : [material];
+  for (const m of mats) {
+    if (!m) continue;
+    m.transparent = false;
+    m.opacity = 1;
+    m.depthWrite = true;
+    m.alphaTest = 0;
+    if (m.color) m.color.setRGB(m.color.r, m.color.g, m.color.b);
+    m.roughness = clamp((m.roughness ?? 0.8) - 0.12, 0.05, 1.0);
+    m.metalness = clamp((m.metalness ?? 0.0) + 0.18, 0.0, 1.0);
+    m.needsUpdate = true;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    RockScene
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -965,10 +981,7 @@ class RockScene {
 
         model.traverse((child) => {
           if (!child.isMesh || !child.material) return;
-          const m = child.material;
-          m.roughness  = clamp((m.roughness  ?? 0.8) - 0.12, 0.05, 1.0);
-          m.metalness  = clamp((m.metalness  ?? 0.0) + 0.18, 0.0,  1.0);
-          m.needsUpdate = true;
+          solidifyRockMaterial(child.material);
         });
 
         model.rotation.set(0.05, -0.2, 0.03);
