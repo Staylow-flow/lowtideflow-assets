@@ -821,6 +821,9 @@ function applyRockTexture(root, tex) {
 class RockScene {
   constructor(container) {
     this.container = container;
+    this.useSplineRock = container.hasAttribute('data-spline-scene');
+    this._splineYaw = 0;
+    this._splinePitch = 0;
     this.modelUrl  = container.getAttribute('data-model-url') || DEFAULT_MODEL_URL;
     this.textureUrl = container.getAttribute('data-rock-texture-url') || DEFAULT_TEXTURE_URL;
 
@@ -865,8 +868,16 @@ class RockScene {
     this._initRenderer();
     this._initScenes();
     this._initNebula();
-    this._initLights();
-    this._loadModel();
+    if (this.useSplineRock) {
+      this._onSplineMotion = (e) => {
+        this._splineYaw = e.detail?.yaw ?? 0;
+        this._splinePitch = e.detail?.pitch ?? 0;
+      };
+      window.addEventListener('ltf-spline-rock-motion', this._onSplineMotion);
+    } else {
+      this._initLights();
+      this._loadModel();
+    }
     this._bindEvents();
     this._onResize();
 
@@ -882,7 +893,7 @@ class RockScene {
     const scale = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : 1;
     const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, 2)) : 1;
     const existingCanvas =
-      this.container.querySelector('#canvas3d, canvas')
+      this.container.querySelector('#canvas3d')
       || (this.container.id === 'canvas3d' ? this.container : null)
       || document.getElementById('canvas3d');
     const rendererOpts = {
@@ -1203,9 +1214,10 @@ class RockScene {
     }
 
     /* ── Nebula — lags rock 0.3 s, coasts 2–4 s with ease-out ───────────── */
-    if (this.rockGroup) {
-      const rockYaw   = this.rockGroup.rotation.y;
-      const rockPitch = this.rockGroup.rotation.x;
+    const motionSource = this.rockGroup || this.useSplineRock;
+    if (motionSource) {
+      const rockYaw   = this.rockGroup ? this.rockGroup.rotation.y : this._splineYaw;
+      const rockPitch = this.rockGroup ? this.rockGroup.rotation.x : this._splinePitch;
       const gasLag    = lagAlpha(dt, GAS_FOLLOW_DELAY_MS);
 
       this.nebulaYawDelayed   += (rockYaw   - this.nebulaYawDelayed)   * gasLag;
@@ -1249,14 +1261,14 @@ class RockScene {
       this.fgNebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
     }
 
-    if (this.rockGroup) this.rockGroup.visible = layers.rock;
+    if (this.rockGroup) this.rockGroup.visible = layers.rock && !this.useSplineRock;
 
     /* ── Three-pass render: behind FG → rock → front FG ──────────────────── */
     this.renderer.clear();
     if (layers.behind) {
       this.renderer.render(this.bgScene, this.bgCamera);
     }
-    if (layers.rock) {
+    if (layers.rock && !this.useSplineRock) {
       this.renderer.clearDepth();
       this.renderer.render(this.scene, this.camera);
     }
@@ -1288,6 +1300,9 @@ class RockScene {
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);
     window.removeEventListener('wheel',       this._onWheelFn);
+    if (this._onSplineMotion) {
+      window.removeEventListener('ltf-spline-rock-motion', this._onSplineMotion);
+    }
     if (this._onMouseFn) window.removeEventListener('mousemove', this._onMouseFn);
     const el = this.renderer.domElement;
     if (el.parentNode) el.parentNode.removeChild(el);
