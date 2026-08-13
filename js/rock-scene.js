@@ -622,7 +622,7 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   gasInner:         0.26,   /* soft full-body halo, not tight core blob */
   edgeWarp:         0.20,
   alphaScale:       1.0,
-  rockLiftPx:       150,
+  rockLiftPx:       200,
   widthTighten:     0.96,   /* stop squeezing width — let glow spread */
   topYFactor:       0.94,   /* extend above rock for nav clearance */
   topFadeStart:     0.80,
@@ -996,7 +996,7 @@ class RockScene {
     if (this.camera) {
       this.camera.position.z = mobileCameraZ(vw);
     }
-    this.rockLiftPx = mobile ? 122 : GAS_LOCKED_BOUNDS.rockLiftPx;
+    this.rockLiftPx = mobile ? 150 : GAS_LOCKED_BOUNDS.rockLiftPx;
     this._applyRockLift();
   }
 

@@ -22,7 +22,7 @@ const IDLE_YAW_AMP1        = 0.07 * 1.1;
 const IDLE_YAW_AMP2        = 0.03 * 1.1;
 const IDLE_NOD_AMP         = 0.025 * 1.1;
 
-const ROCK_LIFT_PX_DEFAULT = 50;
+const ROCK_LIFT_PX_DEFAULT = 200;
 const ROCK_SCALE_MULT      = 1.15;
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -132,8 +132,8 @@ class SplineBoulder {
         console.warn('[LTF Spline] No rock object found. Expected one of:', ROCK_OBJECT_NAMES.join(', '));
       } else {
         console.log('[LTF Spline] rock object:', this.rock.name || '(unnamed)');
-        this._applyRockLayout();
       }
+      this._applyRockLayout();
 
       this.canvas.style.transition = 'opacity 0.45s ease';
       this.canvas.style.opacity = '1';
@@ -148,17 +148,26 @@ class SplineBoulder {
     }
   }
 
+  /** Lift moves the rendered canvas; scale multiplies the mesh once. */
   _applyRockLayout() {
-    const liftPx = Number(this.container.getAttribute('data-rock-lift-px')) || ROCK_LIFT_PX_DEFAULT;
-    if (this.canvas && liftPx) {
+    const liftAttr = this.container.getAttribute('data-rock-lift-px');
+    const liftPx = liftAttr != null && liftAttr !== ''
+      ? Number(liftAttr)
+      : ROCK_LIFT_PX_DEFAULT;
+    if (this.canvas && Number.isFinite(liftPx)) {
       this.canvas.style.transform = `translateY(${-liftPx}px)`;
     }
 
-    const scaleMult = Number(this.container.getAttribute('data-rock-scale')) || ROCK_SCALE_MULT;
-    if (this.rock?.scale && scaleMult !== 1) {
+    if (this._scaleApplied) return;
+    const scaleAttr = this.container.getAttribute('data-rock-scale');
+    const scaleMult = scaleAttr != null && scaleAttr !== ''
+      ? Number(scaleAttr)
+      : ROCK_SCALE_MULT;
+    if (this.rock?.scale && Number.isFinite(scaleMult) && scaleMult !== 1) {
       this.rock.scale.x *= scaleMult;
       this.rock.scale.y *= scaleMult;
       this.rock.scale.z *= scaleMult;
+      this._scaleApplied = true;
     }
   }
 
