@@ -647,15 +647,21 @@
 
   @media (max-width: 991px) {
     .ltf-section:has(.ltf-authority-image-box) {
-      height: auto;
-      max-height: none;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      display: block;
+      padding-top: 48px !important;
+      padding-bottom: 48px !important;
     }
 
     .ltf-authority-image-box,
     .ltf-magnifier {
-      height: auto;
-      max-height: calc((100vh - 40px) * 0.85);
-      min-height: 320px;
+      display: block;
+      width: 100% !important;
+      height: auto !important;
+      max-height: min(70dvh, 520px) !important;
+      min-height: 0 !important;
       aspect-ratio: 3 / 4;
       cursor: auto;
     }
@@ -888,6 +894,147 @@
   .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
     --ltf-btn-radius: 5px;
     border-radius: 5px;
+  }
+
+  /* ── Mobile / tablet: stack the new sections, scale type, kill overflow ─ */
+  @media (max-width: 991px) {
+    .ltf-main-header,
+    .hero-h1 {
+      font-size: clamp(34px, 10.5vw, 48px) !important;
+      line-height: 0.95;
+    }
+
+    .ltf-section-header,
+    .ltf-section-header-navy,
+    .ltf-funnel-cta-heading {
+      font-size: clamp(32px, 9vw, 44px) !important;
+      line-height: 0.95;
+      max-width: none !important;
+    }
+
+    .ltf-split-copy .ltf-section-header-navy {
+      max-width: none !important;
+    }
+
+    .ltf-body-text,
+    .ltf-body-text-navy {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      font-size: 16px !important;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .ltf-hero-bottom-bar,
+    .ltf-hero-bottom-bar.ltf-split-2 {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      grid-template-rows: auto !important;
+      gap: 20px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 24px !important;
+      transform: none !important;
+      padding-left: 0;
+      padding-right: 0;
+      box-sizing: border-box;
+    }
+
+    .ltf-hero-bottom-bar .ltf-split-copy,
+    .ltf-hero-bottom-bar .ltf-split-asset,
+    .ltf-hero-bottom-bar .is-hero-copy {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    .ltf-split-2,
+    .ltf-split-2.ltf-split,
+    .ltf-upsell-grid.ltf-split-2,
+    .ltf-vault-cage.ltf-split-2 {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 28px !important;
+    }
+
+    .ltf-split-copy:not(.is-hero-copy),
+    .ltf-split-asset:not(.ltf-upsell-list) {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .ltf-specs-vault,
+    .ltf-specs-vault-sticky,
+    [data-ltf-specs-slam] {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      position: relative !important;
+    }
+
+    .ltf-specs-vault-cards {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 16px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      flex: 0 1 auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      padding-bottom: 0;
+    }
+
+    .ltf-spec-card,
+    .ltf-spec-card.ltf-spec-card-01,
+    .ltf-spec-card.ltf-spec-card-02,
+    .ltf-spec-card.ltf-spec-card-03,
+    .ltf-spec-card.ltf-spec-card-04 {
+      position: relative !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      padding: 28px 24px !important;
+    }
+
+    .ltf-upsell-list-item {
+      font-size: 16px !important;
+      line-height: 1.35;
+      padding: 16px 16px 16px 14px !important;
+    }
+
+    .ltf-cards-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 16px !important;
+    }
+
+    .ltf-card {
+      width: 100% !important;
+      will-change: auto;
+      min-height: 0;
+    }
+
+    .ltf-funnel-cta::before {
+      width: 140%;
+      height: 280px;
+      filter: blur(70px);
+    }
+
+    .ltf-hero-headline {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

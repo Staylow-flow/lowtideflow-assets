@@ -7,11 +7,12 @@
  *             hematite texture, and a Three.js light rig standing in for Spline's.
  *             Scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
- * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
+ * Loaded as a module from js/ltf.js after first paint. Three + GLTFLoader
+ * resolve from jsDelivr so they share a CDN with the rest of the bundle.
  */
 
-import * as THREE from 'https://esm.sh/three@0.165.0';
-import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
   'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-hematite-optimized-v2.glb';
@@ -928,18 +929,18 @@ class RockScene {
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
   _initRenderer() {
-    /* render-resolution-scale=1 — lock DPR for large displays (27" iMac etc.) */
+    const mobile = isMobileLayout();
     const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
     const scale = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : 1;
-    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, 2)) : 1;
+    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, mobile ? 1 : 2)) : 1;
     const existingCanvas =
       this.container.querySelector('#canvas3d')
       || (this.container.id === 'canvas3d' ? this.container : null)
       || document.getElementById('canvas3d');
     const rendererOpts = {
       alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
+      antialias: !mobile,
+      powerPreference: mobile ? 'default' : 'high-performance',
     };
     if (existingCanvas instanceof HTMLCanvasElement) {
       rendererOpts.canvas = existingCanvas;
@@ -1470,19 +1471,6 @@ function init() {
     if (!node.__ltfRock) node.__ltfRock = new RockScene(node);
   });
 }
-
-function boot() {
-  init();
-  setTimeout(init, 400);
-  setTimeout(init, 1400);
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
-} else {
-  boot();
-}
-window.addEventListener('load', boot);
 
 window.LtfRockScene = {
   init, RockScene, layerVisibility, behindOpacity, frontOpacity,

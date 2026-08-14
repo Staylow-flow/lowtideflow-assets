@@ -141,9 +141,13 @@ function bind(host) {
     if (assetsOn || loading) return;
     loading = true;
 
+    const narrow = window.innerWidth < 992;
     const maxW = Math.min(
-      1400,
-      Math.max(720, Math.round((host.clientWidth || 720) * MAG * 2)),
+      narrow ? 720 : 1400,
+      Math.max(
+        narrow ? 480 : 720,
+        Math.round((host.clientWidth || 480) * MAG * (narrow ? 1.5 : 2)),
+      ),
     );
 
     try {

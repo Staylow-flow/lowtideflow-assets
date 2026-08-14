@@ -23,6 +23,11 @@
  */
 const VIEW_MARGIN = '200px';
 
+const SAVE_DATA =
+  typeof navigator !== 'undefined' &&
+  navigator.connection &&
+  navigator.connection.saveData === true;
+
 const MODULES = [
   {
     name: 'nav-mobile',
@@ -39,6 +44,8 @@ const MODULES = [
     load: () => import('./hero/rock-scene.js'),
     test: () =>
       document.querySelector('.hero-canvas-wrapper, [data-ltf-rock], #canvas3d'),
+    /* Three.js + GLB must not compete with first paint of the H1. */
+    afterPaint: true,
   },
   {
     name: 'specs-vault',
@@ -50,11 +57,12 @@ const MODULES = [
     name: 'garment-magnifier',
     load: () => import('./sections/garment-magnifier.js'),
     test: () =>
-      document.querySelector('.ltf-authority-image-box, [data-ltf-magnifier]'),
+      SAVE_DATA
+        ? null
+        : document.querySelector('.ltf-authority-image-box, [data-ltf-magnifier]'),
     lazy: true,
-    /* Start the module + bitmaps well before the section so the glass is
-       already decoded by the time it enters the viewport. */
-    lazyMargin: '1600px',
+    /* Near enough to avoid a pop-in, far enough not to fight the hero GLB. */
+    lazyMargin: '800px',
   },
   {
     name: 'upsell-lines',
@@ -88,6 +96,15 @@ function whenNear(el, fn, margin) {
   io.observe(el);
 }
 
+function afterPaint(fn) {
+  const run = () => fn();
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(run, { timeout: 900 });
+    return;
+  }
+  requestAnimationFrame(() => setTimeout(run, 0));
+}
+
 async function start(mod) {
   const el = mod.test();
   if (!el) return;
@@ -98,7 +115,6 @@ async function start(mod) {
         loaded.set(mod.name, mod.load());
       }
       const ns = await loaded.get(mod.name);
-      /* rock-scene boots itself on import; the others expose init(). */
       if (typeof ns.init === 'function') ns.init();
     } catch (err) {
       /* A failed section effect must never take the hero down with it. */
@@ -106,8 +122,13 @@ async function start(mod) {
     }
   };
 
-  if (mod.lazy) whenNear(el instanceof Element ? el : null, run, mod.lazyMargin);
-  else run();
+  const kick = () => {
+    if (mod.lazy) whenNear(el instanceof Element ? el : null, run, mod.lazyMargin);
+    else run();
+  };
+
+  if (mod.afterPaint) afterPaint(kick);
+  else kick();
 }
 
 function wrapSpecsTitle() {
