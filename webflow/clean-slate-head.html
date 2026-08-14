@@ -25,25 +25,10 @@
     /* Preferred and max carry the full +50%. The floor moves less, because at
        phone widths the clamp min is what renders and a literal +50% there
        pushes the headline to ~60px and wraps it to four lines. */
-    --fluid-h1: clamp(3rem, 9vw, 8.1rem);
-    /* Edge gutter. Reaches its 80px ceiling at ~1600px instead of 2000px, so
-       laptop widths get the full inset rather than sitting at ~60px. 80px is
-       the comfortable desktop figure for a 1400px container — enough that the
-       content reads as inset rather than flush to the browser chrome. */
+    --fluid-h1: clamp(2.25rem, 6.75vw, 6.075rem);
+    --fluid-h2: clamp(2.5rem, 5.2vw, 4.5rem);
     --fluid-padding: clamp(2rem, 5vw, 5rem);
-
-    /* Gutter BETWEEN columns — smaller than the edge on purpose. Columns
-       that sit further apart than they do from the page edge stop reading as
-       one composition. space-between was dumping ~160px into the specs
-       middle (1400 − 80 − 80 − 520 − 560); 48px is one 8px-grid step under
-       the 80px edge and holds the pair together. */
     --ltf-gutter-mid: 3rem;
-
-    /* Extra indent on copy columns, on top of the cage padding. 40px is
-       enough that headers sit inboard of the edge without looking like they
-       missed their grid. 100px was an estimate and would have put type
-       180px from the cage wall. */
-    --ltf-copy-indent: 2.5rem;
   }
 
   /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
@@ -62,10 +47,21 @@
   .ltf-main-header,
   .hero-h1 {
     font-size: var(--fluid-h1);
-    /* Large display type needs less leading than body copy; 1.1 left visible
-       gaps between the stacked hero lines once the size went up. */
     line-height: 0.95;
     letter-spacing: -0.02em;
+  }
+
+  .ltf-section-header,
+  .ltf-section-header-navy {
+    font-size: var(--fluid-h2) !important;
+    line-height: 0.92;
+    max-width: none;
+  }
+
+  .ltf-body-text,
+  .ltf-body-text-navy {
+    font-size: 20px;
+    max-width: none;
   }
 
   /* Rock stays absolute inside the relative 1400px hero cage */
@@ -436,109 +432,133 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════
-     SECTION RHYTHM
+     UNIFIED TWO-COLUMN RHYTHM
 
-     Numbers, measured at a 1400px cage:
+     1400px cage, 80px edge, 48px gutter → two equal columns (~596px)
+     mirrored across the center line.
 
-       edge padding     80px   (--fluid-padding ceiling)
-       copy indent      40px   (--ltf-copy-indent)
-       mid gutter       48px   (--ltf-gutter-mid)
-       specs cards col  560px  (Webflow)
+       Q2  copy  (headers + paragraphs)
+       Q3  assets, centered in the column (cards / magnifier / upsell)
 
-     The specs row was unbalanced because .ltf-vault-cage used space-between
-     with two fixed-width columns. Space-between does not create a gutter, it
-     dumps leftover width into the middle — ~160px here, double the edge.
-     Packing from the start with an explicit 48px gap closes that dump and
-     slides the cards left. The 40px copy indent then walks the headers
-     inboard so both sides meet in the middle without overlapping.
-
-     Add .ltf-inset-right in the Designer to opt a new copy column into the
-     same indent. Desktop only.
+     Specs / Trenches / Beyond the Gear all share this grid so the cascade
+     reads as one system instead of three different layouts.
      ════════════════════════════════════════════════════════════════════ */
+  .ltf-section-inner,
+  .ltf-upsell-inner {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--site-max-width) !important;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--fluid-padding) !important;
+    padding-right: var(--fluid-padding) !important;
+  }
+
   .ltf-vault-cage {
-    justify-content: flex-start;
+    justify-content: stretch;
+    align-items: start;
     gap: var(--ltf-gutter-mid);
     padding-left: var(--fluid-padding);
     padding-right: var(--fluid-padding);
   }
 
-  .ltf-specs-vault-header {
-    flex: 1 1 auto;
-    width: auto;
-    max-width: none;
-    padding-right: 0;
-  }
-
-  /* Column is wide now, so cap the line length: past ~70 characters the
-     eye loses its place returning to the next line. */
-  .ltf-specs-vault-header > * {
-    max-width: 62ch;
-  }
-
-  .ltf-split,
-  .ltf-upsell-grid {
-    gap: var(--ltf-gutter-mid);
-  }
-
   @media (min-width: 992px) {
-    .ltf-inset-right,
+    .ltf-vault-cage,
+    .ltf-split,
+    .ltf-upsell-grid {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--ltf-gutter-mid) !important;
+      align-items: start;
+    }
+
     .ltf-specs-vault-header,
     .ltf-split > .ltf-stack,
-    .ltf-upsell-grid > .ltf-stack,
-    .ltf-stack.ltf-section-head {
-      padding-left: var(--ltf-copy-indent);
+    .ltf-upsell-grid > .ltf-stack {
+      width: 100%;
+      max-width: none;
+      flex: none;
+      padding-left: 0;
+      padding-right: 0;
+      margin-left: 0;
     }
 
-    /* Narrower measure so the paragraphs run taller and stop competing
-       with the portrait image for width. */
-    .ltf-split > .ltf-stack {
-      max-width: 440px;
+    /* Force SPECs & / STANDARDS onto two lines at the 1400 cage. */
+    .ltf-specs-vault-header .ltf-section-header-navy {
+      max-width: 6.4em;
     }
 
-    /* Absolutely positioned, so this is its left edge rather than a shift. */
+    /* Assets sit in the middle of the right column (3rd quarter). */
+    .ltf-specs-vault-cards,
+    .ltf-authority-image-box,
+    .ltf-magnifier,
+    .ltf-upsell-list {
+      width: 100%;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      justify-self: center;
+    }
+
     .ltf-hero-bottom-bar {
-      left: calc(var(--fluid-padding) + var(--ltf-copy-indent));
+      left: var(--fluid-padding);
+    }
+
+    /* Orange figure: 50px inboard so it shares the Q3 asset axis. */
+    .ltf-hero-figure,
+    .ltf-hero-figure-img {
+      right: 50px !important;
+      transform: none !important;
     }
   }
 
-  /* ── Specs vault: larger navy cards, same type size ─────────────────── */
+  /* ── Specs vault: 60px narrower from the right, left edge held ──────── */
+  .ltf-specs-vault-cards {
+    flex: 0 0 auto !important;
+    width: 500px !important;
+    max-width: 500px !important;
+  }
+
   .ltf-spec-card,
   .ltf-spec-card.ltf-spec-card-01,
   .ltf-spec-card.ltf-spec-card-02,
   .ltf-spec-card.ltf-spec-card-03,
   .ltf-spec-card.ltf-spec-card-04 {
-    width: 520px;
-    max-width: 520px;
+    width: 460px;
+    max-width: 460px;
     height: 340px;
     min-height: 340px;
     max-height: 340px;
-    padding-left: 72px;
-    padding-right: 72px;
+    padding-left: 64px;
+    padding-right: 64px;
   }
 
-  /* The stagger tightens as the cards widen, so the deepest card still
-     lands inside the 560px column rather than spilling out of it. */
   .ltf-spec-card.ltf-spec-card-02 { top: 12px; left: 12px; }
   .ltf-spec-card.ltf-spec-card-03 { top: 24px; left: 24px; }
   .ltf-spec-card.ltf-spec-card-04 { top: 36px; left: 36px; }
 
-  /* ── Beyond the Gear: iridescent hover lines ────────────────────────── */
+  /* ── Beyond the Gear: fill the Q3 column, sweep on hover ────────────── */
+  @keyframes ltf-upsell-sweep {
+    from { background-position: 0% 50%; }
+    to   { background-position: 100% 50%; }
+  }
+
   .ltf-upsell-list {
-    margin-top: 28px;
-    max-width: 480px;
+    margin-top: 0;
+    max-width: 100%;
+    width: 100%;
     margin-left: auto;
+    margin-right: auto;
     overflow: hidden;
   }
 
   .ltf-upsell-list-item {
-    --ltf-mx: 50%;
-    --ltf-my: 50%;
     position: relative;
     display: flex;
     align-items: flex-start;
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.3;
-    padding: 18px 22px 18px 20px;
+    padding: 22px 28px 22px 24px;
     isolation: isolate;
     overflow: hidden;
     transition: color 0.3s ease, border-color 0.3s ease;
@@ -555,18 +575,21 @@
     z-index: 1;
   }
 
-  /* Mouse-follow bloom. --ltf-mx / --ltf-my are written by JS. */
   .ltf-upsell-list-item::after {
     content: '';
     position: absolute;
     inset: 0;
     z-index: 0;
-    background: radial-gradient(
-      180px circle at var(--ltf-mx) var(--ltf-my),
-      rgba(112, 64, 192, 0.28) 0%,
-      rgba(42, 170, 184, 0.16) 38%,
-      transparent 70%
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(112, 64, 192, 0.22) 38%,
+      rgba(42, 170, 184, 0.28) 50%,
+      rgba(112, 64, 192, 0.22) 62%,
+      transparent 100%
     );
+    background-size: 220% 100%;
+    background-position: 0% 50%;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.35s ease;
@@ -574,6 +597,7 @@
 
   .ltf-upsell-list-item:hover::after {
     opacity: 1;
+    animation: ltf-upsell-sweep 3.4s ease-in-out infinite alternate;
   }
 
   .ltf-upsell-list-item:hover::before {
@@ -667,7 +691,7 @@
     }
   }
 
-  /* ── The Squad: roomier, squarer cards with a live gradient edge ────── */
+  /* ── The Squad: 25% narrower cards, scroll-in from the sides ────────── */
   @property --ltf-edge-angle {
     syntax: '<angle>';
     initial-value: 0deg;
@@ -678,13 +702,38 @@
     to { --ltf-edge-angle: 360deg; }
   }
 
+  .ltf-section:has(.ltf-cards-grid) {
+    overflow-x: clip;
+  }
+
   .ltf-cards-grid {
     gap: 40px;
+  }
+
+  @media (min-width: 992px) {
+    .ltf-cards-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .ltf-card {
+      width: 75%;
+      justify-self: center;
+    }
   }
 
   .ltf-card {
     position: relative;
     min-height: clamp(320px, 26vw, 440px);
+    will-change: transform;
+    transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (min-width: 992px) {
+    .ltf-card:nth-child(odd)  { transform: translate3d(-120%, 0, 0); }
+    .ltf-card:nth-child(even) { transform: translate3d(120%, 0, 0); }
+    .ltf-card:nth-child(3),
+    .ltf-card:nth-child(4)    { transition-delay: 0.22s; }
+    .ltf-cards-grid.is-in .ltf-card { transform: none; }
   }
 
   /* Ring only: the gradient fills the box, then a two-layer mask punches the
@@ -778,5 +827,7 @@
     .ltf-authority-image-box,
     .ltf-magnifier { cursor: auto; }
     .ltf-magnifier-lens { display: none; }
+    .ltf-card { transform: none !important; transition: none !important; }
+    .ltf-upsell-list-item:hover::after { animation: none; }
   }
 </style>

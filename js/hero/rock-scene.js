@@ -562,7 +562,7 @@ const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
-const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30;  /* +25% base, +15% hero tune, +30% */
+const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
 /* The Spline export faces away from camera; half a turn brings the good side forward. */
 const ROCK_FACE_YAW        = Math.PI;
 const CAMERA_Z             = 24;
@@ -622,14 +622,14 @@ function mobileCameraZ(viewportW) {
 /** Single source of truth — gas volume, layout, and rock lift */
 const GAS_LOCKED_BOUNDS = Object.freeze({
   gasCenterX:       0.50,
-  gasCenterY:       0.63,   /* aligned with rock — glow wraps silhouette */
+  gasCenterY:       0.74,   /* follows the rock 100px down */
   gasStretchX:      0.82,   /* wider horizontal glow */
   gasStretchY:      1.78,   /* taller vertical glow */
   gasReach:         0.76,   /* outer glow radius past rock */
   gasInner:         0.26,   /* soft full-body halo, not tight core blob */
   edgeWarp:         0.20,
   alphaScale:       1.0,
-  rockLiftPx:       200,
+  rockLiftPx:       100,
   widthTighten:     0.96,   /* stop squeezing width — let glow spread */
   topYFactor:       0.94,   /* extend above rock for nav clearance */
   topFadeStart:     0.80,
@@ -1010,7 +1010,7 @@ class RockScene {
     if (this.camera) {
       this.camera.position.z = mobileCameraZ(vw);
     }
-    this.rockLiftPx = mobile ? 150 : GAS_LOCKED_BOUNDS.rockLiftPx;
+    this.rockLiftPx = mobile ? 50 : GAS_LOCKED_BOUNDS.rockLiftPx;
     this._applyRockLift();
   }
 

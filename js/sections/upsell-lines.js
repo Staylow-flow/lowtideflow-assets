@@ -1,23 +1,14 @@
 /**
- * Lowtideflow — mouse-follow iridescent bloom on .ltf-upsell-list-item.
+ * Lowtideflow — Beyond the Gear line hover.
  *
- * Writes --ltf-mx / --ltf-my on the row. The gradient itself is CSS so the
- * hover colour stays in the same palette as the button rings and squad cards.
+ * The sweep itself is CSS (`ltf-upsell-sweep` in the page head): a slow
+ * left-to-right iridescent band that loops for the duration of the hover.
+ * This module only exists so the effect stays in the bundle registry; there
+ * is no mouse tracking anymore.
  */
 
-function bind(item) {
-  if (item.dataset.ltfUpsellBound === '1') return;
-  item.dataset.ltfUpsellBound = '1';
-
-  item.addEventListener('pointermove', (e) => {
-    const r = item.getBoundingClientRect();
-    item.style.setProperty('--ltf-mx', `${e.clientX - r.left}px`);
-    item.style.setProperty('--ltf-my', `${e.clientY - r.top}px`);
-  });
-}
-
 export function init() {
-  document.querySelectorAll('.ltf-upsell-list-item').forEach(bind);
+  /* CSS-owned. Kept as an idempotent no-op so ltf.js can keep importing it. */
 }
 
 export default init;

@@ -54,6 +54,11 @@ const MODULES = [
     load: () => import('./sections/upsell-lines.js'),
     test: () => document.querySelector('.ltf-upsell-list-item'),
   },
+  {
+    name: 'squad-cards',
+    load: () => import('./sections/squad-cards.js'),
+    test: () => document.querySelector('.ltf-cards-grid'),
+  },
 ];
 
 const loaded = new Map();
@@ -74,7 +79,16 @@ async function start(mod) {
   }
 }
 
+function wrapSpecsTitle() {
+  const h = document.querySelector('.ltf-specs-vault-header .ltf-section-header-navy, .ltf-specs-vault-header h2');
+  if (!h || h.dataset.ltfWrap === '1') return;
+  if (!/STANDARDS/i.test(h.textContent || '')) return;
+  h.innerHTML = h.innerHTML.replace(/(&amp;|&)\s*STANDARDS/i, '$1<br>STANDARDS');
+  h.dataset.ltfWrap = '1';
+}
+
 function boot() {
+  wrapSpecsTitle();
   for (const mod of MODULES) start(mod);
 }
 
