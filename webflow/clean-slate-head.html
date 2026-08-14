@@ -344,12 +344,15 @@
     }
 
     .ltf-hero-bottom-bar {
-      text-align: center;
+      text-align: center !important;
+      align-items: center !important;
+      padding-left: 0 !important;
     }
 
     .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
       margin-left: auto;
       margin-right: auto;
+      align-self: center !important;
     }
 
     .ltf-nav-mobile-panel {
@@ -868,8 +871,9 @@
 
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
     --ltf-btn-radius: 3px;
-    display: inline-block !important;
-    width: auto !important;
+    display: inline-flex !important;
+    width: max-content !important;
+    max-width: max-content !important;
   }
 
   .ltf-nav-actions .ltf-btn-gradient-wrap,
