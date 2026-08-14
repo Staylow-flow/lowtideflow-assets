@@ -5,20 +5,30 @@
   SPLIT OF RESPONSIBILITIES:
 
   WEBFLOW DESIGNER owns (do not override here):
-  - Font size (except the hero H1 14vw clamp below), weight, family, color
   - Default padding, radius, and static placement you want to tweak in the
     Style panel
 
   THIS FILE ONLY (things Designer cannot do):
   - @keyframes, gradient rings, hover sweep, crew scroll-dock transforms
   - Layout lock: .ltf-cage / .ltf-split-2 / .ltf-split-copy / .ltf-split-asset
-  - Hero H1 clamp(2.5rem, 14vw, 14rem) so 14vw actually shows on desktop
+  - Hero H1: clamp(40px, 7vw, 112px) — min 40, max 112, half the previous lock
 -->
 <style>
   :root {
     --site-max-width: 1400px;
-    --fluid-padding: clamp(2rem, 5vw, 5rem);
-    --ltf-gutter-mid: 3rem;
+    --ltf-side-pad: 80px;
+    --ltf-section-pad-y: 100px;
+    --ltf-gutter-mid: 80px;
+    --ltf-col: 580px;
+    --fluid-padding: var(--ltf-side-pad);
+  }
+
+  @media (max-width: 991px) {
+    :root {
+      --ltf-side-pad: 24px;
+      --ltf-section-pad-y: 64px;
+      --ltf-gutter-mid: 32px;
+    }
   }
 
   /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
@@ -30,17 +40,16 @@
     max-width: var(--site-max-width);
     margin-right: auto;
     margin-left: auto;
-    padding-left: var(--fluid-padding);
-    padding-right: var(--fluid-padding);
+    padding-left: var(--ltf-side-pad);
+    padding-right: var(--ltf-side-pad);
     box-sizing: border-box;
   }
 
-  /* Designer already has this clamp; the old 4.5rem max ate 14vw on
-     desktop so Style-panel edits looked like a no-op. Cap at 14rem so
-     14vw is the live size inside the 1400 cage. */
+  /* Half the previous 14vw / 14rem lock. Bounds are pixels so min/max
+     are readable in the file: 40px floor, 112px ceiling. */
   .ltf-main-header,
   .hero-h1 {
-    font-size: clamp(2.5rem, 14vw, 14rem) !important;
+    font-size: clamp(40px, 7vw, 112px) !important;
     line-height: 0.95;
     letter-spacing: -0.02em;
   }
@@ -428,22 +437,23 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════
-     LOCKED LAYOUT  (every section except The Crew)
+     LOCKED LAYOUT  (every split section)
 
-     Section
-       → .ltf-cage          1400 max, shared edge padding
-         → .ltf-split-2     50 / 50 grid (stacks on mobile)
-           → .ltf-split-copy   left: H1 / H2 / paragraphs
-           → .ltf-split-asset  right: unique JS, centered in the cell
-
-     Per-section width fights (1fr 1.3fr, 50px trims, vault flex) are
-     overridden here so the new class names own the box.
+     1400 cage
+       80px side pad  →  1240 inner
+       100px top / bottom
+       Split 2:  580 | 80 gutter | 580
+         → .ltf-split-copy   left: H1 / H2 / paragraphs
+         → .ltf-split-asset  right: unique JS, centered in the cell
      ════════════════════════════════════════════════════════════════════ */
   .ltf-section:has(.ltf-split-2),
+  .ltf-section:has(.ltf-cards-grid),
   .ltf-specs-vault,
   .ltf-upsell {
     padding-left: 0 !important;
     padding-right: 0 !important;
+    padding-top: var(--ltf-section-pad-y) !important;
+    padding-bottom: var(--ltf-section-pad-y) !important;
   }
 
   .ltf-cage {
@@ -452,8 +462,8 @@
     max-width: var(--site-max-width) !important;
     margin-left: auto;
     margin-right: auto;
-    padding-left: var(--fluid-padding) !important;
-    padding-right: var(--fluid-padding) !important;
+    padding-left: var(--ltf-side-pad) !important;
+    padding-right: var(--ltf-side-pad) !important;
   }
 
   .ltf-split-2 {
@@ -462,6 +472,7 @@
     gap: var(--ltf-gutter-mid) !important;
     align-items: start;
     width: 100%;
+    max-width: 1240px;
   }
 
   .ltf-split-copy {
@@ -513,8 +524,9 @@
   @media (min-width: 992px) {
     .ltf-hero-bottom-bar.ltf-split-copy,
     .ltf-hero-bottom-bar {
-      left: var(--fluid-padding) !important;
-      width: calc((100% - (2 * var(--fluid-padding)) - var(--ltf-gutter-mid)) / 2) !important;
+      left: var(--ltf-side-pad) !important;
+      width: calc((100% - (2 * var(--ltf-side-pad)) - var(--ltf-gutter-mid)) / 2) !important;
+      max-width: var(--ltf-col) !important;
       max-width: none !important;
       min-width: 0 !important;
       transform: none !important;
@@ -754,10 +766,12 @@
     min-height: clamp(256px, 20.8vw, 352px);
     overflow: visible;
     will-change: transform;
+    transform-origin: center center;
     transition: border-color 0.35s ease;
   }
 
-  /* Extra hover bloom — same teal/violet gas the Specs tech cards use. */
+  /* Extra hover bloom — same teal/violet gas the Specs tech cards use.
+     Dimmed ~40% from the previous full-opacity bloom. */
   .ltf-card::before {
     content: '';
     position: absolute;
@@ -766,9 +780,9 @@
     border-radius: 18px;
     background: radial-gradient(
       ellipse at center,
-      rgba(112, 64, 192, 0.55) 0%,
-      rgba(42, 170, 184, 0.42) 32%,
-      rgba(31, 119, 129, 0.22) 58%,
+      rgba(112, 64, 192, 0.33) 0%,
+      rgba(42, 170, 184, 0.25) 32%,
+      rgba(31, 119, 129, 0.13) 58%,
       transparent 74%
     );
     filter: blur(28px);
@@ -779,7 +793,7 @@
 
   .ltf-card:hover::before,
   .ltf-card.is-glow::before {
-    opacity: 1;
+    opacity: 0.6;
   }
 
   .ltf-card > * {
@@ -792,9 +806,9 @@
   .ltf-card::after {
     content: '';
     position: absolute;
-    inset: -1px;
-    border-radius: 13px;
-    padding: 4px;
+    inset: -3px;
+    border-radius: 15px;
+    padding: 3px;
     background: conic-gradient(
       from var(--ltf-edge-angle),
       #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D
@@ -815,8 +829,21 @@
 
   .ltf-card:hover::after,
   .ltf-card.is-glow::after {
-    opacity: 1;
+    opacity: 0.6;
     animation: ltf-edge-spin 4s linear infinite;
+  }
+
+  @media (max-width: 991px) {
+    .ltf-card.is-glow,
+    .ltf-card:hover {
+      transform: scale(1.045);
+    }
+  }
+
+  /* Beyond the Gear + The Crew — white outline on the section CTAs. */
+  .ltf-section-cta .ltf-btn-primary {
+    border: 2px solid #FFFFFF !important;
+    background-clip: padding-box;
   }
 
   /* ── Launch CTA: iridescent bloom on hover ──────────────────────────── */

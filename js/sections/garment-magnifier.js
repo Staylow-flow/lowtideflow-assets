@@ -5,8 +5,13 @@
  * Base layer: the Designer <img> (FABRIC-ONLY AVIF).
  * Reveal: LOGO-REVEAL AVIF, shown through the mask hole.
  *
- * The glass is always on. At rest it sits at 50% x / 20% y and slips like
- * ice as the window scrolls. Pointer hover takes over; ice resumes on leave.
+ * The glass is always on. At rest it sits at 50% x / 20% y. Scroll is read
+ * from the shared ticker (`scroll.deltaY`) so this stays in lockstep with
+ * every other effect. The glass mostly holds its place in the window and
+ * only eases a little in the scroll direction. 90% of that slip is vertical;
+ * 10% is a sticky random left or right.
+ *
+ * Pointer hover takes over; ice resumes on leave from the current pose.
  */
 
 import { onFrame, reducedMotion, scroll } from '../core/ticker.js';
@@ -24,10 +29,16 @@ const MASK_RATIO = 936 / 1056;
 const MAG = 1.22;
 const REST_X = 0.5;
 const REST_Y = 0.2;
-const ICE_FRICTION = 0.92;
-const ICE_KICK = 0.42;
-const ICE_MAX_X = 36;
-const ICE_MAX_Y = 22;
+
+/* Motion mix: stay-in-window + a little travel with the scroll. */
+const Y_SHARE = 0.9;
+const X_SHARE = 0.1;
+const LOCK = 0.88;
+const SLIP = 0.1;
+const SMOOTH = 0.12;
+const SETTLE = 0.965;
+const ICE_MAX_X = 24;
+const ICE_MAX_Y = 72;
 
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
@@ -82,8 +93,11 @@ function bind(host) {
   let hovering = false;
   let iceX = 0;
   let iceY = 0;
+  let targetX = 0;
+  let targetY = 0;
   let lastLx = 0;
   let lastLy = 0;
+  const xDir = Math.random() < 0.5 ? -1 : 1;
 
   function sizeLens() {
     const hostW = host.clientWidth;
@@ -157,6 +171,8 @@ function bind(host) {
     const at = rest();
     iceX = lastLx - at.x;
     iceY = lastLy - at.y;
+    targetX = iceX;
+    targetY = iceY;
     parkIce();
   });
 
@@ -176,12 +192,19 @@ function bind(host) {
 
   onFrame(() => {
     if (hovering) return;
-    iceX += scroll.velocity * ICE_KICK;
-    iceY += scroll.velocity * ICE_KICK * 0.35;
-    iceX *= ICE_FRICTION;
-    iceY *= ICE_FRICTION;
-    iceX = clamp(iceX, -ICE_MAX_X, ICE_MAX_X);
-    iceY = clamp(iceY, -ICE_MAX_Y, ICE_MAX_Y);
+
+    /* scroll.deltaY is sampled once per ticker frame — same value every
+       other effect on the page sees this tick. */
+    const kick = scroll.deltaY * (LOCK + SLIP);
+    targetY += kick * Y_SHARE;
+    targetX += kick * X_SHARE * xDir;
+    targetX *= SETTLE;
+    targetY *= SETTLE;
+    targetX = clamp(targetX, -ICE_MAX_X, ICE_MAX_X);
+    targetY = clamp(targetY, -ICE_MAX_Y, ICE_MAX_Y);
+
+    iceX += (targetX - iceX) * SMOOTH;
+    iceY += (targetY - iceY) * SMOOTH;
     parkIce();
   }, { element: host, onEnter: sizeLens });
 }

@@ -16,6 +16,7 @@ const START_AT = 1.08;
    while the block is still below center. */
 const END_AT = 0.52;
 const TRAVEL = 100;
+const HOVER_SCALE = 1.045;
 /* Bottom row waits this much extra progress — a beat, not a second row. */
 const BOTTOM_LAG = 0.07;
 
@@ -75,7 +76,9 @@ export function init() {
       const lag = i >= 2 ? BOTTOM_LAG : 0;
       const p = easeOutQuad(clamp01((gridP - lag) / (1 - lag)));
       const dir = i % 2 === 0 ? -1 : 1;
-      cards[i].style.transform = `translate3d(${(1 - p) * dir * TRAVEL}%, 0, 0)`;
+      const scale = cards[i].classList.contains('is-glow') ? HOVER_SCALE : 1;
+      cards[i].style.transform =
+        `translate3d(${(1 - p) * dir * TRAVEL}%, 0, 0) scale(${scale})`;
     }
   }, { element: grid });
 }
