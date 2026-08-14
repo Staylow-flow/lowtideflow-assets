@@ -5,12 +5,12 @@
   SPLIT OF RESPONSIBILITIES:
 
   WEBFLOW DESIGNER owns:
-  - Split column WIDTH, gap, and placement (tweak in the Style panel)
-  - Default padding, radius, type, and static color
+  - Hero bottom-bar 2-col split, left copy (logo, body, CTA), and all hero text
+  - Split column gap, placement, padding, radius, type, and static color
 
   THIS FILE ONLY (things Designer cannot do):
   - @keyframes, gradient rings, hover sweep, crew scroll-dock transforms
-  - Even split insets (--ltf-split-inset / --ltf-split-inner)
+  - Even split insets on non-hero sections (--ltf-split-inset / --ltf-split-inner)
   - Hero H1: clamp(40px, 7vw, 112px)
 -->
 <style>
@@ -176,28 +176,7 @@
     color: #FFFFFF;
   }
 
-  /* Hero CTA — special case: transparent at rest, navy masks center on hover */
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary.is-hero-cta {
-    display: inline-flex;
-    position: relative;
-    z-index: 1;
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    color: #FFFFFF !important;
-    border: 1px solid #FFFFFF !important;
-    border-radius: 3px !important;
-  }
-
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover > .ltf-btn-primary.is-hero-cta,
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary.is-hero-cta,
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary.is-hero-cta {
-    background: #06142E !important;
-    background-color: #06142E !important;
-    background-image: none !important;
-    border-color: transparent !important;
-    color: #FFFFFF !important;
-  }
+  /* Hero CTA uses the same Instant Quote wrap + .ltf-btn-primary as the funnel. */
 
   /* Mobile nav — hamburger toggle + slide-down panel (≤991px) */
   .ltf-nav-toggle {
@@ -319,10 +298,6 @@
       overflow: hidden;
     }
 
-    .ltf-hero-logo {
-      display: none !important;
-    }
-
     .ltf-hero-headline {
       padding-left: 5% !important;
       padding-right: 5% !important;
@@ -332,36 +307,6 @@
     .ltf-main-header {
       padding-left: 0;
       padding-right: 0;
-    }
-
-    /* Hero CTA — gradient ring always on for mobile, static (no repaint loop) */
-    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap::before {
-      opacity: 1;
-    }
-
-    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
-      box-shadow:
-        0 0 16px rgba(77, 37, 157, 0.45),
-        0 0 28px rgba(31, 119, 129, 0.28);
-    }
-
-    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary.is-hero-cta {
-      background: #06142E !important;
-      background-color: #06142E !important;
-      border-color: transparent !important;
-      color: #FFFFFF !important;
-    }
-
-    .ltf-hero-bottom-bar {
-      text-align: center !important;
-      align-items: center !important;
-      padding-left: 0 !important;
-    }
-
-    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
-      margin-left: auto;
-      margin-right: auto;
-      align-self: center !important;
     }
 
     .ltf-nav-mobile-panel {
@@ -437,8 +382,7 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════
-     LAYOUT  — Designer owns column WIDTH. This file only sets the
-     outer cage and even insets. Tweak split column width in Style panel.
+     LAYOUT  — cage and even insets. Hero bar width lives in Designer.
      ════════════════════════════════════════════════════════════════════ */
   .ltf-section:has(.ltf-split-2),
   .ltf-section:has(.ltf-cards-grid),
@@ -466,14 +410,15 @@
     padding-right: var(--ltf-side-pad);
   }
 
-  .ltf-split-2 {
+  .ltf-split-2:not(.ltf-hero-bottom-bar) {
     display: grid;
     align-items: start;
     width: 100%;
   }
 
-  /* Outer 40px (edge) + inner 50px (gutter) on BOTH columns. */
-  .ltf-split-copy {
+  /* Outer 40px (edge) + inner 50px (gutter) on BOTH columns.
+     Hero left copy uses .is-hero-copy in Designer — do not touch it here. */
+  .ltf-split-copy:not(.is-hero-copy) {
     box-sizing: border-box;
     min-width: 0;
     padding-left: var(--ltf-split-inset);
@@ -492,41 +437,7 @@
     max-width: 6.4em !important;
   }
 
-  /* Hero bottom bar: width / left live in Designer (ltf-hero-bottom-bar).
-     Only keep the CTA shrink-wrap so the gradient ring cannot go full-bleed. */
-  .ltf-hero-bottom-bar.ltf-split-copy,
-  .ltf-hero-bottom-bar {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .ltf-hero-bottom-bar .ltf-hero-logo {
-    display: block !important;
-    width: auto !important;
-    max-width: none !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    align-self: flex-start !important;
-  }
-
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary {
-    display: inline-flex !important;
-    width: max-content !important;
-    max-width: max-content !important;
-    flex: 0 0 auto;
-    align-self: flex-start !important;
-  }
-
-  /* Beyond the Gear: keep the Trenches copy stack. Only the list moves down
-     so its top sits on the H1 baseline. */
-  @media (min-width: 992px) {
-    .ltf-upsell-grid .ltf-split-asset {
-      margin-top: calc(clamp(2.75rem, 7vw, 6.25rem) * 0.9 + 30px);
-    }
-  }
+  /* Beyond the Gear list position lives in Designer (.ltf-upsell-list.ltf-split-asset). */
 
   /* Force SPECs & / STANDARDS onto two lines. */
   .ltf-split-copy .ltf-section-header-navy {
@@ -562,13 +473,15 @@
     to   { background-position: 0% 50%; }
   }
 
-  .ltf-upsell-list {
-    margin-top: 0 !important;
+  /* Bordered box hugs the points. Side padding on .ltf-split-asset would
+     inset the sweep from the white edge — zero it here. */
+  .ltf-upsell-list,
+  .ltf-upsell-list.ltf-split-asset {
     max-width: 100%;
     width: 100%;
-    margin-left: auto;
-    margin-right: auto;
+    padding: 0;
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .ltf-upsell-list-item {
@@ -632,6 +545,7 @@
     max-height: none !important;
     min-height: 0;
     overflow: hidden;
+    border-radius: 16px;
     background: none;
     border: none;
     cursor: none;
@@ -740,28 +654,25 @@
     position: relative;
     min-height: clamp(236px, 19.5vw, 332px);
     overflow: visible;
+    isolation: isolate;
     will-change: transform;
     transform-origin: center center;
     background-color: #00001C;
-    transition: border-color 0.45s ease, box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: border-color 0.45s ease;
   }
 
-  /* Extra hover bloom — same teal/violet gas the Specs tech cards use.
-     Dimmed ~40% from the previous full-opacity bloom. */
+  /* Inner wash — behind the type, clipped to the navy plate. */
   .ltf-card::before {
     content: '';
     position: absolute;
-    inset: -28px;
+    inset: 0;
     z-index: 0;
-    border-radius: 18px;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(112, 64, 192, 0.33) 0%,
-      rgba(42, 170, 184, 0.25) 32%,
-      rgba(31, 119, 129, 0.13) 58%,
-      transparent 74%
-    );
-    filter: blur(28px);
+    border-radius: inherit;
+    background:
+      radial-gradient(ellipse at 22% 18%, rgba(112, 64, 192, 0.72) 0%, transparent 52%),
+      radial-gradient(ellipse at 82% 28%, rgba(42, 170, 184, 0.62) 0%, transparent 50%),
+      radial-gradient(ellipse at 48% 92%, rgba(11, 128, 80, 0.58) 0%, transparent 55%),
+      radial-gradient(ellipse at 70% 70%, rgba(31, 119, 129, 0.4) 0%, transparent 48%);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.45s ease;
@@ -769,7 +680,7 @@
 
   .ltf-card:hover::before,
   .ltf-card.is-glow::before {
-    opacity: 0.6;
+    opacity: 0.84;
   }
 
   .ltf-card > * {
@@ -777,12 +688,13 @@
     z-index: 1;
   }
 
-  /* Slightly larger navy plate on hover — no type scale. */
+  /* Spinning ring sits OUTSIDE the navy plate. */
   .ltf-card::after {
     content: '';
     position: absolute;
-    inset: -3px;
-    border-radius: 15px;
+    inset: -6px;
+    z-index: 2;
+    border-radius: 18px;
     padding: 3px;
     background: conic-gradient(
       from var(--ltf-edge-angle),
@@ -800,12 +712,11 @@
   .ltf-card:hover,
   .ltf-card.is-glow {
     border-color: transparent !important;
-    box-shadow: 0 0 0 6px #00001C;
   }
 
   .ltf-card:hover::after,
   .ltf-card.is-glow::after {
-    opacity: 0.6;
+    opacity: 1;
     animation: ltf-edge-spin 4s linear infinite;
   }
 
@@ -816,13 +727,17 @@
     }
   }
 
-  /* Instant Quote + Beyond + Crew — white ring at rest (wrap padding),
-     gradient ring on hover. Same 2px as .ltf-btn-gradient-wrap padding. */
+  /* Equip Your Crew, Beyond, Instant Quote — navy fill, 2px white ring
+     (wrap background). Hover: white drops, gradient ::before + JS pulse. */
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
   .ltf-section-cta .ltf-btn-gradient-wrap,
   .ltf-funnel-cta .ltf-btn-gradient-wrap {
     background: #FFFFFF;
   }
 
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover,
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:focus-within,
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap.ltf-btn-gradient-active,
   .ltf-section-cta .ltf-btn-gradient-wrap:hover,
   .ltf-section-cta .ltf-btn-gradient-wrap:focus-within,
   .ltf-section-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active,
@@ -832,11 +747,12 @@
     background: transparent;
   }
 
+  .ltf-hero-bottom-bar .ltf-btn-primary,
   .ltf-section-cta .ltf-btn-primary,
   .ltf-funnel-cta .ltf-btn-primary {
     border: none !important;
-    background: #06142E !important;
-    background-color: #06142E !important;
+    background: #00001C !important;
+    background-color: #00001C !important;
     color: #E5E5E5 !important;
   }
 
@@ -913,13 +829,6 @@
     --ltf-btn-radius: 12px;
     padding: var(--ltf-ring-gap);
     border-radius: calc(var(--ltf-btn-radius) + var(--ltf-ring-gap));
-  }
-
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
-    --ltf-btn-radius: 3px;
-    display: inline-flex !important;
-    width: max-content !important;
-    max-width: max-content !important;
   }
 
   .ltf-nav-actions .ltf-btn-gradient-wrap,

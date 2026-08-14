@@ -22,7 +22,7 @@ const HOLE_D = 0.62;
 const MASK_RATIO = 936 / 1056;
 const MAG = 1.22;
 const REST_X = 0.5;
-const REST_Y = 0.2;
+const REST_Y = 0.5;
 
 const Y_SHARE = 0.9;
 const X_SHARE = 0.1;
@@ -33,6 +33,8 @@ const SETTLE = 0.965;
 const ICE_MAX_X = 24;
 const ICE_MAX_Y = 72;
 const IDLE = 0.08;
+const RETURN_SPRING = 0.085;
+const RETURN_DAMP = 0.78;
 
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
@@ -93,6 +95,9 @@ function bind(host) {
   let targetY = 0;
   let lastLx = 0;
   let lastLy = 0;
+  let vx = 0;
+  let vy = 0;
+  let returning = false;
   let assetsOn = false;
   const xDir = Math.random() < 0.5 ? -1 : 1;
 
@@ -166,6 +171,9 @@ function bind(host) {
 
   host.addEventListener('pointerenter', (e) => {
     hovering = true;
+    returning = false;
+    vx = 0;
+    vy = 0;
     host.classList.add('is-hover');
     loadAssets();
     sizeLens();
@@ -181,13 +189,10 @@ function bind(host) {
 
   host.addEventListener('pointerleave', () => {
     hovering = false;
+    returning = true;
+    vx = 0;
+    vy = 0;
     host.classList.remove('is-hover');
-    const at = rest();
-    iceX = lastLx - at.x;
-    iceY = lastLy - at.y;
-    targetX = iceX;
-    targetY = iceY;
-    parkIce();
   });
 
   window.addEventListener('resize', () => {
@@ -210,6 +215,31 @@ function bind(host) {
 
   onFrame(() => {
     if (hovering) return;
+
+    if (returning) {
+      const at = rest();
+      const dx = at.x - lastLx;
+      const dy = at.y - lastLy;
+      vx = vx * RETURN_DAMP + dx * RETURN_SPRING;
+      vy = vy * RETURN_DAMP + dy * RETURN_SPRING;
+      const lx = lastLx + vx;
+      const ly = lastLy + vy;
+      applyLens(lx, ly, lx + holeCx, ly + holeCy);
+      if (
+        Math.abs(dx) < 0.6 &&
+        Math.abs(dy) < 0.6 &&
+        Math.abs(vx) < 0.2 &&
+        Math.abs(vy) < 0.2
+      ) {
+        returning = false;
+        iceX = 0;
+        iceY = 0;
+        targetX = 0;
+        targetY = 0;
+        parkIce();
+      }
+      return;
+    }
 
     const kick = scroll.deltaY * (LOCK + SLIP);
     const idle =
