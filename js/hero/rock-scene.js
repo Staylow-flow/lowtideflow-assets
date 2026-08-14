@@ -563,8 +563,8 @@ const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no 
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
-/* Opening pose is the BACK of the mesh (yaw 0). Prior Math.PI showed the good/front side; another 180° yaw keeps up as up. */
-const ROCK_FACE_YAW        = 0;
+/* Opening pose: back of the mesh (yaw 0) plus another quarter turn. */
+const ROCK_FACE_YAW        = Math.PI / 2;
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 

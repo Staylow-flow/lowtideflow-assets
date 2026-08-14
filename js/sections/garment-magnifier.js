@@ -3,9 +3,9 @@
  *
  * Host: .ltf-authority-image-box or [data-ltf-magnifier]
  * Base layer: the Designer <img> (FABRIC-ONLY AVIF).
- * Reveal / mask layers are not requested until the host is near the
- * viewport. Scroll is sampled once per frame by the shared ticker;
- * this subscriber is parked while the host is off-screen.
+ * Reveal / mask layers decode to display size so a 1790×2400 source does not
+ * sit fully uncompressed in GPU memory. Scroll is sampled once per frame by
+ * the shared ticker; this subscriber is parked while the host is off-screen.
  */
 
 import { onFrame, reducedMotion, scroll } from '../core/ticker.js';
@@ -37,8 +37,33 @@ const RETURN_EASE = 0.012;
 const RETURN_MAX = 0.85;
 const LEAVE_Y_PULL = 0.15;
 
+/* Viewport stick: hold the glass in the window for 1s of quiet, then friction
+   catches it back onto the fabric as the container scrolls. */
+const STICK_HOLD_MS = 1000;
+const STICK_FRICTION = 0.92;
+const STICK_SNAP = 0.4;
+const STICK_SHARE = 1;
+
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
+}
+
+function blobUrlFromBitmap(bitmap, type, quality) {
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext('2d', { alpha: type === 'image/png' });
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('magnifier encode failed'));
+        return;
+      }
+      resolve(URL.createObjectURL(blob));
+    }, type, quality);
+  });
 }
 
 function bind(host) {
@@ -69,14 +94,12 @@ function bind(host) {
   print.className = 'ltf-magnifier-print';
   print.alt = '';
   print.decoding = 'async';
-  print.loading = 'lazy';
   print.setAttribute('fetchpriority', 'low');
 
   const glass = document.createElement('img');
   glass.className = 'ltf-magnifier-glass';
   glass.alt = '';
   glass.decoding = 'async';
-  glass.loading = 'lazy';
   glass.setAttribute('fetchpriority', 'low');
 
   hole.appendChild(print);
@@ -102,18 +125,79 @@ function bind(host) {
   let hangNx = REST_X;
   let hangNy = REST_Y;
   let assetsOn = false;
+  let loading = false;
+  let viewStickY = 0;
+  let lastScrollAt = 0;
+  const objectUrls = [];
   const xDir = Math.random() < 0.5 ? -1 : 1;
 
-  function loadAssets() {
-    if (assetsOn) return;
-    assetsOn = true;
-    host.classList.add('is-lit');
-    print.src = printSrc;
-    glass.src = SRC.mask;
+  function revokeUrls() {
+    while (objectUrls.length) URL.revokeObjectURL(objectUrls.pop());
+  }
+
+  async function loadAssets() {
+    if (assetsOn || loading) return;
+    loading = true;
+
+    const maxW = Math.min(
+      1400,
+      Math.max(720, Math.round((host.clientWidth || 720) * MAG * 2)),
+    );
+
+    try {
+      if (typeof createImageBitmap === 'function') {
+        const [revBlob, maskBlob] = await Promise.all([
+          fetch(printSrc, { cache: 'force-cache' }).then((r) => {
+            if (!r.ok) throw new Error('reveal fetch ' + r.status);
+            return r.blob();
+          }),
+          fetch(SRC.mask, { cache: 'force-cache' }).then((r) => {
+            if (!r.ok) throw new Error('mask fetch ' + r.status);
+            return r.blob();
+          }),
+        ]);
+        const revBmp = await createImageBitmap(revBlob, {
+          resizeWidth: maxW,
+          resizeQuality: 'high',
+        });
+        const maskBmp = await createImageBitmap(maskBlob);
+        const [revUrl, maskUrl] = await Promise.all([
+          blobUrlFromBitmap(revBmp, 'image/jpeg', 0.84),
+          blobUrlFromBitmap(maskBmp, 'image/png'),
+        ]);
+        objectUrls.push(revUrl, maskUrl);
+        print.src = revUrl;
+        glass.src = maskUrl;
+      } else {
+        print.src = printSrc;
+        glass.src = SRC.mask;
+      }
+      await Promise.all([
+        print.decode().catch(() => {}),
+        glass.decode().catch(() => {}),
+      ]);
+      assetsOn = true;
+      host.classList.add('is-lit');
+    } catch (err) {
+      console.error('[ltf] magnifier assets', err);
+      print.src = printSrc;
+      glass.src = SRC.mask;
+      assetsOn = true;
+      host.classList.add('is-lit');
+    } finally {
+      loading = false;
+    }
   }
 
   function dropDecoded() {
-    /* Keep src so a return visit does not refetch; just stop painting. */
+    /* Drop decoded bitmaps while the section is off-screen so the 17MB
+       uncompressed reveal does not sit in GPU memory next to the hero GLB. */
+    assetsOn = false;
+    loading = false;
+    host.classList.remove('is-lit');
+    print.removeAttribute('src');
+    glass.removeAttribute('src');
+    revokeUrls();
     lens.style.willChange = 'auto';
     print.style.willChange = 'auto';
   }
@@ -156,13 +240,18 @@ function bind(host) {
     hangNy = leaveNy + (REST_Y - leaveNy) * LEAVE_Y_PULL;
   }
 
-  function applyLens(lx, ly, focusX, focusY) {
-    lastLx = lx;
-    lastLy = ly;
-    lens.style.transform = `translate3d(${lx}px, ${ly}px, 0)`;
+  function paint() {
+    const ly = lastLy + viewStickY;
+    lens.style.transform = `translate3d(${lastLx}px, ${ly}px, 0)`;
     print.style.transform =
       `translate3d(${holeD / 2}px, ${holeD / 2}px, 0) scale(${MAG}) ` +
-      `translate(${-focusX}px, ${-focusY}px)`;
+      `translate(${-(lastLx + holeCx)}px, ${-(ly + holeCy)}px)`;
+  }
+
+  function applyLens(lx, ly) {
+    lastLx = lx;
+    lastLy = ly;
+    paint();
   }
 
   function moveToPointer(clientX, clientY) {
@@ -171,19 +260,30 @@ function bind(host) {
     const y = clientY - r.top;
     const lx = clamp(x - holeCx, -holeD * 0.25, Math.max(0, r.width - holeD * 0.75));
     const ly = clamp(y - holeCy, -holeD * 0.25, Math.max(0, r.height - holeD * 0.75));
-    applyLens(lx, ly, x, y);
+    applyLens(lx, ly);
   }
 
   function parkIce() {
     const at = rest();
-    const lx = at.x + iceX;
-    const ly = at.y + iceY;
-    applyLens(lx, ly, lx + holeCx, ly + holeCy);
+    applyLens(at.x + iceX, at.y + iceY);
+  }
+
+  function tickStick(now) {
+    const maxStick = Math.max(32, (host.clientHeight || 1) * 0.55);
+    if (Math.abs(scroll.deltaY) > 0.05) {
+      viewStickY += scroll.deltaY * STICK_SHARE;
+      lastScrollAt = now;
+    } else if (now - lastScrollAt > STICK_HOLD_MS) {
+      viewStickY *= STICK_FRICTION;
+      if (Math.abs(viewStickY) < STICK_SNAP) viewStickY = 0;
+    }
+    viewStickY = clamp(viewStickY, -maxStick, maxStick);
   }
 
   host.addEventListener('pointerenter', (e) => {
     hovering = true;
     returning = false;
+    viewStickY = 0;
     host.classList.add('is-hover');
     loadAssets();
     sizeLens();
@@ -210,20 +310,31 @@ function bind(host) {
     if (!hovering) parkIce();
   }, { passive: true });
 
+  /* Kick the fetch as soon as the module binds — do not wait for hover. */
+  loadAssets();
+
+  let seen = false;
+
   if (reducedMotion) {
     onFrame(() => {}, {
       element: host,
       onEnter() {
+        seen = true;
         loadAssets();
         sizeLens();
         parkIce();
+      },
+      onExit() {
+        if (seen) dropDecoded();
       },
     });
     return;
   }
 
-  onFrame(() => {
+  onFrame((dt, now) => {
     if (hovering) return;
+
+    tickStick(now);
 
     if (returning) {
       const at = rest();
@@ -246,7 +357,7 @@ function bind(host) {
         mx *= RETURN_MAX / step;
         my *= RETURN_MAX / step;
       }
-      applyLens(lastLx + mx, lastLy + my, lastLx + mx + holeCx, lastLy + my + holeCy);
+      applyLens(lastLx + mx, lastLy + my);
       return;
     }
 
@@ -256,13 +367,14 @@ function bind(host) {
       Math.abs(targetX - iceX) < IDLE &&
       Math.abs(targetY - iceY) < IDLE &&
       Math.abs(iceX) < IDLE &&
-      Math.abs(iceY) < IDLE;
+      Math.abs(iceY) < IDLE &&
+      Math.abs(viewStickY) < IDLE;
     if (idle) return;
 
-    targetY += kick * Y_SHARE;
+    /* Vertical catch-up is viewStickY. Ice only keeps a little X drift. */
+    targetY *= SETTLE;
     targetX += kick * X_SHARE * xDir;
     targetX *= SETTLE;
-    targetY *= SETTLE;
     targetX = clamp(targetX, -ICE_MAX_X, ICE_MAX_X);
     targetY = clamp(targetY, -ICE_MAX_Y, ICE_MAX_Y);
 
@@ -272,13 +384,16 @@ function bind(host) {
   }, {
     element: host,
     onEnter() {
+      seen = true;
       loadAssets();
       sizeLens();
       lens.style.willChange = 'transform';
       print.style.willChange = 'transform';
       parkIce();
     },
-    onExit: dropDecoded,
+    onExit() {
+      if (seen) dropDecoded();
+    },
   });
 }
 

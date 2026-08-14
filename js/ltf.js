@@ -52,6 +52,9 @@ const MODULES = [
     test: () =>
       document.querySelector('.ltf-authority-image-box, [data-ltf-magnifier]'),
     lazy: true,
+    /* Start the module + bitmaps well before the section so the glass is
+       already decoded by the time it enters the viewport. */
+    lazyMargin: '1600px',
   },
   {
     name: 'upsell-lines',
@@ -69,7 +72,7 @@ const MODULES = [
 
 const loaded = new Map();
 
-function whenNear(el, fn) {
+function whenNear(el, fn, margin) {
   if (!(el instanceof Element) || typeof IntersectionObserver !== 'function') {
     fn();
     return;
@@ -80,7 +83,7 @@ function whenNear(el, fn) {
       io.disconnect();
       fn();
     },
-    { rootMargin: VIEW_MARGIN },
+    { rootMargin: margin || VIEW_MARGIN },
   );
   io.observe(el);
 }
@@ -103,7 +106,7 @@ async function start(mod) {
     }
   };
 
-  if (mod.lazy) whenNear(el instanceof Element ? el : null, run);
+  if (mod.lazy) whenNear(el instanceof Element ? el : null, run, mod.lazyMargin);
   else run();
 }
 
