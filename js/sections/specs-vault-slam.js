@@ -135,6 +135,14 @@ let bindAll = null;
     host.style.overflow = 'hidden';
     host.style.minHeight = runway + 'px';
     host.style.height = runway + 'px';
+  }
+
+  /* Only ever run before building a fresh set of layers. This used to live in
+     prepHost, which remeasure() also calls on resize — so the first resize tore
+     the canvases out of the DOM while fx[] kept pointing at the detached nodes.
+     Their clientWidth then read 0, resizeLayer bailed, and every effect went
+     silently blank for the rest of the page's life. */
+  function clearFxLayers(host) {
     host.querySelectorAll('.ltf-nebula-gas-layer, .ltf-nebula-ring-layer').forEach(function (el) {
       el.remove();
     });
@@ -333,6 +341,7 @@ let bindAll = null;
     if (cards.length < 2) return;
 
     prepHost(cardsHost, sticky);
+    clearFxLayers(cardsHost);
 
     var fx = [];
     var travels = [];
