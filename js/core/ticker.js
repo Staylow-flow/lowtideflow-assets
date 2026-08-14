@@ -124,6 +124,7 @@ function getObserver() {
           if (sub.element !== entry.target) continue;
           sub.active = entry.isIntersecting;
           if (sub.active && sub.onEnter) sub.onEnter();
+          if (!sub.active && sub.onExit) sub.onExit();
         }
       }
       wake();
@@ -142,6 +143,8 @@ function getObserver() {
  * @param {Element} [opts.element]  Only run while this element is near the viewport.
  * @param {() => void} [opts.onEnter]  Called when the element becomes visible,
  *   a good place to re-measure layout that may have changed while parked.
+ * @param {() => void} [opts.onExit]  Called when the element leaves the
+ *   viewport band. Use this to drop decoded images or park GPU layers.
  * @returns {() => void} unsubscribe
  */
 export function onFrame(fn, opts = {}) {
@@ -149,6 +152,7 @@ export function onFrame(fn, opts = {}) {
     fn,
     element: opts.element || null,
     onEnter: opts.onEnter || null,
+    onExit: opts.onExit || null,
     /* With no element to watch, run immediately and always. */
     active: !opts.element,
     stop() {

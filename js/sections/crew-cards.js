@@ -16,7 +16,7 @@ const START_AT = 1.08;
    while the block is still below center. */
 const END_AT = 0.52;
 const TRAVEL = 100;
-const HOVER_SCALE = 1.045;
+const HOVER_SCALE = 1.03;
 /* Bottom row waits this much extra progress — a beat, not a second row. */
 const BOTTOM_LAG = 0.07;
 

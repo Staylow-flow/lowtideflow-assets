@@ -21,6 +21,8 @@
  * `test` decides whether the page needs the module at all. Keep the selectors
  * cheap — they run on every page load before anything else.
  */
+const VIEW_MARGIN = '200px';
+
 const MODULES = [
   {
     name: 'nav-mobile',
@@ -42,41 +44,67 @@ const MODULES = [
     name: 'specs-vault',
     load: () => import('./sections/specs-vault-slam.js'),
     test: () => document.querySelector('.ltf-specs-vault, [data-ltf-specs-slam]'),
+    lazy: true,
   },
   {
     name: 'garment-magnifier',
     load: () => import('./sections/garment-magnifier.js'),
     test: () =>
       document.querySelector('.ltf-authority-image-box, [data-ltf-magnifier]'),
+    lazy: true,
   },
   {
     name: 'upsell-lines',
     load: () => import('./sections/upsell-lines.js'),
     test: () => document.querySelector('.ltf-upsell-list-item'),
+    lazy: true,
   },
   {
     name: 'crew-cards',
     load: () => import('./sections/crew-cards.js'),
     test: () => document.querySelector('.ltf-cards-grid'),
+    lazy: true,
   },
 ];
 
 const loaded = new Map();
 
-async function start(mod) {
-  if (!mod.test()) return;
-
-  try {
-    if (!loaded.has(mod.name)) {
-      loaded.set(mod.name, mod.load());
-    }
-    const ns = await loaded.get(mod.name);
-    /* rock-scene boots itself on import; the others expose init(). */
-    if (typeof ns.init === 'function') ns.init();
-  } catch (err) {
-    /* A failed section effect must never take the hero down with it. */
-    console.error(`[ltf] module "${mod.name}" failed`, err);
+function whenNear(el, fn) {
+  if (!(el instanceof Element) || typeof IntersectionObserver !== 'function') {
+    fn();
+    return;
   }
+  const io = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      fn();
+    },
+    { rootMargin: VIEW_MARGIN },
+  );
+  io.observe(el);
+}
+
+async function start(mod) {
+  const el = mod.test();
+  if (!el) return;
+
+  const run = async () => {
+    try {
+      if (!loaded.has(mod.name)) {
+        loaded.set(mod.name, mod.load());
+      }
+      const ns = await loaded.get(mod.name);
+      /* rock-scene boots itself on import; the others expose init(). */
+      if (typeof ns.init === 'function') ns.init();
+    } catch (err) {
+      /* A failed section effect must never take the hero down with it. */
+      console.error(`[ltf] module "${mod.name}" failed`, err);
+    }
+  };
+
+  if (mod.lazy) whenNear(el instanceof Element ? el : null, run);
+  else run();
 }
 
 function wrapSpecsTitle() {
