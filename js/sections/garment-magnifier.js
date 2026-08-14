@@ -21,7 +21,7 @@ const HOLE_CY = 0.4528;
 const HOLE_D = 0.62;
 const MASK_RATIO = 936 / 1056;
 /* Reveal is a true zoom — larger than the plain fabric plate. */
-const MAG = 1.45;
+const MAG = 1.25;
 const REST_X = 0.33;
 const REST_Y = 0.5;
 const LENS_OVERHANG = 0.45;
