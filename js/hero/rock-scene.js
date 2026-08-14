@@ -562,7 +562,9 @@ const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
-const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15;  /* +25% base, +15% hero tune */
+const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30;  /* +25% base, +15% hero tune, +30% */
+/* The Spline export faces away from camera; half a turn brings the good side forward. */
+const ROCK_FACE_YAW        = Math.PI;
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
@@ -1157,21 +1159,30 @@ class RockScene {
       .then(([gltf, tex]) => {
         const model = buildRockModelFromGltf(gltf);
 
-        const box    = new THREE.Box3().setFromObject(model);
-        const size   = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
+        const box  = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
 
         const longestDim = Math.max(size.x, size.y, size.z, 0.001);
         const scale = ROCK_SCALE_BASE / longestDim;
+
+        /* Orient before centering. position is applied after rotation in the
+           local matrix, so a centering offset measured on the unrotated mesh
+           stops being a centering offset the moment any yaw is added — the
+           rock would swing off to one side. Measuring the box again once the
+           model is already turned keeps it centred at any orientation. */
         model.scale.setScalar(scale);
-        model.position.copy(center.negate().multiplyScalar(scale));
+        model.rotation.set(0.05, -0.2 + ROCK_FACE_YAW, 0.03);
+        model.position.set(0, 0, 0);
+        model.updateMatrixWorld(true);
+
+        const spunCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
+        model.position.copy(spunCenter).negate();
 
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
 
         applyRockTexture(model, tex);
 
-        model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
         this.rockGroup.visible = layerVisibility().rock;
 

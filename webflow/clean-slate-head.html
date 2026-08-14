@@ -22,8 +22,18 @@
 <style>
   :root {
     --site-max-width: 1400px;
-    --fluid-h1: clamp(2.5rem, 6vw, 5.4rem);
+    /* Preferred and max carry the full +50%. The floor moves less, because at
+       phone widths the clamp min is what renders and a literal +50% there
+       pushes the headline to ~60px and wraps it to four lines. */
+    --fluid-h1: clamp(3rem, 9vw, 8.1rem);
     --fluid-padding: clamp(2rem, 4vw, 5rem);
+
+    /* Shared inward shift for section content. One number moves every section
+       that opts in, so the rhythm stays locked instead of drifting per-section.
+       Applied with translate rather than margin: these sit in space-between
+       flex rows and absolute hero positioning, where a margin would resize the
+       row and push neighbours around instead of just sliding the content. */
+    --ltf-inset: 100px;
   }
 
   /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
@@ -42,7 +52,9 @@
   .ltf-main-header,
   .hero-h1 {
     font-size: var(--fluid-h1);
-    line-height: 1.1;
+    /* Large display type needs less leading than body copy; 1.1 left visible
+       gaps between the stacked hero lines once the size went up. */
+    line-height: 0.95;
     letter-spacing: -0.02em;
   }
 
@@ -411,5 +423,194 @@
       justify-content: center;
       text-align: center;
     }
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     SECTION RHYTHM
+     Add .ltf-inset-right / .ltf-inset-left in the Designer to opt a new
+     section into the same shift, instead of hand-tuning its margins.
+     Desktop only — at phone widths a 100px shift just causes overflow,
+     and the hero bar is centre-anchored there with its own transform.
+     ════════════════════════════════════════════════════════════════════ */
+  @media (min-width: 992px) {
+    .ltf-inset-right,
+    .ltf-hero-bottom-bar,
+    .ltf-specs-vault-header,
+    .ltf-split > .ltf-stack,
+    .ltf-upsell-grid > .ltf-stack {
+      transform: translateX(var(--ltf-inset));
+    }
+
+    .ltf-inset-left,
+    .ltf-specs-vault-cards {
+      transform: translateX(calc(var(--ltf-inset) * -1));
+    }
+
+    /* Trenches copy: narrower measure so the paragraphs run taller and the
+       column stops competing with the image box for width. */
+    .ltf-split > .ltf-stack {
+      max-width: 470px;
+    }
+  }
+
+  /* ── Specs vault: larger navy cards, same type size ─────────────────── */
+  .ltf-spec-card,
+  .ltf-spec-card.ltf-spec-card-01,
+  .ltf-spec-card.ltf-spec-card-02,
+  .ltf-spec-card.ltf-spec-card-03,
+  .ltf-spec-card.ltf-spec-card-04 {
+    width: 520px;
+    max-width: 520px;
+    height: 340px;
+    min-height: 340px;
+    max-height: 340px;
+    padding-left: 72px;
+    padding-right: 72px;
+  }
+
+  /* The stagger tightens as the cards widen, so the deepest card still
+     lands inside the 560px column rather than spilling out of it. */
+  .ltf-spec-card.ltf-spec-card-02 { top: 12px; left: 12px; }
+  .ltf-spec-card.ltf-spec-card-03 { top: 24px; left: 24px; }
+  .ltf-spec-card.ltf-spec-card-04 { top: 36px; left: 36px; }
+
+  /* ── Beyond the Gear: landing-page list treatment ───────────────────── */
+  .ltf-upsell-list {
+    /* Webflow pulls this up level with the heading; drop it below instead. */
+    margin-top: 28px;
+    max-width: 520px;
+    margin-left: auto;
+  }
+
+  .ltf-upsell-list-item {
+    display: flex;
+    align-items: flex-start;
+    font-size: 20px;
+    line-height: 1.25;
+    padding: 18px 24px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .ltf-upsell-list-item::before {
+    content: '\25AA';
+    color: #1F7781;
+    font-size: 12px;
+    line-height: 1.6;
+    flex-shrink: 0;
+    margin-right: 16px;
+  }
+
+  .ltf-upsell-list-item:hover {
+    background-color: rgba(31, 119, 129, 0.08);
+  }
+
+  /* ── The Squad: roomier, squarer cards with a live gradient edge ────── */
+  @property --ltf-edge-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes ltf-edge-spin {
+    to { --ltf-edge-angle: 360deg; }
+  }
+
+  .ltf-cards-grid {
+    gap: 40px;
+  }
+
+  .ltf-card {
+    position: relative;
+    min-height: clamp(320px, 26vw, 440px);
+  }
+
+  /* Ring only: the gradient fills the box, then a two-layer mask punches the
+     middle out so just the 3px edge paints. Cheaper than a blurred duplicate
+     and it never bleeds over the card's own text. */
+  .ltf-card::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 15px;
+    padding: 3px;
+    background: conic-gradient(
+      from var(--ltf-edge-angle),
+      #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .ltf-card:hover::after {
+    opacity: 1;
+    animation: ltf-edge-spin 4s linear infinite;
+  }
+
+  /* ── Launch CTA: iridescent bloom on hover ──────────────────────────── */
+  .ltf-funnel-cta {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .ltf-funnel-cta::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 0;
+    width: 900px;
+    height: 520px;
+    max-width: 140%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      ellipse at center,
+      #7040C0 0%, #4D259D 28%, #1F7781 52%, #0B8050 68%, transparent 78%
+    );
+    filter: blur(110px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.55s ease;
+  }
+
+  .ltf-funnel-cta:hover::before {
+    opacity: 0.26;
+  }
+
+  .ltf-funnel-cta-inner {
+    z-index: 2;
+    transition: border-color 0.45s ease;
+  }
+
+  .ltf-funnel-cta:hover .ltf-funnel-cta-inner {
+    border-color: rgba(42, 170, 184, 0.55);
+  }
+
+  /* ── Gradient ring corner radius ────────────────────────────────────── */
+  /* Concentric radii: the ring's corner has to be the button's corner plus
+     the gap it sits in, or the ring reads square against a rounded button.
+     .ltf-btn-primary is 12px in the Designer, so the ring was 7px too tight. */
+  .ltf-btn-gradient-wrap {
+    --ltf-ring-gap: 2px;
+    --ltf-btn-radius: 12px;
+    padding: var(--ltf-ring-gap);
+    border-radius: calc(var(--ltf-btn-radius) + var(--ltf-ring-gap));
+  }
+
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+    --ltf-btn-radius: 3px;
+  }
+
+  .ltf-nav-actions .ltf-btn-gradient-wrap,
+  .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
+    --ltf-btn-radius: 5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ltf-card:hover::after { animation: none; }
   }
 </style>
