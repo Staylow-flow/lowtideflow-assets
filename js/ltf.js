@@ -43,6 +43,17 @@ const MODULES = [
     load: () => import('./sections/specs-vault-slam.js'),
     test: () => document.querySelector('.ltf-specs-vault, [data-ltf-specs-slam]'),
   },
+  {
+    name: 'garment-magnifier',
+    load: () => import('./sections/garment-magnifier.js'),
+    test: () =>
+      document.querySelector('.ltf-authority-image-box, [data-ltf-magnifier]'),
+  },
+  {
+    name: 'upsell-lines',
+    load: () => import('./sections/upsell-lines.js'),
+    test: () => document.querySelector('.ltf-upsell-list-item'),
+  },
 ];
 
 const loaded = new Map();

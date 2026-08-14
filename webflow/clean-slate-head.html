@@ -26,14 +26,24 @@
        phone widths the clamp min is what renders and a literal +50% there
        pushes the headline to ~60px and wraps it to four lines. */
     --fluid-h1: clamp(3rem, 9vw, 8.1rem);
-    --fluid-padding: clamp(2rem, 4vw, 5rem);
+    /* Edge gutter. Reaches its 80px ceiling at ~1600px instead of 2000px, so
+       laptop widths get the full inset rather than sitting at ~60px. 80px is
+       the comfortable desktop figure for a 1400px container — enough that the
+       content reads as inset rather than flush to the browser chrome. */
+    --fluid-padding: clamp(2rem, 5vw, 5rem);
 
-    /* Shared inward shift for section content. One number moves every section
-       that opts in, so the rhythm stays locked instead of drifting per-section.
-       Applied with translate rather than margin: these sit in space-between
-       flex rows and absolute hero positioning, where a margin would resize the
-       row and push neighbours around instead of just sliding the content. */
-    --ltf-inset: 100px;
+    /* Gutter BETWEEN columns — smaller than the edge on purpose. Columns
+       that sit further apart than they do from the page edge stop reading as
+       one composition. space-between was dumping ~160px into the specs
+       middle (1400 − 80 − 80 − 520 − 560); 48px is one 8px-grid step under
+       the 80px edge and holds the pair together. */
+    --ltf-gutter-mid: 3rem;
+
+    /* Extra indent on copy columns, on top of the cage padding. 40px is
+       enough that headers sit inboard of the edge without looking like they
+       missed their grid. 100px was an estimate and would have put type
+       180px from the cage wall. */
+    --ltf-copy-indent: 2.5rem;
   }
 
   /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
@@ -427,29 +437,67 @@
 
   /* ════════════════════════════════════════════════════════════════════
      SECTION RHYTHM
-     Add .ltf-inset-right / .ltf-inset-left in the Designer to opt a new
-     section into the same shift, instead of hand-tuning its margins.
-     Desktop only — at phone widths a 100px shift just causes overflow,
-     and the hero bar is centre-anchored there with its own transform.
+
+     Numbers, measured at a 1400px cage:
+
+       edge padding     80px   (--fluid-padding ceiling)
+       copy indent      40px   (--ltf-copy-indent)
+       mid gutter       48px   (--ltf-gutter-mid)
+       specs cards col  560px  (Webflow)
+
+     The specs row was unbalanced because .ltf-vault-cage used space-between
+     with two fixed-width columns. Space-between does not create a gutter, it
+     dumps leftover width into the middle — ~160px here, double the edge.
+     Packing from the start with an explicit 48px gap closes that dump and
+     slides the cards left. The 40px copy indent then walks the headers
+     inboard so both sides meet in the middle without overlapping.
+
+     Add .ltf-inset-right in the Designer to opt a new copy column into the
+     same indent. Desktop only.
      ════════════════════════════════════════════════════════════════════ */
+  .ltf-vault-cage {
+    justify-content: flex-start;
+    gap: var(--ltf-gutter-mid);
+    padding-left: var(--fluid-padding);
+    padding-right: var(--fluid-padding);
+  }
+
+  .ltf-specs-vault-header {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    padding-right: 0;
+  }
+
+  /* Column is wide now, so cap the line length: past ~70 characters the
+     eye loses its place returning to the next line. */
+  .ltf-specs-vault-header > * {
+    max-width: 62ch;
+  }
+
+  .ltf-split,
+  .ltf-upsell-grid {
+    gap: var(--ltf-gutter-mid);
+  }
+
   @media (min-width: 992px) {
     .ltf-inset-right,
-    .ltf-hero-bottom-bar,
     .ltf-specs-vault-header,
     .ltf-split > .ltf-stack,
-    .ltf-upsell-grid > .ltf-stack {
-      transform: translateX(var(--ltf-inset));
+    .ltf-upsell-grid > .ltf-stack,
+    .ltf-stack.ltf-section-head {
+      padding-left: var(--ltf-copy-indent);
     }
 
-    .ltf-inset-left,
-    .ltf-specs-vault-cards {
-      transform: translateX(calc(var(--ltf-inset) * -1));
-    }
-
-    /* Trenches copy: narrower measure so the paragraphs run taller and the
-       column stops competing with the image box for width. */
+    /* Narrower measure so the paragraphs run taller and stop competing
+       with the portrait image for width. */
     .ltf-split > .ltf-stack {
-      max-width: 470px;
+      max-width: 440px;
+    }
+
+    /* Absolutely positioned, so this is its left edge rather than a shift. */
+    .ltf-hero-bottom-bar {
+      left: calc(var(--fluid-padding) + var(--ltf-copy-indent));
     }
   }
 
@@ -474,34 +522,149 @@
   .ltf-spec-card.ltf-spec-card-03 { top: 24px; left: 24px; }
   .ltf-spec-card.ltf-spec-card-04 { top: 36px; left: 36px; }
 
-  /* ── Beyond the Gear: landing-page list treatment ───────────────────── */
+  /* ── Beyond the Gear: iridescent hover lines ────────────────────────── */
   .ltf-upsell-list {
-    /* Webflow pulls this up level with the heading; drop it below instead. */
     margin-top: 28px;
-    max-width: 520px;
+    max-width: 480px;
     margin-left: auto;
+    overflow: hidden;
   }
 
   .ltf-upsell-list-item {
+    --ltf-mx: 50%;
+    --ltf-my: 50%;
+    position: relative;
     display: flex;
     align-items: flex-start;
-    font-size: 20px;
-    line-height: 1.25;
-    padding: 18px 24px;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 18px;
+    line-height: 1.3;
+    padding: 18px 22px 18px 20px;
+    isolation: isolate;
+    overflow: hidden;
+    transition: color 0.3s ease, border-color 0.3s ease;
   }
 
   .ltf-upsell-list-item::before {
     content: '\25AA';
-    color: #1F7781;
-    font-size: 12px;
-    line-height: 1.6;
+    color: #2AAAB8;
+    font-size: 11px;
+    line-height: 1.7;
     flex-shrink: 0;
-    margin-right: 16px;
+    margin-right: 14px;
+    position: relative;
+    z-index: 1;
   }
 
-  .ltf-upsell-list-item:hover {
-    background-color: rgba(31, 119, 129, 0.08);
+  /* Mouse-follow bloom. --ltf-mx / --ltf-my are written by JS. */
+  .ltf-upsell-list-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(
+      180px circle at var(--ltf-mx) var(--ltf-my),
+      rgba(112, 64, 192, 0.28) 0%,
+      rgba(42, 170, 184, 0.16) 38%,
+      transparent 70%
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .ltf-upsell-list-item:hover::after {
+    opacity: 1;
+  }
+
+  .ltf-upsell-list-item:hover::before {
+    color: #7040C0;
+  }
+
+  /* ── Trenches: portrait magnifier host ──────────────────────────────── */
+  .ltf-authority-image-box,
+  .ltf-magnifier {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    width: 100%;
+    max-width: 520px;
+    max-height: none;
+    min-height: 420px;
+    overflow: hidden;
+    background-color: #06142e;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-left: 2px solid #2AAAB8;
+    cursor: none;
+  }
+
+  .ltf-authority-image-box > img,
+  .ltf-magnifier-base {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ltf-magnifier-lens {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    width: 168px;
+    height: 168px;
+    border-radius: 50%;
+    overflow: hidden;
+    isolation: isolate;
+    pointer-events: none;
+    opacity: 0;
+    will-change: transform;
+    box-shadow:
+      0 0 0 2px rgba(42, 170, 184, 0.85),
+      0 0 18px rgba(112, 64, 192, 0.55),
+      0 0 36px rgba(31, 119, 129, 0.35);
+    transition: opacity 0.2s ease;
+  }
+
+  .ltf-magnifier.is-lit .ltf-magnifier-lens,
+  .ltf-authority-image-box.is-lit .ltf-magnifier-lens {
+    opacity: 1;
+  }
+
+  .ltf-magnifier-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: none;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  /* Same-source fallback: the reveal still reads as a printed pass by
+     pushing teal/violet into the fabric until a real print plate is wired
+     via data-ltf-print-src. */
+  .ltf-magnifier.is-same-src .ltf-magnifier-print {
+    filter: saturate(1.35) contrast(1.12) hue-rotate(-12deg);
+  }
+
+  .ltf-magnifier-print-tint {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, rgba(77, 37, 157, 0.28), rgba(42, 170, 184, 0.22)),
+      repeating-linear-gradient(
+        -18deg,
+        transparent 0 7px,
+        rgba(11, 128, 80, 0.18) 7px 8px
+      );
+    mix-blend-mode: color;
+    pointer-events: none;
+  }
+
+  @media (max-width: 991px) {
+    .ltf-authority-image-box,
+    .ltf-magnifier {
+      min-height: 320px;
+      cursor: auto;
+    }
   }
 
   /* ── The Squad: roomier, squarer cards with a live gradient edge ────── */
@@ -612,5 +775,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .ltf-card:hover::after { animation: none; }
+    .ltf-authority-image-box,
+    .ltf-magnifier { cursor: auto; }
+    .ltf-magnifier-lens { display: none; }
   }
 </style>
