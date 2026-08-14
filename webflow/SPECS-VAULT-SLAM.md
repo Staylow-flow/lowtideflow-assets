@@ -6,17 +6,25 @@ The snippet looked for `#sliding-section-2`. That id **does not exist** on Clean
 
 ## What we use instead
 
-**File:** `js/nebula/specs-vault-slam.js`  
-**Pinned footer:**
+**File:** `js/sections/specs-vault-slam.js`
 
-```html
-<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@1b8e05c/js/nebula/specs-vault-slam.js"></script>
-```
+No longer pinned on its own. It loads through the single bundle entry
+(`js/ltf.js`) along with every other effect — see `CLEAN-SLATE.md`. `ltf.js`
+imports it only when `.ltf-specs-vault` or `[data-ltf-specs-slam]` is on the
+page, so other pages never download it.
 
-Pinned: `1b8e05c` (jsDelivr — do not use raw.githubusercontent; MIME blocks execution).
+Use jsDelivr for the bundle pin, never raw.githubusercontent — its MIME type
+blocks module execution.
 
 ### Behavior
 - Progress 0→1 from Specs vault sticky scroll (`500vh` track)
+
+  **This track height is load-bearing.** Progress is measured from the
+  section's own scroll geometry. If `.ltf-specs-vault` collapses to roughly one
+  viewport, progress never advances past 0 and the cards sit still with no
+  console error — the effect looks "lost" while the script is running fine.
+  Check the section height first when the slam appears dead.
+
 - Card 01 stays as base
 - Card 02 slams in **0–35%**
 - Card 03 slams in **35–66%**
