@@ -61,47 +61,63 @@ body
 | `ltf-section-head` | Combo on stack — section eyebrow + title spacing |
 | `ltf-section-cta` | CTA row under a card grid |
 
+## JS layout
+
+Everything loads through one entry, `js/ltf.js`, which imports the rest by
+relative path. That is what keeps the whole bundle on a single commit.
+
+```
+js/
+  ltf.js                       entry — the only file Webflow points at
+  core/ticker.js               shared rAF loop + once-per-frame scroll sampling
+  hero/rock-scene.js           nebula shader + hematite boulder
+  sections/specs-vault-slam.js specs card slam + gas/ring FX
+  ui/nav-mobile.js             mobile hamburger
+  ui/btn-gradient.js           button click pulse
+  _archive/                    superseded, loaded by nothing
+```
+
+Each module is gated on a selector, so pages only download what they use.
+To add an effect, drop the file in the right folder and add a row to `MODULES`
+in `ltf.js` — no new script tag.
+
 ## Hero FX
 
-- `js/rock-scene.js` — FBM nebula + soapstone rock
+- `js/hero/rock-scene.js` — FBM nebula + hematite boulder, one WebGL context
+- The nebula is a GLSL shader inside that file, **not** a separate script
 - **No mouse hover rotation** — idle + scroll coast only
 - Rock cage: absolute inside `.ltf-site-cage`; DPR locked via `data-render-resolution-scale="1"`
-- Footer pin: `@32c9413`
+- Model + texture: `boulder-hematite-optimized-v2.glb` / `boulder-texture-raw-02.avif`,
+  overridable per page with `data-model-url` / `data-rock-texture-url` on the hero element
 
-## Specs Vault + Nebula scroll engine
+## Specs Vault
 
-**Webflow Interactions cannot be copied via MCP.** Slam is driven by JS.
+**Webflow Interactions cannot be copied via MCP.** The slam is driven by JS.
 
-**File:** `js/nebula-scroll-engine.js` (replaces `ltf-nebula-fart.js`)
+**File:** `js/sections/specs-vault-slam.js`
 
-Performance model (rAF connect):
-1. Shared `requestAnimationFrame` loop samples vault scroll geometry → target timeline
-2. Loop lerps current → target (no per-pixel scroll thrash)
-3. Cards use `translate3d` + opacity (compositor-friendly)
-4. Continuous gas bloom tracks slam progress; particle burst fires at threshold (~0.88)
-
-**Wire (on Specs vault section):**
-
-- `data-ltf-nebula-scroll` (empty)
-- `data-ltf-slam-threshold="0.88"`
-
-**Optional IX path:** paste Specs from Apparel-Landing-Page (brings IX). If you do, **disable IX** or remove `data-ltf-nebula-scroll` — otherwise JS + IX will fight.
+Binds to `.ltf-specs-vault` / `[data-ltf-specs-slam]` containing at least two
+`.ltf-spec-card` elements. Progress is read from the section's scroll geometry,
+so `.ltf-specs-vault` needs a sticky runway taller than the viewport or the
+cards have nothing to animate across. Cards use `translate3d`; the gas bloom
+and edge ring are canvases injected per card and styled inline by the script,
+so no head CSS is required.
 
 ## Custom code
 
 **Head** — `webflow/clean-slate-head.html`  
-`:root` tokens + cage CSS + gradient button / nav FX
+`:root` tokens + cage CSS + gradient button / nav FX. Button **hover** lives
+here as a CSS `::before` opacity fade; the JS only handles the click pulse.
 
 **Footer** — `webflow/clean-slate-footer.html`
 
 ```html
-<script type="module" src="…@32c9413/js/rock-scene.js"></script>
-<script defer src="…@32c9413/js/ltf-btn-gradient.js"></script>
-<script defer src="…/32c9413e7d43…/js/nebula-scroll-engine.js"></script>
-<!-- + mobile nav IIFE -->
+<script type="module" src="…@<commit>/js/ltf.js"></script>
 ```
 
-Nebula engine is pinned to `raw.githubusercontent.com` (full SHA) so Preview does not wait on jsDelivr cache.
+One tag. Shipping a JS change means pushing the repo and swapping that commit
+hash. Do not add a second tag — that is how the hero and section effects
+previously drifted onto different revisions.
 
 ## Feeding fresh content later
 

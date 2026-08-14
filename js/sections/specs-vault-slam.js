@@ -5,7 +5,14 @@
  * • Gradient locked on white border (above card)
  * • Title card (01) gets same ring + gas on scroll 0–14%
  * • Gas clip overlaps border inner edge — no navy gap before gradient
+ *
+ * The effect body is left as the original IIFE so its tuning stays untouched;
+ * the wrapper below only exposes init() to the bundle entry point instead of
+ * self-booting on load.
  */
+
+let bindAll = null;
+
 (function () {
   'use strict';
 
@@ -128,6 +135,14 @@
     host.style.overflow = 'hidden';
     host.style.minHeight = runway + 'px';
     host.style.height = runway + 'px';
+  }
+
+  /* Only ever run before building a fresh set of layers. This used to live in
+     prepHost, which remeasure() also calls on resize — so the first resize tore
+     the canvases out of the DOM while fx[] kept pointing at the detached nodes.
+     Their clientWidth then read 0, resizeLayer bailed, and every effect went
+     silently blank for the rest of the page's life. */
+  function clearFxLayers(host) {
     host.querySelectorAll('.ltf-nebula-gas-layer, .ltf-nebula-ring-layer').forEach(function (el) {
       el.remove();
     });
@@ -326,6 +341,7 @@
     if (cards.length < 2) return;
 
     prepHost(cardsHost, sticky);
+    clearFxLayers(cardsHost);
 
     var fx = [];
     var travels = [];
@@ -539,6 +555,12 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  bindAll = init;
 })();
+
+/** Idempotent — safe to call again after Webflow swaps DOM in. */
+export function init() {
+  if (bindAll) bindAll();
+}
+
+export default init;
