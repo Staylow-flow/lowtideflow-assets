@@ -63,7 +63,7 @@ body
 
 ## Hero FX
 
-- `js/rock-scene.js` — FBM nebula + soapstone rock
+- `js/rock-scene.js` — FBM nebula + hematite boulder
 - **No mouse hover rotation** — idle + scroll coast only
 - Rock cage: absolute inside `.ltf-site-cage`; DPR locked via `data-render-resolution-scale="1"`
 - Footer pin: `@32c9413`
