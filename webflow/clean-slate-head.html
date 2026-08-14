@@ -384,7 +384,7 @@
   /* ════════════════════════════════════════════════════════════════════
      LAYOUT  — cage and even insets. Hero bar width lives in Designer.
      ════════════════════════════════════════════════════════════════════ */
-  .ltf-section:has(.ltf-split-2),
+  .ltf-section:has(.ltf-split-2):not(.ltf-upsell),
   .ltf-section:has(.ltf-cards-grid),
   .ltf-specs-vault {
     padding-left: 0;
@@ -393,11 +393,15 @@
     padding-bottom: var(--ltf-section-pad-y);
   }
 
-  .ltf-upsell {
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: calc(var(--ltf-section-pad-y) + 20px);
-    padding-bottom: var(--ltf-section-pad-y);
+  /* Beyond the Gear — padding lives in Designer (.ltf-upsell is 120).
+     List sits on the CTA baseline: grid align-end, no extra top margin. */
+  .ltf-upsell-grid.ltf-split-2 {
+    align-items: end;
+  }
+
+  .ltf-upsell-list.ltf-split-asset {
+    margin-top: 0;
+    align-self: end;
   }
 
   .ltf-cage {
@@ -410,7 +414,7 @@
     padding-right: var(--ltf-side-pad);
   }
 
-  .ltf-split-2:not(.ltf-hero-bottom-bar) {
+  .ltf-split-2:not(.ltf-hero-bottom-bar):not(.ltf-upsell-grid) {
     display: grid;
     align-items: start;
     width: 100%;
@@ -425,7 +429,7 @@
     padding-right: var(--ltf-split-inner);
   }
 
-  .ltf-split-asset {
+  .ltf-split-asset:not(.ltf-upsell-list) {
     box-sizing: border-box;
     min-width: 0;
     padding-left: var(--ltf-split-inner);
@@ -545,7 +549,7 @@
     max-height: none !important;
     min-height: 0;
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: 24px;
     background: none;
     border: none;
     cursor: none;
@@ -557,6 +561,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: inherit;
   }
 
   .ltf-magnifier:not(.is-lit) .ltf-magnifier-lens {
@@ -751,6 +756,7 @@
   .ltf-section-cta .ltf-btn-primary,
   .ltf-funnel-cta .ltf-btn-primary {
     border: none !important;
+    border-radius: 10px !important;
     background: #00001C !important;
     background-color: #00001C !important;
     color: #E5E5E5 !important;
@@ -820,20 +826,21 @@
     border-color: rgba(42, 170, 184, 0.55);
   }
 
-  /* ── Gradient ring corner radius ────────────────────────────────────── */
-  /* Concentric radii: the ring's corner has to be the button's corner plus
-     the gap it sits in, or the ring reads square against a rounded button.
-     .ltf-btn-primary is 12px in the Designer, so the ring was 7px too tight. */
-  .ltf-btn-gradient-wrap {
+  /* CTA ring: outer 12px, inner 10px — 2px gap, inner a touch tighter so
+     the white outline and navy fill share one curve. Nav stays 5px. */
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+  .ltf-section-cta .ltf-btn-gradient-wrap,
+  .ltf-funnel-cta .ltf-btn-gradient-wrap {
     --ltf-ring-gap: 2px;
-    --ltf-btn-radius: 12px;
+    --ltf-btn-radius: 10px;
     padding: var(--ltf-ring-gap);
-    border-radius: calc(var(--ltf-btn-radius) + var(--ltf-ring-gap));
+    border-radius: 12px;
   }
 
   .ltf-nav-actions .ltf-btn-gradient-wrap,
   .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
     --ltf-btn-radius: 5px;
+    border-radius: 5px;
   }
 
   @media (prefers-reduced-motion: reduce) {
