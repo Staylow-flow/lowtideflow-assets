@@ -20,11 +20,11 @@ const HOLE_CX = 0.4958;
 const HOLE_CY = 0.4528;
 const HOLE_D = 0.62;
 const MASK_RATIO = 936 / 1056;
-/* Zoomed out so the full logo (≈50%×60% of the reveal) fits in the circle. */
-const MAG = 0.55;
+/* Reveal is a true zoom — larger than the plain fabric plate. */
+const MAG = 1.45;
 const REST_X = 0.33;
 const REST_Y = 0.5;
-const LENS_INSET = 6;
+const LENS_OVERHANG = 0.45;
 
 const Y_SHARE = 0.9;
 const X_SHARE = 0.1;
@@ -37,11 +37,12 @@ const ICE_MAX_Y = 72;
 const IDLE = 0.08;
 const RETURN_EASE = 0.012;
 const RETURN_MAX = 0.85;
-const LEAVE_Y_PULL = 0.15;
+const LEAVE_Y_PULL = 0;
 
-/* 50% glued to the fabric, 50% sliding in viewport space. */
-const STICK_FRICTION = 0.96;
-const STICK_SNAP = 0.4;
+/* 50% glued to the fabric, 50% sliding in viewport space.
+   Coast is velocity-only — same direction, slow, then stop. No spring-back. */
+const STICK_FRICTION = 0.94;
+const STICK_SNAP = 0.12;
 const STICK_SHARE = 0.5;
 
 function clamp(v, lo, hi) {
@@ -127,6 +128,7 @@ function bind(host) {
   let assetsOn = false;
   let loading = false;
   let viewStickY = 0;
+  let stickVel = 0;
   let started = false;
   const objectUrls = [];
   const xDir = Math.random() < 0.5 ? -1 : 1;
@@ -206,12 +208,8 @@ function bind(host) {
     const hostW = host.clientWidth;
     const hostH = host.clientHeight;
     if (!hostW || !hostH) return;
-    lensW = Math.min(340, Math.max(200, hostW * 0.72), Math.max(120, hostW - LENS_INSET * 2));
+    lensW = Math.min(340, Math.max(200, hostW * 0.72));
     lensH = lensW * MASK_RATIO;
-    if (lensH > hostH - LENS_INSET * 2) {
-      lensH = Math.max(120, hostH - LENS_INSET * 2);
-      lensW = lensH / MASK_RATIO;
-    }
     holeCx = lensW * HOLE_CX;
     holeCy = lensH * HOLE_CY;
     holeD = lensW * HOLE_D;
@@ -237,10 +235,10 @@ function bind(host) {
     const w = host.clientWidth || 0;
     const h = host.clientHeight || 0;
     return {
-      minX: LENS_INSET,
-      minY: LENS_INSET,
-      maxX: Math.max(LENS_INSET, w - lensW - LENS_INSET),
-      maxY: Math.max(LENS_INSET, h - lensH - LENS_INSET),
+      minX: -lensW * LENS_OVERHANG,
+      minY: -lensH * LENS_OVERHANG,
+      maxX: w - lensW * (1 - LENS_OVERHANG),
+      maxY: h - lensH * (1 - LENS_OVERHANG),
     };
   }
 
@@ -254,8 +252,8 @@ function bind(host) {
 
   function placeStart() {
     const b = lensBounds();
-    const x = b.minX;
-    const y = b.minY + (b.maxY - b.minY) * 0.16;
+    const x = Math.max(0, b.minX);
+    const y = Math.max(0, b.minY) + Math.max(0, host.clientHeight - lensH) * 0.16;
     hangNx = (x + holeCx) / (host.clientWidth || 1);
     hangNy = (y + holeCy) / (host.clientHeight || 1);
   }
@@ -273,7 +271,7 @@ function bind(host) {
     leaveNx = (lastLx + holeCx) / w;
     leaveNy = (lastLy + holeCy) / h;
     hangNx = leaveNx;
-    hangNy = leaveNy + (REST_Y - leaveNy) * LEAVE_Y_PULL;
+    hangNy = leaveNy;
   }
 
   function paint() {
@@ -307,17 +305,19 @@ function bind(host) {
 
   function tickStick() {
     if (Math.abs(scroll.deltaY) > 0.05) {
-      viewStickY += scroll.deltaY * STICK_SHARE;
+      stickVel = scroll.deltaY * STICK_SHARE;
     } else {
-      viewStickY *= STICK_FRICTION;
-      if (Math.abs(viewStickY) < STICK_SNAP) viewStickY = 0;
+      stickVel *= STICK_FRICTION;
+      if (Math.abs(stickVel) < STICK_SNAP) stickVel = 0;
     }
+    if (stickVel) viewStickY += stickVel;
   }
 
   host.addEventListener('pointerenter', (e) => {
     hovering = true;
     returning = false;
     viewStickY = 0;
+    stickVel = 0;
     host.classList.add('is-hover');
     loadAssets();
     sizeLens();
@@ -333,7 +333,7 @@ function bind(host) {
 
   host.addEventListener('pointerleave', () => {
     hovering = false;
-    returning = true;
+    returning = false;
     host.classList.remove('is-hover');
     captureLeave();
   });
@@ -370,51 +370,8 @@ function bind(host) {
 
     tickStick();
 
-    if (returning) {
-      const at = rest();
-      const dx = at.x - lastLx;
-      const dy = at.y - lastLy;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 0.4) {
-        returning = false;
-        iceX = 0;
-        iceY = 0;
-        targetX = 0;
-        targetY = 0;
-        parkIce();
-        return;
-      }
-      let mx = dx * RETURN_EASE;
-      let my = dy * RETURN_EASE;
-      const step = Math.hypot(mx, my);
-      if (step > RETURN_MAX) {
-        mx *= RETURN_MAX / step;
-        my *= RETURN_MAX / step;
-      }
-      applyLens(lastLx + mx, lastLy + my);
-      return;
-    }
-
-    const kick = scroll.deltaY * (LOCK + SLIP);
-    const idle =
-      Math.abs(scroll.deltaY) < IDLE &&
-      Math.abs(targetX - iceX) < IDLE &&
-      Math.abs(targetY - iceY) < IDLE &&
-      Math.abs(iceX) < IDLE &&
-      Math.abs(iceY) < IDLE &&
-      Math.abs(viewStickY) < IDLE;
-    if (idle) return;
-
-    /* Vertical catch-up is viewStickY. Ice only keeps a little X drift. */
-    targetY *= SETTLE;
-    targetX += kick * X_SHARE * xDir;
-    targetX *= SETTLE;
-    targetX = clamp(targetX, -ICE_MAX_X, ICE_MAX_X);
-    targetY = clamp(targetY, -ICE_MAX_Y, ICE_MAX_Y);
-
-    iceX += (targetX - iceX) * SMOOTH;
-    iceY += (targetY - iceY) * SMOOTH;
-    parkIce();
+    if (Math.abs(stickVel) < IDLE && Math.abs(scroll.deltaY) < IDLE) return;
+    paint();
   }, {
     element: host,
     onEnter() {

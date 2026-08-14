@@ -384,7 +384,7 @@
   /* ════════════════════════════════════════════════════════════════════
      LAYOUT  — cage and even insets. Hero bar width lives in Designer.
      ════════════════════════════════════════════════════════════════════ */
-  .ltf-section:has(.ltf-split-2):not(.ltf-upsell),
+  .ltf-section:has(.ltf-split-2):not(.ltf-upsell):not(:has(.ltf-authority-image-box)),
   .ltf-section:has(.ltf-cards-grid),
   .ltf-specs-vault {
     padding-left: 0;
@@ -555,17 +555,40 @@
     color: #7040C0;
   }
 
-  /* ── Trenches: thread-counter magnifier ─────────────────────────────── */
+  /* ── Trenches: one viewport tall, 20px air, glass may hang past the knit ── */
+  .ltf-section:has(.ltf-authority-image-box) {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    box-sizing: border-box;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+  }
+
+  .ltf-section:has(.ltf-authority-image-box) .ltf-site-cage,
+  .ltf-section:has(.ltf-authority-image-box) .ltf-section-inner,
+  .ltf-section:has(.ltf-authority-image-box) .ltf-split-2,
+  .ltf-section:has(.ltf-authority-image-box) .ltf-split-asset {
+    height: 100%;
+    overflow: visible;
+  }
+
+  .ltf-section:has(.ltf-authority-image-box) .ltf-split-2 {
+    align-items: center;
+  }
+
   .ltf-authority-image-box,
   .ltf-magnifier {
     position: relative;
-    aspect-ratio: 3 / 4;
     width: 100%;
-    max-width: 100%;
-    max-height: none !important;
-    min-height: 0;
-    overflow: hidden;
-    border-radius: 24px;
+    height: calc(100vh - 40px) !important;
+    max-height: calc(100vh - 40px) !important;
+    overflow: visible !important;
+    aspect-ratio: auto !important;
+    border-radius: 0;
     background: none;
     border: none;
     cursor: none;
@@ -577,7 +600,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: inherit;
+    border-radius: 24px;
   }
 
   .ltf-magnifier:not(.is-lit) .ltf-magnifier-lens {
@@ -623,9 +646,17 @@
   }
 
   @media (max-width: 991px) {
+    .ltf-section:has(.ltf-authority-image-box) {
+      height: auto;
+      max-height: none;
+    }
+
     .ltf-authority-image-box,
     .ltf-magnifier {
+      height: auto;
+      max-height: calc(100vh - 40px);
       min-height: 320px;
+      aspect-ratio: 3 / 4;
       cursor: auto;
     }
   }
