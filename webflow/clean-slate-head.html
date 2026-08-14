@@ -4,14 +4,14 @@
 
   SPLIT OF RESPONSIBILITIES:
 
-  WEBFLOW DESIGNER owns (do not override here):
-  - Default padding, radius, and static placement you want to tweak in the
-    Style panel
+  WEBFLOW DESIGNER owns:
+  - Split column WIDTH, gap, and placement (tweak in the Style panel)
+  - Default padding, radius, type, and static color
 
   THIS FILE ONLY (things Designer cannot do):
   - @keyframes, gradient rings, hover sweep, crew scroll-dock transforms
-  - Layout lock: .ltf-cage / .ltf-split-2 / .ltf-split-copy / .ltf-split-asset
-  - Hero H1: clamp(40px, 7vw, 112px) — min 40, max 112, half the previous lock
+  - Even split insets (--ltf-split-inset / --ltf-split-inner)
+  - Hero H1: clamp(40px, 7vw, 112px)
 -->
 <style>
   :root {
@@ -21,6 +21,7 @@
     --ltf-gutter-mid: 80px;
     --ltf-col: 580px;
     --ltf-split-inset: 40px;
+    --ltf-split-inner: 50px;
     --fluid-padding: var(--ltf-side-pad);
   }
 
@@ -30,6 +31,7 @@
       --ltf-section-pad-y: 64px;
       --ltf-gutter-mid: 32px;
       --ltf-split-inset: 0px;
+      --ltf-split-inner: 0px;
     }
   }
 
@@ -62,11 +64,7 @@
     max-width: none;
   }
 
-  .ltf-body-text,
-  .ltf-body-text-navy {
-    max-width: none !important;
-    width: 100%;
-  }
+  /* Paragraph width lives in Designer. Do not force 100% here. */
 
   /* Rock stays absolute inside the relative 1400px hero cage */
   .ltf-hero > .ltf-site-cage {
@@ -439,76 +437,54 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════
-     LOCKED LAYOUT  (every split section)
-
-     1400 cage
-       80px side pad  →  1240 inner
-       100px top / bottom
-       Split 2:  580 | 80 gutter | 580
-         → .ltf-split-copy   left: H1 / H2 / paragraphs  (+40px inset)
-         → .ltf-split-asset  right: unique JS            (+40px inset)
-     Cage 80 + inner 40 on BOTH sides so the text and the JS column
-     sit the same distance from the viewport edge.
+     LAYOUT  — Designer owns column WIDTH. This file only sets the
+     outer cage and even insets. Tweak split column width in Style panel.
      ════════════════════════════════════════════════════════════════════ */
   .ltf-section:has(.ltf-split-2),
   .ltf-section:has(.ltf-cards-grid),
-  .ltf-specs-vault,
+  .ltf-specs-vault {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: var(--ltf-section-pad-y);
+    padding-bottom: var(--ltf-section-pad-y);
+  }
+
   .ltf-upsell {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    padding-top: var(--ltf-section-pad-y) !important;
-    padding-bottom: var(--ltf-section-pad-y) !important;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: calc(var(--ltf-section-pad-y) + 20px);
+    padding-bottom: var(--ltf-section-pad-y);
   }
 
   .ltf-cage {
     box-sizing: border-box;
     width: 100%;
-    max-width: var(--site-max-width) !important;
+    max-width: var(--site-max-width);
     margin-left: auto;
     margin-right: auto;
-    padding-left: var(--ltf-side-pad) !important;
-    padding-right: var(--ltf-side-pad) !important;
+    padding-left: var(--ltf-side-pad);
+    padding-right: var(--ltf-side-pad);
   }
 
   .ltf-split-2 {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--ltf-gutter-mid) !important;
+    display: grid;
     align-items: start;
     width: 100%;
-    max-width: 1240px;
   }
 
+  /* Outer 40px (edge) + inner 50px (gutter) on BOTH columns. */
   .ltf-split-copy {
     box-sizing: border-box;
-    width: 100% !important;
-    max-width: none !important;
     min-width: 0;
-    justify-self: stretch;
-    margin: 0 !important;
-    padding-left: var(--ltf-split-inset) !important;
-    padding-right: 0 !important;
-    text-align: left !important;
-    align-items: flex-start !important;
-  }
-
-  .ltf-split-copy > .ltf-section-header,
-  .ltf-split-copy > .ltf-section-header-navy,
-  .ltf-split-copy > .ltf-subheading,
-  .ltf-split-copy > .ltf-body-text {
-    width: 100%;
-    max-width: none !important;
+    padding-left: var(--ltf-split-inset);
+    padding-right: var(--ltf-split-inner);
   }
 
   .ltf-split-asset {
     box-sizing: border-box;
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
     min-width: 0;
-    justify-self: stretch;
-    padding-left: 0 !important;
-    padding-right: var(--ltf-split-inset) !important;
+    padding-left: var(--ltf-split-inner);
+    padding-right: var(--ltf-split-inset);
   }
 
   /* Force SPECs & / STANDARDS onto two lines at the 1400 cage. */
@@ -516,26 +492,14 @@
     max-width: 6.4em !important;
   }
 
-  /* Hero bottom bar = left split column inside the 1400 cage. Absolute
-     left/width match Grid 1 (.ltf-split-copy) in the sections below.
-     Logo + CTA stay shrink-wrapped so the hover ring cannot go full-bleed. */
+  /* Hero bottom bar: width / left live in Designer (ltf-hero-bottom-bar).
+     Only keep the CTA shrink-wrap so the gradient ring cannot go full-bleed. */
   .ltf-hero-bottom-bar.ltf-split-copy,
   .ltf-hero-bottom-bar {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    text-align: left !important;
-  }
-
-  @media (min-width: 992px) {
-    .ltf-hero-bottom-bar.ltf-split-copy,
-    .ltf-hero-bottom-bar {
-      left: var(--ltf-side-pad) !important;
-      width: calc((100% - (2 * var(--ltf-side-pad)) - var(--ltf-gutter-mid)) / 2) !important;
-      max-width: var(--ltf-col) !important;
-      min-width: 0 !important;
-      transform: none !important;
-    }
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
   }
 
   .ltf-hero-bottom-bar .ltf-hero-logo {
@@ -560,15 +524,13 @@
      so its top sits on the H1 baseline. */
   @media (min-width: 992px) {
     .ltf-upsell-grid .ltf-split-asset {
-      margin-top: calc(clamp(2.75rem, 7vw, 6.25rem) * 0.9 + 10px) !important;
+      margin-top: calc(clamp(2.75rem, 7vw, 6.25rem) * 0.9 + 30px);
     }
   }
 
-  @media (max-width: 991px) {
-    .ltf-split-2 {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 2rem !important;
-    }
+  /* Force SPECs & / STANDARDS onto two lines. */
+  .ltf-split-copy .ltf-section-header-navy {
+    max-width: 6.4em;
   }
 
   /* ── Specs vault cards ──────────────────────────────────────────────── */
@@ -744,9 +706,15 @@
     to { --ltf-edge-angle: 360deg; }
   }
 
+  /* The Crew — Specs grey field, navy type. Cards stay dark navy. */
   .ltf-section:has(.ltf-cards-grid) {
+    background-color: #F0F0F0;
     overflow-x: clip;
     overflow-y: visible;
+  }
+
+  .ltf-section:has(.ltf-cards-grid) .ltf-section-header {
+    color: #06142E;
   }
 
   .ltf-cards-grid {
@@ -770,11 +738,12 @@
 
   .ltf-card {
     position: relative;
-    min-height: clamp(256px, 20.8vw, 352px);
+    min-height: clamp(236px, 19.5vw, 332px);
     overflow: visible;
     will-change: transform;
     transform-origin: center center;
-    transition: border-color 0.35s ease;
+    background-color: #00001C;
+    transition: border-color 0.45s ease, box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   /* Extra hover bloom — same teal/violet gas the Specs tech cards use.
@@ -806,17 +775,9 @@
   .ltf-card > * {
     position: relative;
     z-index: 1;
-    transform-origin: center center;
   }
 
-  /* Navy card grows on hover; children counter-scale so type stays put. */
-  .ltf-card:hover > *,
-  .ltf-card.is-glow > * {
-    transform: scale(0.97087);
-  }
-
-  /* 4px ring (was 3px) sits over the card's white border so the outline
-     does not show through the hover gradient. */
+  /* Slightly larger navy plate on hover — no type scale. */
   .ltf-card::after {
     content: '';
     position: absolute;
@@ -839,6 +800,7 @@
   .ltf-card:hover,
   .ltf-card.is-glow {
     border-color: transparent !important;
+    box-shadow: 0 0 0 6px #00001C;
   }
 
   .ltf-card:hover::after,
@@ -850,20 +812,32 @@
   @media (max-width: 991px) {
     .ltf-card.is-glow,
     .ltf-card:hover {
-      transform: scale(1.03);
+      transform: none;
     }
   }
 
-  /* Beyond the Gear + The Crew — white outline at rest; gradient ring on hover. */
-  .ltf-section-cta .ltf-btn-primary {
-    border: 2px solid #FFFFFF !important;
-    background-clip: padding-box;
+  /* Instant Quote + Beyond + Crew — white ring at rest (wrap padding),
+     gradient ring on hover. Same 2px as .ltf-btn-gradient-wrap padding. */
+  .ltf-section-cta .ltf-btn-gradient-wrap,
+  .ltf-funnel-cta .ltf-btn-gradient-wrap {
+    background: #FFFFFF;
   }
 
-  .ltf-section-cta .ltf-btn-gradient-wrap:hover > .ltf-btn-primary,
-  .ltf-section-cta .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary,
-  .ltf-section-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary {
-    border-color: transparent !important;
+  .ltf-section-cta .ltf-btn-gradient-wrap:hover,
+  .ltf-section-cta .ltf-btn-gradient-wrap:focus-within,
+  .ltf-section-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active,
+  .ltf-funnel-cta .ltf-btn-gradient-wrap:hover,
+  .ltf-funnel-cta .ltf-btn-gradient-wrap:focus-within,
+  .ltf-funnel-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+    background: transparent;
+  }
+
+  .ltf-section-cta .ltf-btn-primary,
+  .ltf-funnel-cta .ltf-btn-primary {
+    border: none !important;
+    background: #06142E !important;
+    background-color: #06142E !important;
+    color: #E5E5E5 !important;
   }
 
   /* The Crew heading — Designer combo is flex-direction: row + max-width 720,

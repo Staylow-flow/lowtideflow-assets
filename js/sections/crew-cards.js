@@ -1,24 +1,19 @@
 /**
  * Lowtideflow — The Crew cards scroll-dock.
  *
- * Left-column cards start off-canvas to the left, right-column cards to the
- * right. Position tracks window scroll. All four cards share the grid's
- * progress so the bottom pair only lags a hair, and they finish docking
- * while the section is still traveling toward center.
+ * Each card tracks its own position in the viewport so the bottom row
+ * still slides in instead of appearing already docked. Hover glow lives
+ * in CSS; this file only writes translate so type never scales.
  */
 
 import { onFrame, reducedMotion } from '../core/ticker.js';
 
 const DESKTOP = '(min-width: 992px)';
-/* Grid top at this fraction of the viewport → fully off-canvas. */
-const START_AT = 1.08;
-/* Grid top at this fraction → fully docked. Higher = stops earlier,
-   while the block is still below center. */
-const END_AT = 0.52;
+/* Card top at this fraction of the viewport → fully off-canvas. */
+const START_AT = 1.05;
+/* Card top at this fraction → fully docked. Lower = more travel on-screen. */
+const END_AT = 0.58;
 const TRAVEL = 100;
-const HOVER_SCALE = 1.03;
-/* Bottom row waits this much extra progress — a beat, not a second row. */
-const BOTTOM_LAG = 0.07;
 
 function clamp01(t) {
   return t < 0 ? 0 : t > 1 ? 1 : t;
@@ -45,8 +40,6 @@ export function init() {
   const cards = Array.from(grid.querySelectorAll('.ltf-card'));
   if (!cards.length) return;
 
-  /* Extra hover bloom lives in CSS (.ltf-card::before). The class keeps
-     the glow lit while the pointer is down on the card, matching Specs. */
   for (const card of cards) {
     card.addEventListener('pointerenter', () => card.classList.add('is-glow'));
     card.addEventListener('pointerleave', () => card.classList.remove('is-glow'));
@@ -71,14 +64,11 @@ export function init() {
   onFrame(() => {
     if (!desktop) return;
     const vh = window.innerHeight || 1;
-    const gridP = scrollProgress(grid, vh);
     for (let i = 0; i < cards.length; i++) {
-      const lag = i >= 2 ? BOTTOM_LAG : 0;
-      const p = easeOutQuad(clamp01((gridP - lag) / (1 - lag)));
+      const p = easeOutQuad(scrollProgress(cards[i], vh));
       const dir = i % 2 === 0 ? -1 : 1;
-      const scale = cards[i].classList.contains('is-glow') ? HOVER_SCALE : 1;
       cards[i].style.transform =
-        `translate3d(${(1 - p) * dir * TRAVEL}%, 0, 0) scale(${scale})`;
+        `translate3d(${(1 - p) * dir * TRAVEL}%, 0, 0)`;
     }
   }, { element: grid });
 }
