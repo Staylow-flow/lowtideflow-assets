@@ -1,12 +1,19 @@
 <!--
-  CLEAN SLATE — Full Page Footer (Before </body>)
+  CLEAN SLATE — Page Footer (Before </body>)
 
-  rock-scene.js = nebula gas layers + the Three.js boulder.
-  The Spline runtime is gone; do not re-add spline-boulder.js.
+  One tag, on purpose. js/ltf.js imports every other module by relative path,
+  so the commit below pins the whole bundle at once: hero boulder + nebula,
+  specs vault, mobile nav, and button pulse.
+
+  To ship a JS change: push to the repo, then swap the commit hash below and
+  publish. That hash is the only thing in Webflow that needs to change.
+
+  Do not add more <script> tags here. A second pinned tag is how the hero and
+  the section effects previously ended up on different revisions. New effects
+  get a row in the MODULES list inside js/ltf.js instead.
+
+  The mobile nav used to live here as an inline block. It is now
+  js/ui/nav-mobile.js — do not paste it back, it would double-bind the toggle.
 -->
-<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@290f633/js/rock-scene.js"></script>
-<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@32c9413/js/ltf-btn-gradient.js"></script>
-<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ac9f87f/js/nebula/specs-vault-slam.js"></script>
-<script defer>
-(function(){'use strict';var MQ=window.matchMedia('(max-width: 991px)');function init(){var nav=document.querySelector('.ltf-site-nav');var toggle=document.querySelector('.ltf-nav-toggle');var panel=document.querySelector('.ltf-nav-mobile-panel');if(!nav||!toggle||!panel)return;function setOpen(open){nav.classList.toggle('is-nav-open',open);toggle.setAttribute('aria-expanded',open?'true':'false');toggle.setAttribute('aria-label',open?'Close menu':'Open menu');document.body.classList.toggle('ltf-nav-open',open);}function close(){setOpen(false);}toggle.addEventListener('click',function(e){e.preventDefault();setOpen(!nav.classList.contains('is-nav-open'));});toggle.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();setOpen(!nav.classList.contains('is-nav-open'));}});panel.querySelectorAll('a').forEach(function(link){link.addEventListener('click',close);});document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});MQ.addEventListener('change',function(){if(!MQ.matches)close();});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}})();
-</script>
+<script type="module"
+  src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@76c9e17/js/ltf.js"></script>
