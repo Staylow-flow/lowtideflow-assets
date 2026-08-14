@@ -5,27 +5,26 @@
   SPLIT OF RESPONSIBILITIES:
 
   WEBFLOW DESIGNER owns (do not override here):
-  - Font size, weight, family, color
+  - Font size (except the hero H1 14vw clamp below), weight, family, color
   - Default padding, radius, and static placement you want to tweak in the
     Style panel
 
   THIS FILE ONLY (things Designer cannot do):
   - @keyframes, gradient rings, hover sweep, crew scroll-dock transforms
-  - Layout locks that must stay identical across Specs / Trenches / Gear
-    until those widths are moved into Designer classes
+  - Layout lock: .ltf-cage / .ltf-split-2 / .ltf-split-copy / .ltf-split-asset
+  - Hero H1 clamp(2.5rem, 14vw, 14rem) so 14vw actually shows on desktop
 -->
 <style>
   :root {
     --site-max-width: 1400px;
     --fluid-padding: clamp(2rem, 5vw, 5rem);
     --ltf-gutter-mid: 3rem;
-    --ltf-copy-pad-left: 50px;
-    --ltf-copy-trim-right: 50px;
   }
 
   /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
   .ltf-site-cage,
-  .section-wrapper {
+  .section-wrapper,
+  .ltf-cage {
     position: relative;
     width: 100%;
     max-width: var(--site-max-width);
@@ -36,8 +35,12 @@
     box-sizing: border-box;
   }
 
+  /* Designer already has this clamp; the old 4.5rem max ate 14vw on
+     desktop so Style-panel edits looked like a no-op. Cap at 14rem so
+     14vw is the live size inside the 1400 cage. */
   .ltf-main-header,
   .hero-h1 {
+    font-size: clamp(2.5rem, 14vw, 14rem) !important;
     line-height: 0.95;
     letter-spacing: -0.02em;
   }
@@ -422,26 +425,25 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════
-     UNIFIED TWO-COLUMN RHYTHM
+     LOCKED LAYOUT  (every section except The Crew)
 
-     Specs, Trenches, and Beyond the Gear all sit in the same 1400 cage
-     with the same 80px edge. Parent section padding is zeroed on the
-     split/upsell sections so it cannot double-up against the cage and
-     shove those copy columns inboard of Specs.
+     Section
+       → .ltf-cage          1400 max, shared edge padding
+         → .ltf-split-2     50 / 50 grid (stacks on mobile)
+           → .ltf-split-copy   left: H1 / H2 / paragraphs
+           → .ltf-split-asset  right: unique JS, centered in the cell
 
-     Copy stacks share one box: +50px left pad, 50px trimmed from the
-     right so the right edge moves inboard. Asset columns use the same
-     box width, centered in the right column.
+     Per-section width fights (1fr 1.3fr, 50px trims, vault flex) are
+     overridden here so the new class names own the box.
      ════════════════════════════════════════════════════════════════════ */
-  .ltf-section:has(.ltf-split),
+  .ltf-section:has(.ltf-split-2),
+  .ltf-specs-vault,
   .ltf-upsell {
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
 
-  .ltf-section-inner,
-  .ltf-upsell-inner,
-  .ltf-vault-cage {
+  .ltf-cage {
     box-sizing: border-box;
     width: 100%;
     max-width: var(--site-max-width) !important;
@@ -451,77 +453,78 @@
     padding-right: var(--fluid-padding) !important;
   }
 
-  .ltf-vault-cage {
-    justify-content: stretch;
+  .ltf-split-2 {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--ltf-gutter-mid) !important;
     align-items: start;
-    gap: var(--ltf-gutter-mid);
+    width: 100%;
   }
 
+  .ltf-split-copy {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0;
+    justify-self: stretch;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .ltf-split-copy > * {
+    width: 100%;
+    max-width: none !important;
+  }
+
+  .ltf-split-asset {
+    box-sizing: border-box;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0;
+    justify-self: stretch;
+  }
+
+  /* Force SPECs & / STANDARDS onto two lines at the 1400 cage. */
+  .ltf-split-copy .ltf-section-header-navy {
+    max-width: 6.4em !important;
+  }
+
+  /* Hero bottom bar = the left split column inside the 1400 cage. */
   @media (min-width: 992px) {
-    .ltf-vault-cage,
-    .ltf-split,
-    .ltf-upsell-grid {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: var(--ltf-gutter-mid) !important;
-      align-items: start;
-    }
-
-    .ltf-specs-vault-header,
-    .ltf-split > .ltf-stack,
-    .ltf-upsell-grid > .ltf-stack {
-      box-sizing: border-box;
-      width: calc(100% - var(--ltf-copy-trim-right)) !important;
-      max-width: none !important;
-      min-width: 0;
-      flex: none;
-      justify-self: start;
-      padding-left: var(--ltf-copy-pad-left) !important;
-      padding-right: 0 !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-    }
-
-    .ltf-specs-vault-header > *,
-    .ltf-split > .ltf-stack > *,
-    .ltf-upsell-grid > .ltf-stack > * {
-      width: 100%;
-      max-width: none !important;
-    }
-
-    /* Force SPECs & / STANDARDS onto two lines at the 1400 cage. */
-    .ltf-specs-vault-header .ltf-section-header-navy {
-      max-width: 6.4em !important;
-    }
-
-    /* Same container size as the copy box, centered in the right column. */
-    .ltf-specs-vault-cards,
-    .ltf-authority-image-box,
-    .ltf-magnifier,
-    .ltf-upsell-list {
-      box-sizing: border-box;
-      width: calc(100% - var(--ltf-copy-trim-right)) !important;
-      max-width: none !important;
-      margin-left: auto;
-      margin-right: auto;
-      justify-self: center;
-    }
-
+    .ltf-hero-bottom-bar.ltf-split-copy,
     .ltf-hero-bottom-bar {
-      left: calc(var(--fluid-padding) + var(--ltf-copy-pad-left));
-      width: calc((100% - var(--ltf-gutter-mid)) / 2 - var(--ltf-copy-trim-right));
-    }
-
-    .ltf-stack.ltf-section-head {
-      box-sizing: border-box;
-      padding-left: var(--ltf-copy-pad-left) !important;
-    }
-
-    /* Orange figure: 50px inboard so it shares the Q3 asset axis. */
-    .ltf-hero-figure,
-    .ltf-hero-figure-img {
-      right: 50px !important;
+      left: var(--fluid-padding) !important;
+      width: calc((100% - (2 * var(--fluid-padding)) - var(--ltf-gutter-mid)) / 2) !important;
+      max-width: none !important;
+      min-width: 0 !important;
       transform: none !important;
+    }
+  }
+
+  /* Beyond the Gear: list top sits on the H1 baseline (row 2 = after heading). */
+  @media (min-width: 992px) {
+    .ltf-upsell-grid.ltf-split-2 > .ltf-split-copy {
+      display: contents;
+    }
+
+    .ltf-upsell-grid.ltf-split-2 > .ltf-split-copy > * {
+      grid-column: 1;
+    }
+
+    .ltf-upsell-grid.ltf-split-2 > .ltf-split-asset {
+      grid-column: 2;
+      grid-row: 2 / -1;
+      align-self: start;
+      margin-top: 0 !important;
+    }
+  }
+
+  @media (max-width: 991px) {
+    .ltf-split-2 {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem !important;
     }
   }
 
@@ -555,7 +558,7 @@
   }
 
   .ltf-upsell-list {
-    margin-top: 0;
+    margin-top: 0 !important;
     max-width: 100%;
     width: 100%;
     margin-left: auto;
@@ -614,15 +617,15 @@
     color: #7040C0;
   }
 
-  /* ── Trenches: portrait magnifier host ──────────────────────────────── */
+  /* ── Trenches: thread-counter magnifier ─────────────────────────────── */
   .ltf-authority-image-box,
   .ltf-magnifier {
     position: relative;
     aspect-ratio: 3 / 4;
     width: 100%;
-    max-width: 520px;
-    max-height: none;
-    min-height: 420px;
+    max-width: 100%;
+    max-height: none !important;
+    min-height: 0;
     overflow: hidden;
     background-color: #06142e;
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -643,24 +646,26 @@
     top: 0;
     left: 0;
     z-index: 2;
-    width: 168px;
-    height: 168px;
-    border-radius: 50%;
-    overflow: hidden;
-    isolation: isolate;
     pointer-events: none;
     opacity: 0;
     will-change: transform;
-    box-shadow:
-      0 0 0 2px rgba(42, 170, 184, 0.85),
-      0 0 18px rgba(112, 64, 192, 0.55),
-      0 0 36px rgba(31, 119, 129, 0.35);
-    transition: opacity 0.2s ease;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+    transition: opacity 0.18s ease;
   }
 
   .ltf-magnifier.is-lit .ltf-magnifier-lens,
   .ltf-authority-image-box.is-lit .ltf-magnifier-lens {
     opacity: 1;
+  }
+
+  .ltf-magnifier-hole {
+    position: absolute;
+    overflow: hidden;
+    border-radius: 50%;
+    isolation: isolate;
+    /* Soft falloff at the rim so the reveal reads as rounded glass, not a hard cookie-cutter. */
+    -webkit-mask-image: radial-gradient(circle, #000 68%, transparent 78%);
+    mask-image: radial-gradient(circle, #000 68%, transparent 78%);
   }
 
   .ltf-magnifier-print {
@@ -670,27 +675,17 @@
     max-width: none;
     object-fit: cover;
     pointer-events: none;
+    will-change: transform;
   }
 
-  /* Same-source fallback: the reveal still reads as a printed pass by
-     pushing teal/violet into the fabric until a real print plate is wired
-     via data-ltf-print-src. */
-  .ltf-magnifier.is-same-src .ltf-magnifier-print {
-    filter: saturate(1.35) contrast(1.12) hue-rotate(-12deg);
-  }
-
-  .ltf-magnifier-print-tint {
+  .ltf-magnifier-glass {
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(135deg, rgba(77, 37, 157, 0.28), rgba(42, 170, 184, 0.22)),
-      repeating-linear-gradient(
-        -18deg,
-        transparent 0 7px,
-        rgba(11, 128, 80, 0.18) 7px 8px
-      );
-    mix-blend-mode: color;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
     pointer-events: none;
+    z-index: 3;
   }
 
   @media (max-width: 991px) {
