@@ -2,34 +2,25 @@
   CLEAN SLATE — Page Head Custom Code
   Paste into: Page Settings → Custom Code → Inside <head> tag
 
-  SPLIT OF RESPONSIBILITIES (Webflow-native + minimal custom code):
+  SPLIT OF RESPONSIBILITIES:
 
-  WEBFLOW DESIGNER (editable in Style panel):
-  - ltf-nav-btn / ltf-nav-btn-quote — default: white fill, navy text
-  - Same classes → Hover pseudo: navy fill (#06142E), white text
-  - Padding, font, radius, transitions — all in Webflow
+  WEBFLOW DESIGNER owns (do not override here):
+  - Font size, weight, family, color
+  - Default padding, radius, and static placement you want to tweak in the
+    Style panel
 
-  WEBFLOW DESIGNER — nav text links (ltf-nav-link):
-  - Default + Hover opacity — Style panel
-  - Gradient text fill + letter glow on hover — head CSS (below)
-
-  THIS FILE ONLY (Webflow cannot do keyframes / animated gradients):
-  - @keyframes + gradient ring on .ltf-btn-gradient-wrap:hover
-  - Nav text link gradient fill via background-clip: text
-  - Hero CTA ring mask (transparent → navy on hover)
-  - Click-pulse mirror (.ltf-btn-gradient-active) for JS footer script
+  THIS FILE ONLY (things Designer cannot do):
+  - @keyframes, gradient rings, hover sweep, crew scroll-dock transforms
+  - Layout locks that must stay identical across Specs / Trenches / Gear
+    until those widths are moved into Designer classes
 -->
 <style>
   :root {
     --site-max-width: 1400px;
-    /* Preferred and max carry the full +50%. The floor moves less, because at
-       phone widths the clamp min is what renders and a literal +50% there
-       pushes the headline to ~60px and wraps it to four lines. */
-    --fluid-h1: clamp(2.25rem, 6.75vw, 6.075rem);
-    --fluid-h2: clamp(2.5rem, 5.2vw, 4.5rem);
     --fluid-padding: clamp(2rem, 5vw, 5rem);
     --ltf-gutter-mid: 3rem;
     --ltf-copy-pad-left: 50px;
+    --ltf-copy-trim-right: 50px;
   }
 
   /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
@@ -47,21 +38,18 @@
 
   .ltf-main-header,
   .hero-h1 {
-    font-size: var(--fluid-h1);
     line-height: 0.95;
     letter-spacing: -0.02em;
   }
 
   .ltf-section-header,
   .ltf-section-header-navy {
-    font-size: var(--fluid-h2) !important;
     line-height: 0.92;
     max-width: none;
   }
 
   .ltf-body-text,
   .ltf-body-text-navy {
-    font-size: 20px;
     max-width: none !important;
     width: 100%;
   }
@@ -441,8 +429,9 @@
      split/upsell sections so it cannot double-up against the cage and
      shove those copy columns inboard of Specs.
 
-     Copy stacks then share one box: +50px left pad, full left-column
-     width, no leftover Webflow max-widths (520px / 16em / 720px).
+     Copy stacks share one box: +50px left pad, 50px trimmed from the
+     right so the right edge moves inboard. Asset columns use the same
+     box width, centered in the right column.
      ════════════════════════════════════════════════════════════════════ */
   .ltf-section:has(.ltf-split),
   .ltf-upsell {
@@ -482,11 +471,11 @@
     .ltf-split > .ltf-stack,
     .ltf-upsell-grid > .ltf-stack {
       box-sizing: border-box;
-      width: 100% !important;
+      width: calc(100% - var(--ltf-copy-trim-right)) !important;
       max-width: none !important;
       min-width: 0;
       flex: none;
-      justify-self: stretch;
+      justify-self: start;
       padding-left: var(--ltf-copy-pad-left) !important;
       padding-right: 0 !important;
       margin-left: 0 !important;
@@ -505,20 +494,27 @@
       max-width: 6.4em !important;
     }
 
-    /* Assets sit in the middle of the right column (3rd quarter). */
+    /* Same container size as the copy box, centered in the right column. */
     .ltf-specs-vault-cards,
     .ltf-authority-image-box,
     .ltf-magnifier,
     .ltf-upsell-list {
-      width: 100%;
-      max-width: 500px;
+      box-sizing: border-box;
+      width: calc(100% - var(--ltf-copy-trim-right)) !important;
+      max-width: none !important;
       margin-left: auto;
       margin-right: auto;
       justify-self: center;
     }
 
     .ltf-hero-bottom-bar {
-      left: var(--fluid-padding);
+      left: calc(var(--fluid-padding) + var(--ltf-copy-pad-left));
+      width: calc((100% - var(--ltf-gutter-mid)) / 2 - var(--ltf-copy-trim-right));
+    }
+
+    .ltf-stack.ltf-section-head {
+      box-sizing: border-box;
+      padding-left: var(--ltf-copy-pad-left) !important;
     }
 
     /* Orange figure: 50px inboard so it shares the Q3 asset axis. */
@@ -529,11 +525,9 @@
     }
   }
 
-  /* ── Specs vault: 60px narrower from the right, left edge held ──────── */
+  /* ── Specs vault cards ──────────────────────────────────────────────── */
   .ltf-specs-vault-cards {
     flex: 0 0 auto !important;
-    width: 500px !important;
-    max-width: 500px !important;
   }
 
   .ltf-spec-card,
@@ -556,8 +550,8 @@
 
   /* ── Beyond the Gear: fill the Q3 column, sweep on hover ────────────── */
   @keyframes ltf-upsell-sweep {
-    from { background-position: 0% 50%; }
-    to   { background-position: 100% 50%; }
+    from { background-position: 100% 50%; }
+    to   { background-position: 0% 50%; }
   }
 
   .ltf-upsell-list {
@@ -573,7 +567,6 @@
     position: relative;
     display: flex;
     align-items: flex-start;
-    font-size: 20px;
     line-height: 1.3;
     padding: 22px 28px 22px 24px;
     isolation: isolate;
@@ -606,7 +599,7 @@
       transparent 100%
     );
     background-size: 220% 100%;
-    background-position: 0% 50%;
+    background-position: 100% 50%;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.35s ease;
@@ -708,7 +701,7 @@
     }
   }
 
-  /* ── The Squad: cards +25px, position tracks window scroll ──────────── */
+  /* ── The Crew: cards track window scroll, dock before they center ───── */
   @property --ltf-edge-angle {
     syntax: '<angle>';
     initial-value: 0deg;
@@ -742,17 +735,17 @@
     position: relative;
     min-height: clamp(320px, 26vw, 440px);
     will-change: transform;
+    transition: border-color 0.35s ease;
   }
 
-  /* Ring only: the gradient fills the box, then a two-layer mask punches the
-     middle out so just the 3px edge paints. Cheaper than a blurred duplicate
-     and it never bleeds over the card's own text. */
+  /* 4px ring (was 3px) sits over the card's white border so the outline
+     does not show through the hover gradient. */
   .ltf-card::after {
     content: '';
     position: absolute;
-    inset: -3px;
-    border-radius: 15px;
-    padding: 3px;
+    inset: -1px;
+    border-radius: 13px;
+    padding: 4px;
     background: conic-gradient(
       from var(--ltf-edge-angle),
       #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D
@@ -764,6 +757,10 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.35s ease;
+  }
+
+  .ltf-card:hover {
+    border-color: transparent !important;
   }
 
   .ltf-card:hover::after {

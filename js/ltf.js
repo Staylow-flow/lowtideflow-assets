@@ -55,8 +55,8 @@ const MODULES = [
     test: () => document.querySelector('.ltf-upsell-list-item'),
   },
   {
-    name: 'squad-cards',
-    load: () => import('./sections/squad-cards.js'),
+    name: 'crew-cards',
+    load: () => import('./sections/crew-cards.js'),
     test: () => document.querySelector('.ltf-cards-grid'),
   },
 ];

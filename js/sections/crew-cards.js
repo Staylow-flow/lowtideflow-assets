@@ -1,20 +1,23 @@
 /**
- * Lowtideflow — Squad cards scroll-dock.
+ * Lowtideflow — The Crew cards scroll-dock.
  *
  * Left-column cards start off-canvas to the left, right-column cards to the
- * right. Position is driven by window scroll, not a one-shot enter animation:
- * each card maps its own viewport progress across a long window so docking
- * stays slow and tracks the wheel.
+ * right. Position tracks window scroll. All four cards share the grid's
+ * progress so the bottom pair only lags a hair, and they finish docking
+ * while the section is still traveling toward center.
  */
 
 import { onFrame, reducedMotion } from '../core/ticker.js';
 
 const DESKTOP = '(min-width: 992px)';
-/* Card top at this fraction of the viewport → fully off-canvas. */
-const START_AT = 1.12;
-/* Card top at this fraction → fully docked. Wide gap = slower travel. */
-const END_AT = 0.16;
+/* Grid top at this fraction of the viewport → fully off-canvas. */
+const START_AT = 1.08;
+/* Grid top at this fraction → fully docked. Higher = stops earlier,
+   while the block is still below center. */
+const END_AT = 0.52;
 const TRAVEL = 100;
+/* Bottom row waits this much extra progress — a beat, not a second row. */
+const BOTTOM_LAG = 0.07;
 
 function clamp01(t) {
   return t < 0 ? 0 : t > 1 ? 1 : t;
@@ -35,8 +38,8 @@ function scrollProgress(el, vh) {
 
 export function init() {
   const grid = document.querySelector('.ltf-cards-grid');
-  if (!grid || grid.dataset.ltfSquadBound === '1') return;
-  grid.dataset.ltfSquadBound = '1';
+  if (!grid || grid.dataset.ltfCrewBound === '1') return;
+  grid.dataset.ltfCrewBound = '1';
 
   const cards = Array.from(grid.querySelectorAll('.ltf-card'));
   if (!cards.length) return;
@@ -60,8 +63,10 @@ export function init() {
   onFrame(() => {
     if (!desktop) return;
     const vh = window.innerHeight || 1;
+    const gridP = scrollProgress(grid, vh);
     for (let i = 0; i < cards.length; i++) {
-      const p = easeOutQuad(scrollProgress(cards[i], vh));
+      const lag = i >= 2 ? BOTTOM_LAG : 0;
+      const p = easeOutQuad(clamp01((gridP - lag) / (1 - lag)));
       const dir = i % 2 === 0 ? -1 : 1;
       cards[i].style.transform = `translate3d(${(1 - p) * dir * TRAVEL}%, 0, 0)`;
     }
