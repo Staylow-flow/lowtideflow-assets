@@ -3,8 +3,9 @@
  *
  * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
  *             palette with transparent dark voids, wispy tendrils, dense cores.
- * Foreground: soapstone.glb rock — centered, autonomous idle oscillation,
- *             scroll tumble, hover mouse nudge (±10.5° yaw, ±16° roll on X).
+ * Foreground: boulder-hematite-optimized-v2.glb — quantized geometry, GPU triplanar
+ *             hematite texture, and a Three.js light rig standing in for Spline's.
+ *             Scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
  * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
  */
@@ -13,7 +14,17 @@ import * as THREE from 'https://esm.sh/three@0.165.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@3900fb4/soapstone.glb';
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-hematite-optimized-v2.glb';
+const DEFAULT_TEXTURE_URL =
+  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-texture-raw-02.avif';
+
+/* Triplanar tiling is expressed in repeats across the rock's longest axis. */
+const ROCK_TEXTURE_REPEAT   = 2.4;
+/* Blend exponent — higher keeps each projection flatter and shrinks the seam band. */
+const ROCK_TRIPLANAR_SHARPNESS = 6.0;
+const ROCK_BUMP_SCALE       = 0.9;
+const ROCK_ROUGHNESS        = 0.52;
+const ROCK_METALNESS        = 0.22;
 
 /* ─────────────────────────────────────────────────────────────────────────────
    NEBULA SHADER — FBM Domain Warping
@@ -551,7 +562,7 @@ const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
-const ROCK_SCALE_BASE      = 12.936 * 1.25;  /* +25% rock size */
+const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15;  /* +25% base, +15% hero tune */
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
@@ -616,7 +627,7 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   gasInner:         0.26,   /* soft full-body halo, not tight core blob */
   edgeWarp:         0.20,
   alphaScale:       1.0,
-  rockLiftPx:       100,
+  rockLiftPx:       200,
   widthTighten:     0.96,   /* stop squeezing width — let glow spread */
   topYFactor:       0.94,   /* extend above rock for nav clearance */
   topFadeStart:     0.80,
@@ -699,6 +710,153 @@ function lagAlpha(dt, tauMs) {
 /* ─── Utility ────────────────────────────────────────────────────────────── */
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
+/** Spline GLB/GLTF exports often use BLEND + baseColorFactor alpha ≪ 1 — force solid rock. */
+function solidifyRockMaterial(material) {
+  const mats = Array.isArray(material) ? material : [material];
+  for (const m of mats) {
+    if (!m) continue;
+    m.transparent = false;
+    m.opacity = 1;
+    m.depthWrite = true;
+    m.alphaTest = 0;
+    if (m.color) m.color.setRGB(1, 1, 1);
+    m.roughness = ROCK_ROUGHNESS;
+    m.metalness = ROCK_METALNESS;
+    m.needsUpdate = true;
+  }
+}
+
+function configureRockTexture(tex) {
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+/**
+ * Blend all three world-axis projections of the map in the fragment shader.
+ *
+ * The Spline export carries no UVs. Choosing one projection axis per vertex (the
+ * previous approach) smears the texture across every triangle whose vertices
+ * disagree about the dominant axis, which is what made the rock look plastic.
+ * Sampling all three and weighting by the normal removes those seams entirely.
+ *
+ * Coordinates are object-space so the grain stays locked to the rock as it tumbles.
+ * `axisScale` undoes KHR_mesh_quantization: quantized positions arrive in int16
+ * units stretched differently per axis, so both the sample coordinates and the
+ * blend normal have to be returned to model units before projecting.
+ */
+function applyTriplanarMapping(material, axisScale, repeatScale) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTriAxisScale = { value: axisScale };
+    shader.uniforms.uTriScale     = { value: repeatScale };
+    shader.uniforms.uTriSharpness = { value: ROCK_TRIPLANAR_SHARPNESS };
+    shader.uniforms.uTriBumpScale = { value: ROCK_BUMP_SCALE };
+
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vTriPos;
+        varying vec3 vTriNrm;
+        uniform vec3 uTriAxisScale;`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vTriPos = position * uTriAxisScale;
+        vTriNrm = normalize(normal / uTriAxisScale);`);
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vTriPos;
+        varying vec3 vTriNrm;
+        uniform float uTriScale;
+        uniform float uTriSharpness;
+        uniform float uTriBumpScale;
+        float ltfTriHeight;
+        vec2 ltfTriDHdxy() {
+          return vec2(dFdx(ltfTriHeight), dFdy(ltfTriHeight)) * uTriBumpScale;
+        }`)
+      .replace('#include <map_fragment>', `
+        #ifdef USE_MAP
+          vec3 triW = pow(abs(normalize(vTriNrm)), vec3(uTriSharpness));
+          triW /= max(triW.x + triW.y + triW.z, 1e-4);
+          vec4 triCol = texture2D(map, vTriPos.zy * uTriScale) * triW.x
+                      + texture2D(map, vTriPos.xz * uTriScale) * triW.y
+                      + texture2D(map, vTriPos.xy * uTriScale) * triW.z;
+          ltfTriHeight = dot(triCol.rgb, vec3(0.2126, 0.7152, 0.0722));
+          diffuseColor *= triCol;
+        #endif`)
+      /* Reuse Three's own chunk rather than replacing it, so perturbNormalArb and
+         the clearcoat branches survive; only the height source is swapped for the
+         triplanar one blended above. */
+      .replace(
+        '#include <normal_fragment_maps>',
+        THREE.ShaderChunk.normal_fragment_maps.replaceAll('dHdxy_fwd()', 'ltfTriDHdxy()'),
+      );
+  };
+  /* Keep these injections in their own program slot. */
+  material.customProgramCacheKey = () => 'ltf-rock-triplanar';
+}
+
+/** PBR finish — diffuse + bump driven by the same triplanar sample. */
+function finishRockMaterial(mesh, tex) {
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+
+  const s = mesh.scale;
+  const axisScale = new THREE.Vector3(
+    Math.abs(s.x) > 1e-9 ? s.x : 1,
+    Math.abs(s.y) > 1e-9 ? s.y : 1,
+    Math.abs(s.z) > 1e-9 ? s.z : 1,
+  );
+
+  mesh.geometry.computeBoundingBox();
+  const size = mesh.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(axisScale);
+  const longest = Math.max(Math.abs(size.x), Math.abs(size.y), Math.abs(size.z), 1e-6);
+
+  for (const m of mats) {
+    if (!m) continue;
+    solidifyRockMaterial(m);
+    if (!tex) continue;
+    m.map       = tex;
+    m.bumpMap   = tex;
+    m.bumpScale = ROCK_BUMP_SCALE;
+    applyTriplanarMapping(m, axisScale, ROCK_TEXTURE_REPEAT / longest);
+    m.needsUpdate = true;
+  }
+}
+
+function preloadRockAssets(modelUrl, textureUrl) {
+  if (typeof document === 'undefined') return;
+  for (const [url, as] of [[modelUrl, 'fetch'], [textureUrl, 'image']]) {
+    if (!url) continue;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = as;
+    link.href = url;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  }
+}
+
+/** Spline GLTF exports include lights/camera — keep only mesh geometry for the rock group. */
+function buildRockModelFromGltf(gltf) {
+  const model = new THREE.Group();
+  const meshes = [];
+  gltf.scene.updateMatrixWorld(true);
+  gltf.scene.traverse((child) => {
+    if (child.isMesh) meshes.push(child);
+  });
+  if (!meshes.length) return gltf.scene;
+  for (const mesh of meshes) model.attach(mesh);
+  return model;
+}
+
+function applyRockTexture(root, tex) {
+  if (tex) configureRockTexture(tex);
+  root.traverse((child) => {
+    if (!child.isMesh || !child.geometry || !child.material) return;
+    finishRockMaterial(child, tex);
+  });
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    RockScene
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -706,6 +864,7 @@ class RockScene {
   constructor(container) {
     this.container = container;
     this.modelUrl  = container.getAttribute('data-model-url') || DEFAULT_MODEL_URL;
+    this.textureUrl = container.getAttribute('data-rock-texture-url') || DEFAULT_TEXTURE_URL;
 
     this.w = 1; this.h = 1;
 
@@ -755,14 +914,20 @@ class RockScene {
 
     this._frameBound = this._tick.bind(this);
     this.running = true;
-    this.raf = requestAnimationFrame(this._frameBound);
+    this.inView = true;
+    this._active = false;
+    this._observeVisibility();
+    this._syncActive();
   }
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
   _initRenderer() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    /* render-resolution-scale=1 — lock DPR for large displays (27" iMac etc.) */
+    const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
+    const scale = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : 1;
+    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, 2)) : 1;
     const existingCanvas =
-      this.container.querySelector('#canvas3d, canvas')
+      this.container.querySelector('#canvas3d')
       || (this.container.id === 'canvas3d' ? this.container : null)
       || document.getElementById('canvas3d');
     const rendererOpts = {
@@ -772,13 +937,14 @@ class RockScene {
     };
     if (existingCanvas instanceof HTMLCanvasElement) {
       rendererOpts.canvas = existingCanvas;
+      existingCanvas.setAttribute('loading', 'eager');
     }
     this.renderer = new THREE.WebGLRenderer(rendererOpts);
     this.renderer.setPixelRatio(dpr);
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping      = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
+    this.renderer.toneMappingExposure = 1.18;
     this.renderer.autoClear = false;
     if (!rendererOpts.canvas) {
       this.container.appendChild(this.renderer.domElement);
@@ -842,7 +1008,7 @@ class RockScene {
     if (this.camera) {
       this.camera.position.z = mobileCameraZ(vw);
     }
-    this.rockLiftPx = mobile ? 72 : GAS_LOCKED_BOUNDS.rockLiftPx;
+    this.rockLiftPx = mobile ? 150 : GAS_LOCKED_BOUNDS.rockLiftPx;
     this._applyRockLift();
   }
 
@@ -912,37 +1078,85 @@ class RockScene {
     this.fgNebulaUni = fgMat.uniforms;
   }
 
-  /* ── Iridescent rock lighting ─────────────────────────────────────────── */
-  _initLights() {
-    this.scene.add(new THREE.AmbientLight(0x0d1520, 0.50));
+  /**
+   * Hematite is semi-metallic, and a metal with nothing to reflect renders black —
+   * that is what made earlier GLTF builds look dead next to the Spline scene.
+   * Bake a small sky/horizon/ground gradient into an IBL so the rock has an
+   * environment to pick up. 32x16 costs nothing to build and never hits the network.
+   */
+  _initEnvironment() {
+    const W = 32;
+    const H = 16;
+    const sky     = new THREE.Color(0x9db9d6);
+    const horizon = new THREE.Color(0x2b3550);
+    const ground  = new THREE.Color(0x0b0a12);
 
-    const key = new THREE.DirectionalLight(0xd8e0f0, 1.35);
-    key.position.set(3, 5, 4);
-    this.scene.add(key);
+    const data = new Float32Array(W * H * 4);
+    const c = new THREE.Color();
+    for (let y = 0; y < H; y++) {
+      const t = y / (H - 1);
+      if (t < 0.5) c.copy(sky).lerp(horizon, t / 0.5);
+      else         c.copy(horizon).lerp(ground, (t - 0.5) / 0.5);
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        data[i] = c.r; data[i + 1] = c.g; data[i + 2] = c.b; data[i + 3] = 1;
+      }
+    }
 
-    const teal = new THREE.PointLight(0x1f7781, 3.15, 24);
-    teal.position.set(-7, 2, 6);
-    this.scene.add(teal);
+    const src = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType);
+    src.mapping = THREE.EquirectangularReflectionMapping;
+    src.needsUpdate = true;
 
-    const purple = new THREE.PointLight(0x4d259d, 2.70, 20);
-    purple.position.set(7, -1, -6);
-    this.scene.add(purple);
-
-    const green = new THREE.PointLight(0x0b8050, 1.80, 16);
-    green.position.set(-2, -8, 3);
-    this.scene.add(green);
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this._envMap = pmrem.fromEquirectangular(src).texture;
+    this.scene.environment = this._envMap;
+    this.scene.environmentIntensity = 0.9;
+    pmrem.dispose();
+    src.dispose();
   }
 
-  /* ── GLB loader ──────────────────────────────────────────────────────────── */
+  /* ── Rock lighting — cool key top-left, rim behind, teal bounce bottom-right ─ */
+  _initLights() {
+    this._initEnvironment();
+
+    /* Sky/ground wash on top of the IBL, keeping shadowed faces from crushing. */
+    this.scene.add(new THREE.HemisphereLight(0xbcd2e8, 0x14101c, 0.45));
+
+    /* Key — Spline's export favoured a cool blue-white, so match that tone. */
+    const key = new THREE.DirectionalLight(0xdbe5f2, 3.0);
+    key.position.set(-5.5, 7.5, 5.5);
+    this.scene.add(key);
+
+    /* Rim from behind — separates the silhouette from the nebula. */
+    const rim = new THREE.DirectionalLight(0xffffff, 1.15);
+    rim.position.set(1.2, 2.6, -7.5);
+    this.scene.add(rim);
+
+    /* Brand teal bounce from the lower right. */
+    const fill = new THREE.DirectionalLight(0x3ecfb8, 0.55);
+    fill.position.set(6.5, -4.5, 5.0);
+    this.scene.add(fill);
+  }
+
+  /* ── GLTF/GLB loader — parallel mesh + texture, reveal when both ready ─── */
   _loadModel() {
-    const loader = new GLTFLoader();
-    loader.load(
-      this.modelUrl,
+    preloadRockAssets(this.modelUrl, this.textureUrl);
 
-      (gltf) => {
-        const model = gltf.scene;
+    const gltfLoader = new GLTFLoader();
+    const texLoader = new THREE.TextureLoader();
+    texLoader.setCrossOrigin('anonymous');
 
-        /* Scale to target size */
+    const gltfP = new Promise((resolve, reject) => {
+      gltfLoader.load(this.modelUrl, resolve, undefined, reject);
+    });
+    const texP = this.textureUrl
+      ? texLoader.loadAsync(this.textureUrl)
+      : Promise.resolve(null);
+
+    Promise.all([gltfP, texP])
+      .then(([gltf, tex]) => {
+        const model = buildRockModelFromGltf(gltf);
+
         const box    = new THREE.Box3().setFromObject(model);
         const size   = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
@@ -950,37 +1164,23 @@ class RockScene {
         const longestDim = Math.max(size.x, size.y, size.z, 0.001);
         const scale = ROCK_SCALE_BASE / longestDim;
         model.scale.setScalar(scale);
-
-        /* Re-centre the model on the group origin */
         model.position.copy(center.negate().multiplyScalar(scale));
 
-        /* After centering, apply a corrective X offset to counter any visual
-           asymmetry in the soapstone mesh (boulder heavier on one side).
-           Adjust ROCK_X_CORRECT if rock still drifts left/right. */
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
 
-        model.traverse((child) => {
-          if (!child.isMesh || !child.material) return;
-          const m = child.material;
-          m.roughness  = clamp((m.roughness  ?? 0.8) - 0.12, 0.05, 1.0);
-          m.metalness  = clamp((m.metalness  ?? 0.0) + 0.18, 0.0,  1.0);
-          m.needsUpdate = true;
-        });
+        applyRockTexture(model, tex);
 
         model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
         this.rockGroup.visible = layerVisibility().rock;
+
         const lv = layerVisibility();
-        console.log('[LTF Rock] loaded | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front, '| url:', location.href);
-      },
-
-      undefined,
-
-      (err) => {
-        console.error('[LTF Rock] Failed to load model:', this.modelUrl, err);
-      }
-    );
+        console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
+      })
+      .catch((err) => {
+        console.error('[LTF Rock] Failed to load model/texture:', err);
+      });
   }
 
   /* ── Events ─────────────────────────────────────────────────────────────── */
@@ -994,13 +1194,10 @@ class RockScene {
     };
     window.addEventListener('scroll', this._onScrollFn, { passive: true });
 
-    this._onMouseFn = (e) => {
-      const rect = this.container.getBoundingClientRect();
-      if (rect.width < 1 || rect.height < 1) return;
-      this.mouseTX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      this.mouseTY = ((e.clientY - rect.top)  / rect.height - 0.5) * 2;
-    };
-    window.addEventListener('mousemove', this._onMouseFn, { passive: true });
+    /* Mouse hover tracking removed — idle + scroll only (perf on large displays). */
+    this.mouseTX = 0;
+    this.mouseTY = 0;
+    this._onMouseFn = null;
 
     /* Mac trackpad / mouse horizontal scroll → rock Y-axis tilt ±5° */
     this._onWheelFn = (e) => {
@@ -1035,9 +1232,42 @@ class RockScene {
     this._syncLayoutProfile();
   }
 
+  /* ── Visibility gating — no frames while offscreen or backgrounded ──────── */
+  _observeVisibility() {
+    if (typeof IntersectionObserver === 'function') {
+      this._io = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          this.inView = entry.isIntersecting;
+        }
+        this._syncActive();
+      }, { rootMargin: '200px' });
+      this._io.observe(this.container);
+    }
+
+    this._onVisibilityFn = () => this._syncActive();
+    document.addEventListener('visibilitychange', this._onVisibilityFn);
+  }
+
+  _syncActive() {
+    const shouldRun = this.running && this.inView && !document.hidden;
+    if (shouldRun === this._active) return;
+    this._active = shouldRun;
+
+    if (shouldRun) {
+      this._lastNow = 0;
+      this.raf = requestAnimationFrame(this._frameBound);
+    } else if (this.raf) {
+      cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    }
+  }
+
   /* ── Per-frame tick ──────────────────────────────────────────────────────── */
   _tick(now) {
-    if (!this.running) return;
+    if (!this.running || !this._active) {
+      this.raf = 0;
+      return;
+    }
 
     const dt = this._lastNow ? Math.min(now - this._lastNow, 50) : 16;
     this._lastNow = now;
@@ -1045,16 +1275,16 @@ class RockScene {
 
     const t = this.time;
 
-    this.mouseX += (this.mouseTX - this.mouseX) * ROCK_MOTION_BASELINE.mouseLerp;
-    this.mouseY += (this.mouseTY - this.mouseY) * ROCK_MOTION_BASELINE.mouseLerp;
+    this.mouseX = 0;
+    this.mouseY = 0;
     this.scrollProgress += (this.scrollTarget - this.scrollProgress) * 0.07;
 
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
     this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
 
     /* ── Rock rotation ────────────────────────────────────────────────────
-       X: auto-spin + scroll + mouse roll (vertical hover, ±16°).
-       Y: idle wobble + horizontal scroll tilt + mouse yaw (±10.5° cap).
+       X: auto-spin + scroll coast only (no mouse hover roll).
+       Y: idle wobble + horizontal scroll tilt (no mouse yaw).
        Z: subtle idle nod only.                                           */
     if (this.rockGroup) {
       /* Slow continuous tumble — ~1 full rotation per 140 s */
@@ -1074,16 +1304,14 @@ class RockScene {
       this.scrollPitchOffset  += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
 
       const basePitch = this.rockPitchAccum + this.scrollPitchOffset;
-      const mouseRollTarget = clamp(this.mouseY * MAX_MOUSE_ROLL, -MAX_MOUSE_ROLL, MAX_MOUSE_ROLL);
-      this.mouseRollOffset += (mouseRollTarget - this.mouseRollOffset) * ROCK_MOTION_BASELINE.mouseLerp;
-      this.rockGroup.rotation.x = basePitch + this.mouseRollOffset;
+      this.mouseRollOffset = 0;
+      this.rockGroup.rotation.x = basePitch;
 
-      /* Idle wobble (+10% natural drift) + scroll Y tilt + hover mouse nudge */
+      /* Idle wobble (+10% natural drift) + scroll Y tilt — no mouse nudge */
       const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
                     + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
       const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
-      const mouseYaw = clamp(this.mouseX * MAX_MOUSE_YAW, -MAX_MOUSE_YAW, MAX_MOUSE_YAW);
-      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS + mouseYaw;
+      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
       const targetZ = idleNod;
 
       this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * ROCK_MOTION_BASELINE.idleYawLerp;
@@ -1166,17 +1394,24 @@ class RockScene {
       dbg.textContent = behindLabel + '  |  ' + rockLabel + '  |  ' + frontLabel;
     }
 
-    this.raf = requestAnimationFrame(this._frameBound);
+    this.raf = this._active ? requestAnimationFrame(this._frameBound) : 0;
   }
 
   /* ── Cleanup ──────────────────────────────────────────────────────────── */
   destroy() {
     this.running = false;
+    this._active = false;
     cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    this._io?.disconnect();
+    if (this._onVisibilityFn) {
+      document.removeEventListener('visibilitychange', this._onVisibilityFn);
+    }
     window.removeEventListener('resize',      this._onResizeFn);
     window.removeEventListener('scroll',      this._onScrollFn);
     window.removeEventListener('wheel',       this._onWheelFn);
-    window.removeEventListener('mousemove', this._onMouseFn);
+    this._envMap?.dispose();
+    if (this._onMouseFn) window.removeEventListener('mousemove', this._onMouseFn);
     const el = this.renderer.domElement;
     if (el.parentNode) el.parentNode.removeChild(el);
     this.renderer.dispose();
