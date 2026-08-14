@@ -5,7 +5,14 @@
  * • Gradient locked on white border (above card)
  * • Title card (01) gets same ring + gas on scroll 0–14%
  * • Gas clip overlaps border inner edge — no navy gap before gradient
+ *
+ * The effect body is left as the original IIFE so its tuning stays untouched;
+ * the wrapper below only exposes init() to the bundle entry point instead of
+ * self-booting on load.
  */
+
+let bindAll = null;
+
 (function () {
   'use strict';
 
@@ -539,6 +546,12 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  bindAll = init;
 })();
+
+/** Idempotent — safe to call again after Webflow swaps DOM in. */
+export function init() {
+  if (bindAll) bindAll();
+}
+
+export default init;
