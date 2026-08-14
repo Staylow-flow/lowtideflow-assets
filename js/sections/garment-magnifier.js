@@ -20,9 +20,11 @@ const HOLE_CX = 0.4958;
 const HOLE_CY = 0.4528;
 const HOLE_D = 0.62;
 const MASK_RATIO = 936 / 1056;
-const MAG = 1.22;
-const REST_X = 0.5;
+/* Zoomed out so the full logo (≈50%×60% of the reveal) fits in the circle. */
+const MAG = 0.55;
+const REST_X = 0.33;
 const REST_Y = 0.5;
+const LENS_INSET = 6;
 
 const Y_SHARE = 0.9;
 const X_SHARE = 0.1;
@@ -37,12 +39,10 @@ const RETURN_EASE = 0.012;
 const RETURN_MAX = 0.85;
 const LEAVE_Y_PULL = 0.15;
 
-/* Viewport stick: hold the glass in the window for 1s of quiet, then friction
-   catches it back onto the fabric as the container scrolls. */
-const STICK_HOLD_MS = 1000;
-const STICK_FRICTION = 0.92;
+/* 50% glued to the fabric, 50% sliding in viewport space. */
+const STICK_FRICTION = 0.96;
 const STICK_SNAP = 0.4;
-const STICK_SHARE = 1;
+const STICK_SHARE = 0.5;
 
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
@@ -127,7 +127,7 @@ function bind(host) {
   let assetsOn = false;
   let loading = false;
   let viewStickY = 0;
-  let lastScrollAt = 0;
+  let started = false;
   const objectUrls = [];
   const xDir = Math.random() < 0.5 ? -1 : 1;
 
@@ -206,8 +206,12 @@ function bind(host) {
     const hostW = host.clientWidth;
     const hostH = host.clientHeight;
     if (!hostW || !hostH) return;
-    lensW = Math.min(340, Math.max(200, hostW * 0.72));
+    lensW = Math.min(340, Math.max(200, hostW * 0.72), Math.max(120, hostW - LENS_INSET * 2));
     lensH = lensW * MASK_RATIO;
+    if (lensH > hostH - LENS_INSET * 2) {
+      lensH = Math.max(120, hostH - LENS_INSET * 2);
+      lensW = lensH / MASK_RATIO;
+    }
     holeCx = lensW * HOLE_CX;
     holeCy = lensH * HOLE_CY;
     holeD = lensW * HOLE_D;
@@ -222,13 +226,45 @@ function bind(host) {
     print.style.width = hostW + 'px';
     print.style.height = hostH + 'px';
     print.style.transformOrigin = '0 0';
+
+    if (!started) {
+      placeStart();
+      started = true;
+    }
+  }
+
+  function lensBounds() {
+    const w = host.clientWidth || 0;
+    const h = host.clientHeight || 0;
+    return {
+      minX: LENS_INSET,
+      minY: LENS_INSET,
+      maxX: Math.max(LENS_INSET, w - lensW - LENS_INSET),
+      maxY: Math.max(LENS_INSET, h - lensH - LENS_INSET),
+    };
+  }
+
+  function clampLens(lx, ly) {
+    const b = lensBounds();
+    return {
+      x: clamp(lx, b.minX, b.maxX),
+      y: clamp(ly, b.minY, b.maxY),
+    };
+  }
+
+  function placeStart() {
+    const b = lensBounds();
+    const x = b.minX;
+    const y = b.minY + (b.maxY - b.minY) * 0.16;
+    hangNx = (x + holeCx) / (host.clientWidth || 1);
+    hangNy = (y + holeCy) / (host.clientHeight || 1);
   }
 
   function rest() {
-    return {
-      x: host.clientWidth * hangNx - holeCx,
-      y: host.clientHeight * hangNy - holeCy,
-    };
+    return clampLens(
+      host.clientWidth * hangNx - holeCx,
+      host.clientHeight * hangNy - holeCy,
+    );
   }
 
   function captureLeave() {
@@ -241,16 +277,19 @@ function bind(host) {
   }
 
   function paint() {
-    const ly = lastLy + viewStickY;
-    lens.style.transform = `translate3d(${lastLx}px, ${ly}px, 0)`;
+    const vis = clampLens(lastLx, lastLy + viewStickY);
+    viewStickY = vis.y - lastLy;
+    lastLx = vis.x;
+    lens.style.transform = `translate3d(${vis.x}px, ${vis.y}px, 0)`;
     print.style.transform =
       `translate3d(${holeD / 2}px, ${holeD / 2}px, 0) scale(${MAG}) ` +
-      `translate(${-(lastLx + holeCx)}px, ${-(ly + holeCy)}px)`;
+      `translate(${-(vis.x + holeCx)}px, ${-(vis.y + holeCy)}px)`;
   }
 
   function applyLens(lx, ly) {
-    lastLx = lx;
-    lastLy = ly;
+    const c = clampLens(lx, ly);
+    lastLx = c.x;
+    lastLy = c.y;
     paint();
   }
 
@@ -258,9 +297,7 @@ function bind(host) {
     const r = host.getBoundingClientRect();
     const x = clientX - r.left;
     const y = clientY - r.top;
-    const lx = clamp(x - holeCx, -holeD * 0.25, Math.max(0, r.width - holeD * 0.75));
-    const ly = clamp(y - holeCy, -holeD * 0.25, Math.max(0, r.height - holeD * 0.75));
-    applyLens(lx, ly);
+    applyLens(x - holeCx, y - holeCy);
   }
 
   function parkIce() {
@@ -268,16 +305,13 @@ function bind(host) {
     applyLens(at.x + iceX, at.y + iceY);
   }
 
-  function tickStick(now) {
-    const maxStick = Math.max(32, (host.clientHeight || 1) * 0.55);
+  function tickStick() {
     if (Math.abs(scroll.deltaY) > 0.05) {
       viewStickY += scroll.deltaY * STICK_SHARE;
-      lastScrollAt = now;
-    } else if (now - lastScrollAt > STICK_HOLD_MS) {
+    } else {
       viewStickY *= STICK_FRICTION;
       if (Math.abs(viewStickY) < STICK_SNAP) viewStickY = 0;
     }
-    viewStickY = clamp(viewStickY, -maxStick, maxStick);
   }
 
   host.addEventListener('pointerenter', (e) => {
@@ -334,7 +368,7 @@ function bind(host) {
   onFrame((dt, now) => {
     if (hovering) return;
 
-    tickStick(now);
+    tickStick();
 
     if (returning) {
       const at = rest();

@@ -477,15 +477,14 @@
     to   { background-position: 0% 50%; }
   }
 
-  /* Bordered box hugs the points. Side padding on .ltf-split-asset would
-     inset the sweep from the white edge — zero it here.
-     overflow:visible so the item ::after sweep is not clipped by the list. */
+  /* Sweep clips to the 12px rounded list border. */
   .ltf-upsell-list,
   .ltf-upsell-list.ltf-split-asset {
     max-width: 100%;
     width: 100%;
     padding: 0;
-    overflow: visible;
+    overflow: hidden;
+    border-radius: 12px;
     box-sizing: border-box;
   }
 
@@ -499,7 +498,7 @@
     color: #FFFFFF !important;
     isolation: isolate;
     overflow: hidden;
-    transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+    transition: color 0.3s ease, border-color 0.3s ease;
   }
 
   .ltf-upsell-list-item > * {
@@ -518,7 +517,7 @@
     z-index: 2;
   }
 
-  /* Sweep sits behind the type. Light blue plate — no navy in the hover wash. */
+  /* Quiet purple → green → teal loop behind the white type. No fill plate. */
   .ltf-upsell-list-item::after {
     content: '';
     position: absolute;
@@ -526,13 +525,12 @@
     z-index: -1;
     background: linear-gradient(
       90deg,
-      rgba(90, 170, 230, 0.92) 0%,
-      rgba(126, 196, 255, 0.95) 28%,
-      rgba(112, 64, 192, 0.55) 46%,
-      rgba(42, 170, 184, 0.7) 52%,
-      rgba(112, 64, 192, 0.55) 58%,
-      rgba(126, 196, 255, 0.95) 72%,
-      rgba(90, 170, 230, 0.92) 100%
+      transparent 0%,
+      rgba(112, 64, 192, 0.28) 32%,
+      rgba(11, 128, 80, 0.22) 46%,
+      rgba(42, 170, 184, 0.30) 52%,
+      rgba(112, 64, 192, 0.28) 68%,
+      transparent 100%
     );
     background-size: 220% 100%;
     background-position: 100% 50%;
@@ -543,7 +541,6 @@
 
   .ltf-upsell-list-item:hover,
   .ltf-upsell-list-item.is-sweep {
-    background-color: #5AA8E6 !important;
     color: #FFFFFF !important;
   }
 
@@ -555,7 +552,7 @@
 
   .ltf-upsell-list-item:hover::before,
   .ltf-upsell-list-item.is-sweep::before {
-    color: #FFFFFF;
+    color: #7040C0;
   }
 
   /* ── Trenches: thread-counter magnifier ─────────────────────────────── */

@@ -563,8 +563,11 @@ const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no 
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
-/* Opening pose: back of the mesh (yaw 0) plus another quarter turn. */
-const ROCK_FACE_YAW        = Math.PI / 2;
+/* Opening pose: wide back of the mesh, sitting behind the hero copy.
+   The extra quarter-turn is PITCH (X) — same axis the idle script already
+   rolls toward the camera — not yaw. Yaw +90° showed the narrow side. */
+const ROCK_FACE_YAW        = 0;
+const ROCK_OPEN_PITCH      = Math.PI / 2;
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
@@ -1172,7 +1175,7 @@ class RockScene {
            rock would swing off to one side. Measuring the box again once the
            model is already turned keeps it centred at any orientation. */
         model.scale.setScalar(scale);
-        model.rotation.set(0.05, -0.2 + ROCK_FACE_YAW, 0.03);
+        model.rotation.set(0.05 + ROCK_OPEN_PITCH, -0.2 + ROCK_FACE_YAW, 0.03);
         model.position.set(0, 0, 0);
         model.updateMatrixWorld(true);
 
