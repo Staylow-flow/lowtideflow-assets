@@ -33,8 +33,9 @@ const SETTLE = 0.965;
 const ICE_MAX_X = 24;
 const ICE_MAX_Y = 72;
 const IDLE = 0.08;
-const RETURN_EASE = 0.028;
-const RETURN_MAX = 1.85;
+const RETURN_EASE = 0.012;
+const RETURN_MAX = 0.85;
+const LEAVE_Y_PULL = 0.15;
 
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
@@ -96,6 +97,10 @@ function bind(host) {
   let lastLx = 0;
   let lastLy = 0;
   let returning = false;
+  let leaveNx = REST_X;
+  let leaveNy = REST_Y;
+  let hangNx = REST_X;
+  let hangNy = REST_Y;
   let assetsOn = false;
   const xDir = Math.random() < 0.5 ? -1 : 1;
 
@@ -137,9 +142,18 @@ function bind(host) {
 
   function rest() {
     return {
-      x: host.clientWidth * REST_X - holeCx,
-      y: host.clientHeight * REST_Y - holeCy,
+      x: host.clientWidth * hangNx - holeCx,
+      y: host.clientHeight * hangNy - holeCy,
     };
+  }
+
+  function captureLeave() {
+    const w = host.clientWidth || 1;
+    const h = host.clientHeight || 1;
+    leaveNx = (lastLx + holeCx) / w;
+    leaveNy = (lastLy + holeCy) / h;
+    hangNx = leaveNx;
+    hangNy = leaveNy + (REST_Y - leaveNy) * LEAVE_Y_PULL;
   }
 
   function applyLens(lx, ly, focusX, focusY) {
@@ -187,6 +201,7 @@ function bind(host) {
     hovering = false;
     returning = true;
     host.classList.remove('is-hover');
+    captureLeave();
   });
 
   window.addEventListener('resize', () => {

@@ -563,8 +563,8 @@ const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no 
 const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
 const SCROLL_VEL_SCALE     = 0.0055;
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
-/* The Spline export faces away from camera; half a turn brings the good side forward. */
-const ROCK_FACE_YAW        = Math.PI;
+/* Opening pose is the BACK of the mesh (yaw 0). Prior Math.PI showed the good/front side; another 180° yaw keeps up as up. */
+const ROCK_FACE_YAW        = 0;
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
@@ -585,9 +585,9 @@ const ROCK_MOTION_BASELINE = Object.freeze({
 
 const MAX_MOUSE_YAW  = (ROCK_MOTION_BASELINE.maxMouseYawDeg * 0.7 * Math.PI) / 180;
 const MAX_MOUSE_ROLL = (ROCK_MOTION_BASELINE.maxMouseRollDeg * 2.0 * Math.PI) / 180;
-const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1;
-const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1;
-const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1;
+const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1 * 1.25;
+const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1 * 1.25;
+const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
 
 /** Tighter mobile layout — nebula/rock bleed ≤ ~15% past viewport edges */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
@@ -893,6 +893,7 @@ class RockScene {
     this.running          = false;
     this.raf              = 0;
     this.rockPitchAccum   = 0;
+    this.rockYawAccum     = 0;
     this.scrollPitchOffset = 0;
     this.scrollPitchVelocity = 0;
     this._lastScrollProgress  = 0;
@@ -1295,11 +1296,13 @@ class RockScene {
 
     /* ── Rock rotation ────────────────────────────────────────────────────
        X: auto-spin + scroll coast only (no mouse hover roll).
-       Y: idle wobble + horizontal scroll tilt (no mouse yaw).
+       Y: slow hang-in-space yaw + idle wobble + horizontal scroll tilt.
        Z: subtle idle nod only.                                           */
     if (this.rockGroup) {
-      /* Slow continuous tumble — ~1 full rotation per 140 s */
-      this.rockPitchAccum += 0.0000225 * dt;
+      /* Slow continuous tumble — ~1 full pitch rotation per ~125 s */
+      this.rockPitchAccum += 0.00005 * dt;
+      /* Very slow continuous yaw so it drifts instead of oscillating in place */
+      this.rockYawAccum += 0.000015 * dt;
 
       /* Scroll → impulse only (no spring). Heavy rock coasts, never rubber-bands. */
       const scrollDelta = this.scrollProgress - this._lastScrollProgress;
@@ -1318,11 +1321,11 @@ class RockScene {
       this.mouseRollOffset = 0;
       this.rockGroup.rotation.x = basePitch;
 
-      /* Idle wobble (+10% natural drift) + scroll Y tilt — no mouse nudge */
+      /* Idle wobble (+25% from prior) + slow yaw drift — no mouse nudge */
       const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
                     + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
       const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
-      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
+      const targetY = this.rockYawAccum + idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
       const targetZ = idleNod;
 
       this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * ROCK_MOTION_BASELINE.idleYawLerp;
