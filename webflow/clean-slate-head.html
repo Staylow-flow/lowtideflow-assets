@@ -29,6 +29,7 @@
     --fluid-h2: clamp(2.5rem, 5.2vw, 4.5rem);
     --fluid-padding: clamp(2rem, 5vw, 5rem);
     --ltf-gutter-mid: 3rem;
+    --ltf-copy-pad-left: 50px;
   }
 
   /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
@@ -61,7 +62,8 @@
   .ltf-body-text,
   .ltf-body-text-navy {
     font-size: 20px;
-    max-width: none;
+    max-width: none !important;
+    width: 100%;
   }
 
   /* Rock stays absolute inside the relative 1400px hero cage */
@@ -434,17 +436,23 @@
   /* ════════════════════════════════════════════════════════════════════
      UNIFIED TWO-COLUMN RHYTHM
 
-     1400px cage, 80px edge, 48px gutter → two equal columns (~596px)
-     mirrored across the center line.
+     Specs, Trenches, and Beyond the Gear all sit in the same 1400 cage
+     with the same 80px edge. Parent section padding is zeroed on the
+     split/upsell sections so it cannot double-up against the cage and
+     shove those copy columns inboard of Specs.
 
-       Q2  copy  (headers + paragraphs)
-       Q3  assets, centered in the column (cards / magnifier / upsell)
-
-     Specs / Trenches / Beyond the Gear all share this grid so the cascade
-     reads as one system instead of three different layouts.
+     Copy stacks then share one box: +50px left pad, full left-column
+     width, no leftover Webflow max-widths (520px / 16em / 720px).
      ════════════════════════════════════════════════════════════════════ */
+  .ltf-section:has(.ltf-split),
+  .ltf-upsell {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
   .ltf-section-inner,
-  .ltf-upsell-inner {
+  .ltf-upsell-inner,
+  .ltf-vault-cage {
     box-sizing: border-box;
     width: 100%;
     max-width: var(--site-max-width) !important;
@@ -458,8 +466,6 @@
     justify-content: stretch;
     align-items: start;
     gap: var(--ltf-gutter-mid);
-    padding-left: var(--fluid-padding);
-    padding-right: var(--fluid-padding);
   }
 
   @media (min-width: 992px) {
@@ -475,17 +481,28 @@
     .ltf-specs-vault-header,
     .ltf-split > .ltf-stack,
     .ltf-upsell-grid > .ltf-stack {
-      width: 100%;
-      max-width: none;
+      box-sizing: border-box;
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0;
       flex: none;
-      padding-left: 0;
-      padding-right: 0;
-      margin-left: 0;
+      justify-self: stretch;
+      padding-left: var(--ltf-copy-pad-left) !important;
+      padding-right: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .ltf-specs-vault-header > *,
+    .ltf-split > .ltf-stack > *,
+    .ltf-upsell-grid > .ltf-stack > * {
+      width: 100%;
+      max-width: none !important;
     }
 
     /* Force SPECs & / STANDARDS onto two lines at the 1400 cage. */
     .ltf-specs-vault-header .ltf-section-header-navy {
-      max-width: 6.4em;
+      max-width: 6.4em !important;
     }
 
     /* Assets sit in the middle of the right column (3rd quarter). */
@@ -597,7 +614,7 @@
 
   .ltf-upsell-list-item:hover::after {
     opacity: 1;
-    animation: ltf-upsell-sweep 3.4s ease-in-out infinite alternate;
+    animation: ltf-upsell-sweep 3.4s linear infinite;
   }
 
   .ltf-upsell-list-item:hover::before {
@@ -691,7 +708,7 @@
     }
   }
 
-  /* ── The Squad: 25% narrower cards, scroll-in from the sides ────────── */
+  /* ── The Squad: cards +25px, position tracks window scroll ──────────── */
   @property --ltf-edge-angle {
     syntax: '<angle>';
     initial-value: 0deg;
@@ -716,7 +733,7 @@
     }
 
     .ltf-card {
-      width: 75%;
+      width: calc(75% + 25px);
       justify-self: center;
     }
   }
@@ -725,15 +742,6 @@
     position: relative;
     min-height: clamp(320px, 26vw, 440px);
     will-change: transform;
-    transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @media (min-width: 992px) {
-    .ltf-card:nth-child(odd)  { transform: translate3d(-120%, 0, 0); }
-    .ltf-card:nth-child(even) { transform: translate3d(120%, 0, 0); }
-    .ltf-card:nth-child(3),
-    .ltf-card:nth-child(4)    { transition-delay: 0.22s; }
-    .ltf-cards-grid.is-in .ltf-card { transform: none; }
   }
 
   /* Ring only: the gradient fills the box, then a two-layer mask punches the

@@ -1,10 +1,9 @@
 /**
  * Lowtideflow — Beyond the Gear line hover.
  *
- * The sweep itself is CSS (`ltf-upsell-sweep` in the page head): a slow
- * left-to-right iridescent band that loops for the duration of the hover.
- * This module only exists so the effect stays in the bundle registry; there
- * is no mouse tracking anymore.
+ * The sweep itself is CSS (`ltf-upsell-sweep` in the page head): a left-to-right
+ * iridescent band that restarts at the left and repeats for the hover. This
+ * module only exists so the effect stays in the bundle registry.
  */
 
 export function init() {

@@ -1,37 +1,71 @@
 /**
- * Lowtideflow — Squad cards scroll-in.
+ * Lowtideflow — Squad cards scroll-dock.
  *
  * Left-column cards start off-canvas to the left, right-column cards to the
- * right. When the grid enters the viewport they ease into place. The bottom
- * pair waits 220ms (see head CSS transition-delay) so the motion reads as
- * two beats instead of one slab arriving.
+ * right. Position is driven by window scroll, not a one-shot enter animation:
+ * each card maps its own viewport progress across a long window so docking
+ * stays slow and tracks the wheel.
  */
+
+import { onFrame, reducedMotion } from '../core/ticker.js';
+
+const DESKTOP = '(min-width: 992px)';
+/* Card top at this fraction of the viewport → fully off-canvas. */
+const START_AT = 1.12;
+/* Card top at this fraction → fully docked. Wide gap = slower travel. */
+const END_AT = 0.16;
+const TRAVEL = 100;
+
+function clamp01(t) {
+  return t < 0 ? 0 : t > 1 ? 1 : t;
+}
+
+function easeOutQuad(t) {
+  return 1 - (1 - t) * (1 - t);
+}
+
+function scrollProgress(el, vh) {
+  const top = el.getBoundingClientRect().top;
+  const start = vh * START_AT;
+  const end = vh * END_AT;
+  const span = start - end;
+  if (span <= 0) return 1;
+  return clamp01((start - top) / span);
+}
 
 export function init() {
   const grid = document.querySelector('.ltf-cards-grid');
   if (!grid || grid.dataset.ltfSquadBound === '1') return;
   grid.dataset.ltfSquadBound = '1';
 
-  const reduce =
-    typeof matchMedia === 'function' &&
-    matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) {
-    grid.classList.add('is-in');
+  const cards = Array.from(grid.querySelectorAll('.ltf-card'));
+  if (!cards.length) return;
+
+  const rest = () => {
+    for (const card of cards) card.style.transform = '';
+  };
+
+  if (reducedMotion) {
+    rest();
     return;
   }
 
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add('is-in');
-        io.unobserve(entry.target);
-      }
-    },
-    { threshold: 0.18, rootMargin: '0px 0px -8% 0px' },
-  );
+  const mq = matchMedia(DESKTOP);
+  let desktop = mq.matches;
+  mq.addEventListener('change', (e) => {
+    desktop = e.matches;
+    if (!desktop) rest();
+  });
 
-  io.observe(grid);
+  onFrame(() => {
+    if (!desktop) return;
+    const vh = window.innerHeight || 1;
+    for (let i = 0; i < cards.length; i++) {
+      const p = easeOutQuad(scrollProgress(cards[i], vh));
+      const dir = i % 2 === 0 ? -1 : 1;
+      cards[i].style.transform = `translate3d(${(1 - p) * dir * TRAVEL}%, 0, 0)`;
+    }
+  }, { element: grid });
 }
 
 export default init;
