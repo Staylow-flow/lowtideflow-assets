@@ -44,6 +44,13 @@ export function init() {
   const cards = Array.from(grid.querySelectorAll('.ltf-card'));
   if (!cards.length) return;
 
+  /* Extra hover bloom lives in CSS (.ltf-card::before). The class keeps
+     the glow lit while the pointer is down on the card, matching Specs. */
+  for (const card of cards) {
+    card.addEventListener('pointerenter', () => card.classList.add('is-glow'));
+    card.addEventListener('pointerleave', () => card.classList.remove('is-glow'));
+  }
+
   const rest = () => {
     for (const card of cards) card.style.transform = '';
   };

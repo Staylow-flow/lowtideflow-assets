@@ -468,11 +468,16 @@
     min-width: 0;
     justify-self: stretch;
     margin: 0 !important;
-    padding-left: 0 !important;
+    padding-left: 50px !important;
     padding-right: 0 !important;
+    text-align: left !important;
+    align-items: flex-start !important;
   }
 
-  .ltf-split-copy > * {
+  .ltf-split-copy > .ltf-section-header,
+  .ltf-split-copy > .ltf-section-header-navy,
+  .ltf-split-copy > .ltf-subheading,
+  .ltf-split-copy > .ltf-body-text {
     width: 100%;
     max-width: none !important;
   }
@@ -483,7 +488,7 @@
     width: 100% !important;
     max-width: none !important;
     min-width: 0;
-    justify-self: stretch;
+    justify-self: center;
   }
 
   /* Force SPECs & / STANDARDS onto two lines at the 1400 cage. */
@@ -491,7 +496,17 @@
     max-width: 6.4em !important;
   }
 
-  /* Hero bottom bar = the left split column inside the 1400 cage. */
+  /* Hero bottom bar = left split column inside the 1400 cage. Absolute
+     left/width match Grid 1 (.ltf-split-copy) in the sections below.
+     Logo + CTA stay shrink-wrapped so the hover ring cannot go full-bleed. */
+  .ltf-hero-bottom-bar.ltf-split-copy,
+  .ltf-hero-bottom-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+
   @media (min-width: 992px) {
     .ltf-hero-bottom-bar.ltf-split-copy,
     .ltf-hero-bottom-bar {
@@ -503,21 +518,29 @@
     }
   }
 
-  /* Beyond the Gear: list top sits on the H1 baseline (row 2 = after heading). */
+  .ltf-hero-bottom-bar .ltf-hero-logo {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    align-self: flex-start !important;
+  }
+
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary {
+    display: inline-flex !important;
+    width: max-content !important;
+    max-width: max-content !important;
+    flex: 0 0 auto;
+    align-self: flex-start !important;
+  }
+
+  /* Beyond the Gear: keep the Trenches copy stack. Only the list moves down
+     so its top sits on the H1 baseline. */
   @media (min-width: 992px) {
-    .ltf-upsell-grid.ltf-split-2 > .ltf-split-copy {
-      display: contents;
-    }
-
-    .ltf-upsell-grid.ltf-split-2 > .ltf-split-copy > * {
-      grid-column: 1;
-    }
-
-    .ltf-upsell-grid.ltf-split-2 > .ltf-split-asset {
-      grid-column: 2;
-      grid-row: 2 / -1;
-      align-self: start;
-      margin-top: 0 !important;
+    .ltf-upsell-grid .ltf-split-asset {
+      margin-top: calc(clamp(2.75rem, 7vw, 6.25rem) * 0.9 + 10px) !important;
     }
   }
 
@@ -627,9 +650,8 @@
     max-height: none !important;
     min-height: 0;
     overflow: hidden;
-    background-color: #06142e;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-left: 2px solid #2AAAB8;
+    background: none;
+    border: none;
     cursor: none;
   }
 
@@ -647,15 +669,9 @@
     left: 0;
     z-index: 2;
     pointer-events: none;
-    opacity: 0;
+    opacity: 1;
     will-change: transform;
     filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
-    transition: opacity 0.18s ease;
-  }
-
-  .ltf-magnifier.is-lit .ltf-magnifier-lens,
-  .ltf-authority-image-box.is-lit .ltf-magnifier-lens {
-    opacity: 1;
   }
 
   .ltf-magnifier-hole {
@@ -663,7 +679,6 @@
     overflow: hidden;
     border-radius: 50%;
     isolation: isolate;
-    /* Soft falloff at the rim so the reveal reads as rounded glass, not a hard cookie-cutter. */
     -webkit-mask-image: radial-gradient(circle, #000 68%, transparent 78%);
     mask-image: radial-gradient(circle, #000 68%, transparent 78%);
   }
@@ -709,6 +724,11 @@
 
   .ltf-section:has(.ltf-cards-grid) {
     overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .ltf-cards-grid {
+    overflow: visible;
   }
 
   .ltf-cards-grid {
@@ -728,9 +748,40 @@
 
   .ltf-card {
     position: relative;
-    min-height: clamp(320px, 26vw, 440px);
+    min-height: clamp(256px, 20.8vw, 352px);
+    overflow: visible;
     will-change: transform;
     transition: border-color 0.35s ease;
+  }
+
+  /* Extra hover bloom — same teal/violet gas the Specs tech cards use. */
+  .ltf-card::before {
+    content: '';
+    position: absolute;
+    inset: -28px;
+    z-index: 0;
+    border-radius: 18px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(112, 64, 192, 0.55) 0%,
+      rgba(42, 170, 184, 0.42) 32%,
+      rgba(31, 119, 129, 0.22) 58%,
+      transparent 74%
+    );
+    filter: blur(28px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s ease;
+  }
+
+  .ltf-card:hover::before,
+  .ltf-card.is-glow::before {
+    opacity: 1;
+  }
+
+  .ltf-card > * {
+    position: relative;
+    z-index: 1;
   }
 
   /* 4px ring (was 3px) sits over the card's white border so the outline
@@ -754,11 +805,13 @@
     transition: opacity 0.35s ease;
   }
 
-  .ltf-card:hover {
+  .ltf-card:hover,
+  .ltf-card.is-glow {
     border-color: transparent !important;
   }
 
-  .ltf-card:hover::after {
+  .ltf-card:hover::after,
+  .ltf-card.is-glow::after {
     opacity: 1;
     animation: ltf-edge-spin 4s linear infinite;
   }
@@ -815,6 +868,8 @@
 
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
     --ltf-btn-radius: 3px;
+    display: inline-block !important;
+    width: auto !important;
   }
 
   .ltf-nav-actions .ltf-btn-gradient-wrap,
@@ -826,7 +881,7 @@
     .ltf-card:hover::after { animation: none; }
     .ltf-authority-image-box,
     .ltf-magnifier { cursor: auto; }
-    .ltf-magnifier-lens { display: none; }
+    .ltf-magnifier-lens { opacity: 1; }
     .ltf-card { transform: none !important; transition: none !important; }
     .ltf-upsell-list-item:hover::after { animation: none; }
   }
