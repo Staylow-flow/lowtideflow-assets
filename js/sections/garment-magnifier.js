@@ -130,8 +130,6 @@ function bind(host) {
   let lastLx = 0;
   let lastLy = 0;
   let returning = false;
-  let leaveNx = REST_X;
-  let leaveNy = REST_Y;
   let hangNx = REST_X;
   let hangNy = REST_Y;
   let assetsOn = false;
@@ -247,11 +245,16 @@ function bind(host) {
   function lensBounds() {
     const w = host.clientWidth || 0;
     const h = host.clientHeight || 0;
+    const inset = 50;
+    const minX = -lensW * LENS_OVERHANG + inset;
+    const minY = -lensH * LENS_OVERHANG + inset;
+    const maxX = w - lensW * (1 - LENS_OVERHANG) - inset;
+    const maxY = h - lensH * (1 - LENS_OVERHANG) - inset;
     return {
-      minX: -lensW * LENS_OVERHANG,
-      minY: -lensH * LENS_OVERHANG,
-      maxX: w - lensW * (1 - LENS_OVERHANG),
-      maxY: h - lensH * (1 - LENS_OVERHANG),
+      minX: Math.min(minX, maxX),
+      minY: Math.min(minY, maxY),
+      maxX: Math.max(minX, maxX),
+      maxY: Math.max(minY, maxY),
     };
   }
 
@@ -273,18 +276,9 @@ function bind(host) {
 
   function rest() {
     return clampLens(
-      host.clientWidth * hangNx - holeCx,
-      host.clientHeight * hangNy - holeCy,
+      host.clientWidth * REST_X - holeCx,
+      host.clientHeight * REST_Y - holeCy,
     );
-  }
-
-  function captureLeave() {
-    const w = host.clientWidth || 1;
-    const h = host.clientHeight || 1;
-    leaveNx = (lastLx + holeCx) / w;
-    leaveNy = (lastLy + holeCy) / h;
-    hangNx = leaveNx;
-    hangNy = leaveNy;
   }
 
   function paint() {
@@ -346,15 +340,14 @@ function bind(host) {
 
   host.addEventListener('pointerleave', () => {
     hovering = false;
-    returning = false;
+    returning = true;
     host.classList.remove('is-hover');
-    captureLeave();
   });
 
   window.addEventListener('resize', () => {
     if (!assetsOn) return;
     sizeLens();
-    if (!hovering) parkIce();
+    if (!hovering && !returning) parkIce();
   }, { passive: true });
 
   /* Kick the fetch as soon as the module binds — do not wait for hover. */
@@ -382,6 +375,31 @@ function bind(host) {
     if (hovering) return;
 
     tickStick();
+
+    if (returning) {
+      const at = rest();
+      const dx = at.x - lastLx;
+      const dy = at.y - lastLy;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 0.4) {
+        returning = false;
+        iceX = 0;
+        iceY = 0;
+        targetX = 0;
+        targetY = 0;
+        parkIce();
+        return;
+      }
+      let mx = dx * RETURN_EASE;
+      let my = dy * RETURN_EASE;
+      const step = Math.hypot(mx, my);
+      if (step > RETURN_MAX) {
+        mx *= RETURN_MAX / step;
+        my *= RETURN_MAX / step;
+      }
+      applyLens(lastLx + mx, lastLy + my);
+      return;
+    }
 
     if (Math.abs(stickVel) < IDLE && Math.abs(scroll.deltaY) < IDLE) return;
     paint();
