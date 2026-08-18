@@ -1,10 +1,10 @@
 /**
- * Lowtideflow — Specs Vault Slam + Gemini edge ring + inner gas bloom
+ * Lowtideflow — Specs Vault Slam + Gemini edge ring + nebula gas bloom
  *
  * • Cards runway = full sticky height (not cage clip)
- * • Gradient locked on white border (above card)
+ * • Thin gradient ring locked on the white border (above card)
  * • Title card (01) gets same ring + gas on scroll 0–14%
- * • Gas clip overlaps border inner edge — no navy gap before gradient
+ * • Gas is a delayed nebula / solar-flare glow trailing the ring — not a second stroke
  *
  * The effect body is left as the original IIFE so its tuning stays untouched;
  * the wrapper below only exposes init() to the bundle entry point instead of
@@ -26,9 +26,9 @@ let bindAll = null;
   var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)');
   var RESET_AT = 0.06;
   var RING_W = 6;
-  var GAS_PAD = 28;
-  var GAS_CLIP_OVERLAP = 1;
+  var GAS_PAD = 80;
   var GAS_DELAY = 0.07;
+  var GAS_PAL = [C.purple, C.purpleM, C.purple, C.teal, C.purpleM, C.green];
   var INT = 1.5;
   var FX_OPACITY = 0.625;
   var SETTLE_FADE_MS = 2400;
@@ -261,32 +261,237 @@ let bindAll = null;
     drawBorderStroke(ctx, m, len, alpha, 0, dashOffset, 'source-over');
   }
 
-  /** Clip flush to inner border edge — bloom sits on the white highlight, no navy gap. */
-  function clipToCardInterior(ctx, box) {
-    var inset = Math.max(0, box.bw - GAS_CLIP_OVERLAP);
-    roundRectPath(
-      ctx,
-      box.x + inset,
-      box.y + inset,
-      box.w - inset * 2,
-      box.h - inset * 2,
-      Math.max(0, box.r - inset)
-    );
-    ctx.clip();
+  function hash01(n) {
+    var s = Math.sin(n * 127.1 + 311.7) * 43758.5453123;
+    return s - Math.floor(s);
   }
 
-  /** Inner gas bloom — aligned to border path, blurred inward from white edge. */
-  function drawGasBloom(ctx, box, sweep, alpha, dashOffset) {
+  /** Smooth hash between integer cells so gas morphs instead of sparkling. */
+  function hashMorph(seed, cell) {
+    var i = Math.floor(cell);
+    var f = cell - i;
+    f = f * f * (3 - 2 * f);
+    return lerp(hash01(seed + i * 19.13), hash01(seed + (i + 1) * 19.13), f);
+  }
+
+  function wrapPeri(d, peri) {
+    if (peri <= 0) return 0;
+    var x = d % peri;
+    return x < 0 ? x + peri : x;
+  }
+
+  /** Point + outward normal + clockwise tangent on the border-centered round rect. */
+  function pointOnRoundRect(m, dist) {
+    var x = m.x;
+    var y = m.y;
+    var w = m.w;
+    var h = m.h;
+    var r = Math.max(0, m.rad);
+    var d = wrapPeri(dist, m.peri);
+    var straightW = Math.max(0, w - 2 * r);
+    var straightH = Math.max(0, h - 2 * r);
+    var arc = (Math.PI * r) / 2;
+    var px = x;
+    var py = y;
+    var nx = 0;
+    var ny = -1;
+    var tx = 1;
+    var ty = 0;
+
+    function take(len, place) {
+      if (len < 0.25) return false;
+      if (d > len) {
+        d -= len;
+        return false;
+      }
+      place(len < 0.001 ? 0 : d / len);
+      return true;
+    }
+
+    if (
+      take(straightW, function (t) {
+        px = x + r + t * straightW;
+        py = y;
+        nx = 0;
+        ny = -1;
+        tx = 1;
+        ty = 0;
+      })
+    ) {
+      return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+    }
+    if (
+      take(arc, function (t) {
+        var a = -Math.PI / 2 + t * (Math.PI / 2);
+        nx = Math.cos(a);
+        ny = Math.sin(a);
+        px = x + w - r + nx * r;
+        py = y + r + ny * r;
+        tx = -ny;
+        ty = nx;
+      })
+    ) {
+      return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+    }
+    if (
+      take(straightH, function (t) {
+        px = x + w;
+        py = y + r + t * straightH;
+        nx = 1;
+        ny = 0;
+        tx = 0;
+        ty = 1;
+      })
+    ) {
+      return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+    }
+    if (
+      take(arc, function (t) {
+        var a = t * (Math.PI / 2);
+        nx = Math.cos(a);
+        ny = Math.sin(a);
+        px = x + w - r + nx * r;
+        py = y + h - r + ny * r;
+        tx = -ny;
+        ty = nx;
+      })
+    ) {
+      return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+    }
+    if (
+      take(straightW, function (t) {
+        px = x + w - r - t * straightW;
+        py = y + h;
+        nx = 0;
+        ny = 1;
+        tx = -1;
+        ty = 0;
+      })
+    ) {
+      return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+    }
+    if (
+      take(arc, function (t) {
+        var a = Math.PI / 2 + t * (Math.PI / 2);
+        nx = Math.cos(a);
+        ny = Math.sin(a);
+        px = x + r + nx * r;
+        py = y + h - r + ny * r;
+        tx = -ny;
+        ty = nx;
+      })
+    ) {
+      return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+    }
+    if (
+      take(straightH, function (t) {
+        px = x;
+        py = y + h - r - t * straightH;
+        nx = -1;
+        ny = 0;
+        tx = 0;
+        ty = -1;
+      })
+    ) {
+      return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+    }
+
+    var a = Math.PI + (arc < 0.25 ? 0 : (d / arc) * (Math.PI / 2));
+    nx = Math.cos(a);
+    ny = Math.sin(a);
+    px = x + r + nx * r;
+    py = y + r + ny * r;
+    tx = -ny;
+    ty = nx;
+    return { x: px, y: py, nx: nx, ny: ny, tx: tx, ty: ty };
+  }
+
+  function drawGlowBlob(ctx, x, y, radius, rgb, a) {
+    if (a < 0.012 || radius < 3) return;
+    var g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    g.addColorStop(0, rgba(rgb, clamp(a, 0, 0.42)));
+    g.addColorStop(0.28, rgba(rgb, clamp(a * 0.48, 0, 0.28)));
+    g.addColorStop(0.62, rgba(rgb, clamp(a * 0.16, 0, 0.14)));
+    g.addColorStop(1, rgba(rgb, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /**
+   * Nebula / solar-flare gas trailing the thin ring.
+   * Radial blobs carry the look (Safari-safe). Wide low-alpha strokes are a
+   * haze only — never a second crisp border. Blooms both inward and outward.
+   */
+  function drawGasBloom(ctx, box, sweep, alpha, dashOffset, now) {
     if (sweep < 0.015 || alpha < 0.02) return;
 
-    ctx.save();
-    clipToCardInterior(ctx, box);
-
-    var m = borderMetrics(box, RING_W + 10);
+    var m = borderMetrics(box, RING_W);
     var len = sweep * m.peri;
-    drawBorderStroke(ctx, m, len, alpha * 0.52, 10, dashOffset, 'screen');
-    drawBorderStroke(ctx, m, len, alpha * 0.38, 18, dashOffset, 'screen');
-    drawBorderStroke(ctx, m, len, alpha * 0.24, 26, dashOffset, 'screen');
+    if (len < 1.5 || m.peri < 8) return;
+
+    var t = now || 0;
+    var morph = dashOffset * 0.11 + t * 0.000045;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+
+    drawBorderStroke(ctx, borderMetrics(box, 96), len, alpha * 0.09, 0, dashOffset, 'screen');
+    drawBorderStroke(ctx, borderMetrics(box, 62), len, alpha * 0.07, 0, dashOffset, 'screen');
+    drawBorderStroke(ctx, borderMetrics(box, 38), len, alpha * 0.05, 8, dashOffset, 'screen');
+
+    var count = Math.max(6, Math.min(26, Math.round(len / 26)));
+    var i;
+    for (i = 0; i < count; i++) {
+      var u = (i + 0.5) / count;
+      var dist = dashOffset + u * len;
+      var h1 = hashMorph(i * 13.7 + 1.1, morph);
+      var h2 = hashMorph(i * 17.3 + 2.2, morph);
+      var h3 = hashMorph(i * 9.1 + 3.3, morph);
+      var h4 = hashMorph(i * 23.9 + 4.4, morph);
+      var pt = pointOnRoundRect(m, dist + (h1 - 0.5) * 22);
+      var nOff = (h2 - 0.32) * 28;
+      var tOff = (h3 - 0.5) * 16;
+      var bx = pt.x + pt.nx * nOff + pt.tx * tOff;
+      var by = pt.y + pt.ny * nOff + pt.ty * tOff;
+      var rad = 22 + h4 * 44;
+      var col = GAS_PAL[i % GAS_PAL.length];
+      var flicker = 0.7 + 0.3 * Math.sin(t * 0.0022 + i * 1.61 + dist * 0.012);
+      var a = alpha * (0.16 + h2 * 0.2) * flicker;
+      drawGlowBlob(ctx, bx, by, rad, col, a);
+
+      if (h3 > 0.52) {
+        var dir = h3 > 0.78 ? 1 : -1;
+        var tend = 14 + h1 * 32;
+        drawGlowBlob(
+          ctx,
+          bx + pt.tx * tend * dir + pt.nx * (h4 - 0.5) * 12,
+          by + pt.ty * tend * dir + pt.ny * (h4 - 0.5) * 12,
+          rad * (0.38 + h1 * 0.22),
+          col,
+          a * 0.68
+        );
+      }
+    }
+
+    var bigN = Math.max(3, Math.min(9, Math.round(len / 78)));
+    for (i = 0; i < bigN; i++) {
+      var bu = (i + 0.35) / bigN;
+      var bDist = dashOffset + bu * len;
+      var bh = hashMorph(i * 31.1 + 8.8, morph * 0.7);
+      var bpt = pointOnRoundRect(m, bDist);
+      var bn = (bh - 0.28) * 18;
+      drawGlowBlob(
+        ctx,
+        bpt.x + bpt.nx * bn,
+        bpt.y + bpt.ny * bn,
+        48 + bh * 42,
+        GAS_PAL[(i * 2) % GAS_PAL.length],
+        alpha * (0.1 + bh * 0.1) * (0.75 + 0.25 * Math.sin(t * 0.0014 + i * 2.3))
+      );
+    }
+
     ctx.restore();
   }
 
@@ -389,7 +594,7 @@ let bindAll = null;
       }
     }
 
-    function paintFx(fxItem, card, scrollSweep, idleSweep, scrollAlpha, idleAlpha, idleDrift) {
+    function paintFx(fxItem, card, scrollSweep, idleSweep, scrollAlpha, idleAlpha, idleDrift, now) {
     var showScroll = scrollAlpha > 0.02;
     var showIdle = idleAlpha > 0.02;
 
@@ -418,8 +623,8 @@ let bindAll = null;
       box = cardDrawBox(fxItem.gas, card, GAS_PAD);
       var gctx = fxItem.gas.ctx;
       gctx.clearRect(0, 0, fxItem.gas.cssW, fxItem.gas.cssH);
-      if (showScroll && gasScroll > 0.02) drawGasBloom(gctx, box, gasScroll, scrollAlpha, 0);
-      if (showIdle && gasIdle > 0.02) drawGasBloom(gctx, box, gasIdle, idleAlpha, idleOffset);
+      if (showScroll && gasScroll > 0.02) drawGasBloom(gctx, box, gasScroll, scrollAlpha, 0, now);
+      if (showIdle && gasIdle > 0.02) drawGasBloom(gctx, box, gasIdle, idleAlpha, idleOffset, now);
     }
 
     if (fxItem.ring.cssW) {
@@ -483,7 +688,8 @@ let bindAll = null;
           state.idleSweep[key],
           baseAlpha * state.syncBlend,
           baseAlpha * (1 - state.syncBlend),
-          idleOffset
+          idleOffset,
+          now
         );
       }
 
