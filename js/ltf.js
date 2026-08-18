@@ -1,32 +1,17 @@
 /**
- * Lowtideflow — bundle entry point.
+ * Lowtideflow — UI bundle entry point.
  *
- * This is the only script tag the site needs:
+ * Footer loads two module tags on the same commit pin:
  *
- *   <script type="module"
- *     src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@<commit>/js/ltf.js"></script>
+ *   js/ltf.js              — nav, buttons, cards, magnifier, vault, upsell
+ *   js/hero/rock-scene.js  — Three.js + GLB (own tag so a hung rock cannot
+ *                            stall the rest of the page)
  *
- * Every other module is imported with a RELATIVE path, so they all resolve
- * against whatever commit this file was loaded from. Bumping the one pin in
- * Webflow moves the entire bundle forward atomically — there is no way to end
- * up with the hero on one commit and a section effect on another, which is the
- * failure mode the old multi-tag footer kept producing.
- *
- * Modules are imported on demand: a page with no specs section never downloads
- * the specs code, and a page with no hero never downloads Three.js. Adding a
- * new effect means adding one row to MODULES below.
+ * Every other module here is imported with a RELATIVE path, so they all
+ * resolve against this file's commit. Bump both footer tags together.
  */
 
-/**
- * `test` decides whether the page needs the module at all. Keep the selectors
- * cheap — they run on every page load before anything else.
- */
 const VIEW_MARGIN = '200px';
-
-const SAVE_DATA =
-  typeof navigator !== 'undefined' &&
-  navigator.connection &&
-  navigator.connection.saveData === true;
 
 const MODULES = [
   {
@@ -40,12 +25,14 @@ const MODULES = [
     test: () => document.querySelector('.ltf-btn-gradient-wrap'),
   },
   {
-    name: 'hero-rock',
-    load: () => import('./hero/rock-scene.js'),
-    test: () =>
-      document.querySelector('.hero-canvas-wrapper, [data-ltf-rock], #canvas3d'),
-    /* Three.js + GLB must not compete with first paint of the H1. */
-    afterPaint: true,
+    name: 'crew-cards',
+    load: () => import('./sections/crew-cards.js'),
+    test: () => document.querySelector('.ltf-cards-grid'),
+  },
+  {
+    name: 'upsell-lines',
+    load: () => import('./sections/upsell-lines.js'),
+    test: () => document.querySelector('.ltf-upsell-list-item'),
   },
   {
     name: 'specs-vault',
@@ -57,24 +44,9 @@ const MODULES = [
     name: 'garment-magnifier',
     load: () => import('./sections/garment-magnifier.js'),
     test: () =>
-      SAVE_DATA
-        ? null
-        : document.querySelector('.ltf-authority-image-box, [data-ltf-magnifier]'),
+      document.querySelector('.ltf-authority-image-box, [data-ltf-magnifier]'),
     lazy: true,
-    /* Near enough to avoid a pop-in, far enough not to fight the hero GLB. */
-    lazyMargin: '800px',
-  },
-  {
-    name: 'upsell-lines',
-    load: () => import('./sections/upsell-lines.js'),
-    test: () => document.querySelector('.ltf-upsell-list-item'),
-    lazy: true,
-  },
-  {
-    name: 'crew-cards',
-    load: () => import('./sections/crew-cards.js'),
-    test: () => document.querySelector('.ltf-cards-grid'),
-    lazy: true,
+    lazyMargin: '1600px',
   },
 ];
 
@@ -96,15 +68,6 @@ function whenNear(el, fn, margin) {
   io.observe(el);
 }
 
-function afterPaint(fn) {
-  const run = () => fn();
-  if (typeof requestIdleCallback === 'function') {
-    requestIdleCallback(run, { timeout: 900 });
-    return;
-  }
-  requestAnimationFrame(() => setTimeout(run, 0));
-}
-
 async function start(mod) {
   const el = mod.test();
   if (!el) return;
@@ -117,18 +80,12 @@ async function start(mod) {
       const ns = await loaded.get(mod.name);
       if (typeof ns.init === 'function') ns.init();
     } catch (err) {
-      /* A failed section effect must never take the hero down with it. */
       console.error(`[ltf] module "${mod.name}" failed`, err);
     }
   };
 
-  const kick = () => {
-    if (mod.lazy) whenNear(el instanceof Element ? el : null, run, mod.lazyMargin);
-    else run();
-  };
-
-  if (mod.afterPaint) afterPaint(kick);
-  else kick();
+  if (mod.lazy) whenNear(el instanceof Element ? el : null, run, mod.lazyMargin);
+  else run();
 }
 
 function wrapSpecsTitle() {
@@ -146,9 +103,6 @@ function boot() {
 
 boot();
 
-/* Webflow interactions and CMS-bound content can attach after DOMContentLoaded,
-   so sweep again once at load. Every init() is idempotent, so re-running only
-   picks up nodes that appeared late. */
 window.addEventListener('load', boot, { once: true });
 
 window.LTF = { boot, loaded, MODULES };

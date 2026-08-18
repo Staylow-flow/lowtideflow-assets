@@ -10,10 +10,12 @@
 
 import { onFrame, reducedMotion, scroll } from '../core/ticker.js';
 
-const ASSETS = new URL('../../Magnifying-Glass-Assets/', import.meta.url);
+/* Bitmaps live on the Webflow CDN — not next to this module on jsDelivr. */
 const SRC = {
-  reveal: new URL('Grey-Fabric-Macro-Shot-LOGO-REVEAL.avif', ASSETS).href,
-  mask: new URL('Magnifying-Glass-Mask.png', ASSETS).href,
+  reveal:
+    'https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a7edecc38121cbf2060e27e_Grey-Fabric-Macro-Shot-LOGO-REVEAL.avif',
+  mask:
+    'https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a845ac239284466e6512f78_Magnifying-Glass-Mask.png',
 };
 
 const HOLE_CX = 0.4958;
@@ -83,6 +85,11 @@ function bind(host) {
     host.querySelector('img[data-ltf-print]')?.currentSrc ||
     host.querySelector('img[data-ltf-print]')?.src ||
     SRC.reveal;
+  const maskSrc =
+    host.getAttribute('data-ltf-mask-src') ||
+    host.querySelector('img[data-ltf-mask]')?.currentSrc ||
+    host.querySelector('img[data-ltf-mask]')?.src ||
+    SRC.mask;
 
   const lens = document.createElement('div');
   lens.className = 'ltf-magnifier-lens';
@@ -94,12 +101,14 @@ function bind(host) {
   const print = document.createElement('img');
   print.className = 'ltf-magnifier-print';
   print.alt = '';
+  print.crossOrigin = 'anonymous';
   print.decoding = 'async';
   print.setAttribute('fetchpriority', 'low');
 
   const glass = document.createElement('img');
   glass.className = 'ltf-magnifier-glass';
   glass.alt = '';
+  glass.crossOrigin = 'anonymous';
   glass.decoding = 'async';
   glass.setAttribute('fetchpriority', 'low');
 
@@ -157,7 +166,7 @@ function bind(host) {
             if (!r.ok) throw new Error('reveal fetch ' + r.status);
             return r.blob();
           }),
-          fetch(SRC.mask, { cache: 'force-cache' }).then((r) => {
+          fetch(maskSrc, { cache: 'force-cache' }).then((r) => {
             if (!r.ok) throw new Error('mask fetch ' + r.status);
             return r.blob();
           }),
@@ -176,7 +185,7 @@ function bind(host) {
         glass.src = maskUrl;
       } else {
         print.src = printSrc;
-        glass.src = SRC.mask;
+        glass.src = maskSrc;
       }
       await Promise.all([
         print.decode().catch(() => {}),
@@ -187,7 +196,7 @@ function bind(host) {
     } catch (err) {
       console.error('[ltf] magnifier assets', err);
       print.src = printSrc;
-      glass.src = SRC.mask;
+      glass.src = maskSrc;
       assetsOn = true;
       host.classList.add('is-lit');
     } finally {

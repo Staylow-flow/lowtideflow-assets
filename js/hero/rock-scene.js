@@ -7,17 +7,22 @@
  *             hematite texture, and a Three.js light rig standing in for Spline's.
  *             Scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
- * Loaded as a module from js/ltf.js after first paint. Three + GLTFLoader
- * resolve from jsDelivr so they share a CDN with the rest of the bundle.
+ * Loaded as its own footer <script type="module"> so Three + the GLB cannot
+ * stall nav, cards, or the magnifier. The page importmap maps `three` so
+ * GLTFLoader's bare specifier resolves. Mesh stays on jsDelivr; the hematite
+ * map is on the Webflow CDN (cross-origin: anonymous on both loaders).
  */
 
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
   'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-hematite-optimized-v2.glb';
 const DEFAULT_TEXTURE_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-texture-raw-02.avif';
+  'https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a8455aa05515d512ce8c0ec_boulder-texture-raw-02.avif';
+
+const GLB_TIMEOUT_MS = 12000;
+const GLB_ATTEMPTS = 2;
 
 /* Triplanar tiling is expressed in repeats across the rock's longest axis. */
 const ROCK_TEXTURE_REPEAT   = 2.4;
@@ -1145,57 +1150,86 @@ class RockScene {
     this.scene.add(fill);
   }
 
-  /* ── GLTF/GLB loader — parallel mesh + texture, reveal when both ready ─── */
+  /* ── GLTF/GLB loader — mesh first, texture when it lands ─── */
+  _loadGltf(url) {
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setCrossOrigin('anonymous');
+    return new Promise((resolve, reject) => {
+      gltfLoader.load(url, resolve, undefined, reject);
+    });
+  }
+
+  _loadGltfWithRetry(url) {
+    const attempt = (n) => {
+      const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('GLB timeout after ' + GLB_TIMEOUT_MS + 'ms')), GLB_TIMEOUT_MS);
+      });
+      return Promise.race([this._loadGltf(url), timeout]).catch((err) => {
+        console.warn('[LTF Rock] GLB attempt', n, err && err.message ? err.message : err);
+        if (n >= GLB_ATTEMPTS) throw err;
+        return attempt(n + 1);
+      });
+    };
+    return attempt(1);
+  }
+
+  _mountRockModel(gltf, tex) {
+    const model = buildRockModelFromGltf(gltf);
+
+    const box  = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+
+    const longestDim = Math.max(size.x, size.y, size.z, 0.001);
+    const scale = ROCK_SCALE_BASE / longestDim;
+
+    /* Orient before centering. position is applied after rotation in the
+       local matrix, so a centering offset measured on the unrotated mesh
+       stops being a centering offset the moment any yaw is added — the
+       rock would swing off to one side. Measuring the box again once the
+       model is already turned keeps it centred at any orientation. */
+    model.scale.setScalar(scale);
+    model.rotation.set(0.05 + ROCK_OPEN_PITCH, -0.2 + ROCK_FACE_YAW, 0.03);
+    model.position.set(0, 0, 0);
+    model.updateMatrixWorld(true);
+
+    const spunCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
+    model.position.copy(spunCenter).negate();
+
+    const ROCK_X_CORRECT = -0.6;
+    model.position.x += ROCK_X_CORRECT;
+
+    if (tex) applyRockTexture(model, tex);
+
+    this._rockMesh = model;
+    this.rockGroup.add(model);
+    this.rockGroup.visible = layerVisibility().rock;
+
+    const lv = layerVisibility();
+    console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
+  }
+
   _loadModel() {
     preloadRockAssets(this.modelUrl, this.textureUrl);
 
-    const gltfLoader = new GLTFLoader();
     const texLoader = new THREE.TextureLoader();
     texLoader.setCrossOrigin('anonymous');
 
-    const gltfP = new Promise((resolve, reject) => {
-      gltfLoader.load(this.modelUrl, resolve, undefined, reject);
-    });
-    const texP = this.textureUrl
-      ? texLoader.loadAsync(this.textureUrl)
-      : Promise.resolve(null);
+    let pendingTex = null;
+    if (this.textureUrl) {
+      texLoader.loadAsync(this.textureUrl)
+        .then((tex) => {
+          pendingTex = tex;
+          if (this._rockMesh) applyRockTexture(this._rockMesh, tex);
+        })
+        .catch((err) => {
+          console.warn('[LTF Rock] texture failed:', err);
+        });
+    }
 
-    Promise.all([gltfP, texP])
-      .then(([gltf, tex]) => {
-        const model = buildRockModelFromGltf(gltf);
-
-        const box  = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-
-        const longestDim = Math.max(size.x, size.y, size.z, 0.001);
-        const scale = ROCK_SCALE_BASE / longestDim;
-
-        /* Orient before centering. position is applied after rotation in the
-           local matrix, so a centering offset measured on the unrotated mesh
-           stops being a centering offset the moment any yaw is added — the
-           rock would swing off to one side. Measuring the box again once the
-           model is already turned keeps it centred at any orientation. */
-        model.scale.setScalar(scale);
-        model.rotation.set(0.05 + ROCK_OPEN_PITCH, -0.2 + ROCK_FACE_YAW, 0.03);
-        model.position.set(0, 0, 0);
-        model.updateMatrixWorld(true);
-
-        const spunCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
-        model.position.copy(spunCenter).negate();
-
-        const ROCK_X_CORRECT = -0.6;
-        model.position.x += ROCK_X_CORRECT;
-
-        applyRockTexture(model, tex);
-
-        this.rockGroup.add(model);
-        this.rockGroup.visible = layerVisibility().rock;
-
-        const lv = layerVisibility();
-        console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
-      })
+    this._loadGltfWithRetry(this.modelUrl)
+      .then((gltf) => this._mountRockModel(gltf, pendingTex))
       .catch((err) => {
-        console.error('[LTF Rock] Failed to load model/texture:', err);
+        console.error('[LTF Rock] Failed to load model:', err);
       });
   }
 
@@ -1465,12 +1499,28 @@ function getPrimaryRockScene() {
   return null;
 }
 
-/* ─── Auto-init ─────────────────────────────────────────────────────────── */
+/* ─── Auto-init (own footer tag — do not import from ltf.js) ─────────────── */
 function init() {
   resolveRockContainers().forEach((node) => {
     if (!node.__ltfRock) node.__ltfRock = new RockScene(node);
   });
 }
+
+function boot() {
+  const run = () => init();
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(run, { timeout: 900 });
+    return;
+  }
+  requestAnimationFrame(() => setTimeout(run, 0));
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+window.addEventListener('load', init, { once: true });
 
 window.LtfRockScene = {
   init, RockScene, layerVisibility, behindOpacity, frontOpacity,
