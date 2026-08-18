@@ -270,15 +270,14 @@ function bind(host) {
     const b = lensBounds();
     const x = Math.max(0, b.minX);
     const y = Math.max(0, b.minY) + Math.max(0, host.clientHeight - lensH) * 0.16;
+    lastLx = x;
+    lastLy = y;
     hangNx = (x + holeCx) / (host.clientWidth || 1);
     hangNy = (y + holeCy) / (host.clientHeight || 1);
   }
 
   function rest() {
-    return clampLens(
-      host.clientWidth * REST_X - holeCx,
-      host.clientHeight * REST_Y - holeCy,
-    );
+    return clampLens(host.clientWidth * 0.5 - holeCx, lastLy);
   }
 
   function paint() {
