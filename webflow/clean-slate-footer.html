@@ -1,19 +1,15 @@
 <!--
   CLEAN SLATE — Page Footer (Before </body>)
 
-  One tag, on purpose. js/ltf.js imports every other module by relative path,
-  so the commit below pins the whole bundle at once: hero boulder + nebula,
-  specs vault, mobile nav, and button pulse.
-
-  To ship a JS change: push to the repo, then swap the commit hash below and
-  publish. That hash is the only thing in Webflow that needs to change.
-
-  Do not add more <script> tags here. A second pinned tag is how the hero and
-  the section effects previously ended up on different revisions. New effects
-  get a row in the MODULES list inside js/ltf.js instead.
+  Two tags, same commit pin. ltf.js is nav / buttons / cards / magnifier /
+  vault / upsell. rock-scene.js is Three + the boulder. They must stay on
+  the same hash so UI and hero cannot drift. Do not fold the rock back into
+  ltf.js — a hung GLB must not stall the rest of the page.
 
   The mobile nav used to live here as an inline block. It is now
   js/ui/nav-mobile.js — do not paste it back, it would double-bind the toggle.
 -->
 <script type="module"
-  src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@f22c2e9/js/ltf.js"></script>
+  src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@1cf0bde/js/ltf.js"></script>
+<script type="module"
+  src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@1cf0bde/js/hero/rock-scene.js"></script>
