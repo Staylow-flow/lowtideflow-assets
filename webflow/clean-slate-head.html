@@ -711,7 +711,16 @@
     }
 
     .ltf-card {
-      width: 100%;
+      width: calc(75% + 25px);
+    }
+
+    /* Dock toward the 40px column gap — keep the square, don't stretch. */
+    .ltf-card:nth-child(odd) {
+      justify-self: end;
+    }
+
+    .ltf-card:nth-child(even) {
+      justify-self: start;
     }
   }
 

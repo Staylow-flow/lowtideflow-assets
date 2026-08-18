@@ -203,14 +203,9 @@ function bind(host) {
   }
 
   function dropDecoded() {
-    /* Drop decoded bitmaps while the section is off-screen so the 17MB
-       uncompressed reveal does not sit in GPU memory next to the hero GLB. */
-    assetsOn = false;
-    loading = false;
-    host.classList.remove('is-lit');
-    print.removeAttribute('src');
-    glass.removeAttribute('src');
-    revokeUrls();
+    /* Keep bitmaps once decoded. Dropping them on ticker exit forced a
+       ~1s createImageBitmap/toBlob hitch when scrolling back — the whole
+       Trenches split (copy included) froze blank until decode finished. */
     lens.style.willChange = 'auto';
     print.style.willChange = 'auto';
   }

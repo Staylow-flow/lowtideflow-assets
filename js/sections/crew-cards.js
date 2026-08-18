@@ -61,8 +61,13 @@ export function init() {
     if (!desktop) rest();
   });
 
-  onFrame(() => {
-    if (!desktop) return;
+  /* Only write translates once the grid is near the viewport. Applying
+     100% travel at bind (while the user is still in the hero) parks cards
+     off-canvas; a late JS load then makes them vanish and pop back. */
+  let live = false;
+
+  function paint() {
+    if (!desktop || !live) return;
     const vh = window.innerHeight || 1;
     for (let i = 0; i < cards.length; i++) {
       const p = easeOutQuad(scrollProgress(cards[i], vh));
@@ -70,7 +75,15 @@ export function init() {
       cards[i].style.transform =
         `translate3d(${(1 - p) * dir * TRAVEL}%, 0, 0)`;
     }
-  }, { element: grid });
+  }
+
+  onFrame(paint, {
+    element: grid,
+    onEnter() {
+      live = true;
+      paint();
+    },
+  });
 }
 
 export default init;
