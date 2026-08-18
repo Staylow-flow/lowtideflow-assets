@@ -6,9 +6,21 @@
   the same hash so UI and hero cannot drift. Do not fold the rock back into
   ltf.js — a hung GLB must not stall the rest of the page.
 
+  Import map sits immediately above the rock module so GLTFLoader's
+  `from 'three'` resolves. Prefer head; footer-before-modules is valid
+  because no earlier module on this page uses those specifiers.
+
   The mobile nav used to live here as an inline block. It is now
   js/ui/nav-mobile.js — do not paste it back, it would double-bind the toggle.
 -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
 <script type="module"
   src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@1cf0bde/js/ltf.js"></script>
 <script type="module"
