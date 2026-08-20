@@ -80,6 +80,10 @@ function bind(host) {
   if (!base) return;
   base.classList.add('ltf-magnifier-base');
 
+  function isMobile() {
+    return window.matchMedia('(max-width: 991px)').matches;
+  }
+
   const printSrc =
     host.getAttribute('data-ltf-print-src') ||
     host.querySelector('img[data-ltf-print]')?.currentSrc ||
@@ -214,7 +218,10 @@ function bind(host) {
     const hostW = host.clientWidth;
     const hostH = host.clientHeight;
     if (!hostW || !hostH) return;
-    lensW = Math.min(340, Math.max(200, hostW * 0.72));
+    const mobile = isMobile();
+    lensW = mobile
+      ? Math.min(160, Math.max(110, hostW * 0.42))
+      : Math.min(340, Math.max(200, hostW * 0.72));
     lensH = lensW * MASK_RATIO;
     holeCx = lensW * HOLE_CX;
     holeCy = lensH * HOLE_CY;
@@ -240,7 +247,7 @@ function bind(host) {
   function lensBounds() {
     const w = host.clientWidth || 0;
     const h = host.clientHeight || 0;
-    const inset = 50;
+    const inset = isMobile() ? 12 : 50;
     const minX = -lensW * LENS_OVERHANG + inset;
     const minY = -lensH * LENS_OVERHANG + inset;
     const maxX = w - lensW * (1 - LENS_OVERHANG) - inset;
@@ -263,6 +270,13 @@ function bind(host) {
 
   function placeStart() {
     const b = lensBounds();
+    if (isMobile()) {
+      lastLx = b.minX;
+      lastLy = (b.minY + b.maxY) / 2;
+      hangNx = (lastLx + holeCx) / (host.clientWidth || 1);
+      hangNy = (lastLy + holeCy) / (host.clientHeight || 1);
+      return;
+    }
     const x = Math.max(0, b.minX);
     const y = Math.max(0, b.minY) + Math.max(0, host.clientHeight - lensH) * 0.16;
     lastLx = x;
@@ -314,34 +328,66 @@ function bind(host) {
     if (stickVel) viewStickY += stickVel;
   }
 
-  host.addEventListener('pointerenter', (e) => {
-    hovering = true;
-    returning = false;
+  /** Mobile: pan glass left→right from host scroll progress (no finger drag). */
+  function scrollPanProgress() {
+    const r = host.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+    const start = vh * 0.92;
+    const end = vh * 0.18 - r.height;
+    const span = start - end;
+    if (span <= 0) return 1;
+    return clamp((start - r.top) / span, 0, 1);
+  }
+
+  function applyScrollPan() {
+    const b = lensBounds();
+    const t = scrollPanProgress();
+    const y = (b.minY + b.maxY) / 2;
+    const x = b.minX + (b.maxX - b.minX) * t;
     viewStickY = 0;
-    stickVel = 0;
-    host.classList.add('is-hover');
-    loadAssets();
-    sizeLens();
-    lens.style.willChange = 'transform';
-    print.style.willChange = 'transform';
-    moveToPointer(e.clientX, e.clientY);
-  });
+    applyLens(x, y);
+  }
 
-  host.addEventListener('pointermove', (e) => {
-    if (!hovering) return;
-    moveToPointer(e.clientX, e.clientY);
-  });
+  let mobileMode = isMobile();
 
-  host.addEventListener('pointerleave', () => {
-    hovering = false;
-    returning = true;
-    host.classList.remove('is-hover');
-  });
+  if (!mobileMode) {
+    host.addEventListener('pointerenter', (e) => {
+      hovering = true;
+      returning = false;
+      viewStickY = 0;
+      stickVel = 0;
+      host.classList.add('is-hover');
+      loadAssets();
+      sizeLens();
+      lens.style.willChange = 'transform';
+      print.style.willChange = 'transform';
+      moveToPointer(e.clientX, e.clientY);
+    });
+
+    host.addEventListener('pointermove', (e) => {
+      if (!hovering) return;
+      moveToPointer(e.clientX, e.clientY);
+    });
+
+    host.addEventListener('pointerleave', () => {
+      hovering = false;
+      returning = true;
+      host.classList.remove('is-hover');
+    });
+  }
 
   window.addEventListener('resize', () => {
+    const next = isMobile();
+    if (next !== mobileMode) {
+      mobileMode = next;
+      hovering = false;
+      returning = false;
+      host.classList.remove('is-hover');
+    }
     if (!assetsOn) return;
     sizeLens();
-    if (!hovering && !returning) parkIce();
+    if (mobileMode) applyScrollPan();
+    else if (!hovering && !returning) parkIce();
   }, { passive: true });
 
   /* Kick the fetch as soon as the module binds — do not wait for hover. */
@@ -356,7 +402,8 @@ function bind(host) {
         seen = true;
         loadAssets();
         sizeLens();
-        parkIce();
+        if (isMobile()) applyScrollPan();
+        else parkIce();
       },
       onExit() {
         if (seen) dropDecoded();
@@ -366,6 +413,11 @@ function bind(host) {
   }
 
   onFrame((dt, now) => {
+    if (isMobile()) {
+      applyScrollPan();
+      return;
+    }
+
     if (hovering) return;
 
     tickStick();
@@ -405,7 +457,8 @@ function bind(host) {
       sizeLens();
       lens.style.willChange = 'transform';
       print.style.willChange = 'transform';
-      parkIce();
+      if (isMobile()) applyScrollPan();
+      else parkIce();
     },
     onExit() {
       if (seen) dropDecoded();

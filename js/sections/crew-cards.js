@@ -43,7 +43,22 @@ export function init() {
   for (const card of cards) {
     card.addEventListener('pointerenter', () => card.classList.add('is-glow'));
     card.addEventListener('pointerleave', () => card.classList.remove('is-glow'));
+    /* Touch: keep glow while finger is down (no size change — CSS enforces). */
+    card.addEventListener('pointerdown', () => card.classList.add('is-glow'));
+    card.addEventListener('pointerup', () => card.classList.remove('is-glow'));
+    card.addEventListener('pointercancel', () => card.classList.remove('is-glow'));
   }
+
+  /* Specs & Standards cards — same glow on touch (mobile; slam is desktop-only). */
+  document.querySelectorAll('.ltf-spec-card').forEach((card) => {
+    if (card.dataset.ltfGlowBound === '1') return;
+    card.dataset.ltfGlowBound = '1';
+    card.addEventListener('pointerenter', () => card.classList.add('is-glow'));
+    card.addEventListener('pointerleave', () => card.classList.remove('is-glow'));
+    card.addEventListener('pointerdown', () => card.classList.add('is-glow'));
+    card.addEventListener('pointerup', () => card.classList.remove('is-glow'));
+    card.addEventListener('pointercancel', () => card.classList.remove('is-glow'));
+  });
 
   const rest = () => {
     for (const card of cards) card.style.transform = '';

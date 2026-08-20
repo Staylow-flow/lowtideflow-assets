@@ -598,22 +598,22 @@ const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1 * 1.25;
 const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1 * 1.25;
 const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
 
-/** Tighter mobile layout — nebula/rock bleed ≤ ~15% past viewport edges */
+/** Mobile ≤991 — keep nebula/rock inside the phone frame (no continuous VW scaling) */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  gasStretchX:      0.62,
-  gasStretchY:      1.42,
-  gasReach:         0.58,
-  gasInner:         0.24,
-  widthTighten:     1.08,
-  purpleFarMult:    1.55,
-  streakReachMult:  1.18,
-  tentacleExtend:   1.05,
-  purpleReachBoost: 1.0,
-  flareReachMult:   1.70,
+  gasStretchX:      0.48,
+  gasStretchY:      1.28,
+  gasReach:         0.44,
+  gasInner:         0.22,
+  widthTighten:     1.22,
+  purpleFarMult:    1.25,
+  streakReachMult:  1.02,
+  tentacleExtend:   0.92,
+  purpleReachBoost: 0.88,
+  flareReachMult:   1.35,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
-const MOBILE_CAMERA_Z     = 27;
+const MOBILE_CAMERA_Z     = 31;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
