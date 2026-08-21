@@ -348,7 +348,7 @@
        (that resets all sides and collapses the wrapper to 0 height). */
     .ltf-hero .hero-canvas-wrapper {
       position: absolute !important;
-      inset: 52px 0 0 0 !important;
+      inset: 32px 0 0 0 !important; /* was 52; canvas up 20px */
       width: 100% !important;
       height: auto !important;
       max-height: none !important;
@@ -477,7 +477,7 @@
     }
 
     .ltf-hero-headline {
-      top: calc(12% + 55px) !important; /* +25px down from prior */
+      top: calc(12% + 65px) !important; /* +10px down from prior */
       padding-left: 25px !important;
       padding-right: 25px !important;
       box-sizing: border-box !important;
@@ -1114,7 +1114,7 @@
     }
 
     .ltf-hero .hero-canvas-wrapper {
-      inset: 52px 0 0 0 !important;
+      inset: 32px 0 0 0 !important; /* was 52; canvas up 20px */
       height: auto !important;
       max-height: none !important;
     }

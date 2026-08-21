@@ -658,7 +658,7 @@ const MOBILE_ROCK_SCALE_MULT = 0.82;
  * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx: 100).
  * Was 280 (too high) → drop 75px → 205.
  */
-const MOBILE_ROCK_LIFT_PX = 205;
+const MOBILE_ROCK_LIFT_PX = 185; /* was 205; rock down 20px */
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
