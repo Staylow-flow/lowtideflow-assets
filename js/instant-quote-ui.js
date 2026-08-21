@@ -36,6 +36,12 @@
     target.textContent = display;
     slider.setAttribute('aria-valuenow', display);
     recalculateQuote();
+    var trigger = document.querySelector('.iq-mobile-picker-trigger[data-iq-for="' + slider.id + '"]');
+    if (trigger) {
+      var valEl = trigger.querySelector('.iq-mobile-picker-value');
+      if (valEl) valEl.textContent = display;
+      trigger.setAttribute('aria-valuenow', display);
+    }
   }
 
   function snapValue(slider, raw) {
@@ -198,26 +204,13 @@
     document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(initMagneticSlider);
   }
 
-  function alignSplitUnitPrice() {
-    var splitRow = document.getElementById('split-row-wrapper');
-    var styleRow2 = document.getElementById('iq-style-row-2');
+  function placeSplitUnitPrice() {
     var unit2 = document.getElementById('iq-unit-cost-2');
-    if (!splitRow || !styleRow2 || !unit2) return;
-
-    if (!splitRow.classList.contains('is-visible')) {
-      styleRow2.style.transform = '';
-      unit2.style.transform = '';
-      return;
+    var splitRow = document.querySelector('#split-row-wrapper .iq-apparel-row--split');
+    if (!unit2 || !splitRow) return;
+    if (unit2.parentElement !== splitRow) {
+      splitRow.appendChild(unit2);
     }
-
-    styleRow2.style.transform = 'translateY(-40px)';
-
-    requestAnimationFrame(function () {
-      var styleRect = styleRow2.getBoundingClientRect();
-      var unitRect = unit2.getBoundingClientRect();
-      var delta = styleRect.top - unitRect.top;
-      unit2.style.transform = 'translateY(' + delta + 'px)';
-    });
   }
 
   function setSplitVisible(isOn) {
@@ -226,37 +219,31 @@
     var unitCol = document.getElementById('iq-unit-price-col');
     if (!splitRow) return;
 
+    placeSplitUnitPrice();
+
     if (isOn) {
       splitRow.classList.add('is-visible');
-      splitRow.style.maxHeight = splitRow.scrollHeight + 48 + 'px';
+      splitRow.style.maxHeight = '';
       if (unitCost2) unitCost2.classList.add('is-visible');
       if (unitCol) unitCol.classList.add('is-split-visible');
       recalculateQuote();
-      window.setTimeout(alignSplitUnitPrice, 40);
-      window.setTimeout(alignSplitUnitPrice, 420);
       return;
     }
 
-    splitRow.style.maxHeight = splitRow.scrollHeight + 'px';
-    requestAnimationFrame(function () {
-      splitRow.classList.remove('is-visible');
-      splitRow.style.maxHeight = '0px';
-      if (unitCost2) unitCost2.classList.remove('is-visible');
-      if (unitCol) unitCol.classList.remove('is-split-visible');
-      alignSplitUnitPrice();
-      recalculateQuote();
-    });
+    splitRow.classList.remove('is-visible');
+    splitRow.style.maxHeight = '';
+    if (unitCost2) unitCost2.classList.remove('is-visible');
+    if (unitCol) unitCol.classList.remove('is-split-visible');
+    recalculateQuote();
   }
 
   function initSplitToggle() {
     var toggle = document.getElementById('iq-split-toggle');
+    placeSplitUnitPrice();
     if (!toggle) return;
     setSplitVisible(toggle.checked);
     toggle.addEventListener('change', function () {
       setSplitVisible(toggle.checked);
-    });
-    window.addEventListener('resize', function () {
-      if (toggle.checked) alignSplitUnitPrice();
     });
   }
 
@@ -444,6 +431,175 @@
     });
   }
 
+  /* ── Mobile slider → bottom-sheet pickers (≤991px only) ─────────────── */
+
+  var MOBILE_MQ = '(max-width: 991px)';
+  var mobilePickerSheet = null;
+  var mobilePickerOpenFor = null;
+
+  function isMobileIq() {
+    return window.matchMedia(MOBILE_MQ).matches;
+  }
+
+  function sliderDisplayValue(slider) {
+    var raw = parseFloat(slider.value);
+    if (slider.id === 'iq-slider-ink-colors') return formatInkDisplay(raw);
+    var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step || '1');
+    return step >= 1 ? String(Math.round(raw)) : String(raw);
+  }
+
+  function sliderOptionList(slider) {
+    var min = parseFloat(slider.min);
+    var max = parseFloat(slider.max);
+    var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step || '1');
+    var opts = [];
+    for (var v = min; v <= max + 0.0001; v += step) {
+      var snapped = Math.round(v * 1000) / 1000;
+      opts.push({
+        value: snapped,
+        label: slider.id === 'iq-slider-ink-colors' ? formatInkDisplay(snapped) : String(Math.round(snapped))
+      });
+    }
+    return opts;
+  }
+
+  function sliderTitle(slider) {
+    var row = slider.closest('.iq-slider-row');
+    var label = row && row.querySelector('.iq-slider-label');
+    return (label && label.textContent.trim()) || slider.getAttribute('aria-label') || 'Select value';
+  }
+
+  function ensureMobilePickerSheet() {
+    if (mobilePickerSheet) return mobilePickerSheet;
+    var root = document.createElement('div');
+    root.className = 'iq-mobile-sheet';
+    root.id = 'iq-mobile-picker-sheet';
+    root.setAttribute('aria-hidden', 'true');
+    root.innerHTML =
+      '<div class="iq-mobile-sheet-backdrop" data-iq-sheet-dismiss="1"></div>' +
+      '<div class="iq-mobile-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="iq-mobile-sheet-title">' +
+      '<div class="iq-mobile-sheet-handle" aria-hidden="true"></div>' +
+      '<h3 class="iq-mobile-sheet-title" id="iq-mobile-sheet-title">Select</h3>' +
+      '<div class="iq-mobile-sheet-options" id="iq-mobile-sheet-options"></div>' +
+      '<div class="iq-mobile-sheet-actions">' +
+      '<button type="button" class="iq-mobile-sheet-btn iq-mobile-sheet-btn--ghost" data-iq-sheet-dismiss="1">Cancel</button>' +
+      '<button type="button" class="iq-mobile-sheet-btn iq-mobile-sheet-btn--primary" id="iq-mobile-sheet-done">Done</button>' +
+      '</div></div>';
+    document.body.appendChild(root);
+    mobilePickerSheet = root;
+
+    root.addEventListener('click', function (event) {
+      var t = event.target;
+      if (t && t.getAttribute && t.getAttribute('data-iq-sheet-dismiss')) {
+        closeMobilePicker(false);
+      }
+    });
+
+    var done = root.querySelector('#iq-mobile-sheet-done');
+    if (done) {
+      done.addEventListener('click', function () {
+        closeMobilePicker(true);
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && mobilePickerSheet && mobilePickerSheet.classList.contains('is-open')) {
+        closeMobilePicker(false);
+      }
+    });
+
+    return root;
+  }
+
+  function closeMobilePicker(commit) {
+    if (!mobilePickerSheet) return;
+    var pending = mobilePickerOpenFor;
+    mobilePickerSheet.classList.remove('is-open');
+    mobilePickerSheet.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('iq-sheet-open');
+
+    if (commit && pending && pending.slider && pending.draft != null) {
+      pending.slider.value = String(pending.draft);
+      syncSliderValue(pending.slider);
+      refreshMobilePickerTriggers();
+    }
+    mobilePickerOpenFor = null;
+  }
+
+  function openMobilePicker(slider) {
+    if (!isMobileIq()) return;
+    var sheet = ensureMobilePickerSheet();
+    var title = sheet.querySelector('#iq-mobile-sheet-title');
+    var list = sheet.querySelector('#iq-mobile-sheet-options');
+    if (!list) return;
+
+    var current = snapValue(slider, parseFloat(slider.value));
+    mobilePickerOpenFor = { slider: slider, draft: current };
+    if (title) title.textContent = sliderTitle(slider);
+
+    list.innerHTML = '';
+    sliderOptionList(slider).forEach(function (opt) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'iq-mobile-sheet-option';
+      btn.textContent = opt.label;
+      btn.setAttribute('data-value', String(opt.value));
+      if (opt.value === current) btn.classList.add('is-selected');
+      btn.addEventListener('click', function () {
+        mobilePickerOpenFor.draft = opt.value;
+        list.querySelectorAll('.iq-mobile-sheet-option').forEach(function (el) {
+          el.classList.toggle('is-selected', el === btn);
+        });
+      });
+      list.appendChild(btn);
+    });
+
+    sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('iq-sheet-open');
+  }
+
+  function refreshMobilePickerTriggers() {
+    document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(function (slider) {
+      var trigger = document.querySelector('.iq-mobile-picker-trigger[data-iq-for="' + slider.id + '"]');
+      if (!trigger) return;
+      var display = sliderDisplayValue(slider);
+      trigger.querySelector('.iq-mobile-picker-value').textContent = display;
+      trigger.setAttribute('aria-valuenow', display);
+    });
+  }
+
+  function initMobilePickers() {
+    document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(function (slider) {
+      var control = slider.closest('.iq-slider-control');
+      var row = slider.closest('.iq-slider-row');
+      if (!control || !row) return;
+      if (row.querySelector('.iq-mobile-picker-trigger[data-iq-for="' + slider.id + '"]')) return;
+
+      var trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'iq-mobile-picker-trigger';
+      trigger.setAttribute('data-iq-for', slider.id);
+      trigger.setAttribute('aria-haspopup', 'dialog');
+      trigger.innerHTML =
+        '<span class="iq-mobile-picker-label">Tap to set</span>' +
+        '<span class="iq-mobile-picker-value">' +
+        sliderDisplayValue(slider) +
+        '</span>';
+      trigger.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (!isMobileIq()) return;
+        openMobilePicker(slider);
+      });
+      control.appendChild(trigger);
+    });
+
+    window.matchMedia(MOBILE_MQ).addEventListener('change', function () {
+      if (!isMobileIq()) closeMobilePicker(false);
+      refreshMobilePickerTriggers();
+    });
+  }
+
   function init() {
     initSliders();
     initSplitToggle();
@@ -451,6 +607,7 @@
     initStyleRadios();
     initCustomArtToggle();
     initRunQuoteButton();
+    initMobilePickers();
     recalculateQuote();
   }
 

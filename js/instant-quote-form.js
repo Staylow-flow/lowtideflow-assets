@@ -266,21 +266,36 @@
     return wrap;
   }
 
-  /** Phone label + input on one horizontal row; notes full-width above submit. */
+  /** Match contact fields to label-above-input rows; rename Client Name; notes above submit. */
   function fixFormFieldLayout(form) {
     if (!form || form.classList.contains('iq-form-layout-ready')) return;
 
-    var phone = document.getElementById('iq-form-phone');
-    if (phone && !phone.closest('.iq-form-phone-row')) {
-      var phoneLabel = phone.previousElementSibling;
-      if (phoneLabel && phoneLabel.tagName === 'LABEL') {
-        var phoneRow = document.createElement('div');
-        phoneRow.className = 'iq-form-phone-row';
-        form.insertBefore(phoneRow, phoneLabel);
-        phoneRow.appendChild(phoneLabel);
-        phoneRow.appendChild(phone);
+    /* Undo any prior horizontal phone-row wrap so Phone matches Full Name / Company. */
+    var stalePhoneRow = form.querySelector('.iq-form-phone-row');
+    if (stalePhoneRow) {
+      while (stalePhoneRow.firstChild) {
+        form.insertBefore(stalePhoneRow.firstChild, stalePhoneRow);
+      }
+      stalePhoneRow.remove();
+    }
+
+    var nameInput = document.getElementById('iq-form-full-name');
+    if (nameInput) {
+      var nameLabel = nameInput.previousElementSibling;
+      if (nameLabel && nameLabel.tagName === 'LABEL') {
+        var raw = String(nameLabel.textContent || '');
+        if (/Full\s*Name/i.test(raw)) {
+          nameLabel.textContent = raw.replace(/Full\s*Name/i, 'Client Name');
+        } else if (!/Client Name/i.test(raw)) {
+          nameLabel.textContent = /Required|\*/.test(raw) ? 'Client Name *' : 'Client Name';
+        }
       }
     }
+    form.querySelectorAll('.iq-form-label').forEach(function (span) {
+      if (/Full\s*Name/i.test(span.textContent || '')) {
+        span.innerHTML = String(span.innerHTML || '').replace(/Full\s*Name/i, 'Client Name');
+      }
+    });
 
     var notes = document.getElementById('iq-form-notes');
     var submit = document.getElementById('iq-form-submit');
@@ -487,7 +502,7 @@
     var email = val('iq-form-email');
     var phone = digitsOnly(val('iq-form-phone'));
 
-    if (!name) return 'Please enter your full name.';
+    if (!name) return 'Please enter your client name.';
     if (!email || email.indexOf('@') < 1) return 'Please enter a valid email address.';
     if (phone.length < 10) return 'Please enter a valid 10-digit phone number.';
     return '';

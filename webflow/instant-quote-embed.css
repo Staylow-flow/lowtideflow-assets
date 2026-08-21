@@ -508,7 +508,7 @@
   overflow: hidden;
   max-height: 0;
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-6px);
   transition:
     max-height 0.48s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.36s ease,
@@ -518,36 +518,63 @@
 }
 
 #split-row-wrapper.is-visible {
+  max-height: 720px;
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
   visibility: visible;
+  overflow: visible;
 }
 
 #iq-style-row-2 {
-  transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
+  /* no translateY hacks — overflow:hidden was clipping the top option row */
+  transform: none !important;
+}
+
+#split-row-wrapper .iq-apparel-row--split {
+  grid-template-columns: 150px 1fr minmax(100px, 120px);
+  align-items: center;
+  width: 100%;
+}
+
+#split-row-wrapper .iq-apparel-row--split #iq-unit-cost-2,
+#split-row-wrapper .iq-apparel-row--split > .iq-unit-cost {
+  width: 100%;
+  justify-self: stretch;
+  align-self: center;
 }
 
 #iq-unit-cost-2 {
   overflow: hidden;
   max-height: 0;
   opacity: 0;
-  transform: translateY(-8px);
+  transform: none;
   transition:
     max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.3s ease,
-    transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 0.3s ease;
   pointer-events: none;
   visibility: hidden;
-  will-change: transform;
 }
 
 #iq-unit-cost-2.is-visible {
-  max-height: 120px;
+  max-height: 160px;
   opacity: 1;
   pointer-events: auto;
   visibility: visible;
+  overflow: visible;
+}
+
+/* Keep unit price column aligned with the 4×2 apparel options block */
+#iq-unit-price-col,
+.iq-unit-cost-col {
+  align-self: center !important;
+  justify-self: stretch;
+  width: 100%;
+}
+
+#iq-style-row-1.iq-style-grid,
+#iq-style-row-2.iq-style-grid {
+  align-self: center;
 }
 
 /* ── Art pricing modal (footer HTML) ───────────────────────────────── */
@@ -659,7 +686,7 @@
   background: rgba(42, 170, 184, 0.08);
 }
 
-/* ── Order form — contact grid + phone row + notes above submit ─────── */
+/* ── Order form — contact 2×2 (label above input) + notes above submit ─ */
 
 #iq-order-form {
   display: grid;
@@ -669,36 +696,24 @@
   width: 100%;
 }
 
-/* Default 2×2 when phone is not yet wrapped */
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(1) { grid-column: 1; grid-row: 1; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(3) { grid-column: 2; grid-row: 1; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(4) { grid-column: 2; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(5) { grid-column: 1; grid-row: 3; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(6) { grid-column: 1; grid-row: 4; margin-bottom: 12px; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(7) { grid-column: 2; grid-row: 3; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(8) { grid-column: 2; grid-row: 4; margin-bottom: 12px; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(9) { grid-column: 1 / -1; grid-row: 5; margin-top: 8px; }
-#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(10) { grid-column: 1 / -1; grid-row: 6; margin-bottom: 16px; }
+/* Native Webflow form: label, input, label, input… as siblings */
+#iq-order-form > *:nth-child(1) { grid-column: 1; grid-row: 1; } /* Client Name label */
+#iq-order-form > *:nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 12px; }
+#iq-order-form > *:nth-child(3) { grid-column: 2; grid-row: 1; } /* Company label */
+#iq-order-form > *:nth-child(4) { grid-column: 2; grid-row: 2; margin-bottom: 12px; }
+#iq-order-form > *:nth-child(5) { grid-column: 1; grid-row: 3; } /* Email label */
+#iq-order-form > *:nth-child(6) { grid-column: 1; grid-row: 4; margin-bottom: 12px; }
+#iq-order-form > *:nth-child(7) { grid-column: 2; grid-row: 3; } /* Phone label */
+#iq-order-form > *:nth-child(8) { grid-column: 2; grid-row: 4; margin-bottom: 12px; }
 
-/* After JS wraps phone into .iq-form-phone-row */
-#iq-order-form.iq-form-layout-ready > *:nth-child(1) { grid-column: 1; grid-row: 1; }
-#iq-order-form.iq-form-layout-ready > *:nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form.iq-form-layout-ready > *:nth-child(3) { grid-column: 2; grid-row: 1; }
-#iq-order-form.iq-form-layout-ready > *:nth-child(4) { grid-column: 2; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form.iq-form-layout-ready > *:nth-child(5) { grid-column: 1; grid-row: 3; }
-#iq-order-form.iq-form-layout-ready > *:nth-child(6) { grid-column: 1; grid-row: 4; margin-bottom: 12px; }
-#iq-order-form.iq-form-layout-ready > .iq-form-phone-row {
-  grid-column: 2;
-  grid-row: 3 / 5;
-  align-self: stretch;
-  margin-bottom: 12px;
-}
+#iq-order-form > .iq-form-notes-label,
 #iq-order-form.iq-form-layout-ready > .iq-form-notes-label {
   grid-column: 1 / -1;
   grid-row: 5;
   margin-top: 8px;
 }
+
+#iq-order-form > #iq-form-notes,
 #iq-order-form.iq-form-layout-ready > #iq-form-notes {
   grid-column: 1 / -1;
   grid-row: 6;
@@ -706,11 +721,12 @@
   width: 100%;
 }
 
+/* Legacy: if an old phone-row wrap is still in DOM, stack like other fields */
 .iq-form-phone-row {
   display: flex !important;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
   width: 100%;
 }
 
@@ -718,13 +734,13 @@
 .iq-form-phone-row > .w-form-label {
   flex: 0 0 auto;
   margin-bottom: 0 !important;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .iq-form-phone-row > input,
 .iq-form-phone-row > #iq-form-phone {
   flex: 1 1 auto;
-  width: auto !important;
+  width: 100% !important;
   min-width: 0;
 }
 
@@ -889,8 +905,133 @@
 }
 
 @media screen and (max-width: 991px) {
+  .iq-container {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .iq-intro {
+    padding: 0 4px;
+    margin-bottom: 4px;
+  }
+
+  .iq-toggle-track {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .iq-sliders-block {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .iq-slider-row {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto;
+    gap: 10px !important;
+    align-items: stretch !important;
+    width: 100%;
+  }
+
+  .iq-slider-label,
+  .iq-slider-value {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  /* Desktop range stays in DOM for pricing; hide chrome on mobile */
+  .iq-slider-control {
+    position: relative;
+    min-height: 56px;
+  }
+
+  .iq-slider-control .iq-slider-ticks,
+  .iq-slider-control .iq-range {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  .iq-mobile-picker-trigger {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 14px 16px;
+    border: 1px solid var(--iq-border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--iq-border);
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .iq-mobile-picker-label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .iq-mobile-picker-value {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .iq-apparel-section,
+  .iq-apparel-row,
+  .iq-apparel-row.iq-apparel-row--split {
+    width: 100%;
+  }
+
+  .iq-apparel-row,
+  #split-row-wrapper .iq-apparel-row--split {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .iq-apparel-label-spacer {
+    display: none !important;
+  }
+
+  .iq-style-grid,
+  #iq-style-row-1,
+  #iq-style-row-2 {
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+  }
+
+  #iq-unit-price-col,
+  .iq-unit-cost-col,
+  #iq-unit-cost-1,
+  #iq-unit-cost-2 {
+    width: 100% !important;
+    max-width: none;
+    align-self: stretch !important;
+  }
+
   .iq-receipt-right {
     flex-direction: column !important;
+    gap: 16px !important;
   }
 
   .iq-run-quote-wrap,
@@ -900,20 +1041,180 @@
     max-width: none;
   }
 
-  #iq-order-form,
-  #iq-order-form > *:nth-child(n) {
-    grid-column: 1 / -1;
-    grid-row: auto;
+  #iq-run-quote,
+  .iq-run-quote {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #iq-total-price,
+  .iq-total-price {
+    font-size: clamp(36px, 12vw, 56px) !important;
+    padding: 18px 16px !important;
+    word-break: break-word;
+  }
+
+  #iq-order-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  #iq-order-form > *:nth-child(n),
+  #iq-order-form.iq-form-layout-ready > .iq-form-phone-row,
+  #iq-order-form > #iq-form-submit,
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
     margin-bottom: 0;
   }
 
-  #iq-order-form.iq-form-layout-ready > .iq-form-phone-row {
-    grid-column: 1 / -1;
-    grid-row: auto;
+  #iq-order-form > input.w-input,
+  #iq-order-form > textarea,
+  #iq-order-form > #iq-form-notes {
+    margin-bottom: 12px;
   }
 
-  #iq-order-form > #iq-form-submit,
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
-    grid-row: auto;
+  #iq-form-submit,
+  .iq-form-submit {
+    font-size: 18px;
+    padding: 16px 18px;
+  }
+
+  .iq-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+/* Mobile picker triggers hidden on desktop */
+.iq-mobile-picker-trigger {
+  display: none;
+}
+
+/* ── Mobile bottom-sheet picker ─────────────────────────────────────── */
+
+.iq-mobile-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+.iq-mobile-sheet.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.iq-mobile-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 28, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.iq-mobile-sheet-panel {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  max-height: min(78vh, 640px);
+  overflow: auto;
+  border: 1px solid var(--iq-border);
+  border-radius: 16px 16px 0 0;
+  background: var(--iq-bg);
+  padding: 12px 16px 20px;
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.45);
+  transform: translateY(24px);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.iq-mobile-sheet.is-open .iq-mobile-sheet-panel {
+  transform: translateY(0);
+}
+
+.iq-mobile-sheet-handle {
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  margin: 4px auto 14px;
+}
+
+.iq-mobile-sheet-title {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.iq-mobile-sheet-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.iq-mobile-sheet-option {
+  appearance: none;
+  min-height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iq-mobile-sheet-option.is-selected {
+  background: #fff;
+  color: #00001c;
+  border-color: #fff;
+}
+
+.iq-mobile-sheet-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.iq-mobile-sheet-btn {
+  appearance: none;
+  min-height: 48px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iq-mobile-sheet-btn--ghost {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  color: #fff;
+}
+
+.iq-mobile-sheet-btn--primary {
+  border: 1px solid #fff;
+  background: #fff;
+  color: #00001c;
+}
+
+body.iq-sheet-open {
+  overflow: hidden;
+}
+
+@media screen and (min-width: 992px) {
+  .iq-mobile-sheet {
+    display: none !important;
   }
 }
