@@ -375,7 +375,7 @@
       gap: 18px !important;
       left: 25px !important;
       right: 25px !important;
-      bottom: 103px !important; /* restored — 123 + button gap shoved copy into nav */
+      bottom: 78px !important; /* was 103; whole section down 25px */
       width: auto !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -407,7 +407,7 @@
       max-width: none !important;
       text-align: left !important;
       align-self: stretch !important;
-      font-size: 20px !important;
+      font-size: 18px !important;
       line-height: 1.275 !important; /* ~15% tighter than 1.5 */
       padding: 0 !important;
       padding-right: 20% !important;
@@ -429,7 +429,7 @@
       margin-right: auto !important;
       margin-top: 0 !important;
       position: relative !important;
-      top: 20px !important; /* force CTA down — margin was not visibly applying */
+      top: 5px !important; /* section down 25; button back up 15 → net +10 from prior */
     }
 
     .ltf-hero-bottom-bar .is-hero-logo-mobile,
@@ -1113,12 +1113,12 @@
     /* Late-cascade CTA nudge — must win over earlier margin rules */
     .ltf-hero .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
       position: relative !important;
-      top: 20px !important;
+      top: 5px !important;
       margin-top: 0 !important;
     }
 
     .ltf-hero .ltf-hero-bottom-bar .ltf-body-text {
-      font-size: 20px !important;
+      font-size: 18px !important;
     }
 
     .ltf-hero,
