@@ -77,10 +77,11 @@ const NEBULA_FRAG = /* glsl */`
   uniform float flareSpeed;       /* animation rate for live flares */
   uniform float purpleFlareStrength;
   uniform float blueSpikeStrength;
-  /* Desktop = 1. Mobile lowers these to kill the dark oval “shadow” under
-     the rock WITHOUT rewriting softCore (that caused the oval-mask regression). */
+  /* Desktop = 1. Mobile tunes these to avoid dark oval “shadow” under the
+     rock WITHOUT zeroing density (haloGain 0 left a hole in the gas). */
   uniform float haloGain;
   uniform float navyGain;
+  uniform float coreGain;
   uniform vec2  mouseXY;
   varying vec2 vUv;
 
@@ -144,10 +145,12 @@ const NEBULA_FRAG = /* glsl */`
 
     float core = 1.0 - smoothstep(inner * 0.72, reachEff * 0.50, dist);
     float edge = 1.0 - smoothstep(reachEff * 0.35, reachEff * 0.96, dist);
-    float body = pow(max(core * edge, 0.0), 0.48);
+    /* coreGain boosts colored plume under the rock (mobile hole fix) */
+    float body = pow(max(core * edge, 0.0), 0.48) * coreGain;
 
     /* Outer halo — soft glow rim past rock silhouette (desktop look).
-       haloGain: 1 on desktop; ~0 on mobile so the dark oval doesn’t sit on gas. */
+       Mobile uses a partial haloGain so gas stays continuous without the
+       muddy dark oval that read as a shadow. */
     float halo = 1.0 - smoothstep(reachEff * 0.42, reachEff * 1.10, dist);
     halo = pow(max(halo, 0.0), 1.28) * 0.62;
     body = max(body, halo * haloGain);
@@ -638,9 +641,10 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
   topYFactor:       0.55,  /* less upward bleed past nav */
   topFadeStart:     0.92,
   topFadeEnd:       0.99,
-  /* Kill mobile dark oval under rock — desktop keeps full halo/navy (1.0) */
-  haloGain:         0.0,
-  navyGain:         0.28,
+  /* Partial halo + stronger colored core — seals gas hole without dark oval */
+  haloGain:         0.38,
+  navyGain:         0.16,
+  coreGain:         1.28,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
@@ -690,6 +694,7 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   blueSpikeStrength:   0.82,
   haloGain:         1.0,    /* desktop softCore outer halo ON */
   navyGain:         1.0,
+  coreGain:         1.0,
 });
 
 const BEHIND_FG_VISIBLE    = true;  // override with ?behind=0
@@ -1049,6 +1054,7 @@ class RockScene {
     uni.blueSpikeStrength.value    = b.blueSpikeStrength;
     if (uni.haloGain) uni.haloGain.value = b.haloGain != null ? b.haloGain : 1.0;
     if (uni.navyGain) uni.navyGain.value = b.navyGain != null ? b.navyGain : 1.0;
+    if (uni.coreGain) uni.coreGain.value = b.coreGain != null ? b.coreGain : 1.0;
     if (uni.tentacleExtend) uni.tentacleExtend.value = b.tentacleExtend;
   }
 
@@ -1100,6 +1106,7 @@ class RockScene {
         blueSpikeStrength:   { value: b.blueSpikeStrength },
         haloGain:            { value: b.haloGain },
         navyGain:            { value: b.navyGain },
+        coreGain:            { value: b.coreGain },
         mouseXY:             { value: new THREE.Vector2(0, 0) },
       };
     }
