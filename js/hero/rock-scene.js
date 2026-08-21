@@ -566,8 +566,8 @@ const GAS_FOLLOW_DELAY_MS  = 300;              // gas lags rock by 0.3 s
 const GAS_COAST_TAU_MS     = 3000;             // 2–4 s ease-out coast (midpoint)
 const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
-const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
-const SCROLL_VEL_SCALE     = 0.0055;
+const SCROLL_IMPULSE_GAIN  = 0.54;               // ×4 from 0.135 (+300%)
+const SCROLL_VEL_SCALE     = 0.022;              // ×4 from 0.0055 (+300%)
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
 /* Opening pose: wide back of the mesh, sitting behind the hero copy.
    The extra quarter-turn is PITCH (X) — same axis the idle script already
@@ -581,18 +581,19 @@ const CAMERA_FOV           = 45;
  * Rock motion — idle float stays gentle inside hard caps:
  *   yaw (Y)  ≤ ±10°
  *   pitch (X) ≤ ±15° (idle only)
- *   roll (Z)  ≤ ±8° idle (more visible float)
+ *   roll (Z)  ≤ ±8° idle
+ * Amps are ×4 (+300%) vs prior float tune — caps still bound the orbit.
  * Scroll drives ONE-WAY pitch roll-down (no reverse on scroll-up), uncapped.
  */
 const ROCK_MOTION_BASELINE = Object.freeze({
-  idleYawAmp1:     0.095,   /* ~5.4° */
-  idleYawAmp2:     0.055,   /* ~3.2° */
-  idleYawAmp3:     0.035,   /* ~2.0° — third orbit for space-float feel */
-  idleNodAmp:      0.055,   /* ~3.2° roll (Z) */
-  idleNodAmp2:     0.028,
-  idlePitchAmp:    0.12,    /* ~6.9° */
-  idlePitchAmp2:   0.07,    /* ~4.0° */
-  idleYawLerp:     0.022,   /* slower = gentler float */
+  idleYawAmp1:     0.38,    /* ×4 */
+  idleYawAmp2:     0.22,
+  idleYawAmp3:     0.14,
+  idleNodAmp:      0.22,
+  idleNodAmp2:     0.112,
+  idlePitchAmp:    0.48,
+  idlePitchAmp2:   0.28,
+  idleYawLerp:     0.022,
   idleNodLerp:     0.020,
   mouseLerp:       0.028,
   maxYawDeg:       10,
