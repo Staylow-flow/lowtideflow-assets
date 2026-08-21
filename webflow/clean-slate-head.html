@@ -401,7 +401,7 @@
       gap: 18px !important;
       left: 25px !important;
       right: 25px !important;
-      bottom: 78px !important; /* was 103; whole section down 25px */
+      bottom: 88px !important; /* +10px up from 78 */
       width: auto !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -436,7 +436,7 @@
       font-size: 18px !important;
       line-height: 1.275 !important; /* ~15% tighter than 1.5 */
       padding: 0 !important;
-      padding-right: 15% !important;
+      padding-right: calc(15% + 3px) !important;
       border: 0 !important;
       border-radius: 0 !important;
       background: transparent !important;
@@ -455,7 +455,7 @@
       margin-right: auto !important;
       margin-top: 0 !important;
       position: relative !important;
-      top: 5px !important; /* section down 25; button back up 15 → net +10 from prior */
+      top: 25px !important; /* +20px down from 5 */
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
@@ -1156,7 +1156,7 @@
     /* Late-cascade CTA nudge — must win over earlier margin rules */
     .ltf-hero .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
       position: relative !important;
-      top: 5px !important;
+      top: 25px !important;
       margin-top: 0 !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
@@ -1166,7 +1166,7 @@
 
     .ltf-hero .ltf-hero-bottom-bar .ltf-body-text {
       font-size: 18px !important;
-      padding-right: 15% !important;
+      padding-right: calc(15% + 3px) !important;
       width: calc(100% - 5px) !important;
     }
 
