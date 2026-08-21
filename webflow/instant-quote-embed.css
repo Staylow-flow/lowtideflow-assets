@@ -1,5 +1,6 @@
 /* Instant Quote — behavior-only CSS (page head)
  * Layout, grids, borders, typography → Webflow Designer classes only.
+ * Layout overrides here when Designer cannot be reached for structural edits.
  */
 
 :root {
@@ -9,6 +10,11 @@
   --iq-tick-mark: rgba(255, 255, 255, 0.5);
   --iq-glow-blue: #3b82f6;
   --iq-glow-navy: #1e3a8a;
+  --iq-nebula-green: #0b8050;
+  --iq-nebula-teal: #2aaab8;
+  --iq-nebula-blue: #1f7781;
+  --iq-nebula-purple: #4d259d;
+  --iq-nebula-purple-mid: #7040c0;
 }
 
 /* ── V2: viewport strategy (no height:100vh + overflow:hidden lock) ── */
@@ -56,6 +62,68 @@
   color: rgba(255, 255, 255, 0.78);
 }
 
+/* ── Quality toggle: matched padding + draggable thumb ──────────────── */
+
+.iq-toggle-track {
+  position: relative;
+  padding: 4px !important; /* match L/R to existing T/B — less hug */
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.iq-toggle-track:active {
+  cursor: grabbing;
+}
+
+.iq-toggle-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 8px;
+  background: #ffffff;
+  z-index: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.iq-toggle-track.is-dragging .iq-toggle-thumb {
+  transition: none;
+}
+
+.iq-toggle-track .iq-toggle-btn {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  text-wrap: nowrap;
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+.iq-toggle-track .iq-toggle-btn.is-active {
+  color: #00001c !important;
+  background-color: transparent !important;
+}
+
+/* ── Slider value boxes: match left label width (desktop) ───────────── */
+
+@media screen and (min-width: 992px) {
+  .iq-slider-row {
+    grid-template-columns: 150px 1fr 150px !important;
+  }
+
+  .iq-slider-value {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+}
+
 /* ── V2: total cost gradient border + radial glow ───────────────────── */
 
 .iq-total-wrapper {
@@ -93,13 +161,33 @@
   z-index: 1;
 }
 
-/* ── V2: Calculate Production Run ───────────────────────────────────── */
+/* ── Calculate left / Final Price right ─────────────────────────────── */
+
+.iq-receipt-right {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  width: 100%;
+}
 
 .iq-run-quote-wrap {
   display: flex;
   justify-content: center;
-  width: 100%;
-  margin-top: 18px;
+  align-items: center;
+  order: 1;
+  width: auto;
+  margin-top: 0 !important;
+  flex: 0 1 auto;
+}
+
+.iq-total-wrapper {
+  order: 2;
+  flex: 1 1 280px;
+  max-width: 520px;
+  min-width: min(100%, 240px);
 }
 
 #iq-run-quote,
@@ -108,7 +196,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: min(100%, 360px);
+  min-width: min(100%, 280px);
   border: 0;
   border-radius: 6px;
   background: linear-gradient(135deg, var(--iq-glow-blue), var(--iq-glow-navy));
@@ -122,6 +210,7 @@
   cursor: pointer;
   transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  text-decoration: none;
 }
 
 #iq-run-quote:hover,
@@ -136,6 +225,127 @@
 #iq-run-quote.is-running,
 .iq-run-quote.is-running {
   transform: scale(0.98);
+}
+
+/* ── LTF orbit / glow click FX (Calculate + Submit) ─────────────────── */
+
+.iq-orbit-wrap {
+  position: relative;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 8px;
+  background: transparent;
+  transition: box-shadow 0.35s ease;
+}
+
+.iq-orbit-wrap > .iq-orbit-btn,
+.iq-orbit-wrap > #iq-run-quote,
+.iq-orbit-wrap > #iq-form-submit,
+.iq-orbit-wrap > .iq-run-quote,
+.iq-orbit-wrap > .iq-form-submit {
+  position: relative;
+  z-index: 1;
+}
+
+.iq-orbit-btn,
+#iq-run-quote.iq-orbit-btn,
+#iq-form-submit.iq-orbit-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.iq-orbit-btn::before,
+#iq-run-quote.iq-orbit-btn::before,
+#iq-form-submit.iq-orbit-btn::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--iq-nebula-green),
+    var(--iq-nebula-teal),
+    var(--iq-nebula-blue),
+    var(--iq-nebula-purple),
+    var(--iq-nebula-purple-mid),
+    var(--iq-nebula-green)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transform: rotate(0deg);
+}
+
+.iq-orbit-btn::after,
+#iq-run-quote.iq-orbit-btn::after,
+#iq-form-submit.iq-orbit-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(42, 170, 184, 0.45) 0%,
+    rgba(77, 37, 157, 0.22) 42%,
+    transparent 72%
+  );
+  transform: scale(0.55);
+}
+
+.iq-orbit-btn.iq-orbit-click::before,
+#iq-run-quote.iq-orbit-click::before,
+#iq-form-submit.iq-orbit-click::before,
+.iq-orbit-wrap.iq-orbit-click::before {
+  opacity: 1;
+  animation: iq-orbit-wrap 0.5s linear forwards;
+}
+
+.iq-orbit-btn.iq-orbit-click::after,
+#iq-run-quote.iq-orbit-click::after,
+#iq-form-submit.iq-orbit-click::after {
+  animation: iq-orbit-inner-glow 0.35s ease 0.5s forwards;
+}
+
+.iq-orbit-wrap.ltf-btn-gradient-active,
+.iq-orbit-wrap.iq-orbit-click {
+  box-shadow:
+    0 0 16px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(31, 119, 129, 0.28);
+}
+
+@keyframes iq-orbit-wrap {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iq-orbit-inner-glow {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
 }
 
 /* ── Slider embeds (HtmlEmbed) ───────────────────────────────────────── */
@@ -249,11 +459,6 @@
   background: transparent;
 }
 
-.iq-toggle-track .iq-toggle-btn {
-  white-space: nowrap;
-  text-wrap: nowrap;
-}
-
 /* ── Custom check / radio appearance ───────────────────────────────── */
 
 .iq-check {
@@ -319,6 +524,11 @@
   visibility: visible;
 }
 
+#iq-style-row-2 {
+  transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
 #iq-unit-cost-2 {
   overflow: hidden;
   max-height: 0;
@@ -327,15 +537,15 @@
   transition:
     max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.3s ease,
-    transform 0.3s ease;
+    transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
   visibility: hidden;
+  will-change: transform;
 }
 
 #iq-unit-cost-2.is-visible {
   max-height: 120px;
   opacity: 1;
-  transform: translateY(0);
   pointer-events: auto;
   visibility: visible;
 }
@@ -414,6 +624,26 @@
   margin-bottom: 0;
 }
 
+/* ── Artwork row: remove left pricing border, center upload ─────────── */
+
+#iq-artwork-row.iq-apparel-row,
+.iq-apparel-row.iq-artwork-row {
+  grid-template-columns: 1fr !important;
+  justify-items: center;
+}
+
+#iq-artwork-label,
+.iq-artwork-label-box {
+  display: none !important;
+}
+
+#iq-artwork-row .iq-artwork-panel,
+.iq-artwork-row .iq-artwork-panel {
+  width: min(720px, 100%);
+  max-width: 720px;
+  justify-self: center;
+}
+
 /* ── JS-driven form states only ────────────────────────────────────── */
 
 .iq-form-status.is-success {
@@ -429,7 +659,7 @@
   background: rgba(42, 170, 184, 0.08);
 }
 
-/* ── Order form — 2×2 contact grid (native Webflow FormForm) ─────────── */
+/* ── Order form — contact grid + phone row + notes above submit ─────── */
 
 #iq-order-form {
   display: grid;
@@ -439,16 +669,64 @@
   width: 100%;
 }
 
-#iq-order-form > *:nth-child(1) { grid-column: 1; grid-row: 1; }
-#iq-order-form > *:nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form > *:nth-child(3) { grid-column: 2; grid-row: 1; }
-#iq-order-form > *:nth-child(4) { grid-column: 2; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form > *:nth-child(5) { grid-column: 1; grid-row: 3; }
-#iq-order-form > *:nth-child(6) { grid-column: 1; grid-row: 4; margin-bottom: 12px; }
-#iq-order-form > *:nth-child(7) { grid-column: 2; grid-row: 3; }
-#iq-order-form > *:nth-child(8) { grid-column: 2; grid-row: 4; margin-bottom: 12px; }
-#iq-order-form > *:nth-child(9) { grid-column: 1 / -1; grid-row: 5; margin-top: 8px; }
-#iq-order-form > *:nth-child(10) { grid-column: 1 / -1; grid-row: 6; margin-bottom: 16px; }
+/* Default 2×2 when phone is not yet wrapped */
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(1) { grid-column: 1; grid-row: 1; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 12px; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(3) { grid-column: 2; grid-row: 1; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(4) { grid-column: 2; grid-row: 2; margin-bottom: 12px; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(5) { grid-column: 1; grid-row: 3; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(6) { grid-column: 1; grid-row: 4; margin-bottom: 12px; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(7) { grid-column: 2; grid-row: 3; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(8) { grid-column: 2; grid-row: 4; margin-bottom: 12px; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(9) { grid-column: 1 / -1; grid-row: 5; margin-top: 8px; }
+#iq-order-form:not(.iq-form-layout-ready) > *:nth-child(10) { grid-column: 1 / -1; grid-row: 6; margin-bottom: 16px; }
+
+/* After JS wraps phone into .iq-form-phone-row */
+#iq-order-form.iq-form-layout-ready > *:nth-child(1) { grid-column: 1; grid-row: 1; }
+#iq-order-form.iq-form-layout-ready > *:nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 12px; }
+#iq-order-form.iq-form-layout-ready > *:nth-child(3) { grid-column: 2; grid-row: 1; }
+#iq-order-form.iq-form-layout-ready > *:nth-child(4) { grid-column: 2; grid-row: 2; margin-bottom: 12px; }
+#iq-order-form.iq-form-layout-ready > *:nth-child(5) { grid-column: 1; grid-row: 3; }
+#iq-order-form.iq-form-layout-ready > *:nth-child(6) { grid-column: 1; grid-row: 4; margin-bottom: 12px; }
+#iq-order-form.iq-form-layout-ready > .iq-form-phone-row {
+  grid-column: 2;
+  grid-row: 3 / 5;
+  align-self: stretch;
+  margin-bottom: 12px;
+}
+#iq-order-form.iq-form-layout-ready > .iq-form-notes-label {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  margin-top: 8px;
+}
+#iq-order-form.iq-form-layout-ready > #iq-form-notes {
+  grid-column: 1 / -1;
+  grid-row: 6;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.iq-form-phone-row {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.iq-form-phone-row > label,
+.iq-form-phone-row > .w-form-label {
+  flex: 0 0 auto;
+  margin-bottom: 0 !important;
+  white-space: nowrap;
+}
+
+.iq-form-phone-row > input,
+.iq-form-phone-row > #iq-form-phone {
+  flex: 1 1 auto;
+  width: auto !important;
+  min-width: 0;
+}
 
 /* Hide legacy Webflow file upload (art upload lives above) */
 #iq-form-artwork-file-legacy {
@@ -456,7 +734,8 @@
 }
 
 #iq-order-form > #iq-form-submit,
-#iq-order-form > .iq-form-submit {
+#iq-order-form > .iq-form-submit,
+#iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
   grid-column: 1 / -1;
   grid-row: 7;
   margin-top: 16px;
@@ -492,10 +771,12 @@
   box-sizing: border-box;
 }
 
-#iq-order-form textarea {
+#iq-order-form textarea,
+#iq-form-notes {
   min-height: 132px;
   resize: vertical;
   line-height: 1.45;
+  width: 100%;
 }
 
 #iq-order-form .w-input:focus,
@@ -504,32 +785,68 @@
   box-shadow: 0 0 0 2px rgba(42, 170, 184, 0.45);
 }
 
-#iq-form-submit {
+/* Submit: white fill / navy text; hover = LTF outline glow */
+#iq-form-submit,
+.iq-form-submit {
   appearance: none;
   display: flex;
   width: 100%;
   align-items: center;
   justify-content: center;
-  border: 0;
+  border: 1px solid #ffffff;
   border-radius: 6px;
-  background: #2aaab8;
-  color: #ffffff;
+  background: #ffffff !important;
+  color: #00001c !important;
   font: inherit;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.03em;
   padding: 16px 24px;
   cursor: pointer;
-  transition: filter 0.2s ease, transform 0.15s ease;
+  transition:
+    filter 0.2s ease,
+    transform 0.15s ease,
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 #iq-form-submit:hover,
-#iq-form-submit:focus-visible {
-  filter: brightness(1.08);
+#iq-form-submit:focus-visible,
+.iq-form-submit:hover,
+.iq-form-submit:focus-visible {
   outline: none;
+  border-color: transparent;
+  box-shadow:
+    0 0 0 2px transparent,
+    0 0 18px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(42, 170, 184, 0.28);
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(
+      45deg,
+      var(--iq-nebula-purple),
+      var(--iq-nebula-teal),
+      var(--iq-nebula-blue),
+      var(--iq-nebula-green),
+      var(--iq-nebula-purple-mid),
+      var(--iq-nebula-purple)
+    )
+      border-box !important;
+  border: 2px solid transparent;
+  color: #00001c !important;
+  filter: none;
 }
 
-#iq-form-submit:disabled {
+.iq-orbit-wrap:hover > #iq-form-submit,
+.iq-orbit-wrap:focus-within > #iq-form-submit,
+.iq-orbit-wrap.ltf-btn-gradient-active > #iq-form-submit {
+  border-color: transparent;
+}
+
+#iq-form-submit:disabled,
+.iq-form-submit:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -572,10 +889,31 @@
 }
 
 @media screen and (max-width: 991px) {
+  .iq-receipt-right {
+    flex-direction: column !important;
+  }
+
+  .iq-run-quote-wrap,
+  .iq-total-wrapper {
+    order: initial;
+    width: 100%;
+    max-width: none;
+  }
+
   #iq-order-form,
   #iq-order-form > *:nth-child(n) {
     grid-column: 1 / -1;
     grid-row: auto;
     margin-bottom: 0;
+  }
+
+  #iq-order-form.iq-form-layout-ready > .iq-form-phone-row {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  #iq-order-form > #iq-form-submit,
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
+    grid-row: auto;
   }
 }

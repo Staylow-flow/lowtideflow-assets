@@ -69,7 +69,7 @@
       quality: readQuality(),
       inkColors: inkColors,
       fullColor: isFullColorInk(inkColors),
-      printLocations: readSliderValue('iq-slider-print-locations', 4),
+      printLocations: Math.min(5, Math.max(1, readSliderValue('iq-slider-print-locations', 4))),
       quantity: readSliderValue('iq-slider-final-quantity', 500),
       split: readSplit(),
       customArt: readCustomArt(),

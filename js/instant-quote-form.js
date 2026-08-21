@@ -243,18 +243,86 @@
     });
   }
 
+  var ORBIT_MS = 850;
+
+  function playOrbitClick(el) {
+    if (!el) return;
+    el.classList.remove('iq-orbit-click');
+    void el.offsetWidth;
+    el.classList.add('iq-orbit-click');
+    window.setTimeout(function () {
+      el.classList.remove('iq-orbit-click');
+    }, ORBIT_MS);
+  }
+
+  function ensureOrbitWrap(btn) {
+    if (!btn) return null;
+    var wrap = btn.closest('.iq-orbit-wrap');
+    if (wrap) return wrap;
+    wrap = document.createElement('span');
+    wrap.className = 'iq-orbit-wrap ltf-btn-gradient-wrap iq-form-cta-wrap';
+    btn.parentNode.insertBefore(wrap, btn);
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
+  /** Phone label + input on one horizontal row; notes full-width above submit. */
+  function fixFormFieldLayout(form) {
+    if (!form || form.classList.contains('iq-form-layout-ready')) return;
+
+    var phone = document.getElementById('iq-form-phone');
+    if (phone && !phone.closest('.iq-form-phone-row')) {
+      var phoneLabel = phone.previousElementSibling;
+      if (phoneLabel && phoneLabel.tagName === 'LABEL') {
+        var phoneRow = document.createElement('div');
+        phoneRow.className = 'iq-form-phone-row';
+        form.insertBefore(phoneRow, phoneLabel);
+        phoneRow.appendChild(phoneLabel);
+        phoneRow.appendChild(phone);
+      }
+    }
+
+    var notes = document.getElementById('iq-form-notes');
+    var submit = document.getElementById('iq-form-submit');
+    if (notes) {
+      var notesLabel = notes.previousElementSibling;
+      if (notesLabel && notesLabel.tagName === 'LABEL') {
+        notesLabel.classList.add('iq-form-notes-label');
+      }
+      if (submit) {
+        var submitAnchor = submit.closest('.iq-orbit-wrap') || submit;
+        if (notesLabel && notesLabel.parentNode === form) {
+          form.insertBefore(notesLabel, submitAnchor);
+        }
+        form.insertBefore(notes, submitAnchor);
+      }
+    }
+
+    form.classList.add('iq-form-layout-ready');
+  }
+
   function initFormCtaGradient() {
-    document.querySelectorAll('.iq-form-cta-wrap, .iq-order-section .ltf-btn-gradient-wrap').forEach(function (wrap) {
-      if (wrap.dataset.ltfGradientInit) return;
-      wrap.dataset.ltfGradientInit = '1';
-      wrap.addEventListener('click', function () {
-        wrap.classList.add('ltf-btn-gradient-active');
-        clearTimeout(wrap._ltfGradientTimer);
-        wrap._ltfGradientTimer = setTimeout(function () {
-          wrap.classList.remove('ltf-btn-gradient-active');
-        }, 1400);
+    var submitBtn = document.getElementById('iq-form-submit');
+    if (submitBtn) {
+      submitBtn.classList.add('iq-orbit-btn', 'iq-form-submit');
+      ensureOrbitWrap(submitBtn);
+    }
+
+    document
+      .querySelectorAll('.iq-form-cta-wrap, .iq-order-section .ltf-btn-gradient-wrap, .iq-orbit-wrap')
+      .forEach(function (wrap) {
+        if (wrap.dataset.ltfGradientInit) return;
+        wrap.dataset.ltfGradientInit = '1';
+        wrap.addEventListener('click', function () {
+          wrap.classList.add('ltf-btn-gradient-active', 'iq-orbit-click');
+          var btn = wrap.querySelector('#iq-form-submit, .iq-form-submit, .iq-orbit-btn');
+          playOrbitClick(btn || wrap);
+          clearTimeout(wrap._ltfGradientTimer);
+          wrap._ltfGradientTimer = setTimeout(function () {
+            wrap.classList.remove('ltf-btn-gradient-active', 'iq-orbit-click');
+          }, ORBIT_MS);
+        });
       });
-    });
   }
 
   function initArtworkModal() {
@@ -512,6 +580,7 @@
     var form = document.getElementById('iq-order-form');
     if (!form) return;
 
+    fixFormFieldLayout(form);
     ensureHoneypot(form);
     setRequiredAttrs();
     initPhoneFormatter();
