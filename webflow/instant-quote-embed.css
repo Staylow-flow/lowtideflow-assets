@@ -7,6 +7,135 @@
   --iq-border: #ffffff;
   --iq-tick-line: rgba(255, 255, 255, 0.35);
   --iq-tick-mark: rgba(255, 255, 255, 0.5);
+  --iq-glow-blue: #3b82f6;
+  --iq-glow-navy: #1e3a8a;
+}
+
+/* ── V2: viewport strategy (no height:100vh + overflow:hidden lock) ── */
+
+.iq-page {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.iq-container {
+  width: 100%;
+}
+
+/* ── V2: intro above quality toggle ─────────────────────────────────── */
+
+.iq-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto 8px;
+  padding: 0 12px;
+}
+
+.iq-intro-title {
+  margin: 0;
+  font-size: clamp(22px, 3.2vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--iq-border);
+  line-height: 1.15;
+}
+
+.iq-intro-lead {
+  margin: 0;
+  max-width: 560px;
+  font-size: clamp(14px, 1.6vw, 17px);
+  font-weight: 500;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ── V2: total cost gradient border + radial glow ───────────────────── */
+
+.iq-total-wrapper {
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  background:
+    linear-gradient(var(--iq-bg), var(--iq-bg)) padding-box,
+    linear-gradient(135deg, var(--iq-glow-blue), var(--iq-glow-navy)) border-box;
+  border: 1px solid transparent !important;
+  border-radius: 14px;
+}
+
+.iq-total-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 18% 12% 8%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.15) 0%,
+    transparent 70%
+  );
+}
+
+.iq-total-wrapper > * {
+  position: relative;
+  z-index: 1;
+}
+
+#iq-total-price,
+.iq-total-price {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── V2: Calculate Production Run ───────────────────────────────────── */
+
+.iq-run-quote-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 18px;
+}
+
+#iq-run-quote,
+.iq-run-quote {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: min(100%, 360px);
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--iq-glow-blue), var(--iq-glow-navy));
+  color: #ffffff;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+}
+
+#iq-run-quote:hover,
+#iq-run-quote:focus-visible,
+.iq-run-quote:hover,
+.iq-run-quote:focus-visible {
+  filter: brightness(1.08);
+  outline: none;
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.35);
+}
+
+#iq-run-quote.is-running,
+.iq-run-quote.is-running {
+  transform: scale(0.98);
 }
 
 /* ── Slider embeds (HtmlEmbed) ───────────────────────────────────────── */

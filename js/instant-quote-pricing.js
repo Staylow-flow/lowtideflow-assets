@@ -20,6 +20,9 @@
   };
 
   var STYLE_KEYS = Object.keys(STYLE_TO_GARMENT);
+  var TOTAL_ANIM_MS = 500;
+  var totalAnimFrame = null;
+  var displayedTotal = null;
 
   function parseStyleKey(inputId) {
     if (!inputId) return 'tshirts';
@@ -55,10 +58,17 @@
     return !!(toggle && toggle.checked);
   }
 
+  /** Ink slider tick 5 = Full Color (5+) */
+  function isFullColorInk(inkColors) {
+    return inkColors >= 5;
+  }
+
   function getState() {
+    var inkColors = readSliderValue('iq-slider-ink-colors', 4);
     return {
       quality: readQuality(),
-      inkColors: readSliderValue('iq-slider-ink-colors', 4),
+      inkColors: inkColors,
+      fullColor: isFullColorInk(inkColors),
       printLocations: readSliderValue('iq-slider-print-locations', 4),
       quantity: readSliderValue('iq-slider-final-quantity', 500),
       split: readSplit(),
@@ -87,24 +97,41 @@
   }
 
   /**
-   * Steps 1–4 shared print economics (same ink/locations for the order).
+   * Spot colors 1–4: classic screen math.
+   * Tick 5 (Full Color): CMYK/sim-process/DTF — 4 screens per location + multipliers.
    */
   function sharedPrintEconomics(state, data) {
     var bracket = getPrintBracket(state.quantity, data.printMatrix);
-    var inkColors = state.inkColors;
     var printLocations = state.printLocations;
+    var fc = data.fullColor || {};
+    var inkColors;
+    var totalScreens;
+    var loc1Cost;
+    var otherLocsCost;
 
-    var totalScreens = inkColors + (printLocations - 1);
-    var totalSetupCost = totalScreens * data.screenSetupFeePerScreen;
+    if (state.fullColor) {
+      var screensPerLoc = fc.screensPerLocation != null ? fc.screensPerLocation : 4;
+      var loc1Mult = fc.loc1Multiplier != null ? fc.loc1Multiplier : 1.85;
+      var locOtherMult = fc.locOtherMultiplier != null ? fc.locOtherMultiplier : 1.65;
+      inkColors = 5;
+      totalScreens = screensPerLoc * printLocations;
+      loc1Cost = bracket.loc1Base * loc1Mult;
+      otherLocsCost = (printLocations - 1) * bracket.locOtherBase * locOtherMult;
+    } else {
+      inkColors = state.inkColors;
+      totalScreens = inkColors + (printLocations - 1);
+      loc1Cost = bracket.loc1Base + (inkColors - 1) * bracket.extraInk;
+      otherLocsCost = (printLocations - 1) * bracket.locOtherBase;
+    }
 
-    var loc1Cost = bracket.loc1Base + (inkColors - 1) * bracket.extraInk;
-    var otherLocsCost = (printLocations - 1) * bracket.locOtherBase;
     var printRunCogs = loc1Cost + otherLocsCost;
-
+    var totalSetupCost = totalScreens * data.screenSetupFeePerScreen;
     var screenFeePerUnit = totalSetupCost / state.quantity;
 
     return {
       bracket: bracket,
+      fullColor: !!state.fullColor,
+      inkColors: inkColors,
       totalScreens: totalScreens,
       totalSetupCost: totalSetupCost,
       printRunCogs: printRunCogs,
@@ -170,12 +197,72 @@
     if (node) node.textContent = text;
   }
 
-  function applyQuote(result) {
+  function parseDisplayedTotal(node) {
+    if (!node) return null;
+    var raw = (node.textContent || '').replace(/[^0-9.-]/g, '');
+    var n = parseFloat(raw);
+    return isNaN(n) ? null : n;
+  }
+
+  function animateTotalTo(target, fromZero) {
+    var node = document.getElementById('iq-total-price');
+    if (!node) return;
+
+    if (totalAnimFrame) {
+      cancelAnimationFrame(totalAnimFrame);
+      totalAnimFrame = null;
+    }
+
+    var start =
+      fromZero || displayedTotal == null
+        ? 0
+        : displayedTotal;
+    if (!fromZero && displayedTotal == null) {
+      var parsed = parseDisplayedTotal(node);
+      start = parsed != null ? parsed : 0;
+    }
+
+    var delta = target - start;
+    if (Math.abs(delta) < 0.005) {
+      displayedTotal = target;
+      node.textContent = formatMoney(target);
+      return;
+    }
+
+    var startTime = null;
+
+    function frame(ts) {
+      if (!startTime) startTime = ts;
+      var t = Math.min(1, (ts - startTime) / TOTAL_ANIM_MS);
+      var eased = 1 - Math.pow(1 - t, 3);
+      var current = roundMoney(start + delta * eased);
+      displayedTotal = current;
+      node.textContent = formatMoney(current);
+      if (t < 1) {
+        totalAnimFrame = requestAnimationFrame(frame);
+      } else {
+        totalAnimFrame = null;
+        displayedTotal = target;
+        node.textContent = formatMoney(target);
+      }
+    }
+
+    totalAnimFrame = requestAnimationFrame(frame);
+  }
+
+  function applyQuote(result, options) {
+    options = options || {};
     setText('iq-price-unit-1', formatMoney(result.unit1));
     if (result.unit2 != null) {
       setText('iq-price-unit-2', formatMoney(result.unit2));
     }
-    setText('iq-total-price', formatMoney(result.total));
+
+    if (options.skipTotalAnim) {
+      displayedTotal = result.total;
+      setText('iq-total-price', formatMoney(result.total));
+    } else {
+      animateTotalTo(result.total, !!options.fromZero);
+    }
 
     if (typeof global.IQ.syncQuoteForm === 'function') {
       global.IQ.syncQuoteForm();
@@ -185,18 +272,25 @@
     }
   }
 
-  function recalculate() {
+  function recalculate(options) {
     var data = global.IQ.PRICING_DATA;
     if (!data) return null;
     var state = getState();
     var result = calculateQuote(state, data);
-    applyQuote(result);
+    applyQuote(result, options);
     return { state: state, result: result };
+  }
+
+  /** Explicit "Calculate Production Run" — animate from $0 */
+  function runQuote() {
+    return recalculate({ fromZero: true });
   }
 
   global.IQ.getState = getState;
   global.IQ.calculateQuote = calculateQuote;
   global.IQ.applyQuote = applyQuote;
   global.IQ.recalculate = recalculate;
+  global.IQ.runQuote = runQuote;
   global.IQ.formatMoney = formatMoney;
+  global.IQ.isFullColorInk = isFullColorInk;
 })(typeof window !== 'undefined' ? window : globalThis);

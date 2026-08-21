@@ -1,5 +1,5 @@
 /**
- * Instant Quote — UI bridge (sliders, toggles, split animation)
+ * Instant Quote — UI bridge (sliders, toggles, split animation, Run Quote)
  * Pricing: instant-quote-pricing-data.js + instant-quote-pricing.js (window.IQ.recalculate)
  */
 (function () {
@@ -11,6 +11,11 @@
     }
   }
 
+  function formatInkDisplay(raw) {
+    var n = Math.round(raw);
+    return n >= 5 ? '5+' : String(n);
+  }
+
   function syncSliderValue(slider) {
     var targetId = slider.getAttribute('data-iq-value-target');
     if (!targetId) return;
@@ -20,7 +25,12 @@
 
     var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step || '1');
     var raw = parseFloat(slider.value);
-    var display = step >= 1 ? String(Math.round(raw)) : String(Math.round(raw));
+    var display;
+    if (slider.id === 'iq-slider-ink-colors') {
+      display = formatInkDisplay(raw);
+    } else {
+      display = step >= 1 ? String(Math.round(raw)) : String(Math.round(raw));
+    }
     target.textContent = display;
     slider.setAttribute('aria-valuenow', display);
     recalculateQuote();
@@ -165,12 +175,32 @@
     toggle.addEventListener('change', recalculateQuote);
   }
 
+  function initRunQuoteButton() {
+    var btn =
+      document.getElementById('iq-run-quote') ||
+      document.querySelector('.iq-run-quote');
+    if (!btn) return;
+    btn.addEventListener('click', function (event) {
+      event.preventDefault();
+      if (window.IQ && typeof window.IQ.runQuote === 'function') {
+        window.IQ.runQuote();
+      } else {
+        recalculateQuote();
+      }
+      btn.classList.add('is-running');
+      window.setTimeout(function () {
+        btn.classList.remove('is-running');
+      }, 520);
+    });
+  }
+
   function init() {
     initSliders();
     initSplitToggle();
     initQualityToggle();
     initStyleRadios();
     initCustomArtToggle();
+    initRunQuoteButton();
     recalculateQuote();
   }
 

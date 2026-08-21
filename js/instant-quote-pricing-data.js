@@ -7,7 +7,7 @@
   global.IQ = global.IQ || {};
 
   global.IQ.PRICING_DATA = {
-    version: '1.0.0',
+    version: '2.0.0',
 
     garmentPrices: {
       tshirt: { hq: 5.0, premium: 10.0 },
@@ -28,6 +28,18 @@
       { maxQty: 449, loc1Base: 3.45, locOtherBase: 1.5, extraInk: 0.7 },
       { maxQty: 999, loc1Base: 2.5, locOtherBase: 1.25, extraInk: 0.5 }
     ],
+
+    /**
+     * Tick 5 on Ink Colors = 5+ / Full Color
+     * (Simulated Process / DTF / CMYK) — not spot-color screen math.
+     */
+    fullColor: {
+      screensPerLocation: 4,
+      /** Multiplier on 4-color spot loc1Base for process/DTF/CMYK loc1 */
+      loc1Multiplier: 1.85,
+      /** Multiplier on locOtherBase for additional full-color locations */
+      locOtherMultiplier: 1.65
+    },
 
     screenSetupFeePerScreen: 25.0,
     agencyMarkupMultiplier: 1.25,

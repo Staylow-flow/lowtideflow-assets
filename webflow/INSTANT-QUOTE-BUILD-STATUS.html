@@ -2,37 +2,46 @@
   Instant Quote Calculator — Build Status
   Page: /instant-quote (Webflow ID 6a59f0368e92a3bd60940ad9)
   Site: LowTideFlow.co (6789f449bbb1a21245706751)
-  Last updated: 2026-07-17 (form + breakdown pass)
+  Last updated: 2026-08-20 (V2: intro, 5+ ink, viewport, glow, Run Quote)
 -->
 
 <!--
+  ═══ V2 (2026-08-20) ═══
+  ✅ Intro header above quality toggle
+  ✅ Ink Colors slider 1–5 (tick 5 = 5+ / Full Color)
+  ✅ Viewport: min-height 90vh flex column (no overflow:hidden lock)
+  ✅ Total cost gradient border + radial glow
+  ✅ Calculate Production Run + rAF total counter (~500ms)
+
   ═══ WEBFLOW DESIGNER (Navigator) ═══
   ✅ Section iq-page
   ✅ Div iq-container
+  ✅ iq-intro + Calculate Production Run
   ✅ Calculator block (sliders, apparel, receipt)
   ✅ HtmlEmbed blocks: artwork row, order form, pricing breakdown (via MCP)
 
   ═══ CUSTOM CODE ═══
-  ✅ Head: instant-quote-embed.css (sliders, form, modal, breakdown)
+  ✅ Head: instant-quote-embed.css (sliders, form, modal, breakdown, V2)
   ✅ Footer: pricing-data + pricing + form + ui + artwork modal HTML
-  ✅ Page blocks inserted via MCP whtml_builder (artwork row, form, breakdown)
+  ✅ Page blocks inserted via MCP (artwork row, form, breakdown, intro, run)
 
-  ═══ REPO FILES (new) ═══
+  ═══ REPO FILES ═══
+  webflow/instant-quote-intro.html
   webflow/instant-quote-artwork-row.html
   webflow/instant-quote-order-form.html
   webflow/instant-quote-pricing-breakdown.html
-  webflow/instant-quote-artwork-modal.html   (also in footer deploy)
-  js/instant-quote-form.js                   — form sync, modal, Airtable stub
+  webflow/instant-quote-artwork-modal.html
+  js/instant-quote-pricing-data.js
+  js/instant-quote-pricing.js
+  js/instant-quote-form.js
+  js/instant-quote-ui.js
 
-  ═══ AIRTABLE (when ready) ═══
-  Set window.IQ.FORM_CONFIG.webhookUrl to Make/Zapier/serverless endpoint.
-  Do NOT put Airtable API keys in client-side code.
+  ═══ SHEETS ═══
+  Apps Script webhook live (see LowTideFlow Google Sheets Data/)
 
   ═══ QA CHECKLIST ═══
-  ⬜ Artwork row sits under split wrapper; pushes down on 50/50
-  ⬜ Info link opens modal with pay-to-play copy
-  ⬜ Upload Artwork scrolls to form drop zone
-  ⬜ Form quote fields mirror calculator on slider change
-  ⬜ Submit shows success (stub until webhook configured)
-  ⬜ 3-column breakdown renders at page bottom
+  ⬜ Publish + hard-refresh Instant Quote
+  ⬜ Ink tick 5 shows 5+ and raises full-color estimate
+  ⬜ Calculate Production Run animates total from $0
+  ⬜ Page scrolls to Lock In Your Quote / order form
 -->

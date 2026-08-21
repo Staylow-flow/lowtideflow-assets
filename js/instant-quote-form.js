@@ -103,11 +103,12 @@
       quoted_estimate: quotedEstimate,
       project_notes: val('iq-form-notes'),
       apparel_style: styleLabel(state.styleRow1) + ' · ' + qualityLabel(state.quality),
-      ink_colors: state.inkColors,
+      ink_colors: state.fullColor ? '5+' : state.inkColors,
+      print_mode: state.fullColor ? 'full_color' : 'spot_color',
       print_locations: state.printLocations,
       final_quantity: state.quantity,
       split_apparel_style: state.split ? styleLabel(state.styleRow2) : '',
-      split_ink_colors: state.split ? state.inkColors : '',
+      split_ink_colors: state.split ? (state.fullColor ? '5+' : state.inkColors) : '',
       split_print_locations: state.split ? state.printLocations : '',
       split_final_quantity: splitQty,
       art_url: '',
@@ -133,7 +134,8 @@
       },
       quote: {
         quality: qualityLabel(state.quality),
-        inkColors: state.inkColors,
+        inkColors: state.fullColor ? '5+' : state.inkColors,
+        printMode: state.fullColor ? 'full_color' : 'spot_color',
         printLocations: state.printLocations,
         quantity: state.quantity,
         split: state.split,
@@ -163,7 +165,7 @@
     setHidden('iq-form-quote-quantity', String(state.quantity));
     setHidden('iq-form-quote-styles', buildStylesSummary(state));
     setHidden('iq-form-quote-quality', qualityLabel(state.quality));
-    setHidden('iq-form-quote-ink', String(state.inkColors));
+    setHidden('iq-form-quote-ink', state.fullColor ? '5+' : String(state.inkColors));
     setHidden('iq-form-quote-locations', String(state.printLocations));
     setHidden('iq-form-quote-total', format(result.total));
 
