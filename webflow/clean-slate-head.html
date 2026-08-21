@@ -434,7 +434,7 @@
       font-size: 18px !important;
       line-height: 1.275 !important; /* ~15% tighter than 1.5 */
       padding: 0 !important;
-      padding-right: 20% !important;
+      padding-right: 15% !important;
       border: 0 !important;
       border-radius: 0 !important;
       background: transparent !important;
@@ -454,6 +454,10 @@
       margin-top: 0 !important;
       position: relative !important;
       top: 5px !important; /* section down 25; button back up 15 → net +10 from prior */
+      filter:
+        drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
+        drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
+        drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     }
 
     .ltf-hero-bottom-bar .is-hero-logo-mobile,
@@ -462,16 +466,27 @@
       height: 72px !important;
       width: auto !important;
       align-self: flex-start !important;
+      filter:
+        drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
+        drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
+        drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     }
 
     /*
-      Shirt was stuck above the fold because .ltf-hero + cage force
-      overflow:hidden (below) — bottom:-60px got clipped. Allow the
-      figure to paint past the hero edge; keep canvas clipped.
+      Shirt hangs past the right edge (right:-50px) — allow that paint, but
+      lock the page so phones cannot rubber-band-scroll sideways to see it.
     */
+    html,
+    body {
+      overflow-x: hidden !important;
+      max-width: 100vw !important;
+    }
+
     .ltf-hero,
     .ltf-hero > .ltf-site-cage {
-      overflow: visible !important;
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
+      max-width: 100% !important;
     }
 
     .ltf-hero .hero-canvas-wrapper,
@@ -1139,16 +1154,35 @@
       position: relative !important;
       top: 5px !important;
       margin-top: 0 !important;
+      filter:
+        drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
+        drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
+        drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     }
 
     .ltf-hero .ltf-hero-bottom-bar .ltf-body-text {
       font-size: 18px !important;
+      padding-right: 15% !important;
+    }
+
+    .ltf-hero .ltf-hero-bottom-bar .is-hero-logo-mobile,
+    .ltf-hero .ltf-hero-bottom-bar img.is-hero-logo-mobile {
+      filter:
+        drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
+        drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
+        drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     }
 
     .ltf-hero,
     .ltf-hero > .ltf-site-cage {
-      overflow: visible !important;
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
       max-width: 100%;
+    }
+
+    html,
+    body {
+      overflow-x: hidden !important;
     }
 
     /* Specs: Crew-style glow on touch (slam stays desktop) */

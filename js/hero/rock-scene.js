@@ -578,24 +578,26 @@ const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
 /**
- * Rock motion — hard caps (Aug 2026):
+ * Rock motion — idle float stays gentle inside hard caps:
  *   yaw (Y)  ≤ ±10°
- *   pitch (X) ≤ ±15° from rest (group; mesh open-pose is separate)
- *   roll (Z)  subtle idle only
- * Prior bug: rockYawAccum / rockPitchAccum grew unbounded every frame
- * (~0.000015/0.00005 * dt) until the boulder spun past ~90°.
+ *   pitch (X) ≤ ±15° (idle only)
+ *   roll (Z)  ≤ ±8° idle (more visible float)
+ * Scroll drives ONE-WAY pitch roll-down (no reverse on scroll-up), uncapped.
  */
 const ROCK_MOTION_BASELINE = Object.freeze({
-  idleYawAmp1:     0.04,
-  idleYawAmp2:     0.018,
-  idleNodAmp:      0.016,
-  idlePitchAmp:    0.03,
-  idleYawLerp:     0.036,
-  idleNodLerp:     0.030,
+  idleYawAmp1:     0.095,   /* ~5.4° */
+  idleYawAmp2:     0.055,   /* ~3.2° */
+  idleYawAmp3:     0.035,   /* ~2.0° — third orbit for space-float feel */
+  idleNodAmp:      0.055,   /* ~3.2° roll (Z) */
+  idleNodAmp2:     0.028,
+  idlePitchAmp:    0.12,    /* ~6.9° */
+  idlePitchAmp2:   0.07,    /* ~4.0° */
+  idleYawLerp:     0.022,   /* slower = gentler float */
+  idleNodLerp:     0.020,
   mouseLerp:       0.028,
   maxYawDeg:       10,
   maxPitchDeg:     15,
-  maxRollDeg:      4,
+  maxRollDeg:      8,
 });
 
 const MAX_YAW   = (ROCK_MOTION_BASELINE.maxYawDeg   * Math.PI) / 180;
@@ -606,8 +608,11 @@ const MAX_MOUSE_YAW  = MAX_YAW;
 const MAX_MOUSE_ROLL = MAX_ROLL;
 const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1;
 const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2;
+const IDLE_YAW_AMP3  = ROCK_MOTION_BASELINE.idleYawAmp3;
 const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp;
+const IDLE_NOD_AMP2  = ROCK_MOTION_BASELINE.idleNodAmp2;
 const IDLE_PITCH_AMP = ROCK_MOTION_BASELINE.idlePitchAmp;
+const IDLE_PITCH_AMP2 = ROCK_MOTION_BASELINE.idlePitchAmp2;
 
 /** Mobile ≤991 — rock slightly under H1; nebula TOP flush under 52px nav */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
@@ -1357,31 +1362,36 @@ class RockScene {
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
     this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
 
-    /* ── Rock rotation (hard-capped) ───────────────────────────────────────
-       Mesh open-pose stays on the model (ROCK_OPEN_PITCH). Group motion:
-       X pitch ≤ ±15°, Y yaw ≤ ±10°, Z roll = subtle idle only.
-       No unbounded accumulators — those spun the rock past ~90°.          */
+    /* ── Rock rotation ─────────────────────────────────────────────────────
+       Idle: gentle multi-orbit float, hard-capped (yaw ±10°, pitch ±15°, roll ±8°).
+       Scroll: ONE-WAY pitch roll-down only (down adds; up ignored). Uncapped. */
     if (this.rockGroup) {
       const scrollDelta = this.scrollProgress - this._lastScrollProgress;
       this._lastScrollProgress = this.scrollProgress;
 
-      if (Math.abs(scrollDelta) > 0.000001) {
-        const dirGain = scrollDelta >= 0 ? 1.0 : 0.25;
-        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN * dirGain
+      /* Forward scroll only — never reverse the roll when scrolling back up */
+      if (scrollDelta > 0.000001) {
+        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN
                                   * SCROLL_IMPULSE_GAIN * ROCK_SCROLL_COAST;
+      } else if (scrollDelta < -0.000001) {
+        /* Kill any leftover reverse impulse so coast never spins backward */
+        this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity);
       }
 
       this.scrollPitchVelocity *= Math.pow(ROCK_SPIN_DECAY, dt);
+      this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity); /* one-way */
       this.scrollPitchOffset  += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
-      this.scrollPitchOffset   = clamp(this.scrollPitchOffset, -MAX_PITCH, MAX_PITCH);
-      this.scrollPitchVelocity = clamp(this.scrollPitchVelocity, -0.08, 0.08);
+      /* scrollPitchOffset is intentionally uncapped — window scroll drives roll-down */
 
-      const idlePitch = Math.sin(t * 0.00012) * IDLE_PITCH_AMP;
-      const targetX = clamp(idlePitch + this.scrollPitchOffset, -MAX_PITCH, MAX_PITCH);
+      const idlePitch = Math.sin(t * 0.00011) * IDLE_PITCH_AMP
+                      + Math.sin(t * 0.00019 + 0.9) * IDLE_PITCH_AMP2;
+      const idleYaw = Math.sin(t * 0.00014) * IDLE_YAW_AMP1
+                    + Math.sin(t * 0.00027 + 1.1) * IDLE_YAW_AMP2
+                    + Math.sin(t * 0.00041 + 2.3) * IDLE_YAW_AMP3;
+      const idleNod = Math.sin(t * 0.00013 + 1.4) * IDLE_NOD_AMP
+                    + Math.sin(t * 0.00023 + 0.4) * IDLE_NOD_AMP2;
 
-      const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
-                    + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
-      const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
+      const targetX = clamp(idlePitch, -MAX_PITCH, MAX_PITCH) + this.scrollPitchOffset;
       const targetY = clamp(
         idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS,
         -MAX_YAW,
