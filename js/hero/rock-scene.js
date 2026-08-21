@@ -598,13 +598,13 @@ const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1 * 1.25;
 const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1 * 1.25;
 const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
 
-/** Mobile ≤991 — match mockup: rock under H1, nebula way inset */
+/** Mobile ≤991 — rock/nebula flush under nav, still inset */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  gasCenterY:       0.36,  /* high — sits under H1 in upper third */
+  gasCenterY:       0.24,  /* flush under nav / under H1 */
   gasStretchX:      0.12,  /* way in — white-box concept in mockup */
-  gasStretchY:      0.88,
-  gasReach:         0.20,
-  gasInner:         0.14,
+  gasStretchY:      0.82,
+  gasReach:         0.18,
+  gasInner:         0.13,
   widthTighten:     2.45,
   purpleFarMult:    0.9,
   streakReachMult:  0.7,
@@ -616,8 +616,8 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
 const MOBILE_LAYOUT_MAX_W = 991;
 const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
-/** Strong upward lift so rock sits under H1 (mockup), not mid-body */
-const MOBILE_ROCK_LIFT_PX = -130;
+/** Lift rock flush under nav (negative = up in world space) */
+const MOBILE_ROCK_LIFT_PX = -260;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
