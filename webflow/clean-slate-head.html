@@ -245,8 +245,8 @@
       align-items: center;
       justify-content: unset;
       position: relative;
-      padding-left: 24px !important;
-      padding-right: 24px !important;
+      padding-left: 25px !important;
+      padding-right: 25px !important;
     }
 
     .ltf-nav-toggle .ltf-nav-toggle-bar {
@@ -909,118 +909,15 @@
     border-radius: 5px;
   }
 
-  /* ── Mobile / tablet: stack sections, scale type, kill overflow ─
-     DESKTOP RULES ABOVE ARE UNTOUCHED — everything here is ≤991 only. */
+  /* ── Mobile customs only (Designer owns type/layout at ≤991) ──
+     Keep: hero canvas clip, spec-card Crew glow, fabric magnifier window. */
   @media (max-width: 991px) {
-    /* Full-bleed usable width via screen padding (not a second fixed cage) */
-    .ltf-site-cage,
-    .section-wrapper,
-    .ltf-cage {
-      max-width: none !important;
-      width: 100% !important;
-      padding-left: var(--ltf-side-pad) !important;
-      padding-right: var(--ltf-side-pad) !important;
-    }
-
-    /* H1 ~2× previous mobile cap; keep desktop proportion feel */
-    .ltf-main-header,
-    .hero-h1 {
-      font-size: clamp(68px, 14vw, 96px) !important;
-      line-height: 0.92;
-      letter-spacing: -0.02em;
-      text-align: left !important;
-    }
-
-    .ltf-section-header,
-    .ltf-section-header-navy,
-    .ltf-funnel-cta-heading {
-      font-size: clamp(56px, 12vw, 80px) !important;
-      line-height: 0.92;
-      max-width: none !important;
-      text-align: left !important;
-    }
-
-    .ltf-split-copy .ltf-section-header-navy {
-      max-width: none !important;
-    }
-
-    /* 50px from top of section container → first headline */
-    .ltf-section > .ltf-site-cage > .ltf-main-header:first-child,
-    .ltf-section > .ltf-site-cage > .ltf-stack:first-child .ltf-main-header,
-    .ltf-section > .ltf-site-cage > .ltf-stack:first-child .ltf-section-header,
-    .ltf-section > .ltf-site-cage > .ltf-stack:first-child .ltf-section-header-navy,
-    .ltf-section > .ltf-site-cage > .ltf-section-head:first-child,
-    .ltf-section .ltf-hero-headline,
-    .ltf-section:has(.ltf-cards-grid) .ltf-section-head,
-    .ltf-section:has(.ltf-split-2) .ltf-split-copy > .ltf-section-header-navy:first-child,
-    .ltf-section:has(.ltf-split-2) .ltf-split-copy > .ltf-label-teal:first-child {
-      margin-top: 0 !important;
-      padding-top: 50px !important;
-    }
-
-    .ltf-body-text,
-    .ltf-body-text-navy,
-    .ltf-label-teal,
-    .ltf-meta,
-    .ltf-subheading,
-    .ltf-authority-sublabel {
-      width: 100% !important;
-      max-width: 100% !important;
-      height: auto !important;
-      text-align: left !important;
-    }
-
-    .ltf-body-text,
-    .ltf-body-text-navy {
-      font-size: 16px !important;
-      line-height: 1.45;
-    }
-
-    /* Section heads: left text (override desktop center) */
-    .ltf-stack.ltf-section-head,
-    .ltf-section-head {
-      align-items: flex-start !important;
-      justify-content: flex-start !important;
-      text-align: left !important;
-    }
-
-    .ltf-section-head .ltf-section-header,
-    .ltf-section-head .ltf-section-header-navy,
-    .ltf-section-head .ltf-authority-sublabel,
-    .ltf-section-head .ltf-subheading {
-      text-align: left !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-    }
-
-    /* Buttons centered on screen */
-    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
-    .ltf-section-cta .ltf-btn-gradient-wrap,
-    .ltf-funnel-cta .ltf-btn-gradient-wrap,
-    .ltf-split-copy .ltf-btn-gradient-wrap {
-      display: flex !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
-    }
-
-    .ltf-section-cta,
-    .ltf-funnel-cta-inner,
-    .ltf-hero-bottom-bar .is-hero-copy {
-      text-align: left !important;
-    }
-
-    .ltf-section-cta .ltf-btn-gradient-wrap,
-    .ltf-funnel-cta .ltf-btn-gradient-wrap {
-      width: fit-content;
-    }
-
-    /* Hero: clip rock + nebula to phone frame */
     .ltf-hero,
     .ltf-hero > .ltf-site-cage,
     .ltf-hero .hero-canvas-wrapper,
     .ltf-hero #canvas3d {
       overflow: hidden !important;
-      max-width: 100% !important;
+      max-width: 100%;
     }
 
     .ltf-hero .hero-canvas-wrapper,
@@ -1030,103 +927,12 @@
       right: 0 !important;
     }
 
-    .ltf-hero-bottom-bar,
-    .ltf-hero-bottom-bar.ltf-split-2 {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1fr) !important;
-      grid-template-rows: auto !important;
-      gap: 20px !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      min-width: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 24px !important;
-      transform: none !important;
-      padding-left: 0;
-      padding-right: 0;
-      box-sizing: border-box;
-    }
-
-    .ltf-hero-bottom-bar .ltf-split-copy,
-    .ltf-hero-bottom-bar .ltf-split-asset,
-    .ltf-hero-bottom-bar .is-hero-copy {
-      width: 100% !important;
-      max-width: 100% !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-    }
-
-    .ltf-split-2,
-    .ltf-split-2.ltf-split,
-    .ltf-upsell-grid.ltf-split-2,
-    .ltf-vault-cage.ltf-split-2 {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1fr) !important;
-      gap: 28px !important;
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-
-    .ltf-split-copy:not(.is-hero-copy),
-    .ltf-split-asset:not(.ltf-upsell-list) {
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-
-    /* Kill dark text plates that read as a black box on mobile stacks */
-    .ltf-split-copy:not(.is-hero-copy),
-    .ltf-section-head,
-    .ltf-stack.ltf-section-head {
-      background: transparent !important;
-      background-color: transparent !important;
-      box-shadow: none !important;
-    }
-
-    .ltf-specs-vault,
-    .ltf-specs-vault-sticky,
-    [data-ltf-specs-slam] {
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
-      position: relative !important;
-    }
-
-    .ltf-specs-vault-cards {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 16px !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      flex: 0 1 auto !important;
-      height: auto !important;
-      min-height: 0 !important;
-      overflow: visible !important;
-      padding-bottom: 0;
-    }
-
-    .ltf-spec-card,
-    .ltf-spec-card.ltf-spec-card-01,
-    .ltf-spec-card.ltf-spec-card-02,
-    .ltf-spec-card.ltf-spec-card-03,
-    .ltf-spec-card.ltf-spec-card-04 {
-      position: relative !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
-      padding: 28px 24px !important;
-      transform: none !important;
+    /* Specs: Crew-style glow on touch (slam stays desktop) */
+    .ltf-spec-card {
       isolation: isolate;
       overflow: visible;
     }
 
-    /* Spec cards: Crew-style glow on touch, no size change */
     .ltf-spec-card::before {
       content: '';
       position: absolute;
@@ -1168,10 +974,7 @@
       z-index: 1;
     }
 
-    .ltf-spec-card.is-glow::before {
-      opacity: 0.84;
-    }
-
+    .ltf-spec-card.is-glow::before { opacity: 0.84; }
     .ltf-spec-card.is-glow::after {
       opacity: 1;
       animation: ltf-edge-spin 4s linear infinite;
@@ -1184,54 +987,7 @@
       transform: none !important;
     }
 
-    .ltf-upsell-list,
-    .ltf-upsell-list.ltf-split-asset {
-      width: 100% !important;
-      max-width: 100% !important;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-    }
-
-    .ltf-upsell-list-item {
-      font-size: 16px !important;
-      line-height: 1.35;
-      padding: 16px 16px 16px 14px !important;
-    }
-
-    .ltf-cards-grid {
-      grid-template-columns: minmax(0, 1fr) !important;
-      gap: 16px !important;
-    }
-
-    .ltf-card {
-      width: 100% !important;
-      will-change: auto;
-      min-height: 0;
-      transform: none !important;
-    }
-
-    .ltf-funnel-cta::before {
-      width: 140%;
-      height: 280px;
-      filter: blur(70px);
-    }
-
-    .ltf-hero-headline {
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-      text-align: left !important;
-    }
-
-    /* Fabric magnifier — landscape window ~250px */
-    .ltf-section:has(.ltf-authority-image-box) {
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
-      display: block;
-      padding-top: 48px !important;
-      padding-bottom: 48px !important;
-    }
-
+    /* Fabric magnifier — landscape window (scroll-pan is JS) */
     .ltf-authority-image-box,
     .ltf-magnifier {
       display: block;
@@ -1252,7 +1008,6 @@
 
     .ltf-magnifier-lens {
       opacity: 1 !important;
-      /* Smaller glass so it fits the landscape window */
       max-width: 42% !important;
     }
   }

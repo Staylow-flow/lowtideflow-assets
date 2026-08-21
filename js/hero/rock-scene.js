@@ -600,20 +600,23 @@ const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
 
 /** Mobile ≤991 — keep nebula/rock inside the phone frame (no continuous VW scaling) */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  gasStretchX:      0.48,
-  gasStretchY:      1.28,
-  gasReach:         0.44,
-  gasInner:         0.22,
-  widthTighten:     1.22,
-  purpleFarMult:    1.25,
-  streakReachMult:  1.02,
-  tentacleExtend:   0.92,
-  purpleReachBoost: 0.88,
-  flareReachMult:   1.35,
+  gasStretchX:      0.28,
+  gasStretchY:      0.95,
+  gasReach:         0.30,
+  gasInner:         0.16,
+  widthTighten:     1.55,
+  purpleFarMult:    1.05,
+  streakReachMult:  0.82,
+  tentacleExtend:   0.72,
+  purpleReachBoost: 0.70,
+  flareReachMult:   1.05,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
-const MOBILE_CAMERA_Z     = 31;
+/** Higher Z = smaller rock/nebula in frame (phone was overflowing) */
+const MOBILE_CAMERA_Z     = 42;
+/** Extra mesh shrink on phone after ROCK_SCALE_BASE */
+const MOBILE_ROCK_SCALE_MULT = 0.58;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
@@ -1180,7 +1183,9 @@ class RockScene {
     const size = box.getSize(new THREE.Vector3());
 
     const longestDim = Math.max(size.x, size.y, size.z, 0.001);
-    const scale = ROCK_SCALE_BASE / longestDim;
+    const mobile = isMobileLayout(typeof window !== 'undefined' ? window.innerWidth : 1200);
+    const scale =
+      (ROCK_SCALE_BASE / longestDim) * (mobile ? MOBILE_ROCK_SCALE_MULT : 1);
 
     /* Orient before centering. position is applied after rotation in the
        local matrix, so a centering offset measured on the unrotated mesh
