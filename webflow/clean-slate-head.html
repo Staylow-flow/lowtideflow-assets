@@ -239,14 +239,26 @@
   }
 
   @media (max-width: 991px) {
+    /* Collapsed bar: fixed 52px so logo can true-center vertically */
+    .ltf-site-nav {
+      height: 52px !important;
+      min-height: 52px !important;
+    }
+
     .ltf-nav-inner {
       display: grid !important;
       grid-template-columns: 44px 1fr 44px;
       align-items: center;
       justify-content: unset;
       position: relative;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      height: 52px !important;
+      min-height: 52px !important;
+      max-width: none !important;
+      /* Hamburger sits 10px from the screen edge (right) */
       padding-left: 25px !important;
-      padding-right: 25px !important;
+      padding-right: 10px !important;
     }
 
     .ltf-nav-toggle .ltf-nav-toggle-bar {
@@ -270,20 +282,22 @@
       min-height: 44px !important;
     }
 
-    /* Toggle must live OUTSIDE .ltf-nav-mobile-panel — panel is display:none when closed */
+    /* Toggle must live OUTSIDE .ltf-nav-mobile-panel */
     .ltf-nav-mobile-panel .ltf-nav-toggle {
       display: none !important;
     }
 
     .ltf-nav-toggle {
       display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       position: relative;
       z-index: 102 !important;
       grid-column: 3;
       grid-row: 1;
       justify-self: end;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
+      align-self: center !important;
+      margin: 0 !important;
       pointer-events: auto;
     }
 
@@ -292,28 +306,42 @@
       flex-shrink: 0;
     }
 
-    /* True bar-center — absolute so asymmetric desktop pad cannot skew it */
+    /*
+      Logo: horizontal + vertical center in the 52px bar.
+      Stretch to bar height + flex-center — more reliable than translateY(-50%).
+    */
     .ltf-nav-logo-link {
-      display: block !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       position: absolute !important;
       left: 50% !important;
-      top: 50% !important;
-      transform: translate(-50%, -50%) !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      transform: translateX(-50%) !important;
+      width: auto !important;
+      height: 52px !important;
+      max-height: 52px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 0 !important;
+      z-index: 1;
       grid-column: auto;
       grid-row: auto;
-      z-index: 1;
-      line-height: 0;
-      margin: 0 !important;
       pointer-events: auto;
     }
 
+    .ltf-nav-logo-link .ltf-nav-logo,
+    .ltf-nav-logo-link img,
     .ltf-nav-logo {
       display: block !important;
-      height: 21px;
-      width: auto;
+      height: 21px !important;
+      width: auto !important;
       max-width: 56.25vw;
+      max-height: 21px !important;
       object-fit: contain;
       margin: 0 !important;
+      vertical-align: middle;
     }
 
     .ltf-hero .hero-canvas-wrapper {
@@ -331,8 +359,12 @@
       padding-right: 0;
     }
 
+    /*
+      Expanded panel: half the previous vertical padding + medium slide.
+      Keep display:flex always (visibility/transform) so open/close can animate.
+    */
     .ltf-nav-mobile-panel {
-      display: none;
+      display: flex !important;
       position: fixed;
       top: 52px;
       left: 0;
@@ -345,18 +377,30 @@
       gap: 0;
       width: 100%;
       height: auto;
-      max-height: none;
-      padding: 28px clamp(20px, 5vw, 32px) 32px;
+      max-height: min(80vh, 640px);
+      /* was 28px / 32px → 50% */
+      padding: 14px clamp(20px, 5vw, 32px) 16px;
       overflow: hidden;
       background: rgba(6, 20, 46, 0.97);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      transform: translate3d(0, -100%, 0);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        transform 0.4s ease,
+        opacity 0.35s ease,
+        visibility 0.4s ease;
     }
 
     .ltf-site-nav.is-nav-open .ltf-nav-mobile-panel {
-      display: flex;
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .ltf-nav-mobile-panel .ltf-nav-links {
@@ -366,9 +410,9 @@
       transform: none;
       flex-direction: column;
       align-items: flex-start;
-      gap: 24px;
+      gap: 12px;
       width: 100%;
-      margin: 0 0 28px;
+      margin: 0 0 14px;
       padding: 0;
       flex-shrink: 0;
     }
@@ -383,7 +427,7 @@
       align-items: stretch;
       width: 100%;
       height: auto;
-      gap: 12px;
+      gap: 10px;
       margin: 0;
       padding-top: 8px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -402,10 +446,17 @@
       text-align: center;
       font-size: 19px;
       letter-spacing: 0.14em;
-      padding-top: 14px;
-      padding-bottom: 14px;
+      padding-top: 10px;
+      padding-bottom: 10px;
       padding-left: 20px;
       padding-right: 20px;
+    }
+  }
+
+  @media (max-width: 991px) and (prefers-reduced-motion: reduce) {
+    .ltf-nav-mobile-panel {
+      transition: none;
+      transform: none;
     }
   }
 
