@@ -2,19 +2,16 @@
   Instant Quote — Page Footer scripts
   /instant-quote → Page Settings → Custom Code → Before </body>
 
-  Load in this order (Git source of truth):
+  V2 pin (2026-08-20): @f281e4d via jsDelivr
 
-  1. js/instant-quote-pricing-data.js   — rate tables (edit when prices change)
-  2. js/instant-quote-pricing.js        — calculateQuote + DOM apply
-  3. js/instant-quote-form.js           — order form sync, modal, submit stub
-  4. js/instant-quote-ui.js             — sliders, toggles, split animation
+  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@f281e4d/js/instant-quote-pricing-data.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@f281e4d/js/instant-quote-pricing.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@f281e4d/js/instant-quote-form.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@f281e4d/js/instant-quote-ui.js"></script>
+  + artwork modal HTML (webflow/instant-quote-artwork-modal.html)
 
-  Webflow options:
-  A) Register 3 inline/hosted scripts via Scripts API (recommended for headless path)
-  B) Paste minified bundles into freeform footer (dev / small payloads only)
-  C) Hosted on CDN from repo deploy pipeline (future)
+  Head CSS:
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@f281e4d/webflow/instant-quote-embed.css" />
 
-  Do NOT reference /js/*.js paths directly on publish — use Webflow-registered scripts or inline.
-
-  window.IQ exposes getState(), calculateQuote(), recalculate() for headless routing later.
+  window.IQ exposes getState(), calculateQuote(), recalculate(), runQuote().
 -->
