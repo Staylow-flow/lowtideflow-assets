@@ -598,19 +598,23 @@ const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1 * 1.25;
 const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1 * 1.25;
 const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
 
-/** Mobile ≤991 — rock/nebula WAY HIGH behind H1 (Three.js +Y = up) */
+/** Mobile ≤991 — rock slightly under H1; nebula TOP flush under 52px nav */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  gasCenterY:       0.20,  /* UV: lower value = higher on screen under nav/H1 */
+  /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen (prior 0.20 kept gas LOW). */
+  gasCenterY:       0.88,  /* top of plume sits under nav bar */
   gasStretchX:      0.12,
-  gasStretchY:      0.78,
-  gasReach:         0.18,
-  gasInner:         0.13,
+  gasStretchY:      0.70,
+  gasReach:         0.16,
+  gasInner:         0.12,
   widthTighten:     2.45,
   purpleFarMult:    0.9,
   streakReachMult:  0.7,
-  tentacleExtend:   0.58,
+  tentacleExtend:   0.55,
   purpleReachBoost: 0.55,
   flareReachMult:   0.9,
+  topYFactor:       0.55,  /* less upward bleed past nav */
+  topFadeStart:     0.92,
+  topFadeEnd:       0.99,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
@@ -618,9 +622,9 @@ const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
 /**
  * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx: 100).
- * Prior mobile values were negative — that pushed the rock DOWN.
+ * Was 280 (too high) → drop 75px → 205.
  */
-const MOBILE_ROCK_LIFT_PX = 280;
+const MOBILE_ROCK_LIFT_PX = 205;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;

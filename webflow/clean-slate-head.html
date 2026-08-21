@@ -348,14 +348,15 @@
       overflow: hidden;
     }
 
-    /* Safari-safe full hero; orange shirt sits flush to bottom */
+    /* Stable hero height — 100dvh jumps with Safari chrome and makes the
+       absolute bottom-bar look like it scrolls separately from the section. */
     .ltf-hero {
       height: 100vh !important;
       min-height: 100vh !important;
       max-height: 100vh !important;
-      height: 100dvh !important;
-      min-height: 100dvh !important;
-      max-height: 100dvh !important;
+      height: 100svh !important;
+      min-height: 100svh !important;
+      max-height: 100svh !important;
     }
 
     .ltf-hero > .ltf-site-cage,
@@ -365,9 +366,19 @@
       max-height: 100% !important;
     }
 
+    /* Lock canvas + bottom bar to section scroll (never fixed / never transform) */
+    .ltf-hero .hero-canvas-wrapper,
+    .ltf-hero #canvas3d {
+      position: absolute !important;
+      inset: 0 !important;
+      transform: none !important;
+      will-change: auto !important;
+    }
+
     /* Kill desktop 2-col combo that was cascading onto mobile */
     .ltf-hero-bottom-bar,
     .ltf-hero-bottom-bar.ltf-split-2 {
+      position: absolute !important;
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) !important;
       grid-template-rows: auto !important;
@@ -380,6 +391,8 @@
       max-width: none !important;
       min-width: 0 !important;
       transform: none !important;
+      translate: none !important;
+      will-change: auto !important;
       text-align: center !important;
     }
 
@@ -449,8 +462,9 @@
     }
 
     .ltf-hero-figure {
-      bottom: -110px !important;
+      bottom: 0 !important;
       right: 0 !important;
+      width: min(100vw, 525px) !important;
     }
 
     .ltf-hero-headline {
@@ -461,14 +475,15 @@
       max-width: 100% !important;
     }
 
+    /* Perfect size −5% so 25px pad keeps “WORLD” on two lines */
     .ltf-hero .ltf-main-header {
-      font-size: clamp(3.24rem, 15vw, 4.2rem) !important;
+      font-size: clamp(3.078rem, 14.25vw, 3.99rem) !important;
       max-width: 100% !important;
       padding-left: 0 !important;
       padding-right: 0 !important;
       box-sizing: border-box !important;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      overflow-wrap: normal;
+      word-break: normal;
     }
 
     .ltf-main-header {
