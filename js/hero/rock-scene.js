@@ -600,23 +600,26 @@ const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
 
 /** Mobile ≤991 — keep nebula/rock inside the phone frame (no continuous VW scaling) */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  gasStretchX:      0.28,
+  gasCenterY:       0.62,  /* track rock raised behind H1 */
+  gasStretchX:      0.22,  /* ~75px tighter vs prior phone bleed */
   gasStretchY:      0.95,
-  gasReach:         0.30,
+  gasReach:         0.28,
   gasInner:         0.16,
-  widthTighten:     1.55,
-  purpleFarMult:    1.05,
-  streakReachMult:  0.82,
-  tentacleExtend:   0.72,
-  purpleReachBoost: 0.70,
-  flareReachMult:   1.05,
+  widthTighten:     1.85,
+  purpleFarMult:    1.0,
+  streakReachMult:  0.78,
+  tentacleExtend:   0.68,
+  purpleReachBoost: 0.65,
+  flareReachMult:   1.0,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
-/** Higher Z = smaller rock/nebula in frame (phone was overflowing) */
-const MOBILE_CAMERA_Z     = 42;
-/** Extra mesh shrink on phone after ROCK_SCALE_BASE */
-const MOBILE_ROCK_SCALE_MULT = 0.58;
+/** Slightly closer than prior pass so +25% rock still reads larger */
+const MOBILE_CAMERA_Z     = 38;
+/** Prior 0.58 × 1.25 ≈ larger boulder on phone */
+const MOBILE_ROCK_SCALE_MULT = 0.725;
+/** Lower lift = rock sits higher (flush behind H1); was 50, −60px → −10 */
+const MOBILE_ROCK_LIFT_PX = -10;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
@@ -1023,7 +1026,7 @@ class RockScene {
     if (this.camera) {
       this.camera.position.z = mobileCameraZ(vw);
     }
-    this.rockLiftPx = mobile ? 50 : GAS_LOCKED_BOUNDS.rockLiftPx;
+    this.rockLiftPx = mobile ? MOBILE_ROCK_LIFT_PX : GAS_LOCKED_BOUNDS.rockLiftPx;
     this._applyRockLift();
   }
 

@@ -348,6 +348,33 @@
       overflow: hidden;
     }
 
+    /* Safari: 100vh overshoots the visual viewport — prefer dvh when available */
+    .ltf-hero {
+      height: 95vh !important;
+      min-height: 95vh !important;
+      max-height: 95vh !important;
+      height: 95dvh !important;
+      min-height: 95dvh !important;
+      max-height: 95dvh !important;
+    }
+
+    .ltf-hero > .ltf-site-cage,
+    .ltf-hero .hero-canvas-wrapper,
+    .ltf-hero #canvas3d {
+      height: 100% !important;
+      max-height: 100% !important;
+    }
+
+    /* Hero body: full-width stack; screen inset owned by bottom-bar 25px */
+    .ltf-hero-bottom-bar .is-hero-copy,
+    .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy.is-hero-copy {
+      width: 100% !important;
+      max-width: none !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      box-sizing: border-box !important;
+    }
+
     .ltf-hero-headline {
       padding-left: 5% !important;
       padding-right: 5% !important;
