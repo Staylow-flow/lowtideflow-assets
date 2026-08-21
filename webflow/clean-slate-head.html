@@ -372,9 +372,9 @@
        (that resets all sides and collapses the wrapper to 0 height). */
     .ltf-hero .hero-canvas-wrapper {
       position: absolute !important;
-      /* Nav is 52px; mid-glass = 26px. Hero has margin-top:-52px so
-         top:26px lands at the nav midpoint through the frosted bar. */
-      inset: 26px 0 0 0 !important;
+      /* Nav is 52px; mid-glass = 26px. Up another 5px → 16px so nebula
+         shows through frosted nav glass. Hero has margin-top:-52px. */
+      inset: 16px 0 0 0 !important;
       width: 100% !important;
       height: auto !important;
       max-height: none !important;
@@ -401,7 +401,7 @@
       gap: 18px !important;
       left: 25px !important;
       right: 25px !important;
-      bottom: 88px !important; /* +10px up from 78 */
+      bottom: 78px !important; /* was 103; whole section down 25px */
       width: auto !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -455,7 +455,7 @@
       margin-right: auto !important;
       margin-top: 0 !important;
       position: relative !important;
-      top: 25px !important; /* +20px down from 5 */
+      top: 15px !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
@@ -1140,9 +1140,9 @@
     }
 
     .ltf-hero .hero-canvas-wrapper {
-      /* Nav is 52px; mid-glass = 26px. Hero has margin-top:-52px so
-         top:26px lands at the nav midpoint through the frosted bar. */
-      inset: 26px 0 0 0 !important;
+      /* Nav is 52px; mid-glass = 26px. Up another 5px → 16px so nebula
+         shows through frosted nav glass. Hero has margin-top:-52px. */
+      inset: 16px 0 0 0 !important;
       height: auto !important;
       max-height: none !important;
     }
@@ -1156,7 +1156,7 @@
     /* Late-cascade CTA nudge — must win over earlier margin rules */
     .ltf-hero .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
       position: relative !important;
-      top: 25px !important;
+      top: 15px !important;
       margin-top: 0 !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))

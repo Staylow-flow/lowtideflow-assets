@@ -96,7 +96,14 @@
      │        ├─ Div Block      class: iq-apparel-label-spacer  (empty, same width as label col)
      │        └─ Div Block      class: iq-style-grid  ID: iq-style-row-2
      │             Duplicate 8 options, name="style-row-2"
-
+     │
+     │  └─ Div Block            class: iq-apparel-row iq-artwork-row  ID: iq-artwork-row
+     │       NATIVE ONLY — same grid as Apparel Style (168px | 1fr)
+     │       AFTER split-row-wrapper (pushed down when 50/50 opens)
+     │     ├─ iq-apparel-label-box → "Artwork Files" + spacer fill
+     │     └─ iq-artwork-panel → upload drop zone + info button
+     │       (FormFileUploadWrapper lives in iq-order-form; JS wires browse/drop)
+     │
      └─ Div Block              class: iq-receipt
           Display: Grid, Columns: 220px | 1fr, Gap: 40px, Align: End
         ├─ Div Block            class: iq-receipt-left  (Flex column, gap 18px)
@@ -118,8 +125,36 @@
                   Font: 64px / 700, Text-align: Center, Width: 100%, Max-width: 520px
                   Text: "$2,389.58"
 
+     ├─ Section                class: iq-order-section  ID: iq-order-section
+     │    AFTER iq-receipt — NATIVE Webflow Form (not HtmlEmbed / WHTML)
+     │  ├─ Heading H2          class: iq-order-heading
+     │  ├─ Paragraph           class: iq-order-lead
+     │  └─ Form                ID: iq-order-form
+     │       FormBlockLabel + FormTextInput (contact 2×2 via grid on form)
+     │       FormTextarea (project notes)
+     │       FormFileUploadWrapper ID: iq-form-artwork-file (hidden; wired to artwork row)
+     │       FormButton ID: iq-form-submit + combo ltf-btn-primary is-hero-cta
+     │
+     └─ Section                class: iq-breakdown  ID: iq-pricing-breakdown
+          Bottom of iq-container — 3× iq-breakdown-col (native Div Blocks)
+
+  PAGE FOOTER also injects instant-quote-artwork-modal.html (or paste once in page embed)
+
   ─────────────────────────────────────────────────────────────────────────
-  STYLE OPTIONS (build 8× in row 1, duplicate for row 2)
+  DO NOT USE WHTML / HtmlEmbed FOR LAYOUT (2026-07-17 correction)
+  ─────────────────────────────────────────────────────────────────────────
+  Build artwork row, order form, breakdown as native Webflow elements.
+  See webflow/NATIVE-REBUILD-QUOTE-DOWN.md
+
+  Footer-only OK:
+  webflow/instant-quote-artwork-modal.html    — Pay-to-play guidelines modal
+  Slider HtmlEmbeds (3)                       — range inputs only
+
+  Footer scripts (order):
+  1. instant-quote-pricing-data.js
+  2. instant-quote-pricing.js
+  3. instant-quote-form.js
+  4. instant-quote-ui.js
   ─────────────────────────────────────────────────────────────────────────
   class: iq-style-option  →  Flex, Align: Center, Gap: 10px, Min-height: 44px
   class: iq-check + class: iq-style-option-label

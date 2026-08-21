@@ -1,18 +1,20 @@
 <!--
-  Instant Quote — Page Footer (UI bridge only, no calc yet)
+  Instant Quote — Page Footer scripts
   /instant-quote → Page Settings → Custom Code → Before </body>
 
-  PREFERRED: Register + apply via Webflow Scripts API (Site Settings → Custom Code)
-  1. register_inline_script from js/instant-quote-ui.js (source hosted by Webflow CDN)
-  2. add_page_script → script_id: instantquoteui, location: footer, version: 1.0.0
+  Load in this order (Git source of truth):
 
-  FALLBACK (if add_page_script returns 404 on this page): paste ONE of these:
+  1. js/instant-quote-pricing-data.js   — rate tables (edit when prices change)
+  2. js/instant-quote-pricing.js        — calculateQuote + DOM apply
+  3. js/instant-quote-form.js           — order form sync, modal, submit stub
+  4. js/instant-quote-ui.js             — sliders, toggles, split animation
 
-  Option A — Webflow-hosted registered script (recommended):
-  <script src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751%2F689e5ba67671442434f3ca35%2F6a59f93495b38ce02534146c%2Finstantquoteui-1.0.0.js" defer></script>
+  Webflow options:
+  A) Register 3 inline/hosted scripts via Scripts API (recommended for headless path)
+  B) Paste minified bundles into freeform footer (dev / small payloads only)
+  C) Hosted on CDN from repo deploy pipeline (future)
 
-  Option B — Inline (dev only, sync from js/instant-quote-ui.js):
-  <script>/* paste minified instant-quote-ui.js */</script>
+  Do NOT reference /js/*.js paths directly on publish — use Webflow-registered scripts or inline.
 
-  Do NOT use /js/instant-quote-ui.js — that path is not served on the Webflow publish domain.
+  window.IQ exposes getState(), calculateQuote(), recalculate() for headless routing later.
 -->
