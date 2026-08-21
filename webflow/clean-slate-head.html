@@ -348,14 +348,14 @@
       overflow: hidden;
     }
 
-    /* Safari: 100vh overshoots the visual viewport — prefer dvh when available */
+    /* Safari-safe full hero; orange shirt sits flush to bottom */
     .ltf-hero {
-      height: 95vh !important;
-      min-height: 95vh !important;
-      max-height: 95vh !important;
-      height: 95dvh !important;
-      min-height: 95dvh !important;
-      max-height: 95dvh !important;
+      height: 100vh !important;
+      min-height: 100vh !important;
+      max-height: 100vh !important;
+      height: 100dvh !important;
+      min-height: 100dvh !important;
+      max-height: 100dvh !important;
     }
 
     .ltf-hero > .ltf-site-cage,
@@ -365,7 +365,7 @@
       max-height: 100% !important;
     }
 
-    /* Hero body: full-width stack; screen inset owned by bottom-bar 25px */
+    /* Hero body stack: full width inset; bar center, body left, CTA center */
     .ltf-hero-bottom-bar .is-hero-copy,
     .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy.is-hero-copy {
       width: 100% !important;
@@ -373,6 +373,33 @@
       padding-left: 0 !important;
       padding-right: 0 !important;
       box-sizing: border-box !important;
+      align-items: center !important;
+    }
+
+    .ltf-hero-bottom-bar .ltf-body-text {
+      width: 100% !important;
+      max-width: none !important;
+      text-align: left !important;
+      align-self: stretch !important;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+      align-self: center !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    .ltf-hero-bottom-bar .is-hero-logo-mobile,
+    .ltf-hero-bottom-bar img.is-hero-logo-mobile {
+      display: block !important;
+      height: 72px !important;
+      width: auto !important;
+      align-self: flex-start !important;
+    }
+
+    .ltf-hero-figure {
+      bottom: 0 !important;
+      right: 0 !important;
     }
 
     .ltf-hero-headline {
