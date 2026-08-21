@@ -348,15 +348,16 @@
       overflow: hidden;
     }
 
-    /* Stable hero height — 100dvh jumps with Safari chrome and makes the
-       absolute bottom-bar look like it scrolls separately from the section. */
+    /* Nav is fixed 52px; hero pulls up with margin-top:-52px. Plain 100svh
+       therefore ends ~52px ABOVE the screen bottom (shirt “floating”).
+       Add the nav height back so the section bottom = viewport bottom.
+       Prefer svh (stable) over dvh (Safari chrome resize / bottom-bar jump). */
     .ltf-hero {
-      height: 100vh !important;
-      min-height: 100vh !important;
-      max-height: 100vh !important;
-      height: 100svh !important;
-      min-height: 100svh !important;
-      max-height: 100svh !important;
+      height: calc(100vh + 52px) !important;
+      min-height: calc(100vh + 52px) !important;
+      max-height: none !important;
+      height: calc(100svh + 52px) !important;
+      min-height: calc(100svh + 52px) !important;
     }
 
     .ltf-hero > .ltf-site-cage,
@@ -418,8 +419,9 @@
       max-width: none !important;
       text-align: left !important;
       align-self: stretch !important;
-      /* Soft glow behind glyphs only — no plate / no bounding box */
+      font-size: 18px !important; /* ~21px −15% */
       padding: 0 !important;
+      padding-right: 25% !important;
       border: 0 !important;
       border-radius: 0 !important;
       background: transparent !important;
@@ -464,10 +466,11 @@
     .ltf-hero-figure {
       bottom: 0 !important;
       right: 0 !important;
-      width: min(100vw, 525px) !important;
+      width: min(92vw, 420px) !important; /* back to pre-+25% size */
     }
 
     .ltf-hero-headline {
+      top: calc(12% - 20px) !important;
       padding-left: 25px !important;
       padding-right: 25px !important;
       box-sizing: border-box !important;
