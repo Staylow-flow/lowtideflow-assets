@@ -77,6 +77,10 @@ const NEBULA_FRAG = /* glsl */`
   uniform float flareSpeed;       /* animation rate for live flares */
   uniform float purpleFlareStrength;
   uniform float blueSpikeStrength;
+  /* Desktop = 1. Mobile lowers these to kill the dark oval “shadow” under
+     the rock WITHOUT rewriting softCore (that caused the oval-mask regression). */
+  uniform float haloGain;
+  uniform float navyGain;
   uniform vec2  mouseXY;
   varying vec2 vUv;
 
@@ -142,10 +146,11 @@ const NEBULA_FRAG = /* glsl */`
     float edge = 1.0 - smoothstep(reachEff * 0.35, reachEff * 0.96, dist);
     float body = pow(max(core * edge, 0.0), 0.48);
 
-    /* Outer halo — soft glow rim past rock silhouette (desktop look) */
+    /* Outer halo — soft glow rim past rock silhouette (desktop look).
+       haloGain: 1 on desktop; ~0 on mobile so the dark oval doesn’t sit on gas. */
     float halo = 1.0 - smoothstep(reachEff * 0.42, reachEff * 1.10, dist);
     halo = pow(max(halo, 0.0), 1.28) * 0.62;
-    body = max(body, halo);
+    body = max(body, halo * haloGain);
 
     float above  = max(p.y, 0.0);
     float topCap = 1.0 - smoothstep(reach * 0.62, reach * 0.92, above);
@@ -384,7 +389,7 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLEM, purpleFl * densB * 0.45);
     col = mix(col, TEALL,   blueSp * (densA * 0.48 + densC * 0.42));
     col = mix(col, TEAL,    blueSp * densA * 0.32);
-    col = mix(col, NAVY,    blueSp * 0.16 + purpleFl * densB * 0.14);
+    col = mix(col, NAVY,    (blueSp * 0.16 + purpleFl * densB * 0.14) * navyGain);
 
     /* Outward streaks — follow live flare activity, not static rim */
     float streakBase = max(core * 0.38, max(purpleFl * 0.72, blueSp * 0.55));
@@ -413,7 +418,7 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLE,  streaks * 0.10 + purpleOut * 0.42);
     col = mix(col, TEALL,   streaks * 0.14 + blueSp * densC * 0.22);
     col = mix(col, PURPLEM, wisp2 * 0.08 + purpleOut * 0.30);
-    col = mix(col, NAVY,    purpleOut * 0.12 + blueSp * 0.10);
+    col = mix(col, NAVY,    (purpleOut * 0.12 + blueSp * 0.10) * navyGain);
 
     /* Nav clearance — only fades near very top of viewport */
     float topFade = 1.0 - smoothstep(topFadeStart, topFadeEnd, vUv.y);
@@ -566,9 +571,10 @@ const GAS_FOLLOW_DELAY_MS  = 300;              // gas lags rock by 0.3 s
 const GAS_COAST_TAU_MS     = 3000;             // 2–4 s ease-out coast (midpoint)
 const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
-const SCROLL_IMPULSE_GAIN  = 0.54;               // ×4 from 0.135 (+300%)
-const SCROLL_VEL_SCALE     = 0.022;              // ×4 from 0.0055 (+300%)
+const SCROLL_IMPULSE_GAIN  = 0.27;               // half of prior 0.54 (scroll −50%)
+const SCROLL_VEL_SCALE     = 0.011;              // half of prior 0.022
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
+const DESKTOP_ROCK_SCALE_MULT = 1.10;            /* +10% desktop rock size */
 /* Opening pose: wide back of the mesh, sitting behind the hero copy.
    The extra quarter-turn is PITCH (X) — same axis the idle script already
    rolls toward the camera — not yaw. Yaw +90° showed the narrow side. */
@@ -632,6 +638,9 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
   topYFactor:       0.55,  /* less upward bleed past nav */
   topFadeStart:     0.92,
   topFadeEnd:       0.99,
+  /* Kill mobile dark oval under rock — desktop keeps full halo/navy (1.0) */
+  haloGain:         0.0,
+  navyGain:         0.28,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
@@ -666,7 +675,7 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   gasInner:         0.26,   /* soft full-body halo, not tight core blob */
   edgeWarp:         0.20,
   alphaScale:       1.0,
-  rockLiftPx:       100,
+  rockLiftPx:       115,    /* was 100; +15px up on desktop */
   widthTighten:     0.96,   /* stop squeezing width — let glow spread */
   topYFactor:       0.94,   /* extend above rock for nav clearance */
   topFadeStart:     0.80,
@@ -679,6 +688,8 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   flareSpeed:       1.40,   /* faster flare cycles */
   purpleFlareStrength: 1.0,
   blueSpikeStrength:   0.82,
+  haloGain:         1.0,    /* desktop softCore outer halo ON */
+  navyGain:         1.0,
 });
 
 const BEHIND_FG_VISIBLE    = true;  // override with ?behind=0
@@ -1036,6 +1047,8 @@ class RockScene {
     uni.flareSpeed.value           = b.flareSpeed;
     uni.purpleFlareStrength.value  = b.purpleFlareStrength;
     uni.blueSpikeStrength.value    = b.blueSpikeStrength;
+    if (uni.haloGain) uni.haloGain.value = b.haloGain != null ? b.haloGain : 1.0;
+    if (uni.navyGain) uni.navyGain.value = b.navyGain != null ? b.navyGain : 1.0;
     if (uni.tentacleExtend) uni.tentacleExtend.value = b.tentacleExtend;
   }
 
@@ -1085,6 +1098,8 @@ class RockScene {
         flareSpeed:            { value: b.flareSpeed },
         purpleFlareStrength:   { value: b.purpleFlareStrength },
         blueSpikeStrength:   { value: b.blueSpikeStrength },
+        haloGain:            { value: b.haloGain },
+        navyGain:            { value: b.navyGain },
         mouseXY:             { value: new THREE.Vector2(0, 0) },
       };
     }
@@ -1211,7 +1226,7 @@ class RockScene {
     const longestDim = Math.max(size.x, size.y, size.z, 0.001);
     const mobile = isMobileLayout(typeof window !== 'undefined' ? window.innerWidth : 1200);
     const scale =
-      (ROCK_SCALE_BASE / longestDim) * (mobile ? MOBILE_ROCK_SCALE_MULT : 1);
+      (ROCK_SCALE_BASE / longestDim) * (mobile ? MOBILE_ROCK_SCALE_MULT : DESKTOP_ROCK_SCALE_MULT);
 
     /* Orient before centering. position is applied after rotation in the
        local matrix, so a centering offset measured on the unrotated mesh
