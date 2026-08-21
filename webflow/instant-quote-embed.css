@@ -524,6 +524,9 @@
   pointer-events: auto;
   visibility: visible;
   overflow: visible;
+  /* 40px air between first apparel options set and the 50/50 second set */
+  padding-top: 40px;
+  box-sizing: border-box;
 }
 
 #iq-style-row-2 {
@@ -686,7 +689,9 @@
   background: rgba(42, 170, 184, 0.08);
 }
 
-/* ── Order form — contact 2×2 (label above input) + notes above submit ─ */
+/* ── Order form — contact 2×2 (label above input) + notes above submit ─
+   ID / :has(+ #id) placement — immune to JS-injected siblings (typo hint,
+   honeypot, orbit wrap) that break nth-child maps. */
 
 #iq-order-form {
   display: grid;
@@ -694,54 +699,125 @@
   column-gap: 24px;
   row-gap: 8px;
   width: 100%;
+  align-items: start;
 }
 
-/* Native Webflow form: label, input, label, input… as siblings */
-#iq-order-form > *:nth-child(1) { grid-column: 1; grid-row: 1; } /* Client Name label */
-#iq-order-form > *:nth-child(2) { grid-column: 1; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form > *:nth-child(3) { grid-column: 2; grid-row: 1; } /* Company label */
-#iq-order-form > *:nth-child(4) { grid-column: 2; grid-row: 2; margin-bottom: 12px; }
-#iq-order-form > *:nth-child(5) { grid-column: 1; grid-row: 3; } /* Email label */
-#iq-order-form > *:nth-child(6) { grid-column: 1; grid-row: 4; margin-bottom: 12px; }
-#iq-order-form > *:nth-child(7) { grid-column: 2; grid-row: 3; } /* Phone label */
-#iq-order-form > *:nth-child(8) { grid-column: 2; grid-row: 4; margin-bottom: 12px; }
+/* Explicit contact grid rhythm (desktop ≥992 via base; mobile overrides below) */
+#iq-order-form > label:has(+ #iq-form-full-name),
+#iq-order-form > .w-form-label:has(+ #iq-form-full-name),
+#iq-order-form > .iq-field-label--name {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#iq-form-full-name {
+  grid-column: 1;
+  grid-row: 2;
+  margin-bottom: 12px;
+  width: 100% !important;
+}
+
+#iq-order-form > label:has(+ #iq-form-company),
+#iq-order-form > .w-form-label:has(+ #iq-form-company),
+#iq-order-form > .iq-field-label--company {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#iq-form-company {
+  grid-column: 2;
+  grid-row: 2;
+  margin-bottom: 12px;
+  width: 100% !important;
+}
+
+#iq-order-form > label:has(+ #iq-form-email),
+#iq-order-form > .w-form-label:has(+ #iq-form-email),
+#iq-order-form > .iq-field-label--email {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+#iq-form-email {
+  grid-column: 1;
+  grid-row: 4;
+  margin-bottom: 12px;
+  width: 100% !important;
+}
+
+#iq-order-form > label:has(+ #iq-form-phone),
+#iq-order-form > .w-form-label:has(+ #iq-form-phone),
+#iq-order-form > .iq-field-label--phone {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+  display: block !important;
+  width: 100% !important;
+  align-self: start;
+  white-space: normal !important;
+}
+
+#iq-form-phone {
+  grid-column: 2 !important;
+  grid-row: 4 !important;
+  margin-bottom: 12px;
+  width: 100% !important;
+  max-width: none !important;
+  display: block !important;
+  justify-self: stretch;
+  box-sizing: border-box;
+}
+
+#iq-email-typo-hint {
+  grid-column: 1;
+  grid-row: 5;
+  justify-self: start;
+  align-self: start;
+  margin: -4px 0 8px;
+}
+
+#iq-email-typo-hint[hidden] {
+  display: none !important;
+}
 
 #iq-order-form > .iq-form-notes-label,
-#iq-order-form.iq-form-layout-ready > .iq-form-notes-label {
+#iq-order-form.iq-form-layout-ready > .iq-form-notes-label,
+#iq-order-form > label:has(+ #iq-form-notes),
+#iq-order-form > .w-form-label:has(+ #iq-form-notes) {
   grid-column: 1 / -1;
-  grid-row: 5;
+  grid-row: 6;
   margin-top: 8px;
 }
 
 #iq-order-form > #iq-form-notes,
 #iq-order-form.iq-form-layout-ready > #iq-form-notes {
   grid-column: 1 / -1;
-  grid-row: 6;
+  grid-row: 7;
   margin-bottom: 16px;
   width: 100%;
 }
 
 /* Legacy: if an old phone-row wrap is still in DOM, stack like other fields */
 .iq-form-phone-row {
-  display: flex !important;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  width: 100%;
+  display: contents; /* unwrap visually into the parent 2×2 grid */
 }
 
 .iq-form-phone-row > label,
 .iq-form-phone-row > .w-form-label {
-  flex: 0 0 auto;
-  margin-bottom: 0 !important;
-  white-space: normal;
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 4px !important;
+  white-space: normal !important;
 }
 
 .iq-form-phone-row > input,
 .iq-form-phone-row > #iq-form-phone {
-  flex: 1 1 auto;
+  grid-column: 2 !important;
+  grid-row: 4 !important;
   width: 100% !important;
   min-width: 0;
+  display: block !important;
 }
 
 /* Hide legacy Webflow file upload (art upload lives above) */
@@ -753,10 +829,16 @@
 #iq-order-form > .iq-form-submit,
 #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
   grid-column: 1 / -1;
-  grid-row: 7;
+  grid-row: 8;
   margin-top: 16px;
   display: flex !important;
   width: 100%;
+}
+
+#iq-order-form > #suite-number,
+#iq-order-form > #iq-form-artwork-file-legacy {
+  grid-column: 1 / -1;
+  grid-row: 9;
 }
 
 #iq-order-form .w-form-label,
@@ -1061,7 +1143,22 @@
   #iq-order-form > *:nth-child(n),
   #iq-order-form.iq-form-layout-ready > .iq-form-phone-row,
   #iq-order-form > #iq-form-submit,
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit),
+  #iq-order-form > label:has(+ #iq-form-full-name),
+  #iq-order-form > label:has(+ #iq-form-company),
+  #iq-order-form > label:has(+ #iq-form-email),
+  #iq-order-form > label:has(+ #iq-form-phone),
+  #iq-order-form > .iq-field-label--name,
+  #iq-order-form > .iq-field-label--company,
+  #iq-order-form > .iq-field-label--email,
+  #iq-order-form > .iq-field-label--phone,
+  #iq-form-full-name,
+  #iq-form-company,
+  #iq-form-email,
+  #iq-form-phone,
+  #iq-email-typo-hint,
+  #iq-order-form > .iq-form-notes-label,
+  #iq-form-notes {
     grid-column: 1 / -1 !important;
     grid-row: auto !important;
     margin-bottom: 0;

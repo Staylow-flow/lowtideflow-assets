@@ -266,11 +266,31 @@
     return wrap;
   }
 
-  /** Match contact fields to label-above-input rows; rename Client Name; notes above submit. */
+  function findFieldLabel(input) {
+    if (!input) return null;
+    var prev = input.previousElementSibling;
+    while (prev) {
+      if (prev.id === 'iq-email-typo-hint' || prev.id === 'suite-number') {
+        prev = prev.previousElementSibling;
+        continue;
+      }
+      if (
+        prev.tagName === 'LABEL' ||
+        (prev.classList &&
+          (prev.classList.contains('w-form-label') || prev.classList.contains('iq-form-label')))
+      ) {
+        return prev;
+      }
+      break;
+    }
+    return null;
+  }
+
+  /** Match contact fields to label-above-input 2×2; never wrap phone beside its label. */
   function fixFormFieldLayout(form) {
     if (!form || form.classList.contains('iq-form-layout-ready')) return;
 
-    /* Undo any prior horizontal phone-row wrap so Phone matches Full Name / Company. */
+    /* Undo any prior horizontal phone-row wrap so Phone matches Client / Company / Email. */
     var stalePhoneRow = form.querySelector('.iq-form-phone-row');
     if (stalePhoneRow) {
       while (stalePhoneRow.firstChild) {
@@ -279,10 +299,32 @@
       stalePhoneRow.remove();
     }
 
+    var fieldMap = [
+      { id: 'iq-form-full-name', labelClass: 'iq-field-label--name' },
+      { id: 'iq-form-company', labelClass: 'iq-field-label--company' },
+      { id: 'iq-form-email', labelClass: 'iq-field-label--email' },
+      { id: 'iq-form-phone', labelClass: 'iq-field-label--phone' }
+    ];
+    fieldMap.forEach(function (entry) {
+      var input = document.getElementById(entry.id);
+      if (!input) return;
+      input.style.display = 'block';
+      input.style.width = '100%';
+      input.style.maxWidth = 'none';
+      input.style.boxSizing = 'border-box';
+      var label = findFieldLabel(input);
+      if (label) {
+        label.classList.add(entry.labelClass);
+        label.style.display = 'block';
+        label.style.width = '100%';
+        label.style.whiteSpace = 'normal';
+      }
+    });
+
     var nameInput = document.getElementById('iq-form-full-name');
     if (nameInput) {
-      var nameLabel = nameInput.previousElementSibling;
-      if (nameLabel && nameLabel.tagName === 'LABEL') {
+      var nameLabel = findFieldLabel(nameInput);
+      if (nameLabel) {
         var raw = String(nameLabel.textContent || '');
         if (/Full\s*Name/i.test(raw)) {
           nameLabel.textContent = raw.replace(/Full\s*Name/i, 'Client Name');
@@ -300,8 +342,8 @@
     var notes = document.getElementById('iq-form-notes');
     var submit = document.getElementById('iq-form-submit');
     if (notes) {
-      var notesLabel = notes.previousElementSibling;
-      if (notesLabel && notesLabel.tagName === 'LABEL') {
+      var notesLabel = findFieldLabel(notes);
+      if (notesLabel) {
         notesLabel.classList.add('iq-form-notes-label');
       }
       if (submit) {
@@ -435,13 +477,15 @@
       hint.type = 'button';
       hint.id = 'iq-email-typo-hint';
       hint.hidden = true;
+      hint.setAttribute('aria-live', 'polite');
       hint.style.cssText =
-        'display:block;margin:6px 0 0;padding:0;border:0;background:transparent;color:#f87171;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;text-decoration:underline;';
+        'margin:0;padding:0;border:0;background:transparent;color:#f87171;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;text-decoration:underline;';
       email.insertAdjacentElement('afterend', hint);
     }
 
     function clearHint() {
       hint.hidden = true;
+      hint.style.display = 'none';
       hint.textContent = '';
       hint.onclick = null;
     }
@@ -453,6 +497,7 @@
         return;
       }
       hint.hidden = false;
+      hint.style.display = 'block';
       hint.textContent = 'Did you mean ' + suggestion + '? (Click to fix)';
       hint.onclick = function () {
         email.value = suggestion;
@@ -462,6 +507,7 @@
     });
 
     email.addEventListener('input', clearHint);
+    clearHint();
   }
 
   function setRequiredAttrs() {

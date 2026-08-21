@@ -271,11 +271,14 @@
       setText('iq-price-unit-2', formatMoney(result.unit2));
     }
 
-    if (options.skipTotalAnim) {
-      displayedTotal = result.total;
-      setText('iq-total-price', formatMoney(result.total));
-    } else {
-      animateTotalTo(result.total, !!options.fromZero);
+    /* Total stays static until Calculate — unit prices may still live-update. */
+    if (options.updateTotal) {
+      if (options.skipTotalAnim) {
+        displayedTotal = result.total;
+        setText('iq-total-price', formatMoney(result.total));
+      } else {
+        animateTotalTo(result.total, !!options.fromZero);
+      }
     }
 
     if (typeof global.IQ.syncQuoteForm === 'function') {
@@ -295,9 +298,9 @@
     return { state: state, result: result };
   }
 
-  /** Explicit "Calculate Production Run" — animate from $0 */
+  /** Explicit "Calculate Production Run" — animate total (from $0 on first calc). */
   function runQuote() {
-    return recalculate({ fromZero: true });
+    return recalculate({ fromZero: true, updateTotal: true });
   }
 
   global.IQ.getState = getState;
