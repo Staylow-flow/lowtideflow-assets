@@ -77,8 +77,9 @@ const NEBULA_FRAG = /* glsl */`
   uniform float flareSpeed;       /* animation rate for live flares */
   uniform float purpleFlareStrength;
   uniform float blueSpikeStrength;
-  /* Desktop = 1. Mobile tunes these to avoid dark oval “shadow” under the
-     rock WITHOUT zeroing density (haloGain 0 left a hole in the gas). */
+  /* Desktop = 1. Mobile must stay 1 too — zeroing haloGain left a hole;
+     crushing mobile gasReach/stretch made a navy oval under the rock.
+     Mobile inset is WIDTH-only via GAS_MOBILE_OVERRIDES stretch/tighten. */
   uniform float haloGain;
   uniform float navyGain;
   uniform float coreGain;
@@ -624,27 +625,30 @@ const IDLE_NOD_AMP2  = ROCK_MOTION_BASELINE.idleNodAmp2;
 const IDLE_PITCH_AMP = ROCK_MOTION_BASELINE.idlePitchAmp;
 const IDLE_PITCH_AMP2 = ROCK_MOTION_BASELINE.idlePitchAmp2;
 
-/** Mobile ≤991 — rock slightly under H1; nebula TOP flush under 52px nav */
+/** Mobile ≤991 — keep desktop softCore/halo/navy look; only inset WIDTH
+ *  so plume edges sit inside the phone (no haloGain=0 hole, no navy mask). */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen (prior 0.20 kept gas LOW). */
+  /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen. */
   gasCenterY:       0.88,  /* top of plume sits under nav bar */
-  gasStretchX:      0.12,
-  gasStretchY:      0.70,
-  gasReach:         0.16,
-  gasInner:         0.12,
-  widthTighten:     2.45,
-  purpleFarMult:    0.9,
-  streakReachMult:  0.7,
-  tentacleExtend:   0.55,
-  purpleReachBoost: 0.55,
-  flareReachMult:   0.9,
-  topYFactor:       0.55,  /* less upward bleed past nav */
+  /* SoftCore stays expansive/colorful like desktop — mild horizontal inset */
+  gasStretchX:      0.58,
+  gasStretchY:      1.05,
+  gasReach:         0.48,
+  gasInner:         0.20,
+  widthTighten:     1.28,  /* gentle side squeeze for phone bezel */
+  /* Outer streaks/tendrils — these were bleeding past the screen edge */
+  purpleFarMult:    0.82,
+  streakReachMult:  0.78,
+  tentacleExtend:   0.72,
+  purpleReachBoost: 0.72,
+  flareReachMult:   0.88,
+  topYFactor:       0.62,
   topFadeStart:     0.92,
   topFadeEnd:       0.99,
-  /* Partial halo + stronger colored core — seals gas hole without dark oval */
-  haloGain:         0.38,
-  navyGain:         0.16,
-  coreGain:         1.28,
+  /* Explicit: same softCore/navy as desktop — do not zero these */
+  haloGain:         1.0,
+  navyGain:         1.0,
+  coreGain:         1.0,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
