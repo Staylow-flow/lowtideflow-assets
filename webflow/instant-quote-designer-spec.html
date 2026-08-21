@@ -40,13 +40,13 @@
      │       Display: Flex, Direction: Horizontal
      │       Border: 1px dashed #FFF, Radius: 10px, Padding: 4px
      │       Max-width: 420px (or width auto)
-     │     ├─ Button/Link      class: iq-toggle-btn
-     │     │    Text: "High-Quality"
+     │     ├─ Button/Link      class: iq-toggle-btn  +  combo: is-active
+     │     │    Text: "High-Quality"  ← blank / first-load default (leftmost)
      │     │    Flex: 1, Padding: 12px 20px, Radius: 8px
-     │     │    BG: transparent, Text: #FFF, Font: 19px / 700
-     │     └─ Button/Link      class: iq-toggle-btn  +  combo: is-active
-     │          Text: "Premium-Quality"  ← default selected
-     │          BG: #FFF, Text: #00001c
+     │     │    BG: #FFF, Text: #00001c
+     │     └─ Button/Link      class: iq-toggle-btn
+     │          Text: "Premium-Quality"
+     │          BG: transparent, Text: #FFF
      │          (Create combo class is-active on Designer for active state)
 
      ├─ Div Block              class: iq-sliders-block
@@ -70,7 +70,7 @@
      │            Border: 1px solid #FFF, Radius: 6px
      │            Padding: 14px 10px, Min-height: 48px, Align: Center
      │            Text Block ID: iq-val-ink-colors | iq-val-print-locations | iq-val-final-quantity
-     │            Default text: 4 | 4 | 500
+     │            Default text: 1 | 1 | 0  (blank-state mins; JS syncs on load)
 
      ├─ Div Block              class: iq-apparel-section
      │    Width: 100%

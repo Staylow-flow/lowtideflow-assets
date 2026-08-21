@@ -64,13 +64,13 @@
   }
 
   function getState() {
-    var inkColors = readSliderValue('iq-slider-ink-colors', 4);
+    var inkColors = readSliderValue('iq-slider-ink-colors', 1);
     return {
       quality: readQuality(),
       inkColors: inkColors,
       fullColor: isFullColorInk(inkColors),
-      printLocations: Math.min(5, Math.max(1, readSliderValue('iq-slider-print-locations', 4))),
-      quantity: readSliderValue('iq-slider-final-quantity', 500),
+      printLocations: Math.min(5, Math.max(1, readSliderValue('iq-slider-print-locations', 1))),
+      quantity: readSliderValue('iq-slider-final-quantity', 0),
       split: readSplit(),
       customArt: readCustomArt(),
       styleRow1: readSelectedStyle(1),
@@ -126,7 +126,8 @@
 
     var printRunCogs = loc1Cost + otherLocsCost;
     var totalSetupCost = totalScreens * data.screenSetupFeePerScreen;
-    var screenFeePerUnit = totalSetupCost / state.quantity;
+    var qty = state.quantity > 0 ? state.quantity : 0;
+    var screenFeePerUnit = qty > 0 ? totalSetupCost / qty : 0;
 
     return {
       bracket: bracket,
@@ -152,6 +153,19 @@
   function calculateQuote(state, data) {
     var qty1 = state.split ? state.quantity / 2 : state.quantity;
     var qty2 = state.split ? state.quantity / 2 : 0;
+
+    /* Blank / qty 0: show $0 until a real production run size is chosen */
+    if (!state.quantity || state.quantity <= 0) {
+      return {
+        unit1: 0,
+        unit2: state.split ? 0 : null,
+        total: 0,
+        qty1: 0,
+        qty2: 0,
+        economics: null
+      };
+    }
+
     var economics = sharedPrintEconomics(state, data);
 
     var rawUnit1 = finalUnitPrice(state.styleRow1, state.quality, economics, data);

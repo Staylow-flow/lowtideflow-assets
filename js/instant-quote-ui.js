@@ -137,8 +137,64 @@
     }
   }
 
+  /**
+   * Upgrade live Designer embed: qty scale 0–500 (was 50–500).
+   * Adds one tick for the new 0 option → 11 marks (symmetry).
+   */
+  function upgradeQuantitySlider() {
+    var slider = document.getElementById('iq-slider-final-quantity');
+    if (!slider) return;
+
+    slider.min = '0';
+    slider.max = '500';
+    slider.step = '50';
+    slider.setAttribute('data-iq-step', '50');
+    slider.setAttribute('aria-valuemin', '0');
+    slider.setAttribute('aria-valuemax', '500');
+
+    var control = slider.closest('.iq-slider-control');
+    var ticks = control && control.querySelector('.iq-slider-ticks');
+    if (!ticks) return;
+
+    ticks.setAttribute('data-tick-count', '11');
+    var marks = ticks.querySelectorAll('.iq-slider-tick');
+    while (marks.length < 11) {
+      var tick = document.createElement('span');
+      tick.className = 'iq-slider-tick';
+      ticks.appendChild(tick);
+      marks = ticks.querySelectorAll('.iq-slider-tick');
+    }
+  }
+
+  /** Blank / first-paint: every left-side control at its minimum. */
+  function applyBlankMinimums() {
+    var qty = document.getElementById('iq-slider-final-quantity');
+    if (qty) {
+      qty.value = String(parseFloat(qty.min) || 0);
+    }
+
+    var ink = document.getElementById('iq-slider-ink-colors');
+    if (ink) {
+      ink.value = String(parseFloat(ink.min) || 1);
+    }
+
+    var locs = document.getElementById('iq-slider-print-locations');
+    if (locs) {
+      locs.value = String(parseFloat(locs.min) || 1);
+    }
+
+    var styleRadios = document.querySelectorAll('input[type="radio"][name="style-row-1"]');
+    if (styleRadios.length) {
+      styleRadios.forEach(function (radio, i) {
+        radio.checked = i === 0;
+      });
+    }
+  }
+
   function initSliders() {
     upgradePrintLocationsSlider();
+    upgradeQuantitySlider();
+    applyBlankMinimums();
     document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(initMagneticSlider);
   }
 
@@ -246,7 +302,8 @@
     ensureQualityThumb(track);
     track.classList.add('iq-toggle-draggable');
 
-    var active = track.querySelector('.iq-toggle-btn.is-active') || buttons[1];
+    /* Blank state: leftmost (High-Quality), not Designer Premium default */
+    var active = buttons[0];
     setQualityActive(track, active, false);
 
     var dragging = false;
