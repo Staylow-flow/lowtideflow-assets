@@ -598,11 +598,11 @@ const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1 * 1.25;
 const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1 * 1.25;
 const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
 
-/** Mobile ≤991 — rock/nebula flush under nav, still inset */
+/** Mobile ≤991 — rock/nebula WAY HIGH behind H1 (Three.js +Y = up) */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  gasCenterY:       0.24,  /* flush under nav / under H1 */
-  gasStretchX:      0.12,  /* way in — white-box concept in mockup */
-  gasStretchY:      0.82,
+  gasCenterY:       0.20,  /* UV: lower value = higher on screen under nav/H1 */
+  gasStretchX:      0.12,
+  gasStretchY:      0.78,
   gasReach:         0.18,
   gasInner:         0.13,
   widthTighten:     2.45,
@@ -616,8 +616,11 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
 const MOBILE_LAYOUT_MAX_W = 991;
 const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
-/** Lift rock flush under nav (negative = up in world space) */
-const MOBILE_ROCK_LIFT_PX = -260;
+/**
+ * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx: 100).
+ * Prior mobile values were negative — that pushed the rock DOWN.
+ */
+const MOBILE_ROCK_LIFT_PX = 280;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
@@ -707,9 +710,9 @@ function frontOpacity() {
   return Number.isFinite(n) ? clamp(n, 0, 1) : FRONT_FG_OPACITY;
 }
 
-function rockLiftWorld(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx) {
+function rockLiftWorld(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx, camZ = CAMERA_Z) {
   const fovRad   = (CAMERA_FOV * Math.PI) / 180;
-  const visibleH = 2 * CAMERA_Z * Math.tan(fovRad / 2);
+  const visibleH = 2 * camZ * Math.tan(fovRad / 2);
   return (px / viewportH) * visibleH;
 }
 
@@ -987,7 +990,8 @@ class RockScene {
 
   _applyRockLift() {
     if (this.rockGroup) {
-      this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx);
+      const camZ = this.camera ? this.camera.position.z : CAMERA_Z;
+      this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx, camZ);
     }
   }
 
