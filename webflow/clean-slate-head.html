@@ -372,7 +372,9 @@
        (that resets all sides and collapses the wrapper to 0 height). */
     .ltf-hero .hero-canvas-wrapper {
       position: absolute !important;
-      inset: 32px 0 0 0 !important; /* was 52; canvas up 20px */
+      /* Nav is 52px; mid-glass = 26px. Hero has margin-top:-52px so
+         top:26px lands at the nav midpoint through the frosted bar. */
+      inset: 26px 0 0 0 !important;
       width: 100% !important;
       height: auto !important;
       max-height: none !important;
@@ -1138,7 +1140,9 @@
     }
 
     .ltf-hero .hero-canvas-wrapper {
-      inset: 32px 0 0 0 !important; /* was 52; canvas up 20px */
+      /* Nav is 52px; mid-glass = 26px. Hero has margin-top:-52px so
+         top:26px lands at the nav midpoint through the frosted bar. */
+      inset: 26px 0 0 0 !important;
       height: auto !important;
       max-height: none !important;
     }
