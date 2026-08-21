@@ -140,9 +140,12 @@ const NEBULA_FRAG = /* glsl */`
 
     float core = 1.0 - smoothstep(inner * 0.72, reachEff * 0.50, dist);
     float edge = 1.0 - smoothstep(reachEff * 0.35, reachEff * 0.96, dist);
-    /* Soft plume only — the old outer halo painted a muddy dark oval
-       behind the rock (read as a “shadow” on top of the nebula). */
-    float body = pow(max(core * edge, 0.0), 0.58) * 0.82;
+    float body = pow(max(core * edge, 0.0), 0.48);
+
+    /* Outer halo — soft glow rim past rock silhouette (desktop look) */
+    float halo = 1.0 - smoothstep(reachEff * 0.42, reachEff * 1.10, dist);
+    halo = pow(max(halo, 0.0), 1.28) * 0.62;
+    body = max(body, halo);
 
     float above  = max(p.y, 0.0);
     float topCap = 1.0 - smoothstep(reach * 0.62, reach * 0.92, above);
@@ -381,8 +384,7 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLEM, purpleFl * densB * 0.45);
     col = mix(col, TEALL,   blueSp * (densA * 0.48 + densC * 0.42));
     col = mix(col, TEAL,    blueSp * densA * 0.32);
-    /* Keep navy accents thin — heavy NAVY under the rock reads as a shadow blob */
-    col = mix(col, NAVY,    blueSp * 0.08 + purpleFl * densB * 0.06);
+    col = mix(col, NAVY,    blueSp * 0.16 + purpleFl * densB * 0.14);
 
     /* Outward streaks — follow live flare activity, not static rim */
     float streakBase = max(core * 0.38, max(purpleFl * 0.72, blueSp * 0.55));
@@ -411,7 +413,7 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLE,  streaks * 0.10 + purpleOut * 0.42);
     col = mix(col, TEALL,   streaks * 0.14 + blueSp * densC * 0.22);
     col = mix(col, PURPLEM, wisp2 * 0.08 + purpleOut * 0.30);
-    col = mix(col, NAVY,    purpleOut * 0.05 + blueSp * 0.04);
+    col = mix(col, NAVY,    purpleOut * 0.12 + blueSp * 0.10);
 
     /* Nav clearance — only fades near very top of viewport */
     float topFade = 1.0 - smoothstep(topFadeStart, topFadeEnd, vUv.y);
@@ -611,11 +613,11 @@ const IDLE_PITCH_AMP = ROCK_MOTION_BASELINE.idlePitchAmp;
 const GAS_MOBILE_OVERRIDES = Object.freeze({
   /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen (prior 0.20 kept gas LOW). */
   gasCenterY:       0.88,  /* top of plume sits under nav bar */
-  gasStretchX:      0.18,
-  gasStretchY:      0.78,
-  gasReach:         0.22,
-  gasInner:         0.06,  /* soft veil — avoid tight dark core blob */
-  widthTighten:     1.85,
+  gasStretchX:      0.12,
+  gasStretchY:      0.70,
+  gasReach:         0.16,
+  gasInner:         0.12,
+  widthTighten:     2.45,
   purpleFarMult:    0.9,
   streakReachMult:  0.7,
   tentacleExtend:   0.55,
