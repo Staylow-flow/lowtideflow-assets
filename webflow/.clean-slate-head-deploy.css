@@ -364,6 +364,7 @@
       gap: 18px !important;
       left: 25px !important;
       right: 25px !important;
+      bottom: 78px !important; /* was ~28px; +50px up */
       width: auto !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -414,6 +415,7 @@
       align-self: center !important;
       margin-left: auto !important;
       margin-right: auto !important;
+      margin-top: -25px !important; /* button up 25px within the bar */
     }
 
     .ltf-hero-bottom-bar .is-hero-logo-mobile,
@@ -440,13 +442,13 @@
     }
 
     .ltf-hero-figure {
-      bottom: 0 !important;
-      right: 0 !important;
-      width: min(92vw, 420px) !important; /* back to pre-+25% size */
+      bottom: -40px !important;
+      right: -50px !important;
+      width: min(92vw, 420px) !important;
     }
 
     .ltf-hero-headline {
-      top: calc(12% - 20px) !important;
+      top: calc(12% + 30px) !important; /* prior +30 from last pass; +50 down from that baseline */
       padding-left: 25px !important;
       padding-right: 25px !important;
       box-sizing: border-box !important;
