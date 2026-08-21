@@ -343,16 +343,15 @@
     }
 
     /* Lock canvas to section scroll; top flush under 52px nav (hero has
-       margin-top:-52px, so top:52px lands at the nav bottom edge). */
+       margin-top:-52px, so top:52px lands at the nav bottom edge).
+       Use inset shorthand — do NOT set inset:auto after top/left/etc
+       (that resets all sides and collapses the wrapper to 0 height). */
     .ltf-hero .hero-canvas-wrapper {
       position: absolute !important;
-      top: 52px !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      left: 0 !important;
-      inset: auto !important;
+      inset: 52px 0 0 0 !important;
       width: 100% !important;
       height: auto !important;
+      max-height: none !important;
       transform: none !important;
       will-change: auto !important;
     }
@@ -376,7 +375,7 @@
       gap: 18px !important;
       left: 25px !important;
       right: 25px !important;
-      bottom: 103px !important; /* +25px up from 78 */
+      bottom: 123px !important; /* +20px up from 103 */
       width: auto !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -408,9 +407,10 @@
       max-width: none !important;
       text-align: left !important;
       align-self: stretch !important;
-      font-size: 18px !important; /* ~21px −15% */
+      font-size: 20px !important; /* solid mobile body (~18 +10%) */
+      line-height: 1.45 !important;
       padding: 0 !important;
-      padding-right: 25% !important;
+      padding-right: 30% !important;
       border: 0 !important;
       border-radius: 0 !important;
       background: transparent !important;
@@ -427,7 +427,7 @@
       align-self: center !important;
       margin-left: auto !important;
       margin-right: auto !important;
-      margin-top: -25px !important; /* button up 25px within the bar */
+      margin-top: 20px !important; /* was -25; +45px down */
     }
 
     .ltf-hero-bottom-bar .is-hero-logo-mobile,
@@ -1094,6 +1094,16 @@
       overflow: hidden !important;
       max-width: 100%;
       width: 100% !important;
+    }
+
+    .ltf-hero .hero-canvas-wrapper {
+      inset: 52px 0 0 0 !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+
+    .ltf-hero #canvas3d {
+      inset: 0 !important;
       left: 0 !important;
       right: 0 !important;
     }
