@@ -140,12 +140,9 @@ const NEBULA_FRAG = /* glsl */`
 
     float core = 1.0 - smoothstep(inner * 0.72, reachEff * 0.50, dist);
     float edge = 1.0 - smoothstep(reachEff * 0.35, reachEff * 0.96, dist);
-    float body = pow(max(core * edge, 0.0), 0.48);
-
-    /* Outer halo — soft glow rim past rock silhouette */
-    float halo = 1.0 - smoothstep(reachEff * 0.42, reachEff * 1.10, dist);
-    halo = pow(max(halo, 0.0), 1.28) * 0.62;
-    body = max(body, halo);
+    /* Soft plume only — the old outer halo painted a muddy dark oval
+       behind the rock (read as a “shadow” on top of the nebula). */
+    float body = pow(max(core * edge, 0.0), 0.58) * 0.82;
 
     float above  = max(p.y, 0.0);
     float topCap = 1.0 - smoothstep(reach * 0.62, reach * 0.92, above);
@@ -384,7 +381,8 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLEM, purpleFl * densB * 0.45);
     col = mix(col, TEALL,   blueSp * (densA * 0.48 + densC * 0.42));
     col = mix(col, TEAL,    blueSp * densA * 0.32);
-    col = mix(col, NAVY,    blueSp * 0.16 + purpleFl * densB * 0.14);
+    /* Keep navy accents thin — heavy NAVY under the rock reads as a shadow blob */
+    col = mix(col, NAVY,    blueSp * 0.08 + purpleFl * densB * 0.06);
 
     /* Outward streaks — follow live flare activity, not static rim */
     float streakBase = max(core * 0.38, max(purpleFl * 0.72, blueSp * 0.55));
@@ -413,7 +411,7 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLE,  streaks * 0.10 + purpleOut * 0.42);
     col = mix(col, TEALL,   streaks * 0.14 + blueSp * densC * 0.22);
     col = mix(col, PURPLEM, wisp2 * 0.08 + purpleOut * 0.30);
-    col = mix(col, NAVY,    purpleOut * 0.12 + blueSp * 0.10);
+    col = mix(col, NAVY,    purpleOut * 0.05 + blueSp * 0.04);
 
     /* Nav clearance — only fades near very top of viewport */
     float topFade = 1.0 - smoothstep(topFadeStart, topFadeEnd, vUv.y);
@@ -578,35 +576,46 @@ const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
 /**
- * Rock motion baseline — locked fallback (Jul 14 2026, pre-hover restore).
- * Restore these values if a motion tweak overshoots; idle amps below are +10%.
+ * Rock motion — hard caps (Aug 2026):
+ *   yaw (Y)  ≤ ±10°
+ *   pitch (X) ≤ ±15° from rest (group; mesh open-pose is separate)
+ *   roll (Z)  subtle idle only
+ * Prior bug: rockYawAccum / rockPitchAccum grew unbounded every frame
+ * (~0.000015/0.00005 * dt) until the boulder spun past ~90°.
  */
 const ROCK_MOTION_BASELINE = Object.freeze({
-  idleYawAmp1:     0.07,
-  idleYawAmp2:     0.03,
-  idleNodAmp:      0.025,
+  idleYawAmp1:     0.04,
+  idleYawAmp2:     0.018,
+  idleNodAmp:      0.016,
+  idlePitchAmp:    0.03,
   idleYawLerp:     0.036,
   idleNodLerp:     0.030,
   mouseLerp:       0.028,
-  maxMouseYawDeg:  15,
-  maxMouseRollDeg: 8,
+  maxYawDeg:       10,
+  maxPitchDeg:     15,
+  maxRollDeg:      4,
 });
 
-const MAX_MOUSE_YAW  = (ROCK_MOTION_BASELINE.maxMouseYawDeg * 0.7 * Math.PI) / 180;
-const MAX_MOUSE_ROLL = (ROCK_MOTION_BASELINE.maxMouseRollDeg * 2.0 * Math.PI) / 180;
-const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1 * 1.25;
-const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1 * 1.25;
-const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1 * 1.25;
+const MAX_YAW   = (ROCK_MOTION_BASELINE.maxYawDeg   * Math.PI) / 180;
+const MAX_PITCH = (ROCK_MOTION_BASELINE.maxPitchDeg * Math.PI) / 180;
+const MAX_ROLL  = (ROCK_MOTION_BASELINE.maxRollDeg  * Math.PI) / 180;
+/* Legacy aliases — mouse follow is disabled; keep names for any external refs */
+const MAX_MOUSE_YAW  = MAX_YAW;
+const MAX_MOUSE_ROLL = MAX_ROLL;
+const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1;
+const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2;
+const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp;
+const IDLE_PITCH_AMP = ROCK_MOTION_BASELINE.idlePitchAmp;
 
 /** Mobile ≤991 — rock slightly under H1; nebula TOP flush under 52px nav */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
   /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen (prior 0.20 kept gas LOW). */
   gasCenterY:       0.88,  /* top of plume sits under nav bar */
-  gasStretchX:      0.12,
-  gasStretchY:      0.70,
-  gasReach:         0.16,
-  gasInner:         0.12,
-  widthTighten:     2.45,
+  gasStretchX:      0.18,
+  gasStretchY:      0.78,
+  gasReach:         0.22,
+  gasInner:         0.06,  /* soft veil — avoid tight dark core blob */
+  widthTighten:     1.85,
   purpleFarMult:    0.9,
   streakReachMult:  0.7,
   tentacleExtend:   0.55,
@@ -1346,17 +1355,11 @@ class RockScene {
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
     this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
 
-    /* ── Rock rotation ────────────────────────────────────────────────────
-       X: auto-spin + scroll coast only (no mouse hover roll).
-       Y: slow hang-in-space yaw + idle wobble + horizontal scroll tilt.
-       Z: subtle idle nod only.                                           */
+    /* ── Rock rotation (hard-capped) ───────────────────────────────────────
+       Mesh open-pose stays on the model (ROCK_OPEN_PITCH). Group motion:
+       X pitch ≤ ±15°, Y yaw ≤ ±10°, Z roll = subtle idle only.
+       No unbounded accumulators — those spun the rock past ~90°.          */
     if (this.rockGroup) {
-      /* Slow continuous tumble — ~1 full pitch rotation per ~125 s */
-      this.rockPitchAccum += 0.00005 * dt;
-      /* Very slow continuous yaw so it drifts instead of oscillating in place */
-      this.rockYawAccum += 0.000015 * dt;
-
-      /* Scroll → impulse only (no spring). Heavy rock coasts, never rubber-bands. */
       const scrollDelta = this.scrollProgress - this._lastScrollProgress;
       this._lastScrollProgress = this.scrollProgress;
 
@@ -1368,18 +1371,24 @@ class RockScene {
 
       this.scrollPitchVelocity *= Math.pow(ROCK_SPIN_DECAY, dt);
       this.scrollPitchOffset  += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
+      this.scrollPitchOffset   = clamp(this.scrollPitchOffset, -MAX_PITCH, MAX_PITCH);
+      this.scrollPitchVelocity = clamp(this.scrollPitchVelocity, -0.08, 0.08);
 
-      const basePitch = this.rockPitchAccum + this.scrollPitchOffset;
-      this.mouseRollOffset = 0;
-      this.rockGroup.rotation.x = basePitch;
+      const idlePitch = Math.sin(t * 0.00012) * IDLE_PITCH_AMP;
+      const targetX = clamp(idlePitch + this.scrollPitchOffset, -MAX_PITCH, MAX_PITCH);
 
-      /* Idle wobble (+25% from prior) + slow yaw drift — no mouse nudge */
       const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
                     + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
       const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
-      const targetY = this.rockYawAccum + idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
-      const targetZ = idleNod;
+      const targetY = clamp(
+        idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS,
+        -MAX_YAW,
+        MAX_YAW
+      );
+      const targetZ = clamp(idleNod, -MAX_ROLL, MAX_ROLL);
 
+      this.mouseRollOffset = 0;
+      this.rockGroup.rotation.x += (targetX - this.rockGroup.rotation.x) * ROCK_MOTION_BASELINE.idleNodLerp;
       this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * ROCK_MOTION_BASELINE.idleYawLerp;
       this.rockGroup.rotation.z += (targetZ - this.rockGroup.rotation.z) * ROCK_MOTION_BASELINE.idleNodLerp;
     }
