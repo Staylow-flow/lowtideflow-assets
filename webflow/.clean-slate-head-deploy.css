@@ -364,15 +364,14 @@
     }
 
     /* Copy stack under H1 (JS sets --ltf-hero-copy-top = H1 bottom + 30px).
-       Stretch to hero bottom so CTA can absolute-park above Safari chrome.
-       Wide to screen edges (25px inset). */
+       NEWNEW: left-justified body, ~8 lines on standard phone width. */
     .ltf-hero-bottom-bar,
     .ltf-hero-bottom-bar.ltf-split-2 {
       position: absolute !important;
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) !important;
       grid-template-rows: auto !important;
-      justify-items: center !important;
+      justify-items: stretch !important;
       align-items: start !important;
       gap: 18px !important;
       left: 25px !important;
@@ -385,12 +384,12 @@
       transform: none !important;
       translate: none !important;
       will-change: auto !important;
-      text-align: center !important;
+      text-align: left !important;
       z-index: 3 !important;
       pointer-events: none !important;
     }
 
-    /* Full-bleed copy wrapper — kill rem column lock */
+    /* Full-bleed copy wrapper — left stack, breathable side pad for 8-line lock */
     .ltf-hero-bottom-bar .is-hero-copy,
     .ltf-hero-bottom-bar .ltf-stack,
     .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy,
@@ -401,29 +400,29 @@
       min-width: 0 !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
+      padding-left: 4px !important;
+      padding-right: 12px !important;
       /* Reserve absolute CTA band so logo never sits under the button */
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important;
       box-sizing: border-box !important;
       display: flex !important;
       flex-direction: column !important;
-      align-items: center !important;
+      align-items: flex-start !important;
       justify-self: stretch !important;
-      text-align: center !important;
+      text-align: left !important;
     }
 
     .ltf-hero-bottom-bar .ltf-body-text {
       width: 100% !important;
-      max-width: none !important;
+      max-width: 22.5rem !important;
       margin-top: 0 !important;
       margin-left: 0 !important;
-      margin-right: 0 !important;
+      margin-right: auto !important;
       order: 1 !important;
-      text-align: center !important;
-      align-self: stretch !important;
-      font-size: 20px !important;
-      line-height: 1.275 !important;
+      text-align: left !important;
+      align-self: flex-start !important;
+      font-size: 17px !important;
+      line-height: 1.32 !important;
       letter-spacing: 0 !important;
       word-spacing: 0 !important;
       padding: 0 !important;
@@ -473,7 +472,7 @@
       order: 2 !important;
       margin: 20px 0 0 !important;
       margin-bottom: 0 !important;
-      align-self: center !important;
+      align-self: flex-start !important;
       z-index: 2 !important;
       pointer-events: none !important;
       filter:
@@ -980,7 +979,7 @@
     max-width: 100% !important;
   }
 
-  /* Shared glow chrome — Crew + Specs (wash + orbit ring). */
+  /* Shared glow chrome — Crew + Specs (green-forward wash + orbit ring). */
   .ltf-card::before,
   .ltf-spec-card::before {
     content: '';
@@ -989,10 +988,11 @@
     z-index: 0;
     border-radius: inherit;
     background:
-      radial-gradient(ellipse at 22% 18%, rgba(112, 64, 192, 0.72) 0%, transparent 52%),
-      radial-gradient(ellipse at 82% 28%, rgba(42, 170, 184, 0.62) 0%, transparent 50%),
-      radial-gradient(ellipse at 48% 92%, rgba(11, 128, 80, 0.58) 0%, transparent 55%),
-      radial-gradient(ellipse at 70% 70%, rgba(31, 119, 129, 0.4) 0%, transparent 48%);
+      radial-gradient(ellipse at 28% 22%, rgba(11, 128, 80, 0.78) 0%, transparent 52%),
+      radial-gradient(ellipse at 78% 30%, rgba(42, 170, 184, 0.58) 0%, transparent 50%),
+      radial-gradient(ellipse at 52% 88%, rgba(11, 128, 80, 0.62) 0%, transparent 55%),
+      radial-gradient(ellipse at 70% 70%, rgba(31, 119, 129, 0.4) 0%, transparent 48%),
+      radial-gradient(ellipse at 18% 70%, rgba(112, 64, 192, 0.28) 0%, transparent 48%);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.45s ease;
@@ -1226,22 +1226,22 @@
       max-width: none !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
-      align-items: center !important;
+      align-items: flex-start !important;
       justify-self: stretch !important;
-      text-align: center !important;
+      text-align: left !important;
     }
 
     .ltf-hero .ltf-hero-bottom-bar .ltf-body-text {
       width: 100% !important;
-      max-width: none !important;
+      max-width: 22.5rem !important;
       margin-top: 0 !important;
       margin-left: 0 !important;
-      margin-right: 0 !important;
+      margin-right: auto !important;
       order: 1 !important;
-      font-size: 20px !important;
-      line-height: 1.275 !important;
-      text-align: center !important;
-      align-self: stretch !important;
+      font-size: 17px !important;
+      line-height: 1.32 !important;
+      text-align: left !important;
+      align-self: flex-start !important;
       padding: 0 !important;
       letter-spacing: 0 !important;
       word-spacing: 0 !important;
@@ -1255,7 +1255,7 @@
       order: 2 !important;
       margin: 20px 0 0 !important;
       margin-bottom: 0 !important;
-      align-self: center !important;
+      align-self: flex-start !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
