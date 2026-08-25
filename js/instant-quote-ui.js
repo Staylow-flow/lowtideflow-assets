@@ -36,12 +36,6 @@
     target.textContent = display;
     slider.setAttribute('aria-valuenow', display);
     recalculateQuote();
-    var trigger = document.querySelector('.iq-mobile-picker-trigger[data-iq-for="' + slider.id + '"]');
-    if (trigger) {
-      var valEl = trigger.querySelector('.iq-mobile-picker-value');
-      if (valEl) valEl.textContent = display;
-      trigger.setAttribute('aria-valuenow', display);
-    }
   }
 
   function snapValue(slider, raw) {
@@ -227,6 +221,7 @@
       if (unitCost2) unitCost2.classList.add('is-visible');
       if (unitCol) unitCol.classList.add('is-split-visible');
       recalculateQuote();
+      applyMobileApparelLayout();
       return;
     }
 
@@ -235,6 +230,7 @@
     if (unitCost2) unitCost2.classList.remove('is-visible');
     if (unitCol) unitCol.classList.remove('is-split-visible');
     recalculateQuote();
+    applyMobileApparelLayout();
   }
 
   function initSplitToggle() {
@@ -251,6 +247,7 @@
     var buttons = track.querySelectorAll('.iq-toggle-btn');
     var thumb = track.querySelector('.iq-toggle-thumb');
     var index = 0;
+    var vertical = track.classList.contains('iq-toggle-vertical');
     buttons.forEach(function (el, i) {
       el.classList.toggle('is-active', el === btn);
       if (el === btn) index = i;
@@ -259,7 +256,11 @@
     if (thumb) {
       if (!animate) track.classList.add('is-dragging');
       else track.classList.remove('is-dragging');
-      thumb.style.transform = 'translateX(' + index * 100 + '%)';
+      if (vertical) {
+        thumb.style.transform = 'translateY(' + index * 100 + '%)';
+      } else {
+        thumb.style.transform = 'translateX(' + index * 100 + '%)';
+      }
       if (!animate) {
         requestAnimationFrame(function () {
           track.classList.remove('is-dragging');
@@ -279,6 +280,14 @@
     return thumb;
   }
 
+  function syncQualityToggleOrientation() {
+    var track = document.querySelector('.iq-toggle-track');
+    if (!track) return;
+    track.classList.toggle('iq-toggle-vertical', isMobileIq());
+    var active = track.querySelector('.iq-toggle-btn.is-active') || track.querySelector('.iq-toggle-btn');
+    if (active) setQualityActive(track, active, false);
+  }
+
   function initQualityToggle() {
     var track = document.querySelector('.iq-toggle-track');
     if (!track) return;
@@ -288,6 +297,7 @@
 
     ensureQualityThumb(track);
     track.classList.add('iq-toggle-draggable');
+    syncQualityToggleOrientation();
 
     /* Blank state: leftmost (High-Quality), not Designer Premium default */
     var active = buttons[0];
@@ -295,22 +305,34 @@
 
     var dragging = false;
     var pointerId = null;
+    var vertical = function () {
+      return track.classList.contains('iq-toggle-vertical');
+    };
 
-    function pickFromClientX(clientX) {
+    function pickFromPointer(clientX, clientY) {
       var rect = track.getBoundingClientRect();
-      var mid = rect.left + rect.width / 2;
-      return clientX < mid ? buttons[0] : buttons[1];
+      if (vertical()) {
+        var midY = rect.top + rect.height / 2;
+        return clientY < midY ? buttons[0] : buttons[1];
+      }
+      var midX = rect.left + rect.width / 2;
+      return clientX < midX ? buttons[0] : buttons[1];
     }
 
     function onPointerMove(event) {
       if (!dragging || event.pointerId !== pointerId) return;
       var rect = track.getBoundingClientRect();
       var pad = 4;
-      var usable = Math.max(1, rect.width - pad * 2);
-      var x = Math.min(1, Math.max(0, (event.clientX - rect.left - pad) / usable));
       var thumb = track.querySelector('.iq-toggle-thumb');
-      if (thumb) {
-        track.classList.add('is-dragging');
+      if (!thumb) return;
+      track.classList.add('is-dragging');
+      if (vertical()) {
+        var usableY = Math.max(1, rect.height - pad * 2);
+        var y = Math.min(1, Math.max(0, (event.clientY - rect.top - pad) / usableY));
+        thumb.style.transform = 'translateY(' + y * 100 + '%)';
+      } else {
+        var usableX = Math.max(1, rect.width - pad * 2);
+        var x = Math.min(1, Math.max(0, (event.clientX - rect.left - pad) / usableX));
         thumb.style.transform = 'translateX(' + x * 100 + '%)';
       }
     }
@@ -326,13 +348,16 @@
       }
       pointerId = null;
       var clientX = event && event.clientX != null ? event.clientX : null;
+      var clientY = event && event.clientY != null ? event.clientY : null;
       var targetBtn;
-      if (clientX != null) {
-        targetBtn = pickFromClientX(clientX);
+      if (clientX != null && clientY != null) {
+        targetBtn = pickFromPointer(clientX, clientY);
       } else {
         var thumb = track.querySelector('.iq-toggle-thumb');
         var tx = thumb ? thumb.style.transform : '';
-        var match = /translateX\(([-\d.]+)%\)/.exec(tx);
+        var match = vertical()
+          ? /translateY\(([-\d.]+)%\)/.exec(tx)
+          : /translateX\(([-\d.]+)%\)/.exec(tx);
         var pct = match ? parseFloat(match[1]) : 50;
         targetBtn = pct < 50 ? buttons[0] : buttons[1];
       }
@@ -363,6 +388,8 @@
         setQualityActive(track, btn, true);
       });
     });
+
+    window.matchMedia(MOBILE_MQ).addEventListener('change', syncQualityToggleOrientation);
   }
 
   function initStyleRadios() {
@@ -431,183 +458,120 @@
     });
   }
 
-  /* ── Mobile slider → bottom-sheet pickers (≤991px only) ─────────────── */
+  /* ── Mobile layout only (≤991px): real notched sliders stay native ── */
 
   var MOBILE_MQ = '(max-width: 991px)';
-  var mobilePickerSheet = null;
-  var mobilePickerOpenFor = null;
+  var mobileLayoutAnchors = null;
 
   function isMobileIq() {
     return window.matchMedia(MOBILE_MQ).matches;
   }
 
-  function sliderDisplayValue(slider) {
-    var raw = parseFloat(slider.value);
-    if (slider.id === 'iq-slider-ink-colors') return formatInkDisplay(raw);
-    var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step || '1');
-    return step >= 1 ? String(Math.round(raw)) : String(raw);
+  function rememberMobileAnchor(node) {
+    if (!node || node.dataset.iqMobileHome === '1') return;
+    node.dataset.iqMobileHome = '1';
   }
 
-  function sliderOptionList(slider) {
-    var min = parseFloat(slider.min);
-    var max = parseFloat(slider.max);
-    var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step || '1');
-    var opts = [];
-    for (var v = min; v <= max + 0.0001; v += step) {
-      var snapped = Math.round(v * 1000) / 1000;
-      opts.push({
-        value: snapped,
-        label: slider.id === 'iq-slider-ink-colors' ? formatInkDisplay(snapped) : String(Math.round(snapped))
-      });
-    }
-    return opts;
-  }
-
-  function sliderTitle(slider) {
-    var row = slider.closest('.iq-slider-row');
-    var label = row && row.querySelector('.iq-slider-label');
-    return (label && label.textContent.trim()) || slider.getAttribute('aria-label') || 'Select value';
-  }
-
-  function ensureMobilePickerSheet() {
-    if (mobilePickerSheet) return mobilePickerSheet;
-    var root = document.createElement('div');
-    root.className = 'iq-mobile-sheet';
-    root.id = 'iq-mobile-picker-sheet';
-    root.setAttribute('aria-hidden', 'true');
-    root.innerHTML =
-      '<div class="iq-mobile-sheet-backdrop" data-iq-sheet-dismiss="1"></div>' +
-      '<div class="iq-mobile-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="iq-mobile-sheet-title">' +
-      '<div class="iq-mobile-sheet-handle" aria-hidden="true"></div>' +
-      '<h3 class="iq-mobile-sheet-title" id="iq-mobile-sheet-title">Select</h3>' +
-      '<div class="iq-mobile-sheet-options" id="iq-mobile-sheet-options"></div>' +
-      '<div class="iq-mobile-sheet-actions">' +
-      '<button type="button" class="iq-mobile-sheet-btn iq-mobile-sheet-btn--ghost" data-iq-sheet-dismiss="1">Cancel</button>' +
-      '<button type="button" class="iq-mobile-sheet-btn iq-mobile-sheet-btn--primary" id="iq-mobile-sheet-done">Done</button>' +
-      '</div></div>';
-    document.body.appendChild(root);
-    mobilePickerSheet = root;
-
-    root.addEventListener('click', function (event) {
-      var t = event.target;
-      if (t && t.getAttribute && t.getAttribute('data-iq-sheet-dismiss')) {
-        closeMobilePicker(false);
+  function restoreMobileApparelLayout() {
+    if (!mobileLayoutAnchors) return;
+    ['split', 'unit1'].forEach(function (key) {
+      var entry = mobileLayoutAnchors[key];
+      if (!entry || !entry.node || !entry.parent) return;
+      if (entry.next && entry.next.parentNode === entry.parent) {
+        entry.parent.insertBefore(entry.node, entry.next);
+      } else {
+        entry.parent.appendChild(entry.node);
       }
+      entry.node.classList.remove('iq-split-mobile-below', 'iq-unit-cost-mobile');
     });
+    mobileLayoutAnchors = null;
+  }
 
-    var done = root.querySelector('#iq-mobile-sheet-done');
-    if (done) {
-      done.addEventListener('click', function () {
-        closeMobilePicker(true);
-      });
+  function applyMobileApparelLayout() {
+    if (!isMobileIq()) {
+      restoreMobileApparelLayout();
+      return;
     }
 
-    document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && mobilePickerSheet && mobilePickerSheet.classList.contains('is-open')) {
-        closeMobilePicker(false);
+    var splitWrap = document.querySelector('.iq-split-checkbox-wrapper');
+    var styleRow1 = document.getElementById('iq-style-row-1');
+    var unit1 = document.getElementById('iq-unit-cost-1');
+    var apparelRow1 = styleRow1 && styleRow1.closest('.iq-apparel-row');
+
+    if (!mobileLayoutAnchors) {
+      mobileLayoutAnchors = {};
+      if (splitWrap) {
+        rememberMobileAnchor(splitWrap);
+        mobileLayoutAnchors.split = {
+          node: splitWrap,
+          parent: splitWrap.parentNode,
+          next: splitWrap.nextSibling
+        };
       }
-    });
-
-    return root;
-  }
-
-  function closeMobilePicker(commit) {
-    if (!mobilePickerSheet) return;
-    var pending = mobilePickerOpenFor;
-    mobilePickerSheet.classList.remove('is-open');
-    mobilePickerSheet.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('iq-sheet-open');
-
-    if (commit && pending && pending.slider && pending.draft != null) {
-      pending.slider.value = String(pending.draft);
-      syncSliderValue(pending.slider);
-      refreshMobilePickerTriggers();
+      if (unit1) {
+        rememberMobileAnchor(unit1);
+        mobileLayoutAnchors.unit1 = {
+          node: unit1,
+          parent: unit1.parentNode,
+          next: unit1.nextSibling
+        };
+      }
     }
-    mobilePickerOpenFor = null;
+
+    if (splitWrap && styleRow1 && splitWrap.previousElementSibling !== styleRow1) {
+      styleRow1.insertAdjacentElement('afterend', splitWrap);
+      splitWrap.classList.add('iq-split-mobile-below');
+    }
+
+    if (unit1 && apparelRow1) {
+      var anchor =
+        splitWrap && splitWrap.parentElement === apparelRow1 ? splitWrap : styleRow1;
+      if (anchor) {
+        anchor.insertAdjacentElement('afterend', unit1);
+        unit1.classList.add('iq-unit-cost-mobile');
+      }
+    }
   }
 
-  function openMobilePicker(slider) {
-    if (!isMobileIq()) return;
-    var sheet = ensureMobilePickerSheet();
-    var title = sheet.querySelector('#iq-mobile-sheet-title');
-    var list = sheet.querySelector('#iq-mobile-sheet-options');
-    if (!list) return;
-
-    var current = snapValue(slider, parseFloat(slider.value));
-    mobilePickerOpenFor = { slider: slider, draft: current };
-    if (title) title.textContent = sliderTitle(slider);
-
-    list.innerHTML = '';
-    sliderOptionList(slider).forEach(function (opt) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'iq-mobile-sheet-option';
-      btn.textContent = opt.label;
-      btn.setAttribute('data-value', String(opt.value));
-      if (opt.value === current) btn.classList.add('is-selected');
-      btn.addEventListener('click', function () {
-        mobilePickerOpenFor.draft = opt.value;
-        list.querySelectorAll('.iq-mobile-sheet-option').forEach(function (el) {
-          el.classList.toggle('is-selected', el === btn);
-        });
+  /** Tall / short / tall notch rhythm for tactile tick marks. */
+  function styleSliderTicks() {
+    document.querySelectorAll('.iq-slider-ticks').forEach(function (ticks) {
+      var marks = ticks.querySelectorAll('.iq-slider-tick');
+      marks.forEach(function (tick, i) {
+        tick.classList.remove('is-tall', 'is-mid', 'is-short');
+        if (i === 0 || i === marks.length - 1 || i % 2 === 0) {
+          tick.classList.add('is-tall');
+        } else {
+          tick.classList.add('is-short');
+        }
       });
-      list.appendChild(btn);
-    });
-
-    sheet.classList.add('is-open');
-    sheet.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('iq-sheet-open');
-  }
-
-  function refreshMobilePickerTriggers() {
-    document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(function (slider) {
-      var trigger = document.querySelector('.iq-mobile-picker-trigger[data-iq-for="' + slider.id + '"]');
-      if (!trigger) return;
-      var display = sliderDisplayValue(slider);
-      trigger.querySelector('.iq-mobile-picker-value').textContent = display;
-      trigger.setAttribute('aria-valuenow', display);
     });
   }
 
-  function initMobilePickers() {
-    document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(function (slider) {
-      var control = slider.closest('.iq-slider-control');
-      var row = slider.closest('.iq-slider-row');
-      if (!control || !row) return;
-      if (row.querySelector('.iq-mobile-picker-trigger[data-iq-for="' + slider.id + '"]')) return;
-
-      var trigger = document.createElement('button');
-      trigger.type = 'button';
-      trigger.className = 'iq-mobile-picker-trigger';
-      trigger.setAttribute('data-iq-for', slider.id);
-      trigger.setAttribute('aria-haspopup', 'dialog');
-      trigger.innerHTML =
-        '<span class="iq-mobile-picker-label">Tap to set</span>' +
-        '<span class="iq-mobile-picker-value">' +
-        sliderDisplayValue(slider) +
-        '</span>';
-      trigger.addEventListener('click', function (event) {
-        event.preventDefault();
-        if (!isMobileIq()) return;
-        openMobilePicker(slider);
-      });
-      control.appendChild(trigger);
+  function initMobileLayout() {
+    /* Strip any leftover hold-scroll triggers from older pins */
+    document.querySelectorAll('.iq-mobile-picker-trigger').forEach(function (el) {
+      el.parentNode && el.parentNode.removeChild(el);
     });
+
+    styleSliderTicks();
+    applyMobileApparelLayout();
 
     window.matchMedia(MOBILE_MQ).addEventListener('change', function () {
-      if (!isMobileIq()) closeMobilePicker(false);
-      refreshMobilePickerTriggers();
+      applyMobileApparelLayout();
+      syncQualityToggleOrientation();
     });
   }
 
   function init() {
     initSliders();
+    styleSliderTicks();
     initSplitToggle();
     initQualityToggle();
     initStyleRadios();
     initCustomArtToggle();
     initRunQuoteButton();
-    initMobilePickers();
+    initMobileLayout();
     recalculateQuote();
   }
 

@@ -43,6 +43,19 @@
 
     screenSetupFeePerScreen: 25.0,
     agencyMarkupMultiplier: 1.25,
-    customArtFee: 250.0
+    customArtFee: 250.0,
+
+    /**
+     * Hats — embroidery / cap press: ink tick is mostly cosmetic on the quote.
+     * Decoration cost is flat per location; extra panels ≈ $5 retail per add-on loc.
+     */
+    hatPrint: {
+      loc1Base: 5.5,
+      /** Pre-markup COGS — × agencyMarkup ≈ $5 retail per additional location */
+      locOtherBase: 4.0,
+      screensPerLocation: 1,
+      fullColorLoc1Mult: 1.15,
+      fullColorLocOtherMult: 1.1
+    }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

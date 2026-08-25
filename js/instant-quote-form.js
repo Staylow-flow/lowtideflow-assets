@@ -181,24 +181,179 @@
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
-  function renderArtworkFileList() {
-    var input = document.getElementById('iq-form-artwork-file');
-    var list = document.getElementById('iq-form-artwork-list');
-    if (!input || !list) return;
+  function fileTypeIcon(name) {
+    var ext = (name.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf') return 'pdf';
+    if (ext === 'mp4' || ext === 'mov' || ext === 'webm') return 'video';
+    if (ext === 'ai' || ext === 'eps' || ext === 'svg' || ext === 'psd') return 'vector';
+    return 'image';
+  }
 
-    if (!input.files || !input.files.length) {
-      list.hidden = true;
-      list.innerHTML = '';
+  function ensureArtworkUploadShell(drop) {
+    if (drop.querySelector('.iq-form-upload-shell')) return;
+
+    var inner = drop.querySelector('.iq-form-upload-inner');
+    if (!inner) return;
+
+    var staleList = inner.querySelector('#iq-form-artwork-list');
+    if (staleList) staleList.parentNode.removeChild(staleList);
+
+    var shell = document.createElement('div');
+    shell.className = 'iq-form-upload-shell';
+
+    var idle = document.createElement('div');
+    idle.className = 'iq-form-upload-idle';
+    idle.id = 'iq-form-artwork-idle';
+    idle.appendChild(inner);
+
+    var active = document.createElement('div');
+    active.className = 'iq-form-upload-active';
+    active.id = 'iq-form-artwork-active';
+    active.hidden = true;
+
+    active.innerHTML =
+      '<div class="iq-form-upload-progress" id="iq-form-artwork-progress" hidden>' +
+      '  <div class="iq-form-upload-progress-head">' +
+      '    <span class="iq-form-upload-progress-label" id="iq-form-artwork-progress-label">Reading files…</span>' +
+      '    <span class="iq-form-upload-progress-pct" id="iq-form-artwork-progress-pct">0%</span>' +
+      '  </div>' +
+      '  <div class="iq-form-upload-progress-track" aria-hidden="true">' +
+      '    <div class="iq-form-upload-progress-fill" id="iq-form-artwork-progress-fill"></div>' +
+      '  </div>' +
+      '  <p class="iq-form-upload-progress-sub" id="iq-form-artwork-progress-sub"></p>' +
+      '</div>' +
+      '<div class="iq-form-upload-queue" id="iq-form-artwork-queue" hidden>' +
+      '  <div class="iq-form-upload-queue-head">' +
+      '    <span class="iq-form-upload-queue-title" id="iq-form-artwork-queue-title">Files ready</span>' +
+      '    <button type="button" class="iq-form-upload-add-more" id="iq-form-artwork-add-more">Add more</button>' +
+      '  </div>' +
+      '  <ul class="iq-form-upload-lanes" id="iq-form-artwork-list"></ul>' +
+      '</div>';
+
+    shell.appendChild(idle);
+    shell.appendChild(active);
+    drop.appendChild(shell);
+  }
+
+  function setArtworkDropMode(drop, mode) {
+    var idle = document.getElementById('iq-form-artwork-idle');
+    var active = document.getElementById('iq-form-artwork-active');
+    if (!idle || !active) return;
+
+    drop.classList.remove('is-loading', 'is-queue', 'is-empty');
+    if (mode === 'idle') {
+      idle.hidden = false;
+      active.hidden = true;
+      drop.classList.add('is-empty');
+      return;
+    }
+    idle.hidden = true;
+    active.hidden = false;
+    if (mode === 'loading') drop.classList.add('is-loading');
+    if (mode === 'queue') drop.classList.add('is-queue');
+  }
+
+  function animateArtworkProgress(files, done) {
+    var progress = document.getElementById('iq-form-artwork-progress');
+    var queue = document.getElementById('iq-form-artwork-queue');
+    var fill = document.getElementById('iq-form-artwork-progress-fill');
+    var pctNode = document.getElementById('iq-form-artwork-progress-pct');
+    var sub = document.getElementById('iq-form-artwork-progress-sub');
+    var label = document.getElementById('iq-form-artwork-progress-label');
+    if (!progress || !fill || !pctNode) {
+      done();
       return;
     }
 
-    list.hidden = false;
-    list.innerHTML = '';
-    Array.prototype.forEach.call(input.files, function (file) {
-      var item = document.createElement('li');
-      item.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
-      list.appendChild(item);
+    progress.hidden = false;
+    if (queue) queue.hidden = true;
+
+    var lead = files[0];
+    if (label && lead) label.textContent = lead.name;
+    if (sub && lead) {
+      sub.textContent =
+        formatFileSize(lead.size) + (files.length > 1 ? ' · ' + files.length + ' files total' : '');
+    }
+
+    var start = performance.now();
+    var duration = Math.min(1400, Math.max(520, 280 + files.length * 120));
+
+    function frame(now) {
+      var t = Math.min(1, (now - start) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      var pct = Math.round(eased * 100);
+      fill.style.width = pct + '%';
+      pctNode.textContent = pct + '%';
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        progress.hidden = true;
+        done();
+      }
+    }
+
+    fill.style.width = '0%';
+    pctNode.textContent = '0%';
+    requestAnimationFrame(frame);
+  }
+
+  function renderArtworkFileList() {
+    var input = document.getElementById('iq-form-artwork-file');
+    var list = document.getElementById('iq-form-artwork-list');
+    var drop = document.getElementById('iq-form-artwork-drop');
+    var queue = document.getElementById('iq-form-artwork-queue');
+    var queueTitle = document.getElementById('iq-form-artwork-queue-title');
+    if (!input || !list || !drop) return;
+
+    if (!input.files || !input.files.length) {
+      list.innerHTML = '';
+      if (queue) queue.hidden = true;
+      setArtworkDropMode(drop, 'idle');
+      return;
+    }
+
+    setArtworkDropMode(drop, 'loading');
+    animateArtworkProgress(Array.prototype.slice.call(input.files), function () {
+      list.innerHTML = '';
+      Array.prototype.forEach.call(input.files, function (file) {
+        var lane = document.createElement('li');
+        lane.className = 'iq-form-upload-lane is-complete';
+        lane.innerHTML =
+          '<span class="iq-form-upload-lane-icon iq-form-upload-lane-icon--' +
+          fileTypeIcon(file.name) +
+          '" aria-hidden="true"></span>' +
+          '<div class="iq-form-upload-lane-body">' +
+          '  <div class="iq-form-upload-lane-top">' +
+          '    <span class="iq-form-upload-lane-name">' +
+          escapeHtml(file.name) +
+          '</span>' +
+          '    <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
+          '  </div>' +
+          '  <span class="iq-form-upload-lane-meta">' +
+          formatFileSize(file.size) +
+          '</span>' +
+          '  <div class="iq-form-upload-lane-bar" aria-hidden="true"><span></span></div>' +
+          '</div>';
+        list.appendChild(lane);
+      });
+
+      if (queueTitle) {
+        queueTitle.textContent =
+          input.files.length === 1
+            ? '1 file ready for your brief'
+            : input.files.length + ' files ready for your brief';
+      }
+      if (queue) queue.hidden = false;
+      setArtworkDropMode(drop, 'queue');
     });
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function initArtworkUpload() {
@@ -207,36 +362,62 @@
     var browse = document.getElementById('iq-form-artwork-browse');
     if (!drop || !input) return;
 
+    ensureArtworkUploadShell(drop);
+    setArtworkDropMode(drop, 'idle');
+
+    var dragDepth = 0;
+
     if (browse) {
       browse.addEventListener('click', function (event) {
         event.preventDefault();
+        event.stopPropagation();
         input.click();
       });
     }
 
     drop.addEventListener('click', function (event) {
+      if (drop.classList.contains('is-queue') || drop.classList.contains('is-loading')) return;
       if (event.target === browse || (browse && browse.contains(event.target))) return;
       input.click();
     });
 
+    var addMore = document.getElementById('iq-form-artwork-add-more');
+    if (addMore) {
+      addMore.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        input.click();
+      });
+    }
+
     input.addEventListener('change', renderArtworkFileList);
 
-    ['dragenter', 'dragover'].forEach(function (type) {
-      drop.addEventListener(type, function (event) {
-        event.preventDefault();
-        drop.classList.add('is-dragover');
-      });
+    drop.addEventListener('dragenter', function (event) {
+      event.preventDefault();
+      dragDepth += 1;
+      drop.classList.add('is-dragover');
     });
 
-    ['dragleave', 'drop'].forEach(function (type) {
-      drop.addEventListener(type, function (event) {
-        event.preventDefault();
+    drop.addEventListener('dragover', function (event) {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      drop.classList.add('is-dragover');
+    });
+
+    drop.addEventListener('dragleave', function (event) {
+      event.preventDefault();
+      dragDepth -= 1;
+      if (dragDepth <= 0) {
+        dragDepth = 0;
         drop.classList.remove('is-dragover');
-      });
+      }
     });
 
     drop.addEventListener('drop', function (event) {
-      if (event.dataTransfer && event.dataTransfer.files) {
+      event.preventDefault();
+      dragDepth = 0;
+      drop.classList.remove('is-dragover');
+      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length) {
         input.files = event.dataTransfer.files;
         renderArtworkFileList();
       }

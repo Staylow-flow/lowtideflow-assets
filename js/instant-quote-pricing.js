@@ -96,11 +96,54 @@
     return row[qualityTier] != null ? row[qualityTier] : row.premium;
   }
 
+  function isHatStyle(styleDomKey) {
+    return styleDomKey === 'hats';
+  }
+
+  /**
+   * Hats — flat decoration per location; ink slider does not swing unit price.
+   * Extra print locations target ~$5 retail (pre-markup locOtherBase in data).
+   */
+  function hatPrintEconomics(state, data) {
+    var hat = data.hatPrint || {};
+    var bracket = getPrintBracket(state.quantity, data.printMatrix);
+    var printLocations = state.printLocations;
+    var loc1Base = hat.loc1Base != null ? hat.loc1Base : bracket.loc1Base;
+    var locOtherBase = hat.locOtherBase != null ? hat.locOtherBase : 4.0;
+    var screensPerLoc = hat.screensPerLocation != null ? hat.screensPerLocation : 1;
+    var loc1Cost = loc1Base;
+    var otherLocsCost = (printLocations - 1) * locOtherBase;
+
+    if (state.fullColor) {
+      var fc1 = hat.fullColorLoc1Mult != null ? hat.fullColorLoc1Mult : 1.15;
+      var fcOther = hat.fullColorLocOtherMult != null ? hat.fullColorLocOtherMult : 1.1;
+      loc1Cost *= fc1;
+      otherLocsCost *= fcOther;
+    }
+
+    var totalScreens = screensPerLoc * printLocations;
+    var printRunCogs = loc1Cost + otherLocsCost;
+    var totalSetupCost = totalScreens * data.screenSetupFeePerScreen;
+    var qty = state.quantity > 0 ? state.quantity : 0;
+    var screenFeePerUnit = qty > 0 ? totalSetupCost / qty : 0;
+
+    return {
+      bracket: bracket,
+      garmentType: 'hat',
+      fullColor: !!state.fullColor,
+      inkColors: state.fullColor ? 5 : 1,
+      totalScreens: totalScreens,
+      totalSetupCost: totalSetupCost,
+      printRunCogs: printRunCogs,
+      screenFeePerUnit: screenFeePerUnit
+    };
+  }
+
   /**
    * Spot colors 1–4: classic screen math.
    * Tick 5 (Full Color): CMYK/sim-process/DTF — 4 screens per location + multipliers.
    */
-  function sharedPrintEconomics(state, data) {
+  function apparelPrintEconomics(state, data) {
     var bracket = getPrintBracket(state.quantity, data.printMatrix);
     var printLocations = state.printLocations;
     var fc = data.fullColor || {};
@@ -131,6 +174,7 @@
 
     return {
       bracket: bracket,
+      garmentType: 'apparel',
       fullColor: !!state.fullColor,
       inkColors: inkColors,
       totalScreens: totalScreens,
@@ -138,6 +182,13 @@
       printRunCogs: printRunCogs,
       screenFeePerUnit: screenFeePerUnit
     };
+  }
+
+  function printEconomicsForStyle(state, data, styleDomKey) {
+    if (isHatStyle(styleDomKey) && data.hatPrint) {
+      return hatPrintEconomics(state, data);
+    }
+    return apparelPrintEconomics(state, data);
   }
 
   function finalUnitPrice(styleDomKey, qualityTier, economics, data) {
@@ -166,15 +217,16 @@
       };
     }
 
-    var economics = sharedPrintEconomics(state, data);
-
-    var rawUnit1 = finalUnitPrice(state.styleRow1, state.quality, economics, data);
+    var economics1 = printEconomicsForStyle(state, data, state.styleRow1);
+    var rawUnit1 = finalUnitPrice(state.styleRow1, state.quality, economics1, data);
     var unit1 = roundMoney(rawUnit1);
 
     var rawUnit2 = null;
     var unit2 = null;
+    var economics2 = null;
     if (state.split) {
-      rawUnit2 = finalUnitPrice(state.styleRow2, state.quality, economics, data);
+      economics2 = printEconomicsForStyle(state, data, state.styleRow2);
+      rawUnit2 = finalUnitPrice(state.styleRow2, state.quality, economics2, data);
       unit2 = roundMoney(rawUnit2);
     }
 
@@ -192,7 +244,8 @@
       total: roundMoney(baseTotal),
       qty1: qty1,
       qty2: qty2,
-      economics: economics
+      economics: economics1,
+      economics2: economics2
     };
   }
 
