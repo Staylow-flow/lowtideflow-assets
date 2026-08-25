@@ -1,5 +1,10 @@
-<!--
-  CLEAN SLATE — Page Footer freeform body tags (importmap + 2 module URLs).
-  Fuse split: rock-scene.js first, then ltf.js. Never fold rock into ltf.js.
-  Update @SHA after each JS push. Registered page scripts must stay [].
--->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@e6351cc/js/hero/rock-scene.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@e6351cc/js/ltf.js"></script>

@@ -247,7 +247,8 @@ function bind(host) {
   function lensBounds() {
     const w = host.clientWidth || 0;
     const h = host.clientHeight || 0;
-    const inset = isMobile() ? 12 : 50;
+    /* Mobile: keep glass padded from fabric top/bottom so PNG isn’t clipped. */
+    const inset = isMobile() ? 40 : 28;
     const minX = -lensW * LENS_OVERHANG + inset;
     const minY = -lensH * LENS_OVERHANG + inset;
     const maxX = w - lensW * (1 - LENS_OVERHANG) - inset;
