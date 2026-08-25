@@ -1,0 +1,197 @@
+{
+  "siteId": "6789f449bbb1a21245706751",
+  "pageId": "6a59f0368e92a3bd60940ad9",
+  "context": "Native Webflow element_builder rebuild for artwork row, order form, and pricing breakdown below receipt.",
+  "actions": [
+    {
+      "build_label": "artwork-row",
+      "parent_element_id": { "component": "6a59f0368e92a3bd60940ad9", "element": "373ad801-887c-2401-deaf-55b1745e2b4e" },
+      "creation_position": "after",
+      "return_element_info": true,
+      "element_schema": {
+        "type": "DivBlock",
+        "set_style": { "style_names": ["iq-apparel-row", "iq-artwork-row"] },
+        "set_attributes": { "attributes": [{ "name": "id", "value": "iq-artwork-row" }] },
+        "children": [
+          {
+            "type": "DivBlock",
+            "set_style": { "style_names": ["iq-apparel-label-box"] },
+            "children": [
+              { "type": "Paragraph", "set_style": { "style_names": ["iq-apparel-label-title"] }, "set_text": { "text": "Artwork Files" } },
+              { "type": "DivBlock", "set_style": { "style_names": ["iq-artwork-label-fill"] } }
+            ]
+          },
+          {
+            "type": "DivBlock",
+            "set_style": { "style_names": ["iq-artwork-panel"] },
+            "children": [
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-form-upload"] },
+                "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-artwork-drop" }] },
+                "children": [
+                  { "type": "Paragraph", "set_style": { "style_names": ["iq-form-upload-title"] }, "set_text": { "text": "Drag & drop vector or high-res files here" } },
+                  { "type": "Paragraph", "set_style": { "style_names": ["iq-form-upload-hint"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-upload-hint" }] }, "set_text": { "text": "Accepted: .AI, .EPS, .PDF, .SVG, .PNG, .JPG, .TIFF, .PSD" } },
+                  { "type": "Button", "set_style": { "style_names": ["iq-form-upload-browse"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-artwork-browse" }, { "name": "type", "value": "button" }] }, "set_text": { "text": "Browse files" } }
+                ]
+              },
+              { "type": "Button", "set_style": { "style_names": ["iq-artwork-info-link"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-artwork-info-trigger" }, { "name": "type", "value": "button" }, { "name": "aria-haspopup", "value": "dialog" }, { "name": "aria-controls", "value": "iq-artwork-modal" }] }, "set_text": { "text": "How does artwork pricing work?" } }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "build_label": "order-section",
+      "parent_element_id": { "component": "6a59f0368e92a3bd60940ad9", "element": "621e5ca4-cdb0-8555-1af8-312ce2a2fed0" },
+      "creation_position": "after",
+      "return_element_info": true,
+      "element_schema": {
+        "type": "Section",
+        "set_style": { "style_names": ["iq-order-section"] },
+        "set_attributes": { "attributes": [{ "name": "id", "value": "iq-order-section" }] },
+        "children": [
+          { "type": "Heading", "set_style": { "style_names": ["iq-order-heading"] }, "set_heading_level": { "heading_level": 2 }, "set_text": { "text": "Lock In Your Quote & Start Your Project" } },
+          { "type": "Paragraph", "set_style": { "style_names": ["iq-order-lead"] }, "set_text": { "text": "Your calculator settings travel with this brief—no re-entering numbers. We'll confirm artwork, timeline, and final pricing before production starts." } },
+          {
+            "type": "Form",
+            "set_style": { "style_names": ["iq-form"] },
+            "set_attributes": { "attributes": [{ "name": "id", "value": "iq-order-form" }, { "name": "novalidate", "value": "novalidate" }] },
+            "children": [
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-form-quote-hidden"] },
+                "set_attributes": { "attributes": [{ "name": "aria-hidden", "value": "true" }] },
+                "children": [
+                  { "type": "DOM", "set_dom_config": { "dom_tag": "input" }, "set_attributes": { "attributes": [{ "name": "type", "value": "hidden" }, { "name": "id", "value": "iq-form-quote-quantity" }, { "name": "name", "value": "quoteQuantity" }] } },
+                  { "type": "DOM", "set_dom_config": { "dom_tag": "input" }, "set_attributes": { "attributes": [{ "name": "type", "value": "hidden" }, { "name": "id", "value": "iq-form-quote-styles" }, { "name": "name", "value": "quoteStyles" }] } },
+                  { "type": "DOM", "set_dom_config": { "dom_tag": "input" }, "set_attributes": { "attributes": [{ "name": "type", "value": "hidden" }, { "name": "id", "value": "iq-form-quote-quality" }, { "name": "name", "value": "quoteQuality" }] } },
+                  { "type": "DOM", "set_dom_config": { "dom_tag": "input" }, "set_attributes": { "attributes": [{ "name": "type", "value": "hidden" }, { "name": "id", "value": "iq-form-quote-ink" }, { "name": "name", "value": "quoteInkColors" }] } },
+                  { "type": "DOM", "set_dom_config": { "dom_tag": "input" }, "set_attributes": { "attributes": [{ "name": "type", "value": "hidden" }, { "name": "id", "value": "iq-form-quote-locations" }, { "name": "name", "value": "quotePrintLocations" }] } },
+                  { "type": "DOM", "set_dom_config": { "dom_tag": "input" }, "set_attributes": { "attributes": [{ "name": "type", "value": "hidden" }, { "name": "id", "value": "iq-form-quote-total" }, { "name": "name", "value": "quoteTotalEstimate" }] } },
+                  { "type": "DOM", "set_dom_config": { "dom_tag": "input" }, "set_attributes": { "attributes": [{ "name": "type", "value": "hidden" }, { "name": "id", "value": "iq-form-hidden-payload" }, { "name": "name", "value": "quotePayload" }] } }
+                ]
+              },
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-form-fieldset"] },
+                "children": [
+                  { "type": "Paragraph", "set_style": { "style_names": ["iq-form-legend"] }, "set_text": { "text": "Contact Info" } },
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-form-grid", "iq-form-grid--2"] },
+                    "children": [
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-form-field"] },
+                        "children": [
+                          { "type": "Paragraph", "set_style": { "style_names": ["iq-form-label"] }, "set_text": { "text": "Full Name *" } },
+                          { "type": "FormTextInput", "set_style": { "style_names": ["iq-form-input"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-full-name" }, { "name": "name", "value": "fullName" }, { "name": "autocomplete", "value": "name" }, { "name": "required", "value": "required" }] } }
+                        ]
+                      },
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-form-field"] },
+                        "children": [
+                          { "type": "Paragraph", "set_style": { "style_names": ["iq-form-label"] }, "set_text": { "text": "Company Name" } },
+                          { "type": "FormTextInput", "set_style": { "style_names": ["iq-form-input"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-company" }, { "name": "name", "value": "companyName" }, { "name": "autocomplete", "value": "organization" }] } }
+                        ]
+                      },
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-form-field"] },
+                        "children": [
+                          { "type": "Paragraph", "set_style": { "style_names": ["iq-form-label"] }, "set_text": { "text": "Email Address *" } },
+                          { "type": "FormTextInput", "set_style": { "style_names": ["iq-form-input"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-email" }, { "name": "name", "value": "email" }, { "name": "type", "value": "email" }, { "name": "autocomplete", "value": "email" }, { "name": "required", "value": "required" }] } }
+                        ]
+                      },
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-form-field"] },
+                        "children": [
+                          { "type": "Paragraph", "set_style": { "style_names": ["iq-form-label"] }, "set_text": { "text": "Phone Number" } },
+                          { "type": "FormTextInput", "set_style": { "style_names": ["iq-form-input"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-phone" }, { "name": "name", "value": "phone" }, { "name": "type", "value": "tel" }, { "name": "autocomplete", "value": "tel" }] } }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-form-fieldset"] },
+                "children": [
+                  { "type": "Paragraph", "set_style": { "style_names": ["iq-form-legend"] }, "set_text": { "text": "Project Notes" } },
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-form-field"] },
+                    "children": [
+                      { "type": "Paragraph", "set_style": { "style_names": ["iq-form-label"] }, "set_text": { "text": "Deadlines, sizing, color calls, or creative direction" } },
+                      { "type": "FormTextarea", "set_style": { "style_names": ["iq-form-textarea"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-notes" }, { "name": "name", "value": "projectNotes" }, { "name": "rows", "value": "5" }, { "name": "placeholder", "value": "Example: Need delivery by March 15. Mix of M/L/XL. PMS 186 red on front chest only." }] } }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "FormFileUploadWrapper",
+                "set_style": { "style_names": ["iq-form-file-hidden"] },
+                "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-artwork-file" }, { "name": "name", "value": "artworkFiles" }, { "name": "multiple", "value": "multiple" }, { "name": "accept", "value": ".ai,.eps,.pdf,.svg,.png,.jpg,.jpeg,.tiff,.tif,.psd" }] }
+              },
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-form-actions"] },
+                "children": [
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["ltf-btn-gradient-wrap", "iq-form-cta-wrap"] },
+                    "children": [
+                      { "type": "FormButton", "set_style": { "style_names": ["ltf-btn-primary", "is-hero-cta", "iq-form-submit"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-submit" }] }, "set_text": { "text": "Submit Project Brief" } }
+                    ]
+                  },
+                  { "type": "Paragraph", "set_style": { "style_names": ["iq-form-status"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-form-status" }, { "name": "role", "value": "status" }, { "name": "aria-live", "value": "polite" }] } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "build_label": "pricing-breakdown",
+      "parent_element_id": { "component": "6a59f0368e92a3bd60940ad9", "element": "621e5ca4-cdb0-8555-1af8-312ce2a2fed0" },
+      "creation_position": "after",
+      "return_element_info": true,
+      "element_schema": {
+        "type": "Section",
+        "set_style": { "style_names": ["iq-breakdown"] },
+        "set_attributes": { "attributes": [{ "name": "id", "value": "iq-pricing-breakdown" }, { "name": "aria-label", "value": "How print pricing works" }] },
+        "children": [
+          {
+            "type": "DivBlock",
+            "set_style": { "style_names": ["iq-breakdown-col"] },
+            "children": [
+              { "type": "Heading", "set_style": { "style_names": ["iq-breakdown-heading"] }, "set_heading_level": { "heading_level": 3 }, "set_text": { "text": "The Screen Factor" } },
+              { "type": "Paragraph", "set_style": { "style_names": ["iq-breakdown-copy"] }, "set_text": { "text": "Every ink color in your design requires its own physical screen setup before a single shirt hits the press. More colors mean more screens, more labor, and more setup time. Keeping your palette tight—especially on smaller runs—is one of the fastest ways to protect your per-unit cost." } }
+            ]
+          },
+          {
+            "type": "DivBlock",
+            "set_style": { "style_names": ["iq-breakdown-col"] },
+            "children": [
+              { "type": "Heading", "set_style": { "style_names": ["iq-breakdown-heading"] }, "set_heading_level": { "heading_level": 3 }, "set_text": { "text": "The Power of Volume" } },
+              { "type": "Paragraph", "set_style": { "style_names": ["iq-breakdown-copy"] }, "set_text": { "text": "Fifty pieces is our starting line because screen printing is a volume game. At one hundred and two hundred fifty pieces, automated press efficiencies kick in hard: setup is amortized across more units, ink and handling costs drop, and your per-shirt price falls dramatically. The calculator above reflects those real production breakpoints." } }
+            ]
+          },
+          {
+            "type": "DivBlock",
+            "set_style": { "style_names": ["iq-breakdown-col"] },
+            "children": [
+              { "type": "Heading", "set_style": { "style_names": ["iq-breakdown-heading"] }, "set_heading_level": { "heading_level": 3 }, "set_text": { "text": "Premium Blanks" } },
+              { "type": "Paragraph", "set_style": { "style_names": ["iq-breakdown-copy"] }, "set_text": { "text": "We print on heavyweight, retail-grade garments—think Gildan Hammer and Hanes W120—because durability and hand-feel matter more than shaving pennies off cheap, thin cotton. Your brand lives on the body. We build orders to outlast the event, the season, and the wash cycle." } }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

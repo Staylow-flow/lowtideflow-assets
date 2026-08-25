@@ -1,0 +1,12 @@
+{
+  "ltf": {
+    "url": "https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@98cfa65/js/ltf.js",
+    "sri": "sha384-w3FId2iCNm+FKLz06TJgShVIYp1ePgaIzd2gG0CB/1LTL3oGoV5we/YqsrttXVZd",
+    "bytes": 1387
+  },
+  "rock": {
+    "url": "https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@98cfa65/js/hero/rock-scene.js",
+    "sri": "sha384-bccJIu1j5GbZrmMnOJJ9Ad9cH7Nlw0ySlbItPe8WCmxwl3G3QvbmRD/Se5xH4Ju9",
+    "bytes": 63181
+  }
+}

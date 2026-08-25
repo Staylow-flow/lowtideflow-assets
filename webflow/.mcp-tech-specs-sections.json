@@ -1,0 +1,682 @@
+{
+  "hero": {
+    "type": "Section",
+    "set_style": {
+      "style_names": [
+        "ltf-section",
+        "is-page-hero"
+      ]
+    },
+    "children": [
+      {
+        "type": "DivBlock",
+        "set_style": {
+          "style_names": [
+            "ltf-site-cage"
+          ]
+        },
+        "children": [
+          {
+            "type": "DivBlock",
+            "set_style": {
+              "style_names": [
+                "ltf-stack",
+                "is-measure"
+              ]
+            },
+            "children": [
+              {
+                "type": "Paragraph",
+                "set_style": {
+                  "style_names": [
+                    "ltf-label-teal"
+                  ]
+                },
+                "set_text": {
+                  "text": "LTF · TECH SPECS"
+                }
+              },
+              {
+                "type": "Heading",
+                "set_heading_level": {
+                  "heading_level": 1
+                },
+                "set_style": {
+                  "style_names": [
+                    "ltf-main-header",
+                    "is-page"
+                  ]
+                },
+                "set_text": {
+                  "text": "Tech Specs"
+                }
+              },
+              {
+                "type": "Paragraph",
+                "set_style": {
+                  "style_names": [
+                    "ltf-meta"
+                  ]
+                },
+                "set_text": {
+                  "text": "Garment Frameworks · Print Canvas · Color Science"
+                }
+              },
+              {
+                "type": "Paragraph",
+                "set_style": {
+                  "style_names": [
+                    "ltf-body-text"
+                  ]
+                },
+                "set_text": {
+                  "text": "The blanks we run, where artwork lands on the garment, and how ink and fabric contrast get locked for every fleet print."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "s01": {
+    "type": "Section",
+    "set_style": {
+      "style_names": [
+        "ltf-section",
+        "is-page"
+      ]
+    },
+    "children": [
+      {
+        "type": "DivBlock",
+        "set_style": {
+          "style_names": [
+            "ltf-site-cage"
+          ]
+        },
+        "children": [
+          {
+            "type": "DivBlock",
+            "set_style": {
+              "style_names": [
+                "ltf-stack",
+                "is-measure"
+              ]
+            },
+            "children": [
+              {
+                "type": "Paragraph",
+                "set_style": {
+                  "style_names": [
+                    "ltf-label-teal"
+                  ]
+                },
+                "set_text": {
+                  "text": "01 / GARMENT FRAMEWORKS"
+                }
+              },
+              {
+                "type": "Heading",
+                "set_heading_level": {
+                  "heading_level": 2
+                },
+                "set_style": {
+                  "style_names": [
+                    "ltf-section-header"
+                  ]
+                },
+                "set_text": {
+                  "text": "Heavyweight Apparel & Curated Blanks"
+                }
+              },
+              {
+                "type": "Paragraph",
+                "set_style": {
+                  "style_names": [
+                    "ltf-meta"
+                  ]
+                },
+                "set_text": {
+                  "text": "High-Standard Fleet Gear · Premium Tailored Cuts"
+                }
+              },
+              {
+                "type": "Paragraph",
+                "set_style": {
+                  "style_names": [
+                    "ltf-body-text"
+                  ]
+                },
+                "set_text": {
+                  "text": "We prioritize heavyweight tees so your crew can work hard and the gear stands up to real-world abuse. Our styles hit the exact balance between heavy-duty durability and clean visual cuts your team will actually want to wear off the clock. We know the top garment profiles inside and out — let us suggest the right base for your job, or we will source your specific brand request to spec."
+                }
+              },
+              {
+                "type": "DivBlock",
+                "set_style": {
+                  "style_names": [
+                    "ltf-list"
+                  ]
+                },
+                "children": [
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list-item",
+                        "is-stage"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Heavy-Duty Fleet Tees"
+                    }
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list",
+                        "is-nested"
+                      ]
+                    },
+                    "children": [
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Gildan Hammer Tee (H000): 6.0 oz · High-Standard Heavyweight. Solid industrial baseline built for high-volume durability and daily workwear."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Gildan Hammer Maxweight (75000): 7.0 oz · High-Standard Maxweight. Ultra-dense cotton structure providing maximum fabric weight and structural shape retention."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Hanes Beefy-T: 6.1 oz · High-Standard Classic. Time-tested ring-spun heavy cotton with a roomier classic fit."
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list-item",
+                        "is-stage"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Premium & Styled Tees"
+                    }
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list",
+                        "is-nested"
+                      ]
+                    },
+                    "children": [
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "AS Color 5001: 5.3 oz · Premium-Standard. Ultra-soft, combed cotton with a refined modern drape for elevated lifestyle lines and retail products."
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list-item",
+                        "is-stage"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Heavy Fleece & Hoodies"
+                    }
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list",
+                        "is-nested"
+                      ]
+                    },
+                    "children": [
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Gildan Heavy Blend (18500): 8.0 oz · Mid-Weight Standard. Reliable everyday fleece layer for versatile company deployments."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Independent Trading Co. (IND5000P): 13.5 oz · Heavy Premium. Overbuilt, ultra-heavyweight fleece with dense loopback structure, metal eyelets, and premium hand-feel."
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list-item",
+                        "is-stage"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Structured Headwear"
+                    }
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list",
+                        "is-nested"
+                      ]
+                    },
+                    "children": [
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Custom Embroidered Hats: Custom 5-panel, 6-panel, and dad hat silhouettes featuring high-density 3D puff or flat embroidery."
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "DivBlock",
+            "set_style": {
+              "style_names": [
+                "ltf-matrix-asset"
+              ]
+            },
+            "children": [
+              {
+                "type": "DivBlock",
+                "set_style": {
+                  "style_names": [
+                    "ltf-photo-ph",
+                    "is-wide"
+                  ]
+                },
+                "set_text": {
+                  "text": "16:9 · Blank Rack"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "s02": {
+    "type": "Section",
+    "set_style": {
+      "style_names": [
+        "ltf-section",
+        "is-page"
+      ]
+    },
+    "children": [
+      {
+        "type": "DivBlock",
+        "set_style": {
+          "style_names": [
+            "ltf-site-cage"
+          ]
+        },
+        "children": [
+          {
+            "type": "DivBlock",
+            "set_style": {
+              "style_names": [
+                "ltf-split-2"
+              ]
+            },
+            "children": [
+              {
+                "type": "DivBlock",
+                "set_style": {
+                  "style_names": [
+                    "ltf-stack",
+                    "ltf-split-copy"
+                  ]
+                },
+                "children": [
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-label-teal"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "02 / PRINT PLACEMENTS & CANVAS MAPPING"
+                    }
+                  },
+                  {
+                    "type": "Heading",
+                    "set_heading_level": {
+                      "heading_level": 2
+                    },
+                    "set_style": {
+                      "style_names": [
+                        "ltf-section-header"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Print Locations & Layout Options"
+                    }
+                  },
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-meta"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Standard Placements · Custom Sleeve & Chest Hits"
+                    }
+                  },
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-body-text"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Every garment has optimal print zones. We map artwork to match the physical drape of the fabric so your graphics stay crisp and visible under motion."
+                    }
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list"
+                      ]
+                    },
+                    "children": [
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Standard Large Back Print: The primary visual anchor. Ideal for bold company branding, full-scale artwork, or fleet identification."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Left / Right Pocket & Chest Hit: Subtle, clean branding placed over the left chest or directly on pocket seams."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Full Chest Coverage: Wide-format front placement for high-impact visual statements."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Sleeve Prints (Left / Right): Additional brand hits running down the forearm or capped on the shoulder seam."
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "DivBlock",
+                "set_style": {
+                  "style_names": [
+                    "ltf-matrix-asset"
+                  ]
+                },
+                "children": [
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-photo-ph"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "4:5 · Placement Map"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "s03": {
+    "type": "Section",
+    "set_style": {
+      "style_names": [
+        "ltf-section",
+        "is-page"
+      ]
+    },
+    "children": [
+      {
+        "type": "DivBlock",
+        "set_style": {
+          "style_names": [
+            "ltf-site-cage"
+          ]
+        },
+        "children": [
+          {
+            "type": "DivBlock",
+            "set_style": {
+              "style_names": [
+                "ltf-split-2",
+                "is-reversed"
+              ]
+            },
+            "children": [
+              {
+                "type": "DivBlock",
+                "set_style": {
+                  "style_names": [
+                    "ltf-stack",
+                    "ltf-split-copy",
+                    "is-ltr"
+                  ]
+                },
+                "children": [
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-label-teal"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "03 / COLOR SCIENCE & INK MECHANICS"
+                    }
+                  },
+                  {
+                    "type": "Heading",
+                    "set_heading_level": {
+                      "heading_level": 2
+                    },
+                    "set_style": {
+                      "style_names": [
+                        "ltf-section-header"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Color Matching & Fabric Contrast"
+                    }
+                  },
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-meta"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "PMS Pantone System · Expert Layout Guidance"
+                    }
+                  },
+                  {
+                    "type": "Paragraph",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-body-text"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "Great printing requires strict control over ink-to-fabric contrast. We evaluate your logo, brand guidelines, and visual vision to recommend the exact ink formulations and base layers needed for maximum pop."
+                    }
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-list"
+                      ]
+                    },
+                    "children": [
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Pantone Matching System (PMS): We utilize solid Pantone Solid Coated numbers to guarantee exact color recreation for established brand guidelines."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "In-House Color Selection: If you do not have exact PMS codes, our team uses a trained eye to select complementary ink shades that pop cleanly off dark or heathered fabrics."
+                        }
+                      },
+                      {
+                        "type": "Paragraph",
+                        "set_style": {
+                          "style_names": [
+                            "ltf-list-item"
+                          ]
+                        },
+                        "set_text": {
+                          "text": "Underbase Chemistry: High-opacity white underbases are applied beneath colored inks on dark garments to prevent fabric bleed and keep colors bright after repeated washes."
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "DivBlock",
+                "set_style": {
+                  "style_names": [
+                    "ltf-matrix-asset",
+                    "is-ltr"
+                  ]
+                },
+                "children": [
+                  {
+                    "type": "DivBlock",
+                    "set_style": {
+                      "style_names": [
+                        "ltf-photo-ph"
+                      ]
+                    },
+                    "set_text": {
+                      "text": "4:5 · Ink Bench"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

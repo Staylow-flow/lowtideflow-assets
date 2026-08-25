@@ -1,0 +1,22 @@
+<!-- Paste in Designer: iq-apparel-section, AFTER #split-row-wrapper -->
+<div class="iq-artwork-row iq-apparel-row" id="iq-artwork-row">
+  <div class="iq-apparel-label-box iq-artwork-label-box">
+    <p class="iq-apparel-label-title">Artwork Files</p>
+    <div class="iq-artwork-label-fill" aria-hidden="true"></div>
+  </div>
+  <div class="iq-artwork-panel">
+    <div class="iq-form-upload" id="iq-form-artwork-drop">
+      <input class="iq-form-upload-input" type="file" id="iq-form-artwork-file" name="artworkFiles" accept=".ai,.eps,.pdf,.svg,.png,.jpg,.jpeg,.tif,.tiff,.psd" multiple aria-describedby="iq-form-upload-hint">
+      <div class="iq-form-upload-inner">
+        <p class="iq-form-upload-title">Drag &amp; drop vector or high-res files here</p>
+        <p class="iq-form-upload-hint" id="iq-form-upload-hint">Accepted: .AI, .EPS, .PDF, .SVG, .PNG, .JPG, .TIFF, .PSD</p>
+        <button type="button" class="iq-form-upload-btn" id="iq-form-artwork-browse">Browse Files</button>
+        <ul class="iq-form-upload-list" id="iq-form-artwork-list" hidden></ul>
+      </div>
+    </div>
+    <button type="button" class="iq-artwork-info-link" id="iq-artwork-info-trigger" aria-haspopup="dialog" aria-controls="iq-artwork-modal">
+      <span class="iq-artwork-info-icon" aria-hidden="true">i</span>
+      How does artwork pricing work?
+    </button>
+  </div>
+</div>

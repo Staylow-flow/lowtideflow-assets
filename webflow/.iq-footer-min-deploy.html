@@ -1,0 +1,860 @@
+<script>(function (global) {
+'use strict';
+global.IQ = global.IQ || {};
+global.IQ.PRICING_DATA = {
+version: '1.0.0',
+garmentPrices: {
+tshirt: { hq: 5.0, premium: 10.0 },
+longsleeve: { hq: 10.0, premium: 15.0 },
+polo: { hq: 15.0, premium: 22.0 },
+crewneck: { hq: 15.0, premium: 22.0 },
+hoodie: { hq: 20.0, premium: 30.0 },
+windbreaker: { hq: 30.0, premium: 42.0 },
+hat: { hq: 10.0, premium: 15.0 }
+},
+printMatrix: [
+{ maxQty: 99, loc1Base: 6.25, locOtherBase: 2.5, extraInk: 1.25 },
+{ maxQty: 149, loc1Base: 5.3, locOtherBase: 2.2, extraInk: 1.05 },
+{ maxQty: 199, loc1Base: 4.7, locOtherBase: 1.9, extraInk: 0.95 },
+{ maxQty: 249, loc1Base: 4.05, locOtherBase: 1.7, extraInk: 0.8 },
+{ maxQty: 449, loc1Base: 3.45, locOtherBase: 1.5, extraInk: 0.7 },
+{ maxQty: 999, loc1Base: 2.5, locOtherBase: 1.25, extraInk: 0.5 }
+],
+screenSetupFeePerScreen: 25.0,
+agencyMarkupMultiplier: 1.25,
+customArtFee: 250.0
+};
+})(typeof window !== 'undefined' ? window : globalThis);
+(function (global) {
+'use strict';
+global.IQ = global.IQ || {};
+var STYLE_TO_GARMENT = {
+tshirts: 'tshirt',
+longsleeves: 'longsleeve',
+polos: 'polo',
+crewnecks: 'crewneck',
+hoodies: 'hoodie',
+windbreakers: 'windbreaker',
+hats: 'hat',
+quarterzips: 'polo'
+};
+var STYLE_KEYS = Object.keys(STYLE_TO_GARMENT);
+function parseStyleKey(inputId) {
+if (!inputId) return 'tshirts';
+var match = inputId.match(/iq-style-r\d-(.+)$/);
+return match && STYLE_KEYS.indexOf(match[1]) >= 0 ? match[1] : 'tshirts';
+}
+function readSliderValue(id, fallback) {
+var slider = document.getElementById(id);
+if (!slider) return fallback;
+return parseFloat(slider.value);
+}
+function readQuality() {
+var active = document.querySelector('.iq-toggle-track .iq-toggle-btn.is-active');
+if (!active) return 'premium';
+var label = (active.textContent || '').toLowerCase();
+return label.indexOf('high') >= 0 ? 'hq' : 'premium';
+}
+function readSelectedStyle(row) {
+var selected = document.querySelector('input[name="style-row-' + row + '"]:checked');
+return parseStyleKey(selected && selected.id);
+}
+function readSplit() {
+var toggle = document.getElementById('iq-split-toggle');
+return !!(toggle && toggle.checked);
+}
+function readCustomArt() {
+var toggle = document.getElementById('iq-custom-art-toggle');
+return !!(toggle && toggle.checked);
+}
+function getState() {
+return {
+quality: readQuality(),
+inkColors: readSliderValue('iq-slider-ink-colors', 4),
+printLocations: readSliderValue('iq-slider-print-locations', 4),
+quantity: readSliderValue('iq-slider-final-quantity', 500),
+split: readSplit(),
+customArt: readCustomArt(),
+styleRow1: readSelectedStyle(1),
+styleRow2: readSelectedStyle(2)
+};
+}
+function roundMoney(value) {
+return Math.round(value * 100) / 100;
+}
+function getPrintBracket(totalQty, printMatrix) {
+for (var i = 0; i < printMatrix.length; i += 1) {
+if (totalQty <= printMatrix[i].maxQty) return printMatrix[i];
+}
+return printMatrix[printMatrix.length - 1];
+}
+function garmentCost(styleDomKey, qualityTier, data) {
+var garmentKey = STYLE_TO_GARMENT[styleDomKey] || 'tshirt';
+var row = data.garmentPrices[garmentKey];
+if (!row) return 0;
+return row[qualityTier] != null ? row[qualityTier] : row.premium;
+}
+function sharedPrintEconomics(state, data) {
+var bracket = getPrintBracket(state.quantity, data.printMatrix);
+var inkColors = state.inkColors;
+var printLocations = state.printLocations;
+var totalScreens = inkColors + (printLocations - 1);
+var totalSetupCost = totalScreens * data.screenSetupFeePerScreen;
+var loc1Cost = bracket.loc1Base + (inkColors - 1) * bracket.extraInk;
+var otherLocsCost = (printLocations - 1) * bracket.locOtherBase;
+var printRunCogs = loc1Cost + otherLocsCost;
+var screenFeePerUnit = totalSetupCost / state.quantity;
+return {
+bracket: bracket,
+totalScreens: totalScreens,
+totalSetupCost: totalSetupCost,
+printRunCogs: printRunCogs,
+screenFeePerUnit: screenFeePerUnit
+};
+}
+function finalUnitPrice(styleDomKey, qualityTier, economics, data) {
+var garment = garmentCost(styleDomKey, qualityTier, data);
+var markedUpProduction =
+(garment + economics.printRunCogs) * data.agencyMarkupMultiplier;
+return markedUpProduction + economics.screenFeePerUnit;
+}
+function calculateQuote(state, data) {
+var qty1 = state.split ? state.quantity / 2 : state.quantity;
+var qty2 = state.split ? state.quantity / 2 : 0;
+var economics = sharedPrintEconomics(state, data);
+var rawUnit1 = finalUnitPrice(state.styleRow1, state.quality, economics, data);
+var unit1 = roundMoney(rawUnit1);
+var rawUnit2 = null;
+var unit2 = null;
+if (state.split) {
+rawUnit2 = finalUnitPrice(state.styleRow2, state.quality, economics, data);
+unit2 = roundMoney(rawUnit2);
+}
+var baseTotal = state.split
+? unit1 * qty1 + unit2 * qty2
+: unit1 * state.quantity;
+if (state.customArt) {
+baseTotal += data.customArtFee;
+}
+return {
+unit1: unit1,
+unit2: unit2,
+total: roundMoney(baseTotal),
+qty1: qty1,
+qty2: qty2,
+economics: economics
+};
+}
+function formatMoney(value) {
+return (
+'$' +
+value.toLocaleString('en-US', {
+minimumFractionDigits: 2,
+maximumFractionDigits: 2
+})
+);
+}
+function setText(id, text) {
+var node = document.getElementById(id);
+if (node) node.textContent = text;
+}
+function applyQuote(result) {
+setText('iq-price-unit-1', formatMoney(result.unit1));
+if (result.unit2 != null) {
+setText('iq-price-unit-2', formatMoney(result.unit2));
+}
+setText('iq-total-price', formatMoney(result.total));
+if (typeof global.IQ.syncQuoteForm === 'function') {
+global.IQ.syncQuoteForm();
+}
+if (typeof global.dispatchEvent === 'function') {
+global.dispatchEvent(new CustomEvent('iq:quote-updated', { detail: result }));
+}
+}
+function recalculate() {
+var data = global.IQ.PRICING_DATA;
+if (!data) return null;
+var state = getState();
+var result = calculateQuote(state, data);
+applyQuote(result);
+return { state: state, result: result };
+}
+global.IQ.getState = getState;
+global.IQ.calculateQuote = calculateQuote;
+global.IQ.applyQuote = applyQuote;
+global.IQ.recalculate = recalculate;
+global.IQ.formatMoney = formatMoney;
+})(typeof window !== 'undefined' ? window : globalThis);
+(function (global) {
+'use strict';
+global.IQ = global.IQ || {};
+global.IQ.FORM_CONFIG = {
+webhookUrl:
+'https://script.google.com/macros/s/AKfycbz5MT-0KMpiJy19I4dgpMe8Vji-hp6MAaq7HobkZQSLxlBkxVOHwR2BYHApGX7F3og/exec',
+minSubmitMs: 2500,
+successMessage:
+'Project brief received. We will review your quote configuration and reach out shortly.',
+loadingText: 'Submitting…'
+};
+var STYLE_LABELS = {
+tshirts: 'T-Shirts',
+longsleeves: 'Long Sleeves',
+polos: 'Polos',
+crewnecks: 'Crew Necks',
+hoodies: 'Hoodies',
+windbreakers: 'Wind Breakers',
+hats: 'Hats',
+quarterzips: '1/4 Zips'
+};
+var EMAIL_TYPOS = {
+'gmial.com': 'gmail.com',
+'gmal.com': 'gmail.com',
+'gamil.com': 'gmail.com',
+'hotmial.com': 'hotmail.com',
+'hotmal.com': 'hotmail.com',
+'yaho.com': 'yahoo.com',
+'yahooo.com': 'yahoo.com',
+'outlok.com': 'outlook.com',
+'outllok.com': 'outlook.com'
+};
+var pageLoadedAt = Date.now();
+function styleLabel(key) {
+return STYLE_LABELS[key] || key;
+}
+function qualityLabel(tier) {
+return tier === 'hq' ? 'High-Quality' : 'Premium-Quality';
+}
+function setHidden(id, value) {
+var node = document.getElementById(id);
+if (node) node.value = value;
+}
+function val(id) {
+var node = document.getElementById(id);
+return node ? String(node.value || '').trim() : '';
+}
+function getQuoteSnapshot() {
+if (!global.IQ.getState || !global.IQ.calculateQuote || !global.IQ.PRICING_DATA) {
+return null;
+}
+var state = global.IQ.getState();
+var result = global.IQ.calculateQuote(state, global.IQ.PRICING_DATA);
+return { state: state, result: result };
+}
+function buildStylesSummary(state) {
+if (state.split) {
+return (
+styleLabel(state.styleRow1) +
+' + ' +
+styleLabel(state.styleRow2) +
+' (50/50 Split)'
+);
+}
+return styleLabel(state.styleRow1);
+}
+function readArtworkFileNames() {
+var input = document.getElementById('iq-form-artwork-file');
+if (!input || !input.files) return [];
+return Array.prototype.map.call(input.files, function (file) {
+return file.name;
+});
+}
+function buildSheetPayload(state, result) {
+var splitQty = state.split ? Math.round(state.quantity / 2) : '';
+var quotedEstimate =
+result && result.total != null
+? result.total
+: '';
+return {
+client_name: val('iq-form-full-name'),
+company_name: val('iq-form-company'),
+email: val('iq-form-email'),
+phone: val('iq-form-phone'),
+quoted_estimate: quotedEstimate,
+project_notes: val('iq-form-notes'),
+apparel_style: styleLabel(state.styleRow1) + ' · ' + qualityLabel(state.quality),
+ink_colors: state.inkColors,
+print_locations: state.printLocations,
+final_quantity: state.quantity,
+split_apparel_style: state.split ? styleLabel(state.styleRow2) : '',
+split_ink_colors: state.split ? state.inkColors : '',
+split_print_locations: state.split ? state.printLocations : '',
+split_final_quantity: splitQty,
+art_url: '',
+art_file_names: readArtworkFileNames(),
+timeline: '',
+quality: qualityLabel(state.quality),
+unit_price_1: result.unit1,
+unit_price_2: result.unit2,
+total_estimate: result.total,
+custom_art: !!state.customArt,
+submitted_at: new Date().toISOString()
+};
+}
+function buildQuotePayload(state, result) {
+return {
+submittedAt: new Date().toISOString(),
+contact: {
+fullName: val('iq-form-full-name'),
+companyName: val('iq-form-company'),
+email: val('iq-form-email'),
+phone: val('iq-form-phone')
+},
+quote: {
+quality: qualityLabel(state.quality),
+inkColors: state.inkColors,
+printLocations: state.printLocations,
+quantity: state.quantity,
+split: state.split,
+styleRow1: styleLabel(state.styleRow1),
+styleRow2: state.split ? styleLabel(state.styleRow2) : null,
+unitPrice1: result.unit1,
+unitPrice2: result.unit2,
+totalEstimate: result.total,
+customArt: state.customArt
+},
+projectNotes: val('iq-form-notes'),
+artworkFileNames: readArtworkFileNames(),
+sheet: buildSheetPayload(state, result)
+};
+}
+function syncQuoteFields() {
+var snapshot = getQuoteSnapshot();
+if (!snapshot) return;
+var state = snapshot.state;
+var result = snapshot.result;
+var format = global.IQ.formatMoney || function (v) {
+return '$' + v;
+};
+setHidden('iq-form-quote-quantity', String(state.quantity));
+setHidden('iq-form-quote-styles', buildStylesSummary(state));
+setHidden('iq-form-quote-quality', qualityLabel(state.quality));
+setHidden('iq-form-quote-ink', String(state.inkColors));
+setHidden('iq-form-quote-locations', String(state.printLocations));
+setHidden('iq-form-quote-total', format(result.total));
+var hidden = document.getElementById('iq-form-hidden-payload');
+if (hidden) {
+hidden.value = JSON.stringify(buildQuotePayload(state, result));
+}
+}
+function formatFileSize(bytes) {
+if (bytes < 1024) return bytes + ' B';
+if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+function renderArtworkFileList() {
+var input = document.getElementById('iq-form-artwork-file');
+var list = document.getElementById('iq-form-artwork-list');
+if (!input || !list) return;
+if (!input.files || !input.files.length) {
+list.hidden = true;
+list.innerHTML = '';
+return;
+}
+list.hidden = false;
+list.innerHTML = '';
+Array.prototype.forEach.call(input.files, function (file) {
+var item = document.createElement('li');
+item.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+list.appendChild(item);
+});
+}
+function initArtworkUpload() {
+var drop = document.getElementById('iq-form-artwork-drop');
+var input = document.getElementById('iq-form-artwork-file');
+var browse = document.getElementById('iq-form-artwork-browse');
+if (!drop || !input) return;
+if (browse) {
+browse.addEventListener('click', function (event) {
+event.preventDefault();
+input.click();
+});
+}
+drop.addEventListener('click', function (event) {
+if (event.target === browse || (browse && browse.contains(event.target))) return;
+input.click();
+});
+input.addEventListener('change', renderArtworkFileList);
+['dragenter', 'dragover'].forEach(function (type) {
+drop.addEventListener(type, function (event) {
+event.preventDefault();
+drop.classList.add('is-dragover');
+});
+});
+['dragleave', 'drop'].forEach(function (type) {
+drop.addEventListener(type, function (event) {
+event.preventDefault();
+drop.classList.remove('is-dragover');
+});
+});
+drop.addEventListener('drop', function (event) {
+if (event.dataTransfer && event.dataTransfer.files) {
+input.files = event.dataTransfer.files;
+renderArtworkFileList();
+}
+});
+}
+function initFormCtaGradient() {
+document.querySelectorAll('.iq-form-cta-wrap, .iq-order-section .ltf-btn-gradient-wrap').forEach(function (wrap) {
+if (wrap.dataset.ltfGradientInit) return;
+wrap.dataset.ltfGradientInit = '1';
+wrap.addEventListener('click', function () {
+wrap.classList.add('ltf-btn-gradient-active');
+clearTimeout(wrap._ltfGradientTimer);
+wrap._ltfGradientTimer = setTimeout(function () {
+wrap.classList.remove('ltf-btn-gradient-active');
+}, 1400);
+});
+});
+}
+function initArtworkModal() {
+var modal = document.getElementById('iq-artwork-modal');
+var trigger = document.getElementById('iq-artwork-info-trigger');
+var closeBtn = document.getElementById('iq-artwork-modal-close');
+var backdrop = document.getElementById('iq-artwork-modal-backdrop');
+if (!modal || !trigger) return;
+function openModal() {
+modal.classList.add('is-open');
+modal.setAttribute('aria-hidden', 'false');
+if (closeBtn) closeBtn.focus();
+}
+function closeModal() {
+modal.classList.remove('is-open');
+modal.setAttribute('aria-hidden', 'true');
+trigger.focus();
+}
+trigger.addEventListener('click', function (event) {
+event.preventDefault();
+openModal();
+});
+if (closeBtn) closeBtn.addEventListener('click', closeModal);
+if (backdrop) backdrop.addEventListener('click', closeModal);
+document.addEventListener('keydown', function (event) {
+if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+closeModal();
+}
+});
+}
+function ensureHoneypot(form) {
+if (document.getElementById('suite-number')) return;
+var trap = document.createElement('input');
+trap.type = 'text';
+trap.name = 'suite-number';
+trap.id = 'suite-number';
+trap.autocomplete = 'off';
+trap.tabIndex = -1;
+trap.setAttribute('aria-hidden', 'true');
+trap.style.cssText =
+'position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;opacity:0;';
+form.appendChild(trap);
+}
+function digitsOnly(value) {
+return String(value || '').replace(/\D/g, '');
+}
+function formatPhone(digits) {
+var d = digits.slice(0, 10);
+if (d.length === 0) return '';
+if (d.length < 4) return '(' + d;
+if (d.length < 7) return '(' + d.slice(0, 3) + ') ' + d.slice(3);
+return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6);
+}
+function initPhoneFormatter() {
+var phone = document.getElementById('iq-form-phone');
+if (!phone) return;
+phone.setAttribute('inputmode', 'tel');
+phone.setAttribute('autocomplete', 'tel');
+phone.addEventListener('input', function () {
+var caretEnd = phone.selectionStart === phone.value.length;
+phone.value = formatPhone(digitsOnly(phone.value));
+if (caretEnd) {
+try {
+phone.setSelectionRange(phone.value.length, phone.value.length);
+} catch (e) {}
+}
+});
+}
+function suggestEmailFix(email) {
+var parts = String(email || '').split('@');
+if (parts.length !== 2) return null;
+var local = parts[0];
+var domain = parts[1].toLowerCase();
+var fixed = EMAIL_TYPOS[domain];
+if (!fixed) return null;
+return local + '@' + fixed;
+}
+function initEmailTypoCatcher() {
+var email = document.getElementById('iq-form-email');
+if (!email) return;
+var hint = document.getElementById('iq-email-typo-hint');
+if (!hint) {
+hint = document.createElement('button');
+hint.type = 'button';
+hint.id = 'iq-email-typo-hint';
+hint.hidden = true;
+hint.style.cssText =
+'display:block;margin:6px 0 0;padding:0;border:0;background:transparent;color:#f87171;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;text-decoration:underline;';
+email.insertAdjacentElement('afterend', hint);
+}
+function clearHint() {
+hint.hidden = true;
+hint.textContent = '';
+hint.onclick = null;
+}
+email.addEventListener('blur', function () {
+var suggestion = suggestEmailFix(email.value.trim());
+if (!suggestion) {
+clearHint();
+return;
+}
+hint.hidden = false;
+hint.textContent = 'Did you mean ' + suggestion + '? (Click to fix)';
+hint.onclick = function () {
+email.value = suggestion;
+clearHint();
+email.focus();
+};
+});
+email.addEventListener('input', clearHint);
+}
+function setRequiredAttrs() {
+['iq-form-full-name', 'iq-form-email', 'iq-form-phone'].forEach(function (id) {
+var node = document.getElementById(id);
+if (!node) return;
+node.required = true;
+node.setAttribute('required', 'required');
+});
+}
+function setFormStatus(message, type) {
+var status = document.getElementById('iq-form-status');
+if (!status) return;
+status.textContent = message;
+status.classList.remove('is-success', 'is-error');
+if (type) status.classList.add('is-' + type);
+}
+function getFormShell(form) {
+return form.closest('.w-form') || form.parentElement;
+}
+function showWebflowState(form, which) {
+var shell = getFormShell(form);
+if (!shell) return;
+var done = shell.querySelector('.w-form-done');
+var fail = shell.querySelector('.w-form-fail');
+if (done) done.style.display = which === 'done' ? 'block' : 'none';
+if (fail) fail.style.display = which === 'fail' ? 'block' : 'none';
+if (which === 'done' || which === 'fail') {
+form.style.display = 'none';
+}
+}
+function validateForm() {
+var name = val('iq-form-full-name');
+var email = val('iq-form-email');
+var phone = digitsOnly(val('iq-form-phone'));
+if (!name) return 'Please enter your full name.';
+if (!email || email.indexOf('@') < 1) return 'Please enter a valid email address.';
+if (phone.length < 10) return 'Please enter a valid 10-digit phone number.';
+return '';
+}
+function isBotSubmission(form) {
+var honeypot = document.getElementById('suite-number');
+if (honeypot && String(honeypot.value || '').trim()) return true;
+var minMs = (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.minSubmitMs) || 2500;
+if (Date.now() - pageLoadedAt < minMs) return true;
+return false;
+}
+function silentDrop(form, submitBtn, originalLabel) {
+if (submitBtn) {
+submitBtn.disabled = false;
+submitBtn.value = originalLabel;
+}
+showWebflowState(form, 'done');
+setFormStatus(
+(global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.successMessage) ||
+'Project brief received.',
+'success'
+);
+}
+function submitToWebhook(payload, files) {
+var config = global.IQ.FORM_CONFIG || {};
+if (!config.webhookUrl) return Promise.reject(new Error('Missing webhook'));
+var body = new FormData();
+body.append('payload', JSON.stringify(payload.sheet || payload));
+if (files) {
+Array.prototype.forEach.call(files, function (file, index) {
+body.append('artwork_' + index, file, file.name);
+});
+}
+return fetch(config.webhookUrl, {
+method: 'POST',
+body: body,
+redirect: 'follow'
+}).then(function (response) {
+if (!response.ok) throw new Error('Submit failed');
+return response.text().then(function (text) {
+try {
+return JSON.parse(text);
+} catch (e) {
+return { ok: true, raw: text };
+}
+});
+}).then(function (data) {
+if (data && data.ok === false) throw new Error(data.error || 'Submit failed');
+return data;
+});
+}
+function initOrderForm() {
+var form = document.getElementById('iq-order-form');
+if (!form) return;
+ensureHoneypot(form);
+setRequiredAttrs();
+initPhoneFormatter();
+initEmailTypoCatcher();
+form.setAttribute('novalidate', 'novalidate');
+form.addEventListener('submit', function (event) {
+event.preventDefault();
+event.stopPropagation();
+var submitBtn = document.getElementById('iq-form-submit');
+var originalLabel =
+(submitBtn && (submitBtn.value || submitBtn.textContent || '').trim()) ||
+'Submit Project Brief';
+var loadingText =
+(global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.loadingText) || 'Submitting…';
+if (isBotSubmission(form)) {
+silentDrop(form, submitBtn, originalLabel);
+return;
+}
+var error = validateForm();
+if (error) {
+setFormStatus(error, 'error');
+return;
+}
+syncQuoteFields();
+var snapshot = getQuoteSnapshot();
+if (!snapshot) {
+setFormStatus('Calculator is not ready. Refresh and try again.', 'error');
+return;
+}
+var payload = buildQuotePayload(snapshot.state, snapshot.result);
+var files = document.getElementById('iq-form-artwork-file');
+if (submitBtn) {
+submitBtn.disabled = true;
+if ('value' in submitBtn) submitBtn.value = loadingText;
+}
+setFormStatus('Submitting project brief…', '');
+submitToWebhook(payload, files && files.files)
+.then(function () {
+setFormStatus(
+(global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.successMessage) ||
+'Project brief received.',
+'success'
+);
+showWebflowState(form, 'done');
+form.reset();
+renderArtworkFileList();
+syncQuoteFields();
+global.dispatchEvent(
+new CustomEvent('iq:project-brief-submitted', { detail: payload })
+);
+})
+.catch(function () {
+if (submitBtn) {
+submitBtn.disabled = false;
+if ('value' in submitBtn) submitBtn.value = originalLabel;
+}
+setFormStatus('Something went wrong. Email us directly and we will help.', 'error');
+showWebflowState(form, 'fail');
+form.style.display = '';
+})
+.finally(function () {
+if (submitBtn && form.style.display !== 'none') {
+submitBtn.disabled = false;
+if ('value' in submitBtn) submitBtn.value = originalLabel;
+}
+});
+});
+}
+function initQuoteSync() {
+syncQuoteFields();
+document.addEventListener('iq:quote-updated', syncQuoteFields);
+}
+function init() {
+pageLoadedAt = Date.now();
+initArtworkUpload();
+initFormCtaGradient();
+initArtworkModal();
+initOrderForm();
+initQuoteSync();
+}
+global.IQ.syncQuoteForm = syncQuoteFields;
+global.IQ.buildQuotePayload = buildQuotePayload;
+global.IQ.buildSheetPayload = buildSheetPayload;
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', init);
+} else {
+init();
+}
+})(typeof window !== 'undefined' ? window : globalThis);
+(function () {
+'use strict';
+function recalculateQuote() {
+if (window.IQ && typeof window.IQ.recalculate === 'function') {
+window.IQ.recalculate();
+}
+}
+function syncSliderValue(slider) {
+var targetId = slider.getAttribute('data-iq-value-target');
+if (!targetId) return;
+var target = document.getElementById(targetId);
+if (!target) return;
+var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step || '1');
+var raw = parseFloat(slider.value);
+var display = step >= 1 ? String(Math.round(raw)) : String(Math.round(raw));
+target.textContent = display;
+slider.setAttribute('aria-valuenow', display);
+recalculateQuote();
+}
+function snapValue(slider, raw) {
+var min = parseFloat(slider.min);
+var max = parseFloat(slider.max);
+var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step);
+var snapped = min + Math.round((raw - min) / step) * step;
+return Math.min(max, Math.max(min, snapped));
+}
+function animateSliderTo(slider, target, done) {
+var start = parseFloat(slider.value);
+if (start === target) {
+slider.value = String(target);
+syncSliderValue(slider);
+if (done) done();
+return;
+}
+var duration = 180;
+var startTime = null;
+function frame(ts) {
+if (!startTime) startTime = ts;
+var t = Math.min(1, (ts - startTime) / duration);
+var eased = 1 - Math.pow(1 - t, 3);
+var current = start + (target - start) * eased;
+slider.value = String(current);
+syncSliderValue(slider);
+if (t < 1) {
+requestAnimationFrame(frame);
+} else {
+slider.value = String(target);
+syncSliderValue(slider);
+if (done) done();
+}
+}
+requestAnimationFrame(frame);
+}
+function initMagneticSlider(slider) {
+var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step);
+var smoothStep = Math.max(step / 24, 0.01);
+var dragging = false;
+slider.addEventListener('pointerdown', function () {
+dragging = true;
+slider.step = String(smoothStep);
+});
+function finishDrag() {
+if (!dragging) return;
+dragging = false;
+slider.step = String(step);
+var target = snapValue(slider, parseFloat(slider.value));
+animateSliderTo(slider, target);
+}
+slider.addEventListener('pointerup', finishDrag);
+slider.addEventListener('pointercancel', finishDrag);
+slider.addEventListener('input', function () {
+syncSliderValue(slider);
+});
+slider.addEventListener('change', function () {
+slider.step = String(step);
+var target = snapValue(slider, parseFloat(slider.value));
+slider.value = String(target);
+syncSliderValue(slider);
+});
+syncSliderValue(slider);
+}
+function initSliders() {
+document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(initMagneticSlider);
+}
+function setSplitVisible(isOn) {
+var splitRow = document.getElementById('split-row-wrapper');
+var unitCost2 = document.getElementById('iq-unit-cost-2');
+var unitCol = document.getElementById('iq-unit-price-col');
+if (!splitRow) return;
+if (isOn) {
+splitRow.classList.add('is-visible');
+splitRow.style.maxHeight = splitRow.scrollHeight + 'px';
+if (unitCost2) unitCost2.classList.add('is-visible');
+if (unitCol) unitCol.classList.add('is-split-visible');
+recalculateQuote();
+return;
+}
+splitRow.style.maxHeight = splitRow.scrollHeight + 'px';
+requestAnimationFrame(function () {
+splitRow.classList.remove('is-visible');
+splitRow.style.maxHeight = '0px';
+if (unitCost2) unitCost2.classList.remove('is-visible');
+if (unitCol) unitCol.classList.remove('is-split-visible');
+recalculateQuote();
+});
+}
+function initSplitToggle() {
+var toggle = document.getElementById('iq-split-toggle');
+if (!toggle) return;
+setSplitVisible(toggle.checked);
+toggle.addEventListener('change', function () {
+setSplitVisible(toggle.checked);
+});
+}
+function initQualityToggle() {
+var track = document.querySelector('.iq-toggle-track');
+if (!track) return;
+track.addEventListener('click', function (event) {
+var btn = event.target.closest('.iq-toggle-btn');
+if (!btn || !track.contains(btn)) return;
+event.preventDefault();
+track.querySelectorAll('.iq-toggle-btn').forEach(function (el) {
+el.classList.remove('is-active');
+});
+btn.classList.add('is-active');
+recalculateQuote();
+});
+}
+function initStyleRadios() {
+document
+.querySelectorAll('input[type="radio"][name^="style-row-"]')
+.forEach(function (radio) {
+radio.addEventListener('change', recalculateQuote);
+});
+}
+function initCustomArtToggle() {
+var toggle = document.getElementById('iq-custom-art-toggle');
+if (!toggle) return;
+toggle.addEventListener('change', recalculateQuote);
+}
+function init() {
+initSliders();
+initSplitToggle();
+initQualityToggle();
+initStyleRadios();
+initCustomArtToggle();
+recalculateQuote();
+}
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', init);
+} else {
+init();
+}
+})();</script>
+<!-- Paste once at end of iq-container (or page-level embed before </body> in footer bundle) -->
+<div class="iq-modal" id="iq-artwork-modal" role="dialog" aria-modal="true" aria-labelledby="iq-artwork-modal-title" aria-hidden="true">
+  <div class="iq-modal-backdrop" id="iq-artwork-modal-backdrop" tabindex="-1"></div>
+  <div class="iq-modal-panel">
+    <button type="button" class="iq-modal-close" id="iq-artwork-modal-close" aria-label="Close artwork guidelines">&times;</button>
+    <h2 class="iq-modal-title" id="iq-artwork-modal-title">Artwork Guidelines &amp; Policies</h2>
+    <div class="iq-modal-body">
+      <p><strong>Free Setup &amp; Prep:</strong> If you have your logo, graphics, or branding finalized and ready to print, we provide free professional type-setting, sizing optimization, and digital mockups to make sure it prints flawlessly.</p>
+      <p><strong>Custom Concept Design:</strong> Need killer, ground-up creative work or complex illustration? That is our specialty, but we don&rsquo;t work on spec. True custom apparel design requires a upfront design deposit, locked-in milestone approvals, and a strict &ldquo;pay to play&rdquo; structure. Let us know in your project brief if you need a creative consult.</p>
+    </div>
+  </div>
+</div>

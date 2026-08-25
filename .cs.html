@@ -1,0 +1,384 @@
+<!DOCTYPE html><!-- This site was created in Webflow. https://webflow.com --><!-- Last Published: Fri Aug 14 2026 03:54:10 GMT+0000 (Coordinated Universal Time) --><html data-wf-domain="www.lowtideflow.co" data-wf-page="6a5711c9136987eae97760e3" data-wf-site="6789f449bbb1a21245706751"><head><meta charset="utf-8"/><link href="https://cdn.prod.website-files.com" rel="preconnect" crossorigin="anonymous"/><title>clean slate</title><meta content="clean slate" property="og:title"/><meta content="clean slate" name="twitter:title"/><meta content="width=device-width, initial-scale=1" name="viewport"/><meta content="Webflow" name="generator"/><link href="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/css/lowtideflow-co-v2-build.webflow.shared.ff6c6d91e.css" rel="stylesheet" type="text/css" integrity="sha384-/2xtkea+XpqPmPXxl+CZrKU/dzLksnxcBtb9fQhQxJE1kFb61kLevm1XAESksZxg" crossorigin="anonymous"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link href="https://fonts.gstatic.com" rel="preconnect" crossorigin="anonymous"/><script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js" type="text/javascript"></script><script type="text/javascript">WebFont.load({  google: {    families: ["Montserrat:100,100italic,200,200italic,300,300italic,400,400italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic","Changa One:400,400italic"]  }});</script><script src="https://use.typekit.net/hwf3vtq.js" type="text/javascript"></script><script type="text/javascript">try{Typekit.load();}catch(e){}</script><script type="text/javascript">!function(o,c){var n=c.documentElement,t=" w-mod-";n.className+=t+"js",("ontouchstart"in o||o.DocumentTouch&&c instanceof DocumentTouch)&&(n.className+=t+"touch")}(window,document);</script><link href="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/67a2b098c90a7e93dbbda54c_LowTideFlow%20Fav%2032px.png" rel="shortcut icon" type="image/x-icon"/><link href="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/67a2b0c567a229a4a52b3db7_LowTideFlow%20Fav%20256px.png" rel="apple-touch-icon"/><!-- Keep this css code to improve the font quality-->
+<style>
+  * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -o-font-smoothing: antialiased;
+  -webkit-appearance:none;
+}
+</style><style>
+  :root {
+    --site-max-width: 1400px;
+    --fluid-h1: clamp(2.5rem, 5vw, 4.5rem);
+    --fluid-padding: clamp(2rem, 4vw, 5rem);
+  }
+
+  /* Site standard: 1400px cage (Hero locks this pattern for all sections) */
+  .ltf-site-cage,
+  .section-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: var(--site-max-width);
+    margin-right: auto;
+    margin-left: auto;
+    padding-left: var(--fluid-padding);
+    padding-right: var(--fluid-padding);
+    box-sizing: border-box;
+  }
+
+  .ltf-main-header,
+  .hero-h1 {
+    font-size: var(--fluid-h1);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Rock stays absolute inside the relative 1400px hero cage */
+  .ltf-hero > .ltf-site-cage {
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .ltf-site-cage > .hero-canvas-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  @keyframes ltf-nebula-gradient-shift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+  .ltf-nav-actions .ltf-btn-gradient-wrap {
+    pointer-events: auto;
+  }
+
+  .ltf-body-text,
+  .ltf-btn-primary.is-hero-cta,
+  .ltf-nav-link,
+  .ltf-nav-btn,
+  .ltf-nav-btn-quote {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+  }
+
+  /* Gradient ring + outer glow — wrapper only; button colors live in Webflow */
+  .ltf-btn-gradient-wrap {
+    position: relative;
+    display: inline-block;
+    padding: 2px;
+    border-radius: 5px;
+    background: transparent;
+    transition: box-shadow 0.35s ease;
+  }
+
+  .ltf-btn-gradient-wrap:hover,
+  .ltf-btn-gradient-wrap:focus-within,
+  .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+    background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+    background-size: 200% 200%;
+    animation: ltf-nebula-gradient-shift 3s linear infinite;
+    box-shadow:
+      0 0 16px rgba(77, 37, 157, 0.45),
+      0 0 28px rgba(31, 119, 129, 0.28);
+  }
+
+  .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+    animation-duration: 1.8s;
+  }
+
+  /* Nav text links — gradient text fill + soft glow */
+  .ltf-nav-links .ltf-nav-link {
+    background-image: none;
+    background-clip: border-box;
+    -webkit-background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
+    -webkit-text-stroke: 0 transparent;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+  }
+
+  .ltf-nav-links .ltf-nav-link:hover,
+  .ltf-nav-links .ltf-nav-link:focus-visible {
+    opacity: 1;
+    background-image: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+    background-size: 200% 200%;
+    animation: ltf-nebula-gradient-shift 3s linear infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter:
+      drop-shadow(0 0 5px rgba(77, 37, 157, 0.21))
+      drop-shadow(0 0 12px rgba(42, 170, 184, 0.14))
+      drop-shadow(0 0 20px rgba(31, 119, 129, 0.09));
+  }
+
+  .ltf-nav-actions .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn,
+  .ltf-nav-actions .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn-quote {
+    background-color: #06142E;
+    color: #FFFFFF;
+  }
+
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary.is-hero-cta {
+    display: inline-flex;
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #FFFFFF !important;
+    border: 1px solid #FFFFFF !important;
+    border-radius: 3px !important;
+  }
+
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover > .ltf-btn-primary.is-hero-cta,
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:focus-within > .ltf-btn-primary.is-hero-cta,
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-btn-primary.is-hero-cta {
+    background: #06142E !important;
+    background-color: #06142E !important;
+    background-image: none !important;
+    border-color: transparent !important;
+    color: #FFFFFF !important;
+  }
+
+  .ltf-nav-toggle {
+    flex-shrink: 0;
+    border: none;
+    -webkit-appearance: none;
+    appearance: none;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .ltf-nav-toggle:focus-visible {
+    outline: 2px solid rgba(42, 170, 184, 0.85);
+    outline-offset: 3px;
+  }
+
+  .ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .ltf-nav-toggle-bar {
+    transition: transform 0.25s ease, opacity 0.2s ease;
+    width: 22px;
+    height: 2px;
+    background-color: #FFFFFF;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .ltf-nav-inner > .ltf-nav-toggle.w-button {
+    padding: 0 !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #FFFFFF !important;
+    line-height: 1 !important;
+    font-size: 0 !important;
+    min-height: 44px !important;
+    box-shadow: none !important;
+  }
+
+  body.ltf-nav-open {
+    overflow: hidden;
+  }
+
+  @media (max-width: 991px) {
+    .ltf-nav-inner {
+      display: grid !important;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      justify-content: unset;
+    }
+
+    .ltf-nav-toggle .ltf-nav-toggle-bar {
+      display: block !important;
+      flex-shrink: 0;
+      width: 22px !important;
+      height: 2px !important;
+      background-color: #FFFFFF !important;
+      border-radius: 1px !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .ltf-nav-inner > .ltf-nav-toggle {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-toggle {
+      display: none !important;
+    }
+
+    .ltf-nav-toggle {
+      display: flex !important;
+      position: relative;
+      z-index: 102 !important;
+      grid-column: 3;
+      grid-row: 1;
+      justify-self: end;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      pointer-events: auto;
+    }
+
+    .ltf-nav-toggle .ltf-nav-toggle-bar {
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .ltf-nav-logo {
+      display: block !important;
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: center;
+      z-index: 1;
+      height: 21px;
+      width: auto;
+      max-width: 56.25vw;
+      object-fit: contain;
+      pointer-events: auto;
+    }
+
+    .ltf-hero .hero-canvas-wrapper {
+      overflow: hidden;
+    }
+
+    .ltf-hero-logo {
+      display: none !important;
+    }
+
+    .ltf-hero-headline {
+      padding-left: 5% !important;
+      padding-right: 5% !important;
+      box-sizing: border-box !important;
+    }
+
+    .ltf-main-header {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+      background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+      background-size: 200% 200%;
+      animation: ltf-nebula-gradient-shift 3s linear infinite;
+      box-shadow:
+        0 0 16px rgba(77, 37, 157, 0.45),
+        0 0 28px rgba(31, 119, 129, 0.28);
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap > .ltf-btn-primary.is-hero-cta {
+      background: #06142E !important;
+      background-color: #06142E !important;
+      border-color: transparent !important;
+      color: #FFFFFF !important;
+    }
+
+    .ltf-hero-bottom-bar {
+      text-align: center;
+    }
+
+    .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .ltf-nav-mobile-panel {
+      display: none;
+      position: fixed;
+      top: 52px;
+      left: 0;
+      right: 0;
+      bottom: auto;
+      z-index: 99;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 0;
+      width: 100%;
+      height: auto;
+      max-height: none;
+      padding: 28px clamp(20px, 5vw, 32px) 32px;
+      overflow: hidden;
+      background: rgba(6, 20, 46, 0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ltf-site-nav.is-nav-open .ltf-nav-mobile-panel {
+      display: flex;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-links {
+      position: static;
+      left: auto;
+      top: auto;
+      transform: none;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+      width: 100%;
+      margin: 0 0 28px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-link {
+      font-size: 19px;
+      letter-spacing: 0.14em;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-actions {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      height: auto;
+      gap: 12px;
+      margin: 0;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+
+    .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
+      display: block;
+      width: 100%;
+    }
+
+    .ltf-nav-mobile-panel .ltf-nav-btn,
+    .ltf-nav-mobile-panel .ltf-nav-btn-quote {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+  }
+</style></head><body><header role="banner" class="ltf-site-nav"><div class="ltf-nav-inner"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6789f4edaae5c8cfcfd404bd_LTF%20-%20URL%20Logo%20-%20White.png" loading="lazy" width="225" sizes="225px" alt="Lowtideflow Logo
+" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6789f4edaae5c8cfcfd404bd_LTF%2520-%2520URL%2520Logo%2520-%2520White-p-500.png 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6789f4edaae5c8cfcfd404bd_LTF%2520-%2520URL%2520Logo%2520-%2520White-p-800.png 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6789f4edaae5c8cfcfd404bd_LTF%2520-%2520URL%2520Logo%2520-%2520White-p-1080.png 1080w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6789f4edaae5c8cfcfd404bd_LTF%20-%20URL%20Logo%20-%20White.png 1287w" class="ltf-nav-logo"/><div id="ltf-nav-mobile-panel" class="ltf-nav-mobile-panel"><nav aria-label="Primary" class="ltf-nav-links"><a href="#" class="ltf-nav-link">Production</a><a href="#" class="ltf-nav-link">Tech Spec</a><a href="#" class="ltf-nav-link">Squad</a><a href="#" class="ltf-nav-link">Brand Identity</a></nav><div class="ltf-nav-actions"><div class="ltf-btn-gradient-wrap"><a href="#" class="ltf-nav-btn">Contact</a></div><div class="ltf-btn-gradient-wrap"><a href="#" class="ltf-nav-btn">Instant Quote</a></div></div></div><a aria-controls="ltf-nav-mobile-panel" aria-label="Open menu" aria-expanded="false" href="#" class="ltf-nav-toggle w-button"><div class="ltf-nav-toggle-bar"></div><div class="ltf-nav-toggle-bar"></div><div class="ltf-nav-toggle-bar"></div></a></div></header><section class="ltf-hero"><div class="ltf-site-cage"><div data-spline-scene="" data-ltf-rock="" data-render-resolution-scale="1" loading="eager" class="hero-canvas-wrapper"><div class="w-embed"><canvas id="canvas3d" loading="eager" style="width: 100%; height: 100%; display: block;"></canvas></div></div><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6165484aa8ee200d460_Hi-fi-Orange-Long-Sleeve.png" loading="lazy" sizes="100vw" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6165484aa8ee200d460_Hi-fi-Orange-Long-Sleeve-p-500.png 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6165484aa8ee200d460_Hi-fi-Orange-Long-Sleeve-p-800.png 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6165484aa8ee200d460_Hi-fi-Orange-Long-Sleeve-p-1080.png 1080w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6165484aa8ee200d460_Hi-fi-Orange-Long-Sleeve-p-1600.png 1600w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6165484aa8ee200d460_Hi-fi-Orange-Long-Sleeve.png 1638w" alt="" class="ltf-hero-figure"/><div class="ltf-hero-headline"><h1 class="ltf-main-header">Tough Apparel
+To BUILD The World</h1></div><div class="ltf-hero-bottom-bar"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6cfaa5cc5d2af05d28a_LTF%20Logo%20Mark%20-%20White.png" loading="lazy" sizes="100vw" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6cfaa5cc5d2af05d28a_LTF%20Logo%20Mark%20-%20White-p-500.png 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6cfaa5cc5d2af05d28a_LTF%20Logo%20Mark%20-%20White-p-800.png 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6cfaa5cc5d2af05d28a_LTF%20Logo%20Mark%20-%20White-p-1080.png 1080w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4cc6cfaa5cc5d2af05d28a_LTF%20Logo%20Mark%20-%20White.png 1501w" alt="Low Tide Flow Co." class="ltf-hero-logo"/><p class="ltf-body-text">Built on a foundation of Art, Culture, and Technology. LowTideFlow.co has spent over a decade developing cutting-edge apparel designs and brand identities for operations within SoCal, and across the country.</p><div class="ltf-btn-gradient-wrap"><a href="#" class="ltf-btn-primary is-hero-cta">Equip Your Crew</a></div></div></div></section><section data-ltf-specs-slam="" data-ltf-nebula-gas="" data-ltf-slam-threshold="0.88" class="ltf-specs-vault"><div class="ltf-specs-vault-sticky"><div class="ltf-vault-cage"><div class="ltf-specs-vault-header"><h2 class="ltf-section-header-navy">SPECs &amp; STANDARDS</h2><p class="ltf-subheading-navy">No shortcuts. No exceptions. </p><p class="ltf-body-text-navy">Our non-negotiable standards that define every production run we execute.</p></div><div class="ltf-specs-vault-cards"><div class="ltf-spec-card ltf-spec-card-01"><h3 class="ltf-card-title">1) Elevated Art &amp; Precision Design</h3><p class="ltf-body-text">As design purists with a decade of print production experience, we optimize, vectorize, and refine your brand assets for high-output manufacturing. We ensure your graphics print crisp &amp; precise.</p></div><div class="ltf-spec-card ltf-spec-card-02"><h3 class="ltf-card-title">2) Battle Tested Apparel</h3><p class="ltf-body-text">Your crew destroys clothes. We source premium, heavy-weight fabrics engineered to withstand concrete dust, tree sap, and industrial washing machines without shrinking or fading.</p></div><div class="ltf-spec-card ltf-spec-card-03"><h3 class="ltf-card-title">3) Fleet Scaled Production</h3><p class="ltf-body-text">Built for high-volume, repeating crew runs. We utilize heavy-duty printing to fuse permanent graphics into the fabric, guaranteeing maximum longevity on the job site.</p></div><div class="ltf-spec-card ltf-spec-card-04"><h3 class="ltf-card-title">4) Production Calibration</h3><p class="ltf-body-text">From digital approval forms to pipeline monitoring, your project is tracked down to the individual thread. You approve the design; we handle local production.</p></div></div></div></div></section><section class="ltf-gallery"><div class="ltf-gallery-inner"><div class="ltf-gallery-grid"><div class="ltf-gallery-item"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa8181698ed5850d8a_High-Vis-Orange-Worker.jpg" loading="lazy" sizes="(max-width: 1000px) 100vw, 1000px" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa8181698ed5850d8a_High-Vis-Orange-Worker-p-500.jpg 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa8181698ed5850d8a_High-Vis-Orange-Worker-p-800.jpg 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa8181698ed5850d8a_High-Vis-Orange-Worker.jpg 1000w" alt="Black ink on orange apparel" class="ltf-gallery-img"/><p class="ltf-gallery-item-tag">Black ink on orange</p></div><div class="ltf-gallery-item"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0facbacfcbaadfe7627_Demo-Crew-Worker.jpg" loading="lazy" sizes="(max-width: 1500px) 100vw, 1500px" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0facbacfcbaadfe7627_Demo-Crew-Worker-p-500.jpg 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0facbacfcbaadfe7627_Demo-Crew-Worker-p-800.jpg 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0facbacfcbaadfe7627_Demo-Crew-Worker-p-1080.jpg 1080w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0facbacfcbaadfe7627_Demo-Crew-Worker.jpg 1500w" alt="Demolition crew neck sweater" class="ltf-gallery-img"/><p class="ltf-gallery-item-tag">Demolition crew neck sweater</p></div><div class="ltf-gallery-item"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fbbe4953e9d99cec02_Green-Long-Sleeve-Worker.jpg" loading="lazy" sizes="(max-width: 1024px) 100vw, 1024px" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fbbe4953e9d99cec02_Green-Long-Sleeve-Worker-p-500.jpg 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fbbe4953e9d99cec02_Green-Long-Sleeve-Worker-p-800.jpg 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fbbe4953e9d99cec02_Green-Long-Sleeve-Worker.jpg 1024w" alt="Crew long sleeve sample" class="ltf-gallery-img"/><p class="ltf-gallery-item-tag">Crew long sleeve sample</p></div><div class="ltf-gallery-item"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0f99588a5f10f324715_Tree%20Trimmer-Place-Holder-Worker.jpg" loading="lazy" sizes="(max-width: 720px) 100vw, 720px" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0f99588a5f10f324715_Tree%20Trimmer-Place-Holder-Worker-p-500.jpg 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0f99588a5f10f324715_Tree%20Trimmer-Place-Holder-Worker.jpg 720w" alt="Tree Trimming Heavy Weight T-shirt" class="ltf-gallery-img"/><p class="ltf-gallery-item-tag">Tree Trimming Heavy Weight T-shirt</p></div><div class="ltf-gallery-item"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa6817902276836ce4_ce1e967235934b6ec18ad6be77c00ffa_Built-In-Time-Long-Sleeve-Worker.jpg" loading="lazy" sizes="(max-width: 1000px) 100vw, 1000px" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa6817902276836ce4_ce1e967235934b6ec18ad6be77c00ffa_Built-In-Time-Long-Sleeve-Worker-p-500.jpg 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa6817902276836ce4_ce1e967235934b6ec18ad6be77c00ffa_Built-In-Time-Long-Sleeve-Worker-p-800.jpg 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db0fa6817902276836ce4_ce1e967235934b6ec18ad6be77c00ffa_Built-In-Time-Long-Sleeve-Worker.jpg 1000w" alt="Built-In-time Heavy Weight Hoodie" class="ltf-gallery-img"/><p class="ltf-gallery-item-tag">Built-In-time Heavy Weight Hoodie</p></div><div class="ltf-gallery-item"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db2ba7fdf6f07de01398e_Iron-Worker.jpg" loading="lazy" sizes="(max-width: 730px) 100vw, 730px" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db2ba7fdf6f07de01398e_Iron-Worker-p-500.jpg 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4db2ba7fdf6f07de01398e_Iron-Worker.jpg 730w" alt="Iron Workers of America" class="ltf-gallery-img"/><p class="ltf-gallery-item-tag">Iron Workers of America</p></div></div></div></section><section class="ltf-section"><div class="ltf-section-inner"><div class="ltf-split"><div class="ltf-stack"><h2 class="ltf-section-header">IN THE TRENCHES</h2><p class="ltf-subheading">10+ Years in the Art Dept. Zero BS on the Field.</p><p class="ltf-body-text">Through a decade in the art studio, we specialize in translating designs perfectly onto garments. We dial the fabric weights, source the best blank brands, and handle the technical steps required to make graphics look elite.</p><p class="ltf-body-text">Low Tide Flow eliminates warehouse overhead to keep the focus entirely on execution. Leveraging direct relationships with top apparel brands and elite local printers, the creative direction is built to deliver rock-solid quality.</p></div><div class="ltf-authority-image-box"><img src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4d9556ef8de97412dc9d48_Macro-Fabric-shot.jpg" loading="lazy" sizes="(max-width: 1920px) 100vw, 1920px" srcset="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4d9556ef8de97412dc9d48_Macro-Fabric-shot-p-500.jpg 500w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4d9556ef8de97412dc9d48_Macro-Fabric-shot-p-800.jpg 800w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4d9556ef8de97412dc9d48_Macro-Fabric-shot-p-1080.jpg 1080w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4d9556ef8de97412dc9d48_Macro-Fabric-shot-p-1600.jpg 1600w, https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a4d9556ef8de97412dc9d48_Macro-Fabric-shot.jpg 1920w" alt="Macro fabric texture" class="ltf-trench-image"/></div></div></div></section><section class="ltf-upsell"><div class="ltf-upsell-inner"><div class="ltf-upsell-grid"><div class="ltf-stack"><h2 class="ltf-section-header">BEYOND THE GEAR:</h2><p class="ltf-subheading">Executing Complete Fleet Dominance</p><p class="ltf-body-text">What started as instinctual design evolved into strategic brand systems. We build right where identity, story, and performance intersect.</p><p class="ltf-body-text">We now direct creative across multiple brands, aligning culture with clarity so each identity puts its own raw torque to the ground.</p></div><div class="ltf-upsell-list"><p class="ltf-upsell-list-item">High-Converting Web Systems &amp; Digital Graphics</p><p class="ltf-upsell-list-item">Automated Client Intake, Quoting Pipelines &amp; CRM Systems</p><p class="ltf-upsell-list-item">Heavy-Duty Signage, Vehicle Wraps, &amp; Marketing Assets</p></div></div></div></section><section class="ltf-section"><div class="ltf-section-inner"><div class="ltf-stack ltf-section-head"><p class="ltf-authority-sublabel">02 / THE SQUAD</p><h2 class="ltf-section-header">THE SQUAD</h2></div><div class="ltf-cards-grid"><div class="ltf-card"><h3 class="ltf-card-title">At the Helm</h3><p class="ltf-body-text">Founder Nate Taylor runs point on your creative direction and logistics. Built on a decade of product obsession, rigid technical specs, and hands-on production artistry—he knows the apparel engine inside and out. You deal directly with the source.</p></div><div class="ltf-card"><h3 class="ltf-card-title">The Factory Floor</h3><p class="ltf-body-text">Heavy production is anchored at Reef Point Studios in Torrance, CA. A veteran industrial house with 30 years of screen-printing mastery, the shop specializes in elite, high-durability print techniques. In-house production manager Justin Peltier commands the press line, while Dave Peltier drives operations and logistics.</p></div><div class="ltf-card"><h3 class="ltf-card-title">The Materials</h3><p class="ltf-body-text">We build strictly on premium garment frameworks. Our standard go-to brands are Next Level Apparel, AS Color, and Independent Trading Co. If your project requires a highly specific fit, weight, or brand profile, name it—our wholesale distribution channels can source it.</p></div><div class="ltf-card"><h3 class="ltf-card-title">The Reserve Network</h3><p class="ltf-body-text">Over a decade in the trade, we have established an exhaustive network of elite graphic designers, visual artists, and brand specialists ready to deploy for any advanced creative or marketing requirement.</p></div></div><div class="ltf-section-cta"><div class="ltf-btn-gradient-wrap"><a href="#" class="ltf-btn-primary">EXPLORE THE FULL NETWORK</a></div></div></div></section><section class="ltf-funnel-cta"><div class="ltf-funnel-cta-inner"><h2 class="ltf-funnel-cta-heading">LAUNCH YOUR FLEET APPAREL</h2><p class="ltf-funnel-cta-threshold">explore options &amp; quotes</p><div class="ltf-btn-gradient-wrap"><a href="#" class="ltf-btn-primary">Instant Quote</a></div></div></section><script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=6789f449bbb1a21245706751" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/js/webflow.schunk.f383f5e6d5965c7d.js" type="text/javascript" integrity="sha384-QnOp7fbOcrKXZDi7+0fkHJk90FV9G/AoswfyaoltjC7RwYWcCfFhbXP4nXa9dqGz" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/6789f449bbb1a21245706751/js/webflow.751e0867.6551f58fa950fc60.js" type="text/javascript" integrity="sha384-1dzC0J/1cXneCALthyqDxwNOGMQVz5u79cgPYtq+trc8svQGAEjWtfOWQQilgE8m" crossorigin="anonymous"></script><!-- All site JS loads through one pinned ES module: hero boulder + nebula, specs vault, mobile nav, button pulse.
+     To ship a JS change, swap the commit hash below and publish.
+     Do not add more <script> tags here — new effects get registered inside js/ltf.js.
+     The mobile nav that used to sit here inline is now js/ui/nav-mobile.js; re-adding it would double-bind the toggle. -->
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@57e0e0c/js/ltf.js"></script></body></html>

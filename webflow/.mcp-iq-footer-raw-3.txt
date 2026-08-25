@@ -1,0 +1,156 @@
+ = String(target);
+      syncSliderValue(slider);
+      if (done) done();
+      return;
+    }
+
+    var duration = 180;
+    var startTime = null;
+
+    function frame(ts) {
+      if (!startTime) startTime = ts;
+      var t = Math.min(1, (ts - startTime) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      var current = start + (target - start) * eased;
+      slider.value = String(current);
+      syncSliderValue(slider);
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        slider.value = String(target);
+        syncSliderValue(slider);
+        if (done) done();
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  function initMagneticSlider(slider) {
+    var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step);
+    var smoothStep = Math.max(step / 24, 0.01);
+    var dragging = false;
+
+    slider.addEventListener('pointerdown', function () {
+      dragging = true;
+      slider.step = String(smoothStep);
+    });
+
+    function finishDrag() {
+      if (!dragging) return;
+      dragging = false;
+      slider.step = String(step);
+      var target = snapValue(slider, parseFloat(slider.value));
+      animateSliderTo(slider, target);
+    }
+
+    slider.addEventListener('pointerup', finishDrag);
+    slider.addEventListener('pointercancel', finishDrag);
+    slider.addEventListener('input', function () {
+      syncSliderValue(slider);
+    });
+    slider.addEventListener('change', function () {
+      slider.step = String(step);
+      var target = snapValue(slider, parseFloat(slider.value));
+      slider.value = String(target);
+      syncSliderValue(slider);
+    });
+
+    syncSliderValue(slider);
+  }
+
+  function initSliders() {
+    document.querySelectorAll('.iq-range[data-iq-value-target]').forEach(initMagneticSlider);
+  }
+
+  function setSplitVisible(isOn) {
+    var splitRow = document.getElementById('split-row-wrapper');
+    var unitCost2 = document.getElementById('iq-unit-cost-2');
+    var unitCol = document.getElementById('iq-unit-price-col');
+    if (!splitRow) return;
+
+    if (isOn) {
+      splitRow.classList.add('is-visible');
+      splitRow.style.maxHeight = splitRow.scrollHeight + 'px';
+      if (unitCost2) unitCost2.classList.add('is-visible');
+      if (unitCol) unitCol.classList.add('is-split-visible');
+      recalculateQuote();
+      return;
+    }
+
+    splitRow.style.maxHeight = splitRow.scrollHeight + 'px';
+    requestAnimationFrame(function () {
+      splitRow.classList.remove('is-visible');
+      splitRow.style.maxHeight = '0px';
+      if (unitCost2) unitCost2.classList.remove('is-visible');
+      if (unitCol) unitCol.classList.remove('is-split-visible');
+      recalculateQuote();
+    });
+  }
+
+  function initSplitToggle() {
+    var toggle = document.getElementById('iq-split-toggle');
+    if (!toggle) return;
+    setSplitVisible(toggle.checked);
+    toggle.addEventListener('change', function () {
+      setSplitVisible(toggle.checked);
+    });
+  }
+
+  function initQualityToggle() {
+    var track = document.querySelector('.iq-toggle-track');
+    if (!track) return;
+    track.addEventListener('click', function (event) {
+      var btn = event.target.closest('.iq-toggle-btn');
+      if (!btn || !track.contains(btn)) return;
+      event.preventDefault();
+      track.querySelectorAll('.iq-toggle-btn').forEach(function (el) {
+        el.classList.remove('is-active');
+      });
+      btn.classList.add('is-active');
+      recalculateQuote();
+    });
+  }
+
+  function initStyleRadios() {
+    document
+      .querySelectorAll('input[type="radio"][name^="style-row-"]')
+      .forEach(function (radio) {
+        radio.addEventListener('change', recalculateQuote);
+      });
+  }
+
+  function initCustomArtToggle() {
+    var toggle = document.getElementById('iq-custom-art-toggle');
+    if (!toggle) return;
+    toggle.addEventListener('change', recalculateQuote);
+  }
+
+  function init() {
+    initSliders();
+    initSplitToggle();
+    initQualityToggle();
+    initStyleRadios();
+    initCustomArtToggle();
+    recalculateQuote();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+<!-- Paste once at end of iq-container (or page-level embed before </body> in footer bundle) -->
+<div class="iq-modal" id="iq-artwork-modal" role="dialog" aria-modal="true" aria-labelledby="iq-artwork-modal-title" aria-hidden="true">
+  <div class="iq-modal-backdrop" id="iq-artwork-modal-backdrop" tabindex="-1"></div>
+  <div class="iq-modal-panel">
+    <button type="button" class="iq-modal-close" id="iq-artwork-modal-close" aria-label="Close artwork guidelines">&times;</button>
+    <h2 class="iq-modal-title" id="iq-artwork-modal-title">Artwork Guidelines &amp; Policies</h2>
+    <div class="iq-modal-body">
+      <p><strong>Free Setup &amp; Prep:</strong> If you have your logo, graphics, or branding finalized and ready to print, we provide free professional type-setting, sizing optimization, and digital mockups to make sure it prints flawlessly.</p>
+      <p><strong>Custom Concept Design:</strong> Need killer, ground-up creative work or complex illustration? That is our specialty, but we don&rsquo;t work on spec. True custom apparel design requires a upfront design deposit, locked-in milestone approvals, and a strict &ldquo;pay to play&rdquo; structure. Let us know in your project brief if you need a creative consult.</p>
+    </div>
+  </div>
+</div>

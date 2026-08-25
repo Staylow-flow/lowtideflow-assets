@@ -1,0 +1,8 @@
+{
+  "server": "project-0-Lowtideflow-Apparel-V1-webflow",
+  "toolName": "data_scripts_tool",
+  "description": "Push Clean-slate page head custom code",
+  "arguments_path": "/Users/natetaylor/Lowtideflow-Apparel-V1/webflow/.mcp-nav-head-push.json",
+  "content_sha256": "2063dfab8937c493dee08473b0a1eba9b85647f4802a422f43f76ed78fe3bc16",
+  "content_len": 28171
+}

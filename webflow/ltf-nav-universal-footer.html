@@ -1,0 +1,99 @@
+<!--
+  LTF site-wide footer:
+  1) Mobile nav toggle
+  2) Force Acumin font-display:swap after Typekit.load() reinjects auto
+-->
+<script defer>
+(function () {
+  'use strict';
+
+  /* ── Force swap on Typekit faces (JS injects font-display:auto later) ── */
+  function forceAcuminSwap() {
+    try {
+      var sheets = document.styleSheets;
+      for (var i = 0; i < sheets.length; i++) {
+        var sheet = sheets[i];
+        var rules;
+        try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
+        if (!rules) continue;
+        for (var j = 0; j < rules.length; j++) {
+          var rule = rules[j];
+          if (!rule || rule.type !== CSSRule.FONT_FACE_RULE) continue;
+          var ff = (rule.style.getPropertyValue('font-family') || '').replace(/["']/g, '');
+          if (ff.indexOf('acumin') === -1) continue;
+          if (rule.style.getPropertyValue('font-display') !== 'swap') {
+            rule.style.setProperty('font-display', 'swap', 'important');
+          }
+        }
+      }
+    } catch (e) {}
+
+    try {
+      var nodes = document.querySelectorAll('style');
+      for (var k = 0; k < nodes.length; k++) {
+        var el = nodes[k];
+        var txt = el.textContent || '';
+        if (txt.indexOf('acumin') !== -1 && /font-display\s*:\s*auto/.test(txt)) {
+          el.textContent = txt.replace(/font-display\s*:\s*auto/g, 'font-display:swap');
+        }
+      }
+    } catch (e2) {}
+  }
+
+  forceAcuminSwap();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(forceAcuminSwap).catch(function () {});
+  }
+  var mo = new MutationObserver(function () { forceAcuminSwap(); });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(forceAcuminSwap, 0);
+  setTimeout(forceAcuminSwap, 250);
+  setTimeout(forceAcuminSwap, 1000);
+  window.addEventListener('load', forceAcuminSwap);
+
+  /* ── Mobile nav ── */
+  var MQ = window.matchMedia('(max-width: 991px)');
+  function initNav() {
+    var nav = document.querySelector('.ltf-site-nav');
+    var toggle = document.querySelector('.ltf-nav-toggle');
+    var panel = document.querySelector('.ltf-nav-mobile-panel');
+    if (!nav || !toggle || !panel) return;
+    if (nav.getAttribute('data-ltf-nav-bound') === '1') return;
+    nav.setAttribute('data-ltf-nav-bound', '1');
+
+    function setOpen(open) {
+      nav.classList.toggle('is-nav-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      document.body.classList.toggle('ltf-nav-open', open);
+    }
+    function close() { setOpen(false); }
+
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      setOpen(!nav.classList.contains('is-nav-open'));
+    });
+    toggle.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setOpen(!nav.classList.contains('is-nav-open'));
+      }
+    });
+    panel.querySelectorAll('a').forEach(function (link) {
+      link.addEventListener('click', close);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') close();
+    });
+    MQ.addEventListener('change', function () {
+      if (!MQ.matches) close();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNav);
+  } else {
+    initNav();
+  }
+})();
+</script>
