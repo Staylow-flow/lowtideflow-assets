@@ -1,4 +1,4 @@
-  :root {
+:root {
     --site-max-width: 1400px;
     --ltf-side-pad: 80px;
     --ltf-section-pad-y: 100px;
@@ -364,14 +364,15 @@
     }
 
     /* Copy stack under H1 (JS sets --ltf-hero-copy-top = H1 bottom + 30px).
-       NEWNEW: left-justified body, ~8 lines on standard phone width. */
+       Stretch to hero bottom so CTA can absolute-park above Safari chrome.
+       Wide to screen edges (25px inset). */
     .ltf-hero-bottom-bar,
     .ltf-hero-bottom-bar.ltf-split-2 {
       position: absolute !important;
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) !important;
       grid-template-rows: auto !important;
-      justify-items: stretch !important;
+      justify-items: center !important;
       align-items: start !important;
       gap: 18px !important;
       left: 25px !important;
@@ -384,12 +385,12 @@
       transform: none !important;
       translate: none !important;
       will-change: auto !important;
-      text-align: left !important;
+      text-align: center !important;
       z-index: 3 !important;
       pointer-events: none !important;
     }
 
-    /* Full-bleed copy wrapper — left stack, breathable side pad for 8-line lock */
+    /* Full-bleed copy wrapper — kill rem column lock */
     .ltf-hero-bottom-bar .is-hero-copy,
     .ltf-hero-bottom-bar .ltf-stack,
     .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy,
@@ -400,29 +401,29 @@
       min-width: 0 !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
-      padding-left: 4px !important;
-      padding-right: 12px !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
       /* Reserve absolute CTA band so logo never sits under the button */
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important;
       box-sizing: border-box !important;
       display: flex !important;
       flex-direction: column !important;
-      align-items: flex-start !important;
+      align-items: center !important;
       justify-self: stretch !important;
-      text-align: left !important;
+      text-align: center !important;
     }
 
     .ltf-hero-bottom-bar .ltf-body-text {
       width: 100% !important;
-      max-width: 22.5rem !important;
+      max-width: none !important;
       margin-top: 0 !important;
       margin-left: 0 !important;
-      margin-right: auto !important;
+      margin-right: 0 !important;
       order: 1 !important;
-      text-align: left !important;
-      align-self: flex-start !important;
-      font-size: 17px !important;
-      line-height: 1.32 !important;
+      text-align: center !important;
+      align-self: stretch !important;
+      font-size: 20px !important;
+      line-height: 1.275 !important;
       letter-spacing: 0 !important;
       word-spacing: 0 !important;
       padding: 0 !important;
@@ -472,7 +473,7 @@
       order: 2 !important;
       margin: 20px 0 0 !important;
       margin-bottom: 0 !important;
-      align-self: flex-start !important;
+      align-self: center !important;
       z-index: 2 !important;
       pointer-events: none !important;
       filter:
@@ -754,10 +755,11 @@
 
   .ltf-upsell-list-item {
     position: relative;
-    display: flex;
-    align-items: flex-start;
+    display: flex !important;
+    align-items: flex-start !important;
     line-height: 1.3;
-    padding: 22px 28px 22px 24px;
+    padding: 22px 28px 22px 24px !important;
+    box-sizing: border-box !important;
     background-color: transparent !important;
     color: #FFFFFF !important;
     isolation: isolate;
@@ -786,7 +788,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     background: linear-gradient(
       90deg,
       transparent 0%,
@@ -810,7 +812,7 @@
 
   .ltf-upsell-list-item:hover::after,
   .ltf-upsell-list-item.is-sweep::after {
-    opacity: 1;
+    opacity: 1 !important;
     animation: ltf-upsell-sweep 3.4s linear infinite;
   }
 
@@ -960,7 +962,7 @@
   .ltf-card {
     position: relative;
     min-height: clamp(236px, 19.5vw, 332px);
-    overflow: visible;
+    overflow: visible !important;
     isolation: isolate;
     will-change: transform;
     transform-origin: center center;
@@ -979,7 +981,7 @@
     max-width: 100% !important;
   }
 
-  /* Shared glow chrome — Crew + Specs (green-forward wash + orbit ring). */
+  /* Shared glow chrome — Crew + Specs (wash + orbit ring). */
   .ltf-card::before,
   .ltf-spec-card::before {
     content: '';
@@ -988,11 +990,10 @@
     z-index: 0;
     border-radius: inherit;
     background:
-      radial-gradient(ellipse at 28% 22%, rgba(11, 128, 80, 0.78) 0%, transparent 52%),
-      radial-gradient(ellipse at 78% 30%, rgba(42, 170, 184, 0.58) 0%, transparent 50%),
-      radial-gradient(ellipse at 52% 88%, rgba(11, 128, 80, 0.62) 0%, transparent 55%),
-      radial-gradient(ellipse at 70% 70%, rgba(31, 119, 129, 0.4) 0%, transparent 48%),
-      radial-gradient(ellipse at 18% 70%, rgba(112, 64, 192, 0.28) 0%, transparent 48%);
+      radial-gradient(ellipse at 22% 18%, rgba(112, 64, 192, 0.72) 0%, transparent 52%),
+      radial-gradient(ellipse at 82% 28%, rgba(42, 170, 184, 0.62) 0%, transparent 50%),
+      radial-gradient(ellipse at 48% 92%, rgba(11, 128, 80, 0.58) 0%, transparent 55%),
+      radial-gradient(ellipse at 70% 70%, rgba(31, 119, 129, 0.4) 0%, transparent 48%);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.45s ease;
@@ -1062,7 +1063,9 @@
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
   .ltf-section-cta .ltf-btn-gradient-wrap,
   .ltf-funnel-cta .ltf-btn-gradient-wrap {
-    background: #FFFFFF;
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    padding: 2px !important;
   }
 
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover,
@@ -1074,7 +1077,8 @@
   .ltf-funnel-cta .ltf-btn-gradient-wrap:hover,
   .ltf-funnel-cta .ltf-btn-gradient-wrap:focus-within,
   .ltf-funnel-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
   }
 
   .ltf-hero-bottom-bar .ltf-btn-primary,
@@ -1226,22 +1230,22 @@
       max-width: none !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
-      align-items: flex-start !important;
+      align-items: center !important;
       justify-self: stretch !important;
-      text-align: left !important;
+      text-align: center !important;
     }
 
     .ltf-hero .ltf-hero-bottom-bar .ltf-body-text {
       width: 100% !important;
-      max-width: 22.5rem !important;
+      max-width: none !important;
       margin-top: 0 !important;
       margin-left: 0 !important;
-      margin-right: auto !important;
+      margin-right: 0 !important;
       order: 1 !important;
-      font-size: 17px !important;
-      line-height: 1.32 !important;
-      text-align: left !important;
-      align-self: flex-start !important;
+      font-size: 20px !important;
+      line-height: 1.275 !important;
+      text-align: center !important;
+      align-self: stretch !important;
       padding: 0 !important;
       letter-spacing: 0 !important;
       word-spacing: 0 !important;
@@ -1255,7 +1259,7 @@
       order: 2 !important;
       margin: 20px 0 0 !important;
       margin-bottom: 0 !important;
-      align-self: flex-start !important;
+      align-self: center !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
@@ -1407,17 +1411,44 @@
       border-color: transparent !important;
     }
 
-    /* Fabric magnifier — landscape window (scroll-pan is JS) */
+    /* Fabric magnifier — tall/skinny window; wide knit pans L→R on vertical scroll */
+    .ltf-section:has(.ltf-authority-image-box) {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      display: block !important;
+      padding-top: 48px !important;
+      padding-bottom: 48px !important;
+    }
+
+    .ltf-section:has(.ltf-authority-image-box) .ltf-split-2 {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      height: auto !important;
+    }
+
+    .ltf-section:has(.ltf-authority-image-box) .ltf-split-asset {
+      width: 100% !important;
+      display: flex !important;
+      justify-content: center !important;
+      height: auto !important;
+    }
+
     .ltf-authority-image-box,
     .ltf-magnifier {
-      display: block;
-      width: 100% !important;
-      height: 250px !important;
-      max-height: 250px !important;
-      min-height: 250px !important;
-      aspect-ratio: auto;
+      display: block !important;
+      /* Tall + skinny viewport over a wide fabric image (JS scroll-pans). */
+      width: min(78vw, 320px) !important;
+      max-width: min(78vw, 320px) !important;
+      height: min(68vh, 560px) !important;
+      min-height: min(68vh, 560px) !important;
+      max-height: min(68vh, 560px) !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      aspect-ratio: auto !important;
       cursor: auto;
-      overflow: hidden;
+      overflow: hidden !important;
     }
 
     .ltf-magnifier-base,
@@ -1428,7 +1459,24 @@
 
     .ltf-magnifier-lens {
       opacity: 1 !important;
-      max-width: 42% !important;
+      max-width: 48% !important;
+    }
+
+    /* Beyond the Gear — restore inner pad + pull block up ~40px */
+    .ltf-upsell {
+      padding-top: 35px !important;
+    }
+
+    .ltf-upsell-list,
+    .ltf-upsell-list.ltf-split-asset {
+      margin-top: -40px !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      border-radius: 12px !important;
+    }
+
+    .ltf-upsell-list-item {
+      padding: 22px 28px 22px 24px !important;
     }
   }
 

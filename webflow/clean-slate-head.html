@@ -779,10 +779,11 @@
 
   .ltf-upsell-list-item {
     position: relative;
-    display: flex;
-    align-items: flex-start;
+    display: flex !important;
+    align-items: flex-start !important;
     line-height: 1.3;
-    padding: 22px 28px 22px 24px;
+    padding: 22px 28px 22px 24px !important;
+    box-sizing: border-box !important;
     background-color: transparent !important;
     color: #FFFFFF !important;
     isolation: isolate;
@@ -811,7 +812,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     background: linear-gradient(
       90deg,
       transparent 0%,
@@ -835,7 +836,7 @@
 
   .ltf-upsell-list-item:hover::after,
   .ltf-upsell-list-item.is-sweep::after {
-    opacity: 1;
+    opacity: 1 !important;
     animation: ltf-upsell-sweep 3.4s linear infinite;
   }
 
@@ -985,7 +986,7 @@
   .ltf-card {
     position: relative;
     min-height: clamp(236px, 19.5vw, 332px);
-    overflow: visible;
+    overflow: visible !important;
     isolation: isolate;
     will-change: transform;
     transform-origin: center center;
@@ -1086,7 +1087,9 @@
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
   .ltf-section-cta .ltf-btn-gradient-wrap,
   .ltf-funnel-cta .ltf-btn-gradient-wrap {
-    background: #FFFFFF;
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    padding: 2px !important;
   }
 
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover,
@@ -1098,7 +1101,8 @@
   .ltf-funnel-cta .ltf-btn-gradient-wrap:hover,
   .ltf-funnel-cta .ltf-btn-gradient-wrap:focus-within,
   .ltf-funnel-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
   }
 
   .ltf-hero-bottom-bar .ltf-btn-primary,
@@ -1431,17 +1435,44 @@
       border-color: transparent !important;
     }
 
-    /* Fabric magnifier — landscape window (scroll-pan is JS) */
+    /* Fabric magnifier — tall/skinny window; wide knit pans L→R on vertical scroll */
+    .ltf-section:has(.ltf-authority-image-box) {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      display: block !important;
+      padding-top: 48px !important;
+      padding-bottom: 48px !important;
+    }
+
+    .ltf-section:has(.ltf-authority-image-box) .ltf-split-2 {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      height: auto !important;
+    }
+
+    .ltf-section:has(.ltf-authority-image-box) .ltf-split-asset {
+      width: 100% !important;
+      display: flex !important;
+      justify-content: center !important;
+      height: auto !important;
+    }
+
     .ltf-authority-image-box,
     .ltf-magnifier {
-      display: block;
-      width: 100% !important;
-      height: 250px !important;
-      max-height: 250px !important;
-      min-height: 250px !important;
-      aspect-ratio: auto;
+      display: block !important;
+      /* Tall + skinny viewport over a wide fabric image (JS scroll-pans). */
+      width: min(78vw, 320px) !important;
+      max-width: min(78vw, 320px) !important;
+      height: min(68vh, 560px) !important;
+      min-height: min(68vh, 560px) !important;
+      max-height: min(68vh, 560px) !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      aspect-ratio: auto !important;
       cursor: auto;
-      overflow: hidden;
+      overflow: hidden !important;
     }
 
     .ltf-magnifier-base,
@@ -1452,7 +1483,24 @@
 
     .ltf-magnifier-lens {
       opacity: 1 !important;
-      max-width: 42% !important;
+      max-width: 48% !important;
+    }
+
+    /* Beyond the Gear — restore inner pad + pull block up ~40px */
+    .ltf-upsell {
+      padding-top: 35px !important;
+    }
+
+    .ltf-upsell-list,
+    .ltf-upsell-list.ltf-split-asset {
+      margin-top: -40px !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      border-radius: 12px !important;
+    }
+
+    .ltf-upsell-list-item {
+      padding: 22px 28px 22px 24px !important;
     }
   }
 
