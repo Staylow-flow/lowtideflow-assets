@@ -629,7 +629,7 @@ const IDLE_PITCH_AMP2 = ROCK_MOTION_BASELINE.idlePitchAmp2;
  *  so plume edges sit inside the phone (no haloGain=0 hole, no navy mask). */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
   /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen. */
-  gasCenterY:       0.92,  /* Part 1: plume follows raised rock / H1 */
+  gasCenterY:       0.88,  /* tracks rock after +25px drop */
   /* SoftCore stays expansive/colorful like desktop — mild horizontal inset */
   gasStretchX:      0.58,
   gasStretchY:      1.05,
@@ -643,8 +643,9 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
   purpleReachBoost: 0.72,
   flareReachMult:   0.88,
   topYFactor:       0.62,
-  topFadeStart:     0.92,
-  topFadeEnd:       0.99,
+  /* Canvas top sits at 25% of nav — allow gas into that band */
+  topFadeStart:     0.97,
+  topFadeEnd:       1.0,
   /* Explicit: same softCore/navy as desktop — do not zero these */
   haloGain:         1.0,
   navyGain:         1.0,
@@ -656,9 +657,9 @@ const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
 /**
  * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx: 100).
- * Part 1: raise so boulder sits flush behind H1 at top:77px.
+ * Canvas top = -39px (into nav at 25% of 52px); H1 at 102px — rock down 25px vs prior 77px stack.
  */
-const MOBILE_ROCK_LIFT_PX = 270; /* was 185; up ~85px with H1 */
+const MOBILE_ROCK_LIFT_PX = 129;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;

@@ -373,6 +373,60 @@
   html, body {
     overflow-x: clip;
   }
+
+  /* Mockup locks — beat any stale Designer cascade */
+  .ltf-hero .hero-canvas-wrapper {
+    top: -39px !important; /* nav 52px → 25% = 13px from page top */
+    overflow: visible !important;
+  }
+  .ltf-hero-headline {
+    top: 102px !important;
+    left: 0 !important;
+    width: 100% !important;
+    transform: none !important;
+    text-align: center !important;
+  }
+  .ltf-hero-headline .ltf-main-header {
+    text-align: center !important;
+  }
+  .ltf-hero-bottom-bar {
+    left: 15px !important;
+    right: 15px !important;
+    width: auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-items: stretch !important;
+  }
+  .ltf-hero-bottom-bar .is-hero-copy {
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+  .ltf-hero-bottom-bar .is-hero-body,
+  .ltf-hero-bottom-bar .ltf-body-text.is-hero-body {
+    text-align: left !important;
+    align-self: flex-start !important;
+  }
+  .ltf-hero-bottom-bar .is-hero-logo-mobile {
+    display: block !important;
+    height: 101px !important;
+    width: auto !important;
+    order: 0 !important;
+    align-self: flex-start !important;
+  }
+  .ltf-hero-bottom-bar .ltf-hero-logo {
+    display: none !important;
+  }
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap.is-hero-cta-wrap {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: 50px !important;
+    transform: translateX(-50%) !important;
+    z-index: 6 !important;
+    margin: 0 !important;
+    pointer-events: auto !important;
+  }
 }
 
 </style>
