@@ -365,7 +365,8 @@
       will-change: auto !important;
     }
 
-    /* Kill desktop 2-col combo that was cascading onto mobile */
+    /* Copy stack under H1 (JS sets --ltf-hero-copy-top = H1 bottom + 50px).
+       Wide to screen edges (25px inset). Not bottom-anchored. */
     .ltf-hero-bottom-bar,
     .ltf-hero-bottom-bar.ltf-split-2 {
       position: absolute !important;
@@ -373,11 +374,12 @@
       grid-template-columns: minmax(0, 1fr) !important;
       grid-template-rows: auto !important;
       justify-items: center !important;
-      align-items: center !important;
+      align-items: start !important;
       gap: 18px !important;
       left: 25px !important;
       right: 25px !important;
-      bottom: 78px !important; /* was 103; whole section down 25px */
+      top: var(--ltf-hero-copy-top, calc(12% + 280px)) !important;
+      bottom: auto !important;
       width: auto !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -385,38 +387,39 @@
       translate: none !important;
       will-change: auto !important;
       text-align: center !important;
+      z-index: 3 !important;
     }
 
-    /* Main copy lock: rem-width wrapper so line breaks stay stable while centered */
+    /* Full-bleed copy wrapper — kill rem column lock */
     .ltf-hero-bottom-bar .is-hero-copy,
     .ltf-hero-bottom-bar .ltf-stack,
     .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy,
     .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy.is-hero-copy {
-      width: min(22rem, 100%) !important;
-      max-width: 100% !important;
+      position: relative !important;
+      width: 100% !important;
+      max-width: none !important;
       min-width: 0 !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
       padding-left: 0 !important;
       padding-right: 0 !important;
       box-sizing: border-box !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      justify-self: center !important;
+      justify-self: stretch !important;
       text-align: center !important;
     }
 
     .ltf-hero-bottom-bar .ltf-body-text {
-      /* Locked rem measure keeps wrap points stable across iPhone scale */
-      width: 18.75rem !important;
-      max-width: 100% !important;
-      margin-top: -5px !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin-top: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
       text-align: center !important;
-      align-self: center !important;
-      font-size: 1.125rem !important; /* 18px locked */
+      align-self: stretch !important;
+      font-size: 20px !important;
       line-height: 1.275 !important;
       letter-spacing: 0 !important;
       word-spacing: 0 !important;
@@ -449,17 +452,17 @@
         drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     }
 
-    /* Wave mark up into navy negative space above body */
+    /* Wave mark overlays left of body (out of flow so body stays at bar top) */
     .ltf-hero-bottom-bar .is-hero-logo-mobile,
     .ltf-hero-bottom-bar img.is-hero-logo-mobile {
       display: block !important;
       height: 72px !important;
       width: auto !important;
-      align-self: flex-start !important;
-      position: relative !important;
-      top: -82px !important; /* was -42; +40px up */
-      margin-top: 0 !important;
-      margin-bottom: -68px !important; /* keep stack compact after lift */
+      position: absolute !important;
+      left: 0 !important;
+      top: 28px !important;
+      margin: 0 !important;
+      z-index: 2 !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
@@ -1164,28 +1167,37 @@
         drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     }
 
+    .ltf-hero .ltf-hero-bottom-bar {
+      top: var(--ltf-hero-copy-top, calc(12% + 280px)) !important;
+      bottom: auto !important;
+      left: 25px !important;
+      right: 25px !important;
+      align-items: start !important;
+    }
+
     .ltf-hero .ltf-hero-bottom-bar .is-hero-copy,
     .ltf-hero .ltf-hero-bottom-bar .ltf-stack,
     .ltf-hero .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy,
     .ltf-hero .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy.is-hero-copy {
-      width: min(22rem, 100%) !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
       align-items: center !important;
-      justify-self: center !important;
+      justify-self: stretch !important;
       text-align: center !important;
     }
 
     .ltf-hero .ltf-hero-bottom-bar .ltf-body-text {
-      width: 18.75rem !important;
-      max-width: 100% !important;
-      margin-top: -5px !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
-      font-size: 1.125rem !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin-top: 0 !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      font-size: 20px !important;
       line-height: 1.275 !important;
       text-align: center !important;
-      align-self: center !important;
+      align-self: stretch !important;
       padding: 0 !important;
       letter-spacing: 0 !important;
       word-spacing: 0 !important;
@@ -1193,11 +1205,10 @@
 
     .ltf-hero .ltf-hero-bottom-bar .is-hero-logo-mobile,
     .ltf-hero .ltf-hero-bottom-bar img.is-hero-logo-mobile {
-      position: relative !important;
-      top: -82px !important;
-      margin-top: 0 !important;
-      margin-bottom: -68px !important;
-      align-self: flex-start !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 28px !important;
+      margin: 0 !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
