@@ -221,7 +221,7 @@ function bind(host) {
     const mobile = isMobile();
     lensW = mobile
       ? Math.min(180, Math.max(128, hostW * 0.48))
-      : Math.min(260, Math.max(170, hostW * 0.48));
+      : Math.min(286, Math.max(187, hostW * 0.528)); /* desktop +10% */
     lensH = lensW * MASK_RATIO;
     holeCx = lensW * HOLE_CX;
     holeCy = lensH * HOLE_CY;

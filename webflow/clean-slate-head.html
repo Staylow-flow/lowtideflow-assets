@@ -265,6 +265,10 @@
 }
 .ltf-authority-image-box {
   border-radius: 0 !important;
+  max-width: 515px; /* desktop fabric −1% */
+  padding-top: 50px;
+  padding-bottom: 50px;
+  box-sizing: border-box;
 }
 .ltf-authority-image-box > img,
 .ltf-magnifier-base,
@@ -426,6 +430,123 @@
     z-index: 6 !important;
     margin: 0 !important;
     pointer-events: auto !important;
+  }
+
+  /* Trenches fabric — −15% + 50px vertical pad; ~40px from screen edges */
+  .ltf-authority-image-box {
+    width: min(73.1vw, 306px) !important;
+    max-width: calc(100vw - 80px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-top: 50px !important;
+    padding-bottom: 50px !important;
+  }
+
+  /* Specs & Standards — exact Crew mobile stack + full-width left copy */
+  .ltf-specs-vault {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .ltf-specs-vault-sticky {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+    top: auto !important;
+    padding-top: 50px !important;
+    padding-bottom: 50px !important;
+    padding-left: 25px !important;
+    padding-right: 25px !important;
+    align-items: stretch !important;
+  }
+  .ltf-vault-cage,
+  .ltf-vault-cage.ltf-cage,
+  .ltf-vault-cage.ltf-split-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+  }
+  .ltf-specs-vault-header,
+  .ltf-specs-vault-header.ltf-split-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 8px !important;
+    align-items: flex-start !important;
+    align-self: stretch !important;
+    text-align: left !important;
+  }
+  .ltf-specs-vault-header .ltf-section-header-navy,
+  .ltf-specs-vault-header .ltf-subheading-navy,
+  .ltf-specs-vault-header .ltf-body-text-navy {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: left !important;
+  }
+  .ltf-specs-vault-header .ltf-subheading-navy {
+    white-space: nowrap !important;
+  }
+  .ltf-specs-vault-cards,
+  .ltf-specs-vault-cards.ltf-split-asset {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 40px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .ltf-spec-card,
+  .ltf-spec-card.ltf-spec-card-01,
+  .ltf-spec-card.ltf-spec-card-02,
+  .ltf-spec-card.ltf-spec-card-03,
+  .ltf-spec-card.ltf-spec-card-04 {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 28px 20px !important;
+    aspect-ratio: 4 / 3 !important;
+    border-style: solid !important;
+    border-width: 3px !important;
+    border-color: #e5e5e5 !important;
+    border-radius: 12px !important;
+    background-color: #00001C !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+  .ltf-spec-card .ltf-card-title {
+    font-size: clamp(1.62rem, 2.4vw, 1.98rem) !important;
+  }
+  .ltf-spec-card .ltf-body-text {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    font-size: 18px !important;
+    line-height: 1.35 !important;
   }
 }
 
