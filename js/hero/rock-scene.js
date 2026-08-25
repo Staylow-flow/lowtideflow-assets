@@ -629,7 +629,7 @@ const IDLE_PITCH_AMP2 = ROCK_MOTION_BASELINE.idlePitchAmp2;
  *  so plume edges sit inside the phone (no haloGain=0 hole, no navy mask). */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
   /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen. */
-  gasCenterY:       0.861,  /* −15px vs prior 0.88 (~800px canvas) */
+  gasCenterY:       0.811,  /* rock/gas down ~40px vs prior 0.861 */
   /* SoftCore stays expansive/colorful like desktop — mild horizontal inset */
   gasStretchX:      0.58,
   gasStretchY:      1.05,
@@ -657,9 +657,9 @@ const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
 /**
  * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx: 100).
- * Canvas top = -39px (into nav at 25% of 52px); +20px vs prior 129.
+ * −40px vs prior 149 (rock down 40).
  */
-const MOBILE_ROCK_LIFT_PX = 149;
+const MOBILE_ROCK_LIFT_PX = 109;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
