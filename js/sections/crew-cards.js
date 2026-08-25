@@ -17,6 +17,8 @@ const START_AT = 1.05;
 /* Card top at this fraction → fully docked. Lower = more travel on-screen. */
 const END_AT = 0.58;
 const TRAVEL = 100;
+/* Keep touch glow visible briefly after finger-up (pointerleave is flaky). */
+const TOUCH_GLOW_MS = 900;
 
 function clamp01(t) {
   return t < 0 ? 0 : t > 1 ? 1 : t;
@@ -38,12 +40,36 @@ function scrollProgress(el, vh) {
 function bindGlow(card) {
   if (card.dataset.ltfGlowBound === '1') return;
   card.dataset.ltfGlowBound = '1';
-  card.addEventListener('pointerenter', () => card.classList.add('is-glow'));
-  card.addEventListener('pointerleave', () => card.classList.remove('is-glow'));
-  /* Touch: keep glow while finger is down (no size change — CSS enforces). */
-  card.addEventListener('pointerdown', () => card.classList.add('is-glow'));
-  card.addEventListener('pointerup', () => card.classList.remove('is-glow'));
-  card.addEventListener('pointercancel', () => card.classList.remove('is-glow'));
+
+  let hideTimer = 0;
+  const show = () => {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = 0;
+    }
+    card.classList.add('is-glow');
+  };
+  const hideSoon = () => {
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = window.setTimeout(() => {
+      card.classList.remove('is-glow');
+      hideTimer = 0;
+    }, TOUCH_GLOW_MS);
+  };
+  const hideNow = () => {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = 0;
+    }
+    card.classList.remove('is-glow');
+  };
+
+  card.addEventListener('pointerenter', show);
+  card.addEventListener('pointerleave', hideNow);
+  /* Touch: show wash + orbit ring while finger is down, linger briefly. */
+  card.addEventListener('pointerdown', show);
+  card.addEventListener('pointerup', hideSoon);
+  card.addEventListener('pointercancel', hideNow);
 }
 
 /** Mobile Specs: kill slam leftovers, stack like Crew, glow only. */

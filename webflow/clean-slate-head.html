@@ -993,8 +993,20 @@
     transition: border-color 0.45s ease;
   }
 
-  /* Inner wash — behind the type, clipped to the navy plate. */
-  .ltf-card::before {
+  /* Card body type — keep hero 20px scoped; Crew/Specs stay ~18px left. */
+  .ltf-card .ltf-body-text,
+  .ltf-spec-card .ltf-body-text {
+    font-size: 18px !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+    text-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Shared glow chrome — Crew + Specs (wash + orbit ring). */
+  .ltf-card::before,
+  .ltf-spec-card::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -1011,17 +1023,21 @@
   }
 
   .ltf-card:hover::before,
-  .ltf-card.is-glow::before {
+  .ltf-card.is-glow::before,
+  .ltf-spec-card:hover::before,
+  .ltf-spec-card.is-glow::before {
     opacity: 0.84;
   }
 
-  .ltf-card > * {
+  .ltf-card > *,
+  .ltf-spec-card > * {
     position: relative;
     z-index: 1;
   }
 
   /* Spinning ring sits OUTSIDE the navy plate. */
-  .ltf-card::after {
+  .ltf-card::after,
+  .ltf-spec-card::after {
     content: '';
     position: absolute;
     inset: -6px;
@@ -1042,20 +1058,26 @@
   }
 
   .ltf-card:hover,
-  .ltf-card.is-glow {
+  .ltf-card.is-glow,
+  .ltf-spec-card:hover,
+  .ltf-spec-card.is-glow {
     border-color: transparent !important;
   }
 
   .ltf-card:hover::after,
-  .ltf-card.is-glow::after {
+  .ltf-card.is-glow::after,
+  .ltf-spec-card:hover::after,
+  .ltf-spec-card.is-glow::after {
     opacity: 1;
     animation: ltf-edge-spin 4s linear infinite;
   }
 
   @media (max-width: 991px) {
     .ltf-card.is-glow,
-    .ltf-card:hover {
-      transform: none;
+    .ltf-card:hover,
+    .ltf-spec-card.is-glow,
+    .ltf-spec-card:hover {
+      transform: none !important;
     }
   }
 
@@ -1291,12 +1313,12 @@
       width: 100% !important;
     }
 
-    /* Specs → Crew-style stacked boxes on mobile (no slam / no scroll slide) */
+    /* Specs → exact Crew stack on mobile (no slam / no 500vh track) */
     .ltf-specs-vault {
       height: auto !important;
       min-height: 0 !important;
       padding-top: 0 !important;
-      padding-bottom: 48px !important;
+      padding-bottom: var(--ltf-section-pad-y, 48px) !important;
     }
 
     .ltf-specs-vault-sticky {
@@ -1329,11 +1351,12 @@
       align-self: stretch !important;
     }
 
+    /* Match .ltf-cards-grid: column stack + 40px gap */
     .ltf-specs-vault-cards {
       position: relative !important;
       display: flex !important;
       flex-direction: column !important;
-      gap: 14px !important;
+      gap: 40px !important;
       width: 100% !important;
       max-width: 100% !important;
       min-height: 0 !important;
@@ -1344,6 +1367,7 @@
       isolation: isolate;
     }
 
+    /* Specs cards = Crew .ltf-card box model */
     .ltf-spec-card,
     .ltf-spec-card.ltf-spec-card-01,
     .ltf-spec-card.ltf-spec-card-02,
@@ -1362,7 +1386,7 @@
       width: 100% !important;
       max-width: 100% !important;
       height: auto !important;
-      min-height: clamp(236px, 58vw, 320px) !important;
+      min-height: clamp(236px, 19.5vw, 332px) !important;
       max-height: none !important;
       margin: 0 !important;
       padding: 28px 20px !important;
@@ -1378,12 +1402,14 @@
       transition: border-color 0.45s ease !important;
     }
 
+    .ltf-card .ltf-card-title,
     .ltf-spec-card .ltf-card-title {
       font-size: clamp(1.25rem, 5.2vw, 1.55rem) !important;
       line-height: 1.15 !important;
       margin-bottom: 10px !important;
     }
 
+    .ltf-card .ltf-body-text,
     .ltf-spec-card .ltf-body-text {
       width: 100% !important;
       max-width: 100% !important;
@@ -1391,58 +1417,10 @@
       padding: 0 !important;
       text-align: left !important;
       align-self: stretch !important;
-      font-size: 16px !important;
+      font-size: 18px !important;
       line-height: 1.35 !important;
       color: #E5E5E5 !important;
       text-shadow: none !important;
-    }
-
-    /* Crew-style glow on touch (slam stays desktop) */
-    .ltf-spec-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      border-radius: inherit;
-      background:
-        radial-gradient(ellipse at 22% 18%, rgba(112, 64, 192, 0.72) 0%, transparent 52%),
-        radial-gradient(ellipse at 82% 28%, rgba(42, 170, 184, 0.62) 0%, transparent 50%),
-        radial-gradient(ellipse at 48% 92%, rgba(11, 128, 80, 0.58) 0%, transparent 55%),
-        radial-gradient(ellipse at 70% 70%, rgba(31, 119, 129, 0.4) 0%, transparent 48%);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.45s ease;
-    }
-
-    .ltf-spec-card::after {
-      content: '';
-      position: absolute;
-      inset: -6px;
-      z-index: 2;
-      border-radius: 18px;
-      padding: 3px;
-      background: conic-gradient(
-        from var(--ltf-edge-angle),
-        #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D
-      );
-      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-      mask-composite: exclude;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.35s ease;
-    }
-
-    .ltf-spec-card > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    .ltf-spec-card.is-glow::before { opacity: 0.84; }
-    .ltf-spec-card.is-glow::after {
-      opacity: 1;
-      animation: ltf-edge-spin 4s linear infinite;
     }
 
     .ltf-spec-card.is-glow,
@@ -1479,13 +1457,14 @@
   }
 
   @media (max-width: 479px) {
+    .ltf-card,
     .ltf-spec-card,
     .ltf-spec-card.ltf-spec-card-01,
     .ltf-spec-card.ltf-spec-card-02,
     .ltf-spec-card.ltf-spec-card-03,
     .ltf-spec-card.ltf-spec-card-04 {
       padding: 24px 16px !important;
-      min-height: clamp(220px, 62vw, 300px) !important;
+      min-height: clamp(236px, 19.5vw, 332px) !important;
     }
   }
 
