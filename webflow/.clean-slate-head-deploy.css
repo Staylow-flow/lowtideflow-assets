@@ -342,15 +342,13 @@
       max-height: 100% !important;
     }
 
-    /* Lock canvas to section scroll; top flush under 52px nav (hero has
-       margin-top:-52px, so top:52px lands at the nav bottom edge).
-       Use inset shorthand — do NOT set inset:auto after top/left/etc
-       (that resets all sides and collapses the wrapper to 0 height). */
+    /* Lock canvas to section scroll. Hero has margin-top:-52px so top:0 =
+       viewport top (nebula under frosted nav). Use inset shorthand — do
+       NOT set inset:auto after top/left/etc (collapses wrapper height). */
     .ltf-hero .hero-canvas-wrapper {
       position: absolute !important;
-      /* Nav is 52px; mid-glass = 26px. Up another 5px → 16px so nebula
-         shows through frosted nav glass. Hero has margin-top:-52px. */
-      inset: 16px 0 0 0 !important;
+      /* Part 1: canvas up so boulder sits flush behind raised H1 */
+      inset: 0 0 0 0 !important;
       width: 100% !important;
       height: auto !important;
       max-height: none !important;
@@ -365,8 +363,9 @@
       will-change: auto !important;
     }
 
-    /* Copy stack under H1 (JS sets --ltf-hero-copy-top = H1 bottom + 50px).
-       Wide to screen edges (25px inset). Not bottom-anchored. */
+    /* Copy stack under H1 (JS sets --ltf-hero-copy-top = H1 bottom + 30px).
+       Stretch to hero bottom so CTA can absolute-park above Safari chrome.
+       Wide to screen edges (25px inset). */
     .ltf-hero-bottom-bar,
     .ltf-hero-bottom-bar.ltf-split-2 {
       position: absolute !important;
@@ -378,8 +377,8 @@
       gap: 18px !important;
       left: 25px !important;
       right: 25px !important;
-      top: var(--ltf-hero-copy-top, calc(12% + 280px)) !important;
-      bottom: auto !important;
+      top: var(--ltf-hero-copy-top, calc(12% + 200px)) !important;
+      bottom: 0 !important;
       width: auto !important;
       max-width: none !important;
       min-width: 0 !important;
@@ -388,6 +387,7 @@
       will-change: auto !important;
       text-align: center !important;
       z-index: 3 !important;
+      pointer-events: none !important;
     }
 
     /* Full-bleed copy wrapper — kill rem column lock */
@@ -403,6 +403,8 @@
       margin-right: 0 !important;
       padding-left: 0 !important;
       padding-right: 0 !important;
+      /* Reserve absolute CTA band so logo never sits under the button */
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important;
       box-sizing: border-box !important;
       display: flex !important;
       flex-direction: column !important;
@@ -417,6 +419,7 @@
       margin-top: 0 !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
+      order: 1 !important;
       text-align: center !important;
       align-self: stretch !important;
       font-size: 20px !important;
@@ -431,6 +434,7 @@
       hyphens: none !important;
       overflow-wrap: normal !important;
       word-break: normal !important;
+      pointer-events: none !important;
       text-shadow:
         0 0 10px rgba(0, 0, 0, 0.85),
         0 0 22px rgba(0, 0, 0, 0.7),
@@ -438,31 +442,40 @@
         0 0 1px rgba(0, 0, 0, 1) !important;
     }
 
+    /* CTA: absolute inside stretched bottom-bar; parked above Safari chrome.
+       Independent of body/logo flow. ~50px lower than prior mid-stack sit. */
     .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
       display: inline-block !important;
-      align-self: center !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
-      margin-top: 0 !important;
-      position: relative !important;
-      top: 15px !important;
+      position: absolute !important;
+      left: 50% !important;
+      right: auto !important;
+      top: auto !important;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 28px) !important;
+      transform: translateX(-50%) !important;
+      margin: 0 !important;
+      z-index: 4 !important;
+      pointer-events: auto !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
         drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     }
 
-    /* Wave mark overlays left of body (out of flow so body stays at bar top) */
+    /* Wave mark fully BELOW body — undo Designer top:-82px / negative margin */
     .ltf-hero-bottom-bar .is-hero-logo-mobile,
     .ltf-hero-bottom-bar img.is-hero-logo-mobile {
       display: block !important;
       height: 72px !important;
       width: auto !important;
-      position: absolute !important;
-      left: 0 !important;
-      top: 28px !important;
-      margin: 0 !important;
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      order: 2 !important;
+      margin: 20px 0 0 !important;
+      margin-bottom: 0 !important;
+      align-self: center !important;
       z-index: 2 !important;
+      pointer-events: none !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
@@ -503,8 +516,10 @@
       will-change: auto !important;
     }
 
+    /* 52px nav + 25px gap. Kill Designer translateY(-50%) so top = top edge. */
     .ltf-hero-headline {
-      top: calc(12% + 65px) !important; /* +10px down from prior */
+      top: 77px !important;
+      transform: translateX(-50%) !important;
       padding-left: 25px !important;
       padding-right: 25px !important;
       box-sizing: border-box !important;
@@ -1143,9 +1158,8 @@
     }
 
     .ltf-hero .hero-canvas-wrapper {
-      /* Nav is 52px; mid-glass = 26px. Up another 5px → 16px so nebula
-         shows through frosted nav glass. Hero has margin-top:-52px. */
-      inset: 16px 0 0 0 !important;
+      /* Part 1: canvas flush to hero top so rock sits behind raised H1 */
+      inset: 0 0 0 0 !important;
       height: auto !important;
       max-height: none !important;
     }
@@ -1156,11 +1170,17 @@
       right: 0 !important;
     }
 
-    /* Late-cascade CTA nudge — must win over earlier margin rules */
+    /* Late-cascade CTA — absolute, above Safari home indicator */
     .ltf-hero .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
-      position: relative !important;
-      top: 15px !important;
-      margin-top: 0 !important;
+      position: absolute !important;
+      left: 50% !important;
+      right: auto !important;
+      top: auto !important;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 28px) !important;
+      transform: translateX(-50%) !important;
+      margin: 0 !important;
+      z-index: 4 !important;
+      pointer-events: auto !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
@@ -1168,11 +1188,12 @@
     }
 
     .ltf-hero .ltf-hero-bottom-bar {
-      top: var(--ltf-hero-copy-top, calc(12% + 280px)) !important;
-      bottom: auto !important;
+      top: var(--ltf-hero-copy-top, calc(12% + 200px)) !important;
+      bottom: 0 !important;
       left: 25px !important;
       right: 25px !important;
       align-items: start !important;
+      pointer-events: none !important;
     }
 
     .ltf-hero .ltf-hero-bottom-bar .is-hero-copy,
@@ -1194,6 +1215,7 @@
       margin-top: 0 !important;
       margin-left: 0 !important;
       margin-right: 0 !important;
+      order: 1 !important;
       font-size: 20px !important;
       line-height: 1.275 !important;
       text-align: center !important;
@@ -1205,14 +1227,22 @@
 
     .ltf-hero .ltf-hero-bottom-bar .is-hero-logo-mobile,
     .ltf-hero .ltf-hero-bottom-bar img.is-hero-logo-mobile {
-      position: absolute !important;
-      left: 0 !important;
-      top: 28px !important;
-      margin: 0 !important;
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      order: 2 !important;
+      margin: 20px 0 0 !important;
+      margin-bottom: 0 !important;
+      align-self: center !important;
       filter:
         drop-shadow(0 0 10px rgba(0, 0, 0, 0.85))
         drop-shadow(0 0 22px rgba(0, 0, 0, 0.7))
         drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
+    }
+
+    .ltf-hero .ltf-hero-headline {
+      top: 77px !important;
+      transform: translateX(-50%) !important;
     }
 
     .ltf-hero .ltf-hero-figure {
