@@ -8,9 +8,9 @@
 }
 
 @keyframes ltf-upsell-sweep {
-  /* Left → right, seamless when gradient ends transparent on both sides */
+  /* Continuous L→R roll; 300% band + 0→100% position loops forever without a hitch */
   from { background-position: 0% 50%; }
-  to { background-position: 200% 50%; }
+  to { background-position: 100% 50%; }
 }
 
 @property --ltf-edge-angle {
@@ -214,9 +214,13 @@ body.ltf-nav-open {
   z-index: 0;
   isolation: isolate;
   overflow: hidden;
-  /* Solid fill so ::after (z-index:-1) sits under text, not behind the page */
+  list-style: none !important;
+  /* Solid fill so sweep band sits above this, under text */
   background-color: #00001C;
-  /* Match list radius so gradient clips on left + right corners */
+}
+.ltf-upsell-list-item::marker {
+  content: none !important;
+  font-size: 0 !important;
 }
 .ltf-upsell-list-item:first-child {
   border-top-left-radius: 12px;
@@ -232,38 +236,39 @@ body.ltf-nav-open {
   z-index: 2;
 }
 .ltf-upsell-list-item::before {
-  content: '▪';
-  color: #2AAAB8;
-  font-size: 11px;
+  content: '▪' !important;
+  color: #0B8050 !important; /* green → purple on hover / touch */
+  font-size: 14px !important;
   line-height: 1.7;
   flex-shrink: 0;
   margin-right: 14px;
   position: relative;
   z-index: 2;
+  transition: color 0.35s ease;
 }
 /*
-  Gradient sits UNDER text (z-index: -1 above item bg, below in-flow text).
-  Vibrant band; L→R seamless loop via keyframes.
+  Sweep band UNDER text (z-index 1), ABOVE the solid item background.
+  Never use z-index:-1 here — it vanishes behind the fill.
 */
 .ltf-upsell-list-item::after {
   content: '' !important;
   position: absolute !important;
   inset: 0 !important;
-  z-index: -1 !important;
+  z-index: 1 !important;
   border-radius: inherit !important;
   background-image: linear-gradient(
     90deg,
     rgba(112, 64, 192, 0) 0%,
-    rgba(112, 64, 192, 0.55) 14%,
-    rgba(77, 37, 157, 0.72) 28%,
-    rgba(42, 170, 184, 0.82) 42%,
-    rgba(11, 128, 80, 0.70) 50%,
-    rgba(42, 170, 184, 0.82) 58%,
-    rgba(77, 37, 157, 0.72) 72%,
-    rgba(112, 64, 192, 0.55) 86%,
+    rgba(11, 128, 80, 0.55) 10%,
+    rgba(42, 170, 184, 0.75) 22%,
+    rgba(77, 37, 157, 0.78) 36%,
+    rgba(112, 64, 192, 0.85) 50%,
+    rgba(77, 37, 157, 0.78) 64%,
+    rgba(42, 170, 184, 0.75) 78%,
+    rgba(11, 128, 80, 0.55) 90%,
     rgba(112, 64, 192, 0) 100%
   ) !important;
-  background-size: 200% 100% !important;
+  background-size: 300% 100% !important;
   background-position: 0% 50% !important;
   background-repeat: repeat-x !important;
   opacity: 0 !important;
@@ -271,12 +276,14 @@ body.ltf-nav-open {
   transition: opacity 0.3s ease;
 }
 .ltf-upsell-list-item:hover::after,
-.ltf-upsell-list-item.is-sweep::after {
+.ltf-upsell-list-item.is-sweep::after,
+.ltf-upsell-list-item:active::after {
   opacity: 1 !important;
-  animation: ltf-upsell-sweep 2.6s linear infinite !important;
+  animation: ltf-upsell-sweep 5.2s linear infinite !important;
 }
 .ltf-upsell-list-item:hover::before,
-.ltf-upsell-list-item.is-sweep::before {
+.ltf-upsell-list-item.is-sweep::before,
+.ltf-upsell-list-item:active::before {
   color: #7040C0 !important;
 }
 
@@ -400,7 +407,10 @@ body.ltf-nav-open {
     max-width: 100vw !important;
   }
 
-  /* Mockup locks — beat any stale Designer cascade */
+  /*
+    Hero LAYOUT lives in Designer (canvas / headline / body / figure / CTA).
+    FX only clips sideways scroll + keeps CTA from going viewport-fixed.
+  */
   .ltf-hero {
     overflow-x: clip !important;
     overflow-y: hidden !important;
@@ -412,96 +422,20 @@ body.ltf-nav-open {
     max-width: 100% !important;
     height: 100% !important;
   }
-  .ltf-hero .hero-canvas-wrapper {
-    top: 1px !important; /* was -39 → down 40px */
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    overflow: hidden !important;
-  }
-  .ltf-hero-headline {
-    top: 142px !important; /* was 102 → down 40px */
-    left: 0 !important;
-    width: 100% !important;
-    transform: none !important;
-    text-align: center !important;
-  }
-  .ltf-hero-headline .ltf-main-header {
-    text-align: center !important;
-  }
-  .ltf-hero-bottom-bar {
-    left: 15px !important;
-    right: 15px !important;
-    width: auto !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    justify-items: stretch !important;
-  }
-  .ltf-hero-bottom-bar .is-hero-copy {
-    align-items: flex-start !important;
-    text-align: left !important;
-  }
   .ltf-hero-bottom-bar .is-hero-body,
   .ltf-hero-bottom-bar .ltf-body-text.is-hero-body {
-    text-align: left !important;
-    align-self: flex-start !important;
     text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.75) !important;
-  }
-  .ltf-hero-bottom-bar .is-hero-logo-mobile {
-    display: block !important;
-    height: 101px !important;
-    width: auto !important;
-    order: 0 !important;
-    align-self: flex-start !important;
   }
   .ltf-hero-bottom-bar .ltf-hero-logo {
     display: none !important;
   }
-  /* CTA stays in the hero — absolute, not viewport-fixed */
+  .ltf-hero-bottom-bar .is-hero-logo-mobile {
+    display: block !important;
+  }
+  /* Never let CTA go position:fixed (stuck on all sections) */
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap.is-hero-cta-wrap {
     position: absolute !important;
-    left: 50% !important;
-    right: auto !important;
-    top: auto !important;
-    bottom: 25px !important; /* was 35 → down 10px */
-    transform: translateX(-50%) !important;
-    z-index: 6 !important;
-    margin: 0 !important;
     pointer-events: auto !important;
-  }
-  /*
-    Orange shirt: 20% past the right edge, bottom flush with hero bottom.
-    NEVER translateX(-…) — that centered him. Clip overflow so no sideways scroll.
-  */
-  .ltf-hero-figure {
-    position: absolute !important;
-    right: -20vw !important;
-    left: auto !important;
-    bottom: 0 !important;
-    top: auto !important;
-    width: min(92vw, 420px) !important;
-    max-width: none !important;
-    height: auto !important;
-    transform: none !important;
-    z-index: 1 !important;
-    pointer-events: none !important;
-  }
-  .ltf-hero-figure-img,
-  .ltf-hero-figure img {
-    position: relative !important;
-    display: block !important;
-    right: auto !important;
-    left: auto !important;
-    bottom: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    height: auto !important;
-    max-width: none !important;
-    max-height: none !important;
-    object-fit: contain !important;
-    object-position: bottom right !important;
-    transform: none !important;
   }
 
   /* ── Mobile nav bar + panel ─────────────────────────────────────── */
@@ -785,35 +719,49 @@ body.ltf-nav-open {
     line-height: 1.35 !important;
   }
 
-  /* Beyond the Gear — mobile: Crew-edge width, 100vh stack, CTA gap */
+  /*
+    Beyond the Gear — mobile: same 75px H1 section pad as other sections.
+    NO fixed 100vh (was clipping H1 + CTA). List gets 50px top/bottom air.
+  */
   .ltf-upsell {
     display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     box-sizing: border-box !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
+    height: auto !important;
+    min-height: 0 !important;
     padding-top: 75px !important;
     padding-bottom: 75px !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
+    overflow: visible !important;
   }
   .ltf-upsell .ltf-upsell-inner.ltf-cage,
   .ltf-upsell .ltf-upsell-inner {
     display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     width: 100% !important;
     max-width: 100% !important;
     padding-left: 25px !important;
     padding-right: 25px !important;
     box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+  .ltf-upsell .ltf-section-head,
+  .ltf-upsell .ltf-section-header {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
   .ltf-upsell-list {
     width: 100% !important;
     max-width: 100% !important;
+    margin-top: 50px !important;
+    margin-bottom: 50px !important;
   }
   .ltf-upsell-list-item {
+    display: flex !important;
+    align-items: center !important;
     font-size: 19.2px !important; /* 24px −20% — fit 2 lines on phone */
     line-height: 1.22 !important;
     padding-top: 18px !important;
@@ -821,11 +769,22 @@ body.ltf-nav-open {
     padding-left: 18px !important;
     padding-right: 18px !important;
   }
+  .ltf-upsell-list-item::before {
+    content: '▪' !important;
+    color: #0B8050 !important;
+    display: inline-block !important;
+  }
+  .ltf-upsell-list-item.is-sweep::before,
+  .ltf-upsell-list-item:active::before {
+    color: #7040C0 !important;
+  }
   .ltf-section-cta.is-beyond-mobile {
     display: flex !important;
     width: 100% !important;
-    margin-top: 28px !important; /* ≥25px clear of upsell list */
+    margin-top: 40px !important;
+    margin-bottom: 20px !important;
     justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 }
 
