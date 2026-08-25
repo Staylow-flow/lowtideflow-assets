@@ -824,22 +824,21 @@
 
   /* ── Trenches: one viewport tall, 20px air, glass may hang past the knit ── */
   .ltf-section:has(.ltf-authority-image-box) {
-    height: 100vh !important;
-    min-height: 100vh !important;
-    max-height: 100vh !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     box-sizing: border-box;
-    padding-top: 20px !important;
-    padding-bottom: 20px !important;
+    padding-top: 48px !important;
+    padding-bottom: 64px !important;
     overflow: visible;
-    display: flex;
-    align-items: center;
+    display: block;
   }
 
   .ltf-section:has(.ltf-authority-image-box) .ltf-site-cage,
   .ltf-section:has(.ltf-authority-image-box) .ltf-section-inner,
   .ltf-section:has(.ltf-authority-image-box) .ltf-split-2,
   .ltf-section:has(.ltf-authority-image-box) .ltf-split-asset {
-    height: 100%;
+    height: auto;
     overflow: visible;
   }
 
@@ -847,15 +846,21 @@
     align-items: center;
   }
 
+  .ltf-section:has(.ltf-authority-image-box) .ltf-split-asset {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+
   .ltf-authority-image-box,
   .ltf-magnifier {
     position: relative;
     width: 100%;
-    height: calc((100vh - 40px) * 0.85) !important;
-    max-height: calc((100vh - 40px) * 0.85) !important;
-    overflow: visible !important;
-    aspect-ratio: auto !important;
-    border-radius: 0;
+    max-width: 520px;
+    height: auto !important;
+    max-height: none !important;
+    aspect-ratio: 3 / 4 !important;
+    overflow: hidden !important;
+    border-radius: 24px;
     background: none;
     border: none;
     cursor: none;
@@ -947,7 +952,12 @@
     }
 
     .ltf-card {
-      width: calc(75% + 25px);
+      /* Thinner / more square vs prior calc(75% + 25px); gutters stay 40px. */
+      width: calc(58% + 18px);
+      max-width: 420px;
+      aspect-ratio: 4 / 3;
+      min-height: 0;
+      height: auto;
     }
 
     /* Dock toward the 40px column gap — keep the square, don't stretch. */
@@ -962,7 +972,7 @@
 
   .ltf-card {
     position: relative;
-    min-height: clamp(236px, 19.5vw, 332px);
+    min-height: 0;
     overflow: visible !important;
     isolation: isolate;
     will-change: transform;
@@ -1066,8 +1076,8 @@
   .ltf-funnel-cta .ltf-btn-gradient-wrap {
     background: #FFFFFF !important;
     background-color: #FFFFFF !important;
-    padding: 2px !important;
-    box-shadow: 0 0 0 2px #FFFFFF !important;
+    padding: 1px !important;
+    box-shadow: 0 0 0 1px #FFFFFF !important;
   }
 
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover,
@@ -1094,8 +1104,7 @@
     color: #E5E5E5 !important;
   }
 
-  /* The Crew heading — Designer combo is flex-direction: row + max-width 720,
-     which hides the center alignment already set in the Style panel. */
+  /* The Crew heading — desktop stays centered; mobile left to match Trenches. */
   .ltf-stack.ltf-section-head,
   .ltf-section-head {
     display: flex !important;
@@ -1119,12 +1128,33 @@
     margin-right: auto;
   }
 
+  @media (max-width: 991px) {
+    .ltf-stack.ltf-section-head,
+    .ltf-section-head {
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      text-align: left !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .ltf-section-head .ltf-section-header,
+    .ltf-section-head .ltf-section-header-navy,
+    .ltf-section-head .ltf-authority-sublabel,
+    .ltf-section-head .ltf-subheading {
+      text-align: left !important;
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
   /* ── Launch CTA: iridescent bloom on hover ──────────────────────────── */
   .ltf-funnel-cta {
     position: relative;
     isolation: isolate;
   }
 
+  /* Launch glow — crew teal/purple, vignette-tapered like the old blue bloom. */
   .ltf-funnel-cta::before {
     content: '';
     position: absolute;
@@ -1135,18 +1165,40 @@
     height: 520px;
     max-width: 140%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(
-      ellipse at center,
-      #7040C0 0%, #4D259D 28%, #1F7781 52%, #0B8050 68%, transparent 78%
-    );
-    filter: blur(110px);
+    background:
+      radial-gradient(ellipse at 28% 32%, rgba(42, 170, 184, 0.62) 0%, transparent 52%),
+      radial-gradient(ellipse at 72% 68%, rgba(112, 64, 192, 0.55) 0%, transparent 55%),
+      radial-gradient(ellipse at center, rgba(11, 128, 80, 0.28) 0%, transparent 72%);
+    filter: blur(100px);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.55s ease;
   }
 
-  .ltf-funnel-cta:hover::before {
-    opacity: 0.26;
+  .ltf-funnel-cta-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 0;
+    width: 900px;
+    height: 520px;
+    max-width: 140%;
+    transform: translate(-50%, -50%);
+    background:
+      radial-gradient(ellipse at 28% 32%, rgba(42, 170, 184, 0.62) 0%, transparent 52%),
+      radial-gradient(ellipse at 72% 68%, rgba(112, 64, 192, 0.55) 0%, transparent 55%),
+      radial-gradient(ellipse at center, rgba(11, 128, 80, 0.28) 0%, transparent 72%);
+    filter: blur(100px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.55s ease;
+  }
+
+  .ltf-funnel-cta:hover::before,
+  .ltf-funnel-cta.is-glow::before,
+  .ltf-funnel-cta:hover .ltf-funnel-cta-glow,
+  .ltf-funnel-cta.is-glow .ltf-funnel-cta-glow {
+    opacity: 0.32;
   }
 
   .ltf-funnel-cta-inner {
@@ -1154,16 +1206,16 @@
     transition: border-color 0.45s ease;
   }
 
-  .ltf-funnel-cta:hover .ltf-funnel-cta-inner {
+  .ltf-funnel-cta:hover .ltf-funnel-cta-inner,
+  .ltf-funnel-cta.is-glow .ltf-funnel-cta-inner {
     border-color: rgba(42, 170, 184, 0.55);
   }
 
-  /* CTA ring: outer 12px, inner 10px — 2px gap, inner a touch tighter so
-     the white outline and navy fill share one curve. Nav stays 5px. */
+  /* CTA ring: 1px white outline. Nav stays 5px. */
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
   .ltf-section-cta .ltf-btn-gradient-wrap,
   .ltf-funnel-cta .ltf-btn-gradient-wrap {
-    --ltf-ring-gap: 2px;
+    --ltf-ring-gap: 1px;
     --ltf-btn-radius: 10px;
     padding: var(--ltf-ring-gap);
     border-radius: 12px;
@@ -1387,7 +1439,8 @@
 
     .ltf-card .ltf-card-title,
     .ltf-spec-card .ltf-card-title {
-      font-size: clamp(1.25rem, 5.2vw, 1.55rem) !important;
+      /* +20% vs prior mobile clamp(1.25rem … 1.55rem) */
+      font-size: clamp(1.5rem, 6.24vw, 1.86rem) !important;
       line-height: 1.15 !important;
       margin-bottom: 10px !important;
     }
@@ -1414,35 +1467,41 @@
       border-color: transparent !important;
     }
 
-    /* Fabric magnifier — landscape window; glass pans L→R on vertical scroll (8f38c87) */
+    /* Fabric magnifier — portrait plate; glass pans L→R on vertical scroll */
     .ltf-section:has(.ltf-authority-image-box) {
       height: auto !important;
       min-height: 0 !important;
       max-height: none !important;
       display: block !important;
       padding-top: 48px !important;
-      padding-bottom: 48px !important;
+      padding-bottom: 64px !important;
     }
 
     .ltf-section:has(.ltf-authority-image-box) .ltf-split-2 {
       display: flex !important;
       flex-direction: column !important;
       height: auto !important;
+      gap: 28px !important;
     }
 
     .ltf-section:has(.ltf-authority-image-box) .ltf-split-asset {
       width: 100% !important;
       height: auto !important;
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
     }
 
     .ltf-authority-image-box,
     .ltf-magnifier {
       display: block !important;
-      width: 100% !important;
-      height: 250px !important;
-      max-height: 250px !important;
-      min-height: 250px !important;
-      aspect-ratio: auto !important;
+      width: min(86vw, 360px) !important;
+      max-width: min(86vw, 360px) !important;
+      height: auto !important;
+      max-height: none !important;
+      min-height: 0 !important;
+      aspect-ratio: 3 / 4 !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
       cursor: auto;
       overflow: hidden !important;
     }
@@ -1455,17 +1514,24 @@
 
     .ltf-magnifier-lens {
       opacity: 1 !important;
-      max-width: 42% !important;
+      max-width: 48% !important;
     }
 
-    /* Beyond the Gear — restore inner pad + pull block up ~40px */
+    /* Beyond the Gear — full mobile viewport + sweep host */
     .ltf-upsell {
-      padding-top: 35px !important;
+      min-height: 100vh !important;
+      height: auto !important;
+      padding-top: 48px !important;
+      padding-bottom: 48px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      box-sizing: border-box !important;
     }
 
     .ltf-upsell-list,
     .ltf-upsell-list.ltf-split-asset {
-      margin-top: -40px !important;
+      margin-top: 0 !important;
       padding: 0 !important;
       overflow: hidden !important;
       border-radius: 12px !important;
@@ -1473,6 +1539,39 @@
 
     .ltf-upsell-list-item {
       padding: 22px 28px 22px 24px !important;
+    }
+
+    /* Launch Your Fleet — own 100vh; dashed border inset trimmed 50px */
+    .ltf-funnel-cta {
+      min-height: 100vh !important;
+      height: auto !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: center !important;
+      box-sizing: border-box !important;
+    }
+
+    .ltf-funnel-cta-inner {
+      padding-top: 70px !important;
+      padding-bottom: 70px !important;
+    }
+
+    /* Mobile section H1 pad matches Trenches (48px top) — not hero */
+    .ltf-section:not(.ltf-hero):not(:has(.ltf-hero)),
+    .ltf-section:has(.ltf-cards-grid),
+    .ltf-section:has(.ltf-specs-vault),
+    .ltf-section:has(.ltf-authority-image-box) {
+      padding-top: 48px !important;
+    }
+
+    .ltf-section:not(.ltf-hero) .ltf-section-header,
+    .ltf-section:not(.ltf-hero) .ltf-section-header-navy {
+      font-size: 48px !important;
+      line-height: 0.92 !important;
+      text-align: left !important;
     }
   }
 
@@ -1484,7 +1583,8 @@
     .ltf-spec-card.ltf-spec-card-03,
     .ltf-spec-card.ltf-spec-card-04 {
       padding: 24px 16px !important;
-      min-height: clamp(236px, 19.5vw, 332px) !important;
+      min-height: 0 !important;
+      height: auto !important;
     }
   }
 

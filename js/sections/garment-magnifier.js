@@ -220,8 +220,8 @@ function bind(host) {
     if (!hostW || !hostH) return;
     const mobile = isMobile();
     lensW = mobile
-      ? Math.min(160, Math.max(110, hostW * 0.42))
-      : Math.min(340, Math.max(200, hostW * 0.72));
+      ? Math.min(180, Math.max(128, hostW * 0.48))
+      : Math.min(260, Math.max(170, hostW * 0.48));
     lensH = lensW * MASK_RATIO;
     holeCx = lensW * HOLE_CX;
     holeCy = lensH * HOLE_CY;

@@ -172,6 +172,36 @@ export function init() {
   /* Specs cards — same glow; mobile = Crew stack, no scroll slide. */
   document.querySelectorAll('.ltf-spec-card').forEach(bindGlow);
   normalizeSpecsMobile();
+
+  /* Launch Your Fleet — touch/pointer glow (CSS ::before + .ltf-funnel-cta-glow). */
+  document.querySelectorAll('.ltf-funnel-cta').forEach((el) => {
+    if (el.dataset.ltfFunnelGlow === '1') return;
+    el.dataset.ltfFunnelGlow = '1';
+    let hideTimer = 0;
+    const show = () => {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = 0;
+      }
+      el.classList.add('is-glow');
+    };
+    const hideNow = () => {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = 0;
+      }
+      el.classList.remove('is-glow');
+    };
+    const hideSoon = () => {
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(hideNow, TOUCH_GLOW_MS);
+    };
+    el.addEventListener('pointerenter', show);
+    el.addEventListener('pointerleave', hideNow);
+    el.addEventListener('pointerdown', show);
+    el.addEventListener('pointerup', hideSoon);
+    el.addEventListener('pointercancel', hideNow);
+  });
 }
 
 export default init;
