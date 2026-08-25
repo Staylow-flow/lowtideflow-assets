@@ -61,25 +61,23 @@ body
 | `ltf-section-head` | Combo on stack — section eyebrow + title spacing |
 | `ltf-section-cta` | CTA row under a card grid |
 
-## JS layout
+## JS layout (fuse split — two footer tags)
 
-Everything loads through one entry, `js/ltf.js`, which imports the rest by
-relative path. That is what keeps the whole bundle on a single commit.
+**Critical:** boulder/nebula and UI effects are **separate git URLs**. Same
+commit pin, two `<script type="module">` tags. A hung GLB must never stall
+nav / cards / magnifier / upsell. Do **not** fold `rock-scene.js` into `ltf.js`
+or into a single combined boot that only injects one module.
 
 ```
 js/
-  ltf.js                       entry — the only file Webflow points at
-  core/ticker.js               shared rAF loop + once-per-frame scroll sampling
-  hero/rock-scene.js           nebula shader + hematite boulder
-  sections/specs-vault-slam.js specs card slam + gas/ring FX
-  ui/nav-mobile.js             mobile hamburger
-  ui/btn-gradient.js           button click pulse
-  _archive/                    superseded, loaded by nothing
+  ltf.js                       UI entry — own jsDelivr URL (footer tag 2)
+  hero/rock-scene.js           nebula + boulder — own jsDelivr URL (footer tag 1)
+  sections/…                   imported by ltf.js (relative, same commit)
+  ui/…                         imported by ltf.js
 ```
 
-Each module is gated on a selector, so pages only download what they use.
-To add an effect, drop the file in the right folder and add a row to `MODULES`
-in `ltf.js` — no new script tag.
+Registered boots: `LTFRockBoot…` (importmap + rock-scene) then `LTFUIBoot…`
+(ltf.js). Bump both hashes together when shipping.
 
 ## Hero FX
 
@@ -112,12 +110,13 @@ here as a CSS `::before` opacity fade; the JS only handles the click pulse.
 **Footer** — `webflow/clean-slate-footer.html`
 
 ```html
+<script type="importmap">…three…</script>
+<script type="module" src="…@<commit>/js/hero/rock-scene.js"></script>
 <script type="module" src="…@<commit>/js/ltf.js"></script>
 ```
 
-One tag. Shipping a JS change means pushing the repo and swapping that commit
-hash. Do not add a second tag — that is how the hero and section effects
-previously drifted onto different revisions.
+Two tags, **same** commit. Rock first (own URL). UI second (own URL).
+Never one combined injector that hides the split — and never different SHAs.
 
 ## Feeding fresh content later
 

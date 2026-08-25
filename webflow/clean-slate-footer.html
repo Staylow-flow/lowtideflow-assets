@@ -1,6 +1,12 @@
 <!--
-  CLEAN SLATE — Page Footer pin (NEWNEW left hero + Crew/Specs glow + upsell touch)
-  Head: CSCSSBoot<sha> → jsDelivr .clean-slate-head-deploy.css + Part1 place (H1+30, left)
-  Footer: LTFCSBoot<sha> → ltf.js + rock-scene.js
-  Freeform head/footer comments only — real code is registered scripts.
+  CLEAN SLATE — footer pin (fuse split — two git URLs, same SHA)
+
+  Head: CSCSSFetch… fetches CSS → injects <style> (jsDelivr serves .css as text/plain;
+        <link rel=stylesheet> is ignored by the browser — that killed CTA rings / sweep).
+
+  Footer freeform (preferred) OR boots:
+    1) importmap + js/hero/rock-scene.js   — nebula + boulder (own URL)
+    2) js/ltf.js                           — UI effects (own URL)
+
+  Do not fold rock into ltf.js. Do not load CSS via <link> from jsDelivr gh.
 -->

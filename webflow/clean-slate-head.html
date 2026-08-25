@@ -807,12 +807,13 @@
     z-index: 2;
   }
 
-  /* Quiet purple → green → teal loop behind the white type. No fill plate. */
+  /* Quiet purple → green → teal loop behind the white type. No fill plate.
+     !important on content — Designer/paragraph resets set content:none and kill the sweep. */
   .ltf-upsell-list-item::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
     background: linear-gradient(
       90deg,
       transparent 0%,
@@ -821,11 +822,11 @@
       rgba(42, 170, 184, 0.30) 52%,
       rgba(112, 64, 192, 0.28) 68%,
       transparent 100%
-    );
-    background-size: 220% 100%;
-    background-position: 100% 50%;
-    opacity: 0;
-    pointer-events: none;
+    ) !important;
+    background-size: 220% 100% !important;
+    background-position: 100% 50% !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
     transition: opacity 0.35s ease;
   }
 
@@ -837,12 +838,12 @@
   .ltf-upsell-list-item:hover::after,
   .ltf-upsell-list-item.is-sweep::after {
     opacity: 1 !important;
-    animation: ltf-upsell-sweep 3.4s linear infinite;
+    animation: ltf-upsell-sweep 3.4s linear infinite !important;
   }
 
   .ltf-upsell-list-item:hover::before,
   .ltf-upsell-list-item.is-sweep::before {
-    color: #7040C0;
+    color: #7040C0 !important;
   }
 
   /* ── Trenches: one viewport tall, 20px air, glass may hang past the knit ── */
@@ -1083,13 +1084,14 @@
   }
 
   /* Equip Your Crew, Beyond, Instant Quote — navy fill, 2px white ring
-     (wrap background). Hover: white drops, gradient ::before + JS pulse. */
+     (wrap background + box-shadow fallback). Hover: white drops, gradient ::before + JS pulse. */
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
   .ltf-section-cta .ltf-btn-gradient-wrap,
   .ltf-funnel-cta .ltf-btn-gradient-wrap {
     background: #FFFFFF !important;
     background-color: #FFFFFF !important;
     padding: 2px !important;
+    box-shadow: 0 0 0 2px #FFFFFF !important;
   }
 
   .ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover,
@@ -1103,6 +1105,7 @@
   .ltf-funnel-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
     background: transparent !important;
     background-color: transparent !important;
+    box-shadow: none !important;
   }
 
   .ltf-hero-bottom-bar .ltf-btn-primary,
@@ -1435,7 +1438,7 @@
       border-color: transparent !important;
     }
 
-    /* Fabric magnifier — tall/skinny window; wide knit pans L→R on vertical scroll */
+    /* Fabric magnifier — landscape window; glass pans L→R on vertical scroll (8f38c87) */
     .ltf-section:has(.ltf-authority-image-box) {
       height: auto !important;
       min-height: 0 !important;
@@ -1448,28 +1451,21 @@
     .ltf-section:has(.ltf-authority-image-box) .ltf-split-2 {
       display: flex !important;
       flex-direction: column !important;
-      align-items: center !important;
       height: auto !important;
     }
 
     .ltf-section:has(.ltf-authority-image-box) .ltf-split-asset {
       width: 100% !important;
-      display: flex !important;
-      justify-content: center !important;
       height: auto !important;
     }
 
     .ltf-authority-image-box,
     .ltf-magnifier {
       display: block !important;
-      /* Tall + skinny viewport over a wide fabric image (JS scroll-pans). */
-      width: min(78vw, 320px) !important;
-      max-width: min(78vw, 320px) !important;
-      height: min(68vh, 560px) !important;
-      min-height: min(68vh, 560px) !important;
-      max-height: min(68vh, 560px) !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
+      width: 100% !important;
+      height: 250px !important;
+      max-height: 250px !important;
+      min-height: 250px !important;
       aspect-ratio: auto !important;
       cursor: auto;
       overflow: hidden !important;
@@ -1483,7 +1479,7 @@
 
     .ltf-magnifier-lens {
       opacity: 1 !important;
-      max-width: 48% !important;
+      max-width: 42% !important;
     }
 
     /* Beyond the Gear — restore inner pad + pull block up ~40px */
