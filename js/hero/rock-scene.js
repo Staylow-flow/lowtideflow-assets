@@ -579,7 +579,7 @@ const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no 
 const SCROLL_IMPULSE_GAIN  = 0.27;               // half of prior 0.54 (scroll −50%)
 const SCROLL_VEL_SCALE     = 0.011;              // half of prior 0.022
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
-const DESKTOP_ROCK_SCALE_MULT = 1.10;            /* +10% desktop rock size */
+const DESKTOP_ROCK_SCALE_MULT = 0.88;            /* desktop −20% vs prior 1.10 tune */
 /* Opening pose: wide back of the mesh, sitting behind the hero copy.
    The extra quarter-turn is PITCH (X) — same axis the idle script already
    rolls toward the camera — not yaw. Yaw +90° showed the narrow side. */
