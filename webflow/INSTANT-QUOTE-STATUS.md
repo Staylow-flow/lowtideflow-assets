@@ -71,7 +71,7 @@ Branch: `cursor/instant-quote-v2`
   - "500px of Padding outside the [Submit] button" → interpreted as a typo for ~50px;
     implemented as `margin-top: 50px` separating the button from the field above it.
 
-### Round 4 follow-up — desktop drop container still too tall (commit `<PENDING — filled in after push>`)
+### Round 4 follow-up — desktop drop container still too tall (commit `b89b700`)
 User did live QA on `8237a53` with real DevTools measurements. Items 1, 2, and 4 confirmed
 fully correct live (upload lane renders + animates with name/ext/size; card border measured
 4px with the hover glow layering over `.is-calculating`; submit button measured 64px tall,
@@ -96,9 +96,20 @@ down, `min-height: 220px !important`, was already correct and untouched). Verifi
 competing Designer-side min-height (`.iq-form-upload` Designer style only sets `140px`,
 harmless/overridden by the more specific custom-CSS selector).
 
-**Before/after (desktop, 1920×1080 viewport, `#iq-form-artwork-drop.getBoundingClientRect().height`):**
-- Before: ~886px (idle) — matches `82vh` at 1080px viewport height.
-- After: see live verification note below for the measured number.
+**Before/after (desktop, 1920×1080 viewport, `#iq-form-artwork-drop` total rendered height):**
+- Before: ~886px (idle) — matches `82vh` at 1080px viewport height (user's live measurement).
+- After (calculated from the CSS box model, NOT a live DOM measurement — `cursor-ide-browser`
+  tools were unavailable again this session, same as round 4; confirmed via ~8 attempts across
+  both sessions, consistently "No browser tab available"): outer container is now
+  `min-height: 500px` `box-sizing: border-box` with `padding: clamp(28px, 4vw, 48px)` → at
+  1920px viewport width, `4vw` = 76.8px, clamped down to `48px` each side. `.iq-form-upload-
+  shell` (`min-height: inherit`) and `.iq-form-upload-inner` (`min-height: 500px`) both now
+  match the outer's 500px floor exactly (no more double-stacking against the old 886px
+  value), so total ≈ 48px + 500px + 48px = **~596px** — down from ~886px, in the right
+  ballpark of "roughly 500px" (the extra ~96px is the container's own intentional outer
+  padding/breathing room, not dead space). **Flagging this explicitly: this is a calculated
+  estimate, not a verified live measurement — please spot-check with DevTools
+  (`getBoundingClientRect().height`) since you have working access this session.**
 
 ## Files touched (round 4)
 - `webflow/instant-quote-embed.css`
