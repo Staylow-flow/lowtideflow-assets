@@ -2172,6 +2172,12 @@
     margin-top: -120px !important;
   }
 
+  /* Touch devices can't :hover — keep the gradient ring active on mobile */
+  .iq-total-wrapper::after {
+    opacity: 1 !important;
+    animation: iq-edge-spin 5s linear infinite !important;
+  }
+
   #iq-run-quote,
   .iq-run-quote {
     min-width: 0;
@@ -2244,6 +2250,12 @@
   .iq-intro {
     max-width: 100%;
     overflow-x: clip;
+  }
+}
+
+@media screen and (max-width: 991px) and (prefers-reduced-motion: reduce) {
+  .iq-total-wrapper::after {
+    animation: none !important;
   }
 }
 
