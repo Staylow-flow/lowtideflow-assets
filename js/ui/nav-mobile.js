@@ -1,5 +1,7 @@
 /**
- * Lowtideflow — mobile nav hamburger + hide-on-scroll for .ltf-site-nav.
+ * Lowtideflow — nav hamburger (mobile only) + hide-on-scroll for
+ * .ltf-site-nav (mobile AND desktop: hides on scroll down, reveals on a
+ * 20px upward scroll, both driven by the same accumulator logic).
  */
 
 const MOBILE_QUERY = '(max-width: 991px)';
@@ -34,11 +36,6 @@ export function init() {
   }
 
   function setHidden(next) {
-    if (!mq.matches) {
-      nav.classList.remove('is-nav-hidden');
-      hidden = false;
-      return;
-    }
     if (nav.classList.contains('is-nav-open')) {
       next = false;
     }
@@ -48,7 +45,6 @@ export function init() {
   }
 
   function onScroll() {
-    if (!mq.matches) return;
     const y = window.scrollY || 0;
     const dy = y - lastY;
     lastY = y;
