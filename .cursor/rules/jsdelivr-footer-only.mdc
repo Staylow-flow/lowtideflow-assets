@@ -1,0 +1,37 @@
+---
+description: jsDelivr scripts and importmaps must stay in Webflow footer — never head
+globs: webflow/**
+alwaysApply: true
+---
+
+# jsDelivr Scripts — Footer Only (CRITICAL)
+
+**NEVER** move, relocate, or convert jsDelivr `<script>` links or `<script type="importmap">` blocks out of the **Before `</body>`** (footer) custom code into the **`<head>`** tag.
+
+All jsDelivr scripts **MUST** remain permanently inside the **Before `</body>`** tag.
+
+## Forbidden
+
+```html
+<!-- ❌ NEVER in <head> -->
+<script type="importmap">…</script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@…/js/ltf.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/…"></script>
+```
+
+## Required
+
+```html
+<!-- ✅ ONLY in Before </body> (footer custom code) -->
+<script type="importmap">…</script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@<commit>/js/ltf.js"></script>
+```
+
+## Head vs footer split
+
+| Location | Allowed |
+|----------|---------|
+| **`<head>`** | CSS (`<style>`), `:root` tokens, `@keyframes`, layout cages — **no jsDelivr scripts, no importmaps** |
+| **Before `</body>`** | All jsDelivr `<script>` tags, importmaps, module entry points |
+
+When deploying via Webflow MCP, use `location: "footer"` for any jsDelivr or importmap content. Never use `location: "head"` for scripts.
