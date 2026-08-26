@@ -644,9 +644,14 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
   purpleReachBoost: 0.72,
   flareReachMult:   0.88,
   topYFactor:       0.62,
-  /* Canvas top sits at 25% of nav — allow gas into that band */
-  topFadeStart:     0.97,
-  topFadeEnd:       1.0,
+  /* Fade must start well before the copy band. Desktop fades 0.80→0.94;
+     mobile's higher gasCenterY (0.811) + softer topYFactor push the dense
+     core further up-screen than desktop, so mobile fades earlier/wider
+     (was 0.97→1.0 — left the gas at full density over almost the whole
+     screen, only clearing the top 3%, which is what read as "denser"
+     over the hero copy). */
+  topFadeStart:     0.76,
+  topFadeEnd:       0.92,
   /* Explicit: same softCore/navy as desktop — do not zero these */
   haloGain:         1.0,
   navyGain:         1.0,
@@ -656,6 +661,10 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
 const MOBILE_LAYOUT_MAX_W = 991;
 const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
+/* Mobile's tighter widthTighten squeeze concentrates the same gas mass into a
+   narrower band, which reads denser/more saturated than desktop even with the
+   top-fade fix above. Cut nebula alpha only on mobile — desktop untouched. */
+const MOBILE_GAS_ALPHA_MULT = 0.72;
 /**
  * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx convention).
  * was 259, then 209 (−50 down), now 224 (+15 up).
@@ -1463,9 +1472,12 @@ class RockScene {
     const behindOp = behindOpacity();
     const frontOp  = frontOpacity();
     const frontOn  = layers.front || layers.frontInspect;
+    const gasAlphaMult = isMobileLayout(
+      typeof window !== 'undefined' ? window.innerWidth : this.w
+    ) ? MOBILE_GAS_ALPHA_MULT : 1.0;
 
     if (this.nebulaUni && layers.behind) {
-      this.nebulaUni.alphaScale.value       = behindOp;
+      this.nebulaUni.alphaScale.value       = behindOp * gasAlphaMult;
       this.nebulaUni.time.value             = nebulaTime;
       this.nebulaUni.rockYaw.value          = nebulaYaw;
       this.nebulaUni.rockPitch.value        = nebulaPitch;
@@ -1473,7 +1485,7 @@ class RockScene {
       this.nebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
     }
     if (this.fgNebulaUni && frontOn) {
-      this.fgNebulaUni.alphaScale.value     = frontOp;
+      this.fgNebulaUni.alphaScale.value     = frontOp * gasAlphaMult;
       this.fgNebulaUni.time.value           = nebulaTime;
       this.fgNebulaUni.rockYaw.value        = nebulaYaw;
       this.fgNebulaUni.rockPitch.value      = nebulaPitch;
