@@ -176,8 +176,10 @@
   position: relative;
   isolation: isolate;
   background: var(--iq-bg);
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  border-radius: 14px;
+  /* Idle/default border (both mobile + desktop): solid white, 2px — already
+     set in Designer (border + border-radius), left uncontested here. The
+     gradient ring is a separate ::after overlay that only shows during the
+     ~2s .is-calculating click sequence (see below). */
   overflow: visible;
 }
 
