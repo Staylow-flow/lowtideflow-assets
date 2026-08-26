@@ -758,7 +758,7 @@
   padding: clamp(28px, 4vw, 48px);
   box-sizing: border-box;
   border-radius: 16px;
-  border: 2px dashed rgba(42, 170, 184, 0.45);
+  border: 2px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
   background:
     radial-gradient(ellipse 80% 60% at 50% 42%, rgba(42, 170, 184, 0.12), transparent 68%),
     radial-gradient(ellipse 55% 45% at 18% 78%, rgba(77, 37, 157, 0.08), transparent 70%),
@@ -771,29 +771,63 @@
     transform 0.35s ease;
 }
 
-#iq-form-artwork-drop.iq-form-upload::before,
-.iq-form-upload#iq-form-artwork-drop::before {
-  content: '';
+/* Static dashed edge at rest; on hover / dragover the dashes march (no idle spin). */
+#iq-form-artwork-drop .iq-form-upload-ants {
   position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  padding: 2px;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg 36deg,
-    rgba(42, 170, 184, 0.95) 36deg 72deg,
-    transparent 72deg 108deg,
-    rgba(42, 170, 184, 0.55) 108deg 144deg,
-    transparent 144deg 360deg
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.35;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  animation: iq-upload-dash-spin 14s linear infinite;
+  z-index: 1;
+  overflow: visible;
+}
+
+#iq-form-artwork-drop .iq-form-upload-ants-rect {
+  x: 1px;
+  y: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  rx: 15px;
+  ry: 15px;
+  fill: none;
+  stroke-width: 2px;
+  stroke-dasharray: 10 9;
+  transition: opacity 0.3s ease;
+}
+
+#iq-form-artwork-drop .iq-form-upload-ants-rect--a {
+  stroke: var(--iq-nebula-teal);
+  stroke-dashoffset: 0;
+  opacity: 0.45;
+}
+
+#iq-form-artwork-drop .iq-form-upload-ants-rect--b {
+  stroke: var(--iq-nebula-purple);
+  stroke-dashoffset: 9.5;
+  opacity: 0;
+}
+
+#iq-form-artwork-drop.iq-form-upload:hover .iq-form-upload-ants-rect--a,
+#iq-form-artwork-drop.is-dragover .iq-form-upload-ants-rect--a {
+  opacity: 0.95;
+  animation: iq-marching-ants 0.85s linear infinite;
+}
+
+#iq-form-artwork-drop.iq-form-upload:hover .iq-form-upload-ants-rect--b,
+#iq-form-artwork-drop.is-dragover .iq-form-upload-ants-rect--b {
+  opacity: 0.85;
+  animation: iq-marching-ants 0.85s linear infinite;
+}
+
+#iq-form-artwork-drop.is-dragover .iq-form-upload-ants-rect--a,
+#iq-form-artwork-drop.is-dragover .iq-form-upload-ants-rect--b {
+  animation-duration: 0.55s;
+}
+
+@keyframes iq-marching-ants {
+  to {
+    stroke-dashoffset: -19px;
+  }
 }
 
 #iq-form-artwork-drop.iq-form-upload::after,
@@ -808,12 +842,6 @@
   animation: iq-upload-glow-pulse 3.2s ease-in-out infinite;
 }
 
-@keyframes iq-upload-dash-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes iq-upload-glow-pulse {
   0%,
   100% {
@@ -823,6 +851,15 @@
   50% {
     opacity: 0.72;
     transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #iq-form-artwork-drop .iq-form-upload-ants-rect--a,
+  #iq-form-artwork-drop .iq-form-upload-ants-rect--b,
+  #iq-form-artwork-drop.iq-form-upload::after,
+  .iq-form-upload#iq-form-artwork-drop::after {
+    animation: none !important;
   }
 }
 
@@ -915,12 +952,6 @@
   transform: scale(1.008);
 }
 
-#iq-form-artwork-drop.is-dragover::before,
-.iq-form-upload.is-dragover::before {
-  opacity: 1;
-  animation-duration: 2.4s;
-}
-
 #iq-form-artwork-drop.is-dragover::after,
 .iq-form-upload.is-dragover::after {
   opacity: 0.95;
@@ -955,6 +986,38 @@
   gap: 20px;
   min-height: clamp(420px, 70vh, 780px);
   padding: clamp(12px, 2vw, 24px);
+}
+
+.iq-form-upload-progress {
+  padding: 20px 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 3px solid var(--iq-nebula-teal);
+  background: rgba(0, 0, 28, 0.55);
+  box-shadow: none;
+  transition: box-shadow 0.3s ease, border-left-color 0.3s ease;
+}
+
+.iq-form-upload-progress.is-complete-flash {
+  animation: iq-progress-complete-flash 0.85s ease;
+}
+
+@keyframes iq-progress-complete-flash {
+  0% {
+    box-shadow: none;
+    border-left-color: var(--iq-nebula-teal);
+  }
+  40% {
+    box-shadow:
+      0 0 28px rgba(42, 170, 184, 0.5),
+      0 0 52px rgba(112, 64, 192, 0.32),
+      0 0 74px rgba(11, 128, 80, 0.22);
+    border-left-color: var(--iq-nebula-green);
+  }
+  100% {
+    box-shadow: none;
+    border-left-color: var(--iq-nebula-teal);
+  }
 }
 
 .iq-form-upload-progress-head {
@@ -992,7 +1055,13 @@
   height: 100%;
   width: 0%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--iq-nebula-blue), var(--iq-nebula-teal));
+  background: linear-gradient(
+    90deg,
+    var(--iq-nebula-purple),
+    var(--iq-nebula-blue),
+    var(--iq-nebula-teal),
+    var(--iq-nebula-green)
+  );
   box-shadow: 0 0 18px rgba(42, 170, 184, 0.55);
   transition: width 0.08s linear;
 }
@@ -1097,12 +1166,33 @@
 }
 
 .iq-form-upload-lane-name {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 15px;
   font-weight: 700;
   color: var(--iq-border);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.iq-form-upload-lane-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.iq-form-upload-lane-pct {
+  min-width: 34px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--iq-nebula-teal);
+  text-align: right;
+}
+
+.iq-form-upload-lane.is-complete .iq-form-upload-lane-pct {
+  display: none;
 }
 
 .iq-form-upload-lane-meta {
@@ -1123,9 +1213,16 @@
 .iq-form-upload-lane-bar span {
   display: block;
   height: 100%;
-  width: 100%;
+  width: 0%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--iq-nebula-blue), var(--iq-nebula-teal));
+  transition: width 0.08s linear;
+  background: linear-gradient(
+    90deg,
+    var(--iq-nebula-purple),
+    var(--iq-nebula-blue),
+    var(--iq-nebula-teal),
+    var(--iq-nebula-green)
+  );
 }
 
 .iq-form-upload-lane-check {
@@ -1148,6 +1245,64 @@
   border: solid var(--iq-nebula-teal);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+
+/* Uploading state — spinner ring replaces the checkmark until this file lands */
+.iq-form-upload-lane.is-uploading .iq-form-upload-lane-check {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.iq-form-upload-lane.is-uploading .iq-form-upload-lane-check::after {
+  display: none;
+}
+
+.iq-form-upload-lane.is-uploading .iq-form-upload-lane-check::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--iq-nebula-teal);
+  border-right-color: var(--iq-nebula-purple);
+  animation: iq-lane-spin 0.85s linear infinite;
+}
+
+@keyframes iq-lane-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Glow flash the moment a lane lands, using the full nebula palette */
+.iq-form-upload-lane.is-just-complete {
+  animation: iq-lane-complete-flash 0.75s ease;
+}
+
+@keyframes iq-lane-complete-flash {
+  0% {
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  35% {
+    box-shadow:
+      0 0 24px rgba(42, 170, 184, 0.5),
+      0 0 44px rgba(112, 64, 192, 0.32),
+      0 0 60px rgba(11, 128, 80, 0.2);
+    border-color: rgba(42, 170, 184, 0.55);
+  }
+  100% {
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iq-form-upload-lane.is-uploading .iq-form-upload-lane-check::before,
+  .iq-form-upload-lane.is-just-complete,
+  .iq-form-upload-progress.is-complete-flash {
+    animation: none !important;
+  }
 }
 
 .iq-artwork-info-link {

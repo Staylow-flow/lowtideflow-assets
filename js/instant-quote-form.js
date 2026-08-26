@@ -235,6 +235,22 @@
     drop.appendChild(shell);
   }
 
+  /** Marching-ants edge — sits behind the shell, static until hover/dragover (see CSS). */
+  function ensureArtworkAntsOverlay(drop) {
+    if (drop.querySelector('.iq-form-upload-ants')) return;
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('class', 'iq-form-upload-ants');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    ['a', 'b'].forEach(function (variant) {
+      var rect = document.createElementNS(svgNS, 'rect');
+      rect.setAttribute('class', 'iq-form-upload-ants-rect iq-form-upload-ants-rect--' + variant);
+      svg.appendChild(rect);
+    });
+    drop.insertBefore(svg, drop.firstChild);
+  }
+
   function setArtworkDropMode(drop, mode) {
     var idle = document.getElementById('iq-form-artwork-idle');
     var active = document.getElementById('iq-form-artwork-active');
@@ -253,7 +269,34 @@
     if (mode === 'queue') drop.classList.add('is-queue');
   }
 
-  function animateArtworkProgress(files, done) {
+  var UPLOAD_MIN_MS = 900;
+  var UPLOAD_MAX_MS = 5000;
+
+  /** Fake, size-flavored upload time — up to 5s so there's something to watch. */
+  function fakeUploadDuration(bytes) {
+    var mb = bytes / (1024 * 1024);
+    var base = 900 + Math.min(mb, 42) * 95;
+    var jitter = 0.82 + Math.random() * 0.32;
+    return Math.max(UPLOAD_MIN_MS, Math.min(UPLOAD_MAX_MS, Math.round(base * jitter)));
+  }
+
+  function runFakeUpload(duration, onFrame, onDone) {
+    var start = performance.now();
+    function frame(now) {
+      var t = Math.min(1, (now - start) / duration);
+      var eased = t < 1 ? 1 - Math.pow(1 - t, 2.4) : 1;
+      onFrame(Math.round(eased * 100));
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        onDone();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /** Single file — big hero bar (id=iq-form-artwork-progress), then a glow flash on landing. */
+  function animateSingleUpload(file, done) {
     var progress = document.getElementById('iq-form-artwork-progress');
     var queue = document.getElementById('iq-form-artwork-queue');
     var fill = document.getElementById('iq-form-artwork-progress-fill');
@@ -266,35 +309,79 @@
     }
 
     progress.hidden = false;
+    progress.classList.remove('is-complete-flash');
     if (queue) queue.hidden = true;
-
-    var lead = files[0];
-    if (label && lead) label.textContent = lead.name;
-    if (sub && lead) {
-      sub.textContent =
-        formatFileSize(lead.size) + (files.length > 1 ? ' · ' + files.length + ' files total' : '');
-    }
-
-    var start = performance.now();
-    var duration = Math.min(1400, Math.max(520, 280 + files.length * 120));
-
-    function frame(now) {
-      var t = Math.min(1, (now - start) / duration);
-      var eased = 1 - Math.pow(1 - t, 3);
-      var pct = Math.round(eased * 100);
-      fill.style.width = pct + '%';
-      pctNode.textContent = pct + '%';
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        progress.hidden = true;
-        done();
-      }
-    }
-
+    if (label) label.textContent = file.name;
+    if (sub) sub.textContent = formatFileSize(file.size);
     fill.style.width = '0%';
     pctNode.textContent = '0%';
-    requestAnimationFrame(frame);
+
+    runFakeUpload(
+      fakeUploadDuration(file.size),
+      function (pct) {
+        fill.style.width = pct + '%';
+        pctNode.textContent = pct + '%';
+      },
+      function () {
+        progress.classList.add('is-complete-flash');
+        window.setTimeout(function () {
+          progress.hidden = true;
+          progress.classList.remove('is-complete-flash');
+          done();
+        }, 550);
+      }
+    );
+  }
+
+  function buildArtworkLane(file) {
+    var lane = document.createElement('li');
+    lane.className = 'iq-form-upload-lane is-uploading';
+    lane.innerHTML =
+      '<span class="iq-form-upload-lane-icon iq-form-upload-lane-icon--' +
+      fileTypeIcon(file.name) +
+      '" aria-hidden="true"></span>' +
+      '<div class="iq-form-upload-lane-body">' +
+      '  <div class="iq-form-upload-lane-top">' +
+      '    <span class="iq-form-upload-lane-name">' +
+      escapeHtml(file.name) +
+      '</span>' +
+      '    <span class="iq-form-upload-lane-status">' +
+      '      <span class="iq-form-upload-lane-pct">0%</span>' +
+      '      <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
+      '    </span>' +
+      '  </div>' +
+      '  <span class="iq-form-upload-lane-meta">' +
+      formatFileSize(file.size) +
+      '</span>' +
+      '  <div class="iq-form-upload-lane-bar" aria-hidden="true"><span></span></div>' +
+      '</div>';
+    return lane;
+  }
+
+  /** Each lane uploads on its own clock (own duration + a little stagger) — no shared bar. */
+  function animateArtworkLane(lane, file, onDone) {
+    var fill = lane.querySelector('.iq-form-upload-lane-bar span');
+    var pctNode = lane.querySelector('.iq-form-upload-lane-pct');
+    var startDelay = Math.round(Math.random() * 260);
+
+    window.setTimeout(function () {
+      runFakeUpload(
+        fakeUploadDuration(file.size),
+        function (pct) {
+          if (fill) fill.style.width = pct + '%';
+          if (pctNode) pctNode.textContent = pct + '%';
+        },
+        function () {
+          lane.classList.remove('is-uploading');
+          lane.classList.add('is-just-complete');
+          window.setTimeout(function () {
+            lane.classList.remove('is-just-complete');
+            lane.classList.add('is-complete');
+          }, 750);
+          if (onDone) onDone();
+        }
+      );
+    }, startDelay);
   }
 
   function renderArtworkFileList() {
@@ -312,39 +399,42 @@
       return;
     }
 
-    setArtworkDropMode(drop, 'loading');
-    animateArtworkProgress(Array.prototype.slice.call(input.files), function () {
-      list.innerHTML = '';
-      Array.prototype.forEach.call(input.files, function (file) {
-        var lane = document.createElement('li');
-        lane.className = 'iq-form-upload-lane is-complete';
-        lane.innerHTML =
-          '<span class="iq-form-upload-lane-icon iq-form-upload-lane-icon--' +
-          fileTypeIcon(file.name) +
-          '" aria-hidden="true"></span>' +
-          '<div class="iq-form-upload-lane-body">' +
-          '  <div class="iq-form-upload-lane-top">' +
-          '    <span class="iq-form-upload-lane-name">' +
-          escapeHtml(file.name) +
-          '</span>' +
-          '    <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
-          '  </div>' +
-          '  <span class="iq-form-upload-lane-meta">' +
-          formatFileSize(file.size) +
-          '</span>' +
-          '  <div class="iq-form-upload-lane-bar" aria-hidden="true"><span></span></div>' +
-          '</div>';
-        list.appendChild(lane);
-      });
+    var files = Array.prototype.slice.call(input.files);
 
-      if (queueTitle) {
-        queueTitle.textContent =
-          input.files.length === 1
-            ? '1 file ready for your brief'
-            : input.files.length + ' files ready for your brief';
-      }
-      if (queue) queue.hidden = false;
-      setArtworkDropMode(drop, 'queue');
+    if (files.length === 1) {
+      setArtworkDropMode(drop, 'loading');
+      animateSingleUpload(files[0], function () {
+        list.innerHTML = '';
+        var lane = buildArtworkLane(files[0]);
+        lane.classList.remove('is-uploading');
+        lane.classList.add('is-complete');
+        var fill = lane.querySelector('.iq-form-upload-lane-bar span');
+        if (fill) fill.style.width = '100%';
+        list.appendChild(lane);
+
+        if (queueTitle) queueTitle.textContent = '1 file ready for your brief';
+        if (queue) queue.hidden = false;
+        setArtworkDropMode(drop, 'queue');
+      });
+      return;
+    }
+
+    // Multiple files — every file gets its own independent lane, uploading at once.
+    setArtworkDropMode(drop, 'queue');
+    list.innerHTML = '';
+    if (queueTitle) queueTitle.textContent = 'Uploading ' + files.length + ' files…';
+    if (queue) queue.hidden = false;
+
+    var remaining = files.length;
+    files.forEach(function (file) {
+      var lane = buildArtworkLane(file);
+      list.appendChild(lane);
+      animateArtworkLane(lane, file, function () {
+        remaining -= 1;
+        if (remaining <= 0 && queueTitle) {
+          queueTitle.textContent = files.length + ' files ready for your brief';
+        }
+      });
     });
   }
 
@@ -363,6 +453,7 @@
     if (!drop || !input) return;
 
     ensureArtworkUploadShell(drop);
+    ensureArtworkAntsOverlay(drop);
     setArtworkDropMode(drop, 'idle');
 
     var dragDepth = 0;
