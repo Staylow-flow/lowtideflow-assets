@@ -81,9 +81,7 @@
   }
 
   function readArtworkFileNames() {
-    var input = document.getElementById('iq-form-artwork-file');
-    if (!input || !input.files) return [];
-    return Array.prototype.map.call(input.files, function (file) {
+    return artworkFiles.map(function (file) {
       return file.name;
     });
   }
@@ -181,12 +179,48 @@
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
+  function fileExt(name) {
+    var parts = String(name || '').split('.');
+    return parts.length > 1 ? parts.pop().toUpperCase() : '';
+  }
+
   function fileTypeIcon(name) {
     var ext = (name.split('.').pop() || '').toLowerCase();
     if (ext === 'pdf') return 'pdf';
     if (ext === 'mp4' || ext === 'mov' || ext === 'webm') return 'video';
     if (ext === 'ai' || ext === 'eps' || ext === 'svg' || ext === 'psd') return 'vector';
     return 'image';
+  }
+
+  /** Persistent, cumulative set of artwork files across multiple selections —
+   *  picking more files ADDS to this set rather than replacing it (C4). This
+   *  array (not the <input> FileList, which the browser always overwrites on
+   *  each picker interaction) is the single source of truth for the UI and
+   *  for what actually gets submitted. */
+  var artworkFiles = [];
+  var artworkLaneMap = {};
+
+  function artworkFileKey(file) {
+    return file.name + '|' + file.size + '|' + (file.lastModified || 0);
+  }
+
+  function addArtworkFiles(fileList) {
+    var seen = {};
+    artworkFiles.forEach(function (f) {
+      seen[artworkFileKey(f)] = true;
+    });
+    Array.prototype.forEach.call(fileList || [], function (file) {
+      var key = artworkFileKey(file);
+      if (!seen[key]) {
+        seen[key] = true;
+        artworkFiles.push(file);
+      }
+    });
+  }
+
+  function clearArtworkFiles() {
+    artworkFiles = [];
+    artworkLaneMap = {};
   }
 
   function ensureArtworkUploadShell(drop) {
@@ -212,19 +246,12 @@
     active.hidden = true;
 
     active.innerHTML =
-      '<div class="iq-form-upload-progress" id="iq-form-artwork-progress" hidden>' +
-      '  <div class="iq-form-upload-progress-head">' +
-      '    <span class="iq-form-upload-progress-label" id="iq-form-artwork-progress-label">Reading files…</span>' +
-      '    <span class="iq-form-upload-progress-pct" id="iq-form-artwork-progress-pct">0%</span>' +
-      '  </div>' +
-      '  <div class="iq-form-upload-progress-track" aria-hidden="true">' +
-      '    <div class="iq-form-upload-progress-fill" id="iq-form-artwork-progress-fill"></div>' +
-      '  </div>' +
-      '  <p class="iq-form-upload-progress-sub" id="iq-form-artwork-progress-sub"></p>' +
-      '</div>' +
       '<div class="iq-form-upload-queue" id="iq-form-artwork-queue" hidden>' +
       '  <div class="iq-form-upload-queue-head">' +
-      '    <span class="iq-form-upload-queue-title" id="iq-form-artwork-queue-title">Files ready</span>' +
+      '    <div class="iq-form-upload-queue-count-wrap">' +
+      '      <span class="iq-form-upload-queue-count" id="iq-form-artwork-queue-count">0</span>' +
+      '      <span class="iq-form-upload-queue-title" id="iq-form-artwork-queue-title">files ready</span>' +
+      '    </div>' +
       '    <button type="button" class="iq-form-upload-add-more" id="iq-form-artwork-add-more">Add more</button>' +
       '  </div>' +
       '  <ul class="iq-form-upload-lanes" id="iq-form-artwork-list"></ul>' +
@@ -269,14 +296,17 @@
     if (mode === 'queue') drop.classList.add('is-queue');
   }
 
-  var UPLOAD_MIN_MS = 900;
-  var UPLOAD_MAX_MS = 5000;
+  /* Every upload — regardless of how "fast" the simulated transfer would
+     otherwise be — always runs for at least 5000ms so there's something to
+     watch (C1). Larger files can stretch up to UPLOAD_MAX_MS. */
+  var UPLOAD_MIN_MS = 5000;
+  var UPLOAD_MAX_MS = 8000;
 
-  /** Fake, size-flavored upload time — up to 5s so there's something to watch. */
+  /** Fake, size-flavored upload time — always 5-8s so there's something to watch. */
   function fakeUploadDuration(bytes) {
     var mb = bytes / (1024 * 1024);
-    var base = 900 + Math.min(mb, 42) * 95;
-    var jitter = 0.82 + Math.random() * 0.32;
+    var base = UPLOAD_MIN_MS + Math.min(mb, 42) * 65;
+    var jitter = 0.94 + Math.random() * 0.12;
     return Math.max(UPLOAD_MIN_MS, Math.min(UPLOAD_MAX_MS, Math.round(base * jitter)));
   }
 
@@ -293,44 +323,6 @@
       }
     }
     requestAnimationFrame(frame);
-  }
-
-  /** Single file — big hero bar (id=iq-form-artwork-progress), then a glow flash on landing. */
-  function animateSingleUpload(file, done) {
-    var progress = document.getElementById('iq-form-artwork-progress');
-    var queue = document.getElementById('iq-form-artwork-queue');
-    var fill = document.getElementById('iq-form-artwork-progress-fill');
-    var pctNode = document.getElementById('iq-form-artwork-progress-pct');
-    var sub = document.getElementById('iq-form-artwork-progress-sub');
-    var label = document.getElementById('iq-form-artwork-progress-label');
-    if (!progress || !fill || !pctNode) {
-      done();
-      return;
-    }
-
-    progress.hidden = false;
-    progress.classList.remove('is-complete-flash');
-    if (queue) queue.hidden = true;
-    if (label) label.textContent = file.name;
-    if (sub) sub.textContent = formatFileSize(file.size);
-    fill.style.width = '0%';
-    pctNode.textContent = '0%';
-
-    runFakeUpload(
-      fakeUploadDuration(file.size),
-      function (pct) {
-        fill.style.width = pct + '%';
-        pctNode.textContent = pct + '%';
-      },
-      function () {
-        progress.classList.add('is-complete-flash');
-        window.setTimeout(function () {
-          progress.hidden = true;
-          progress.classList.remove('is-complete-flash');
-          done();
-        }, 550);
-      }
-    );
   }
 
   function buildArtworkLane(file) {
@@ -351,18 +343,21 @@
       '    </span>' +
       '  </div>' +
       '  <span class="iq-form-upload-lane-meta">' +
-      formatFileSize(file.size) +
+      fileExt(file.name) + ' · ' + formatFileSize(file.size) +
       '</span>' +
       '  <div class="iq-form-upload-lane-bar" aria-hidden="true"><span></span></div>' +
       '</div>';
     return lane;
   }
 
-  /** Each lane uploads on its own clock (own duration + a little stagger) — no shared bar. */
-  function animateArtworkLane(lane, file, onDone) {
+  /** Each lane uploads on its own independent bar/clock. Multiple files
+   *  selected together are staggered by index (rather than starting all at
+   *  once) while each individual bar still takes at least UPLOAD_MIN_MS. */
+  function animateArtworkLane(lane, file, index, onDone) {
     var fill = lane.querySelector('.iq-form-upload-lane-bar span');
     var pctNode = lane.querySelector('.iq-form-upload-lane-pct');
-    var startDelay = Math.round(Math.random() * 260);
+    var stagger = (index || 0) * 380;
+    var startDelay = stagger + Math.round(Math.random() * 220);
 
     window.setTimeout(function () {
       runFakeUpload(
@@ -384,58 +379,65 @@
     }, startDelay);
   }
 
+  var artworkUploadsInFlight = 0;
+
+  function updateArtworkQueueCount() {
+    var countNode = document.getElementById('iq-form-artwork-queue-count');
+    var titleNode = document.getElementById('iq-form-artwork-queue-title');
+    var total = artworkFiles.length;
+    if (countNode) countNode.textContent = String(total);
+    if (titleNode) {
+      if (artworkUploadsInFlight > 0) {
+        titleNode.textContent =
+          (total === 1 ? 'file' : 'files') + ' — uploading…';
+      } else {
+        titleNode.textContent =
+          (total === 1 ? 'file ready' : 'files ready') + ' for your brief';
+      }
+    }
+  }
+
+  /** Renders every file currently in the persistent `artworkFiles` set.
+   *  Already-completed lanes are left alone; only files newly added since
+   *  the last render get a lane + independent, staggered upload animation
+   *  (C3/C4) — nothing already uploaded is ever replaced or restarted. */
   function renderArtworkFileList() {
-    var input = document.getElementById('iq-form-artwork-file');
     var list = document.getElementById('iq-form-artwork-list');
     var drop = document.getElementById('iq-form-artwork-drop');
     var queue = document.getElementById('iq-form-artwork-queue');
-    var queueTitle = document.getElementById('iq-form-artwork-queue-title');
-    if (!input || !list || !drop) return;
+    if (!list || !drop) return;
 
-    if (!input.files || !input.files.length) {
+    if (!artworkFiles.length) {
       list.innerHTML = '';
+      artworkLaneMap = {};
       if (queue) queue.hidden = true;
       setArtworkDropMode(drop, 'idle');
       return;
     }
 
-    var files = Array.prototype.slice.call(input.files);
-
-    if (files.length === 1) {
-      setArtworkDropMode(drop, 'loading');
-      animateSingleUpload(files[0], function () {
-        list.innerHTML = '';
-        var lane = buildArtworkLane(files[0]);
-        lane.classList.remove('is-uploading');
-        lane.classList.add('is-complete');
-        var fill = lane.querySelector('.iq-form-upload-lane-bar span');
-        if (fill) fill.style.width = '100%';
-        list.appendChild(lane);
-
-        if (queueTitle) queueTitle.textContent = '1 file ready for your brief';
-        if (queue) queue.hidden = false;
-        setArtworkDropMode(drop, 'queue');
-      });
-      return;
-    }
-
-    // Multiple files — every file gets its own independent lane, uploading at once.
-    setArtworkDropMode(drop, 'queue');
-    list.innerHTML = '';
-    if (queueTitle) queueTitle.textContent = 'Uploading ' + files.length + ' files…';
     if (queue) queue.hidden = false;
+    setArtworkDropMode(drop, 'queue');
 
-    var remaining = files.length;
-    files.forEach(function (file) {
+    var newIndex = 0;
+    artworkFiles.forEach(function (file) {
+      var key = artworkFileKey(file);
+      if (artworkLaneMap[key]) return;
+
       var lane = buildArtworkLane(file);
+      artworkLaneMap[key] = lane;
       list.appendChild(lane);
-      animateArtworkLane(lane, file, function () {
-        remaining -= 1;
-        if (remaining <= 0 && queueTitle) {
-          queueTitle.textContent = files.length + ' files ready for your brief';
-        }
+
+      artworkUploadsInFlight += 1;
+      updateArtworkQueueCount();
+
+      animateArtworkLane(lane, file, newIndex, function () {
+        artworkUploadsInFlight = Math.max(0, artworkUploadsInFlight - 1);
+        updateArtworkQueueCount();
       });
+      newIndex += 1;
     });
+
+    updateArtworkQueueCount();
   }
 
   function escapeHtml(str) {
@@ -481,7 +483,13 @@
       });
     }
 
-    input.addEventListener('change', renderArtworkFileList);
+    input.addEventListener('change', function () {
+      addArtworkFiles(input.files);
+      renderArtworkFileList();
+      // Reset so picking the exact same file(s) again still fires 'change'
+      // next time (browsers won't re-fire on an identical FileList).
+      input.value = '';
+    });
 
     drop.addEventListener('dragenter', function (event) {
       event.preventDefault();
@@ -509,7 +517,7 @@
       dragDepth = 0;
       drop.classList.remove('is-dragover');
       if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length) {
-        input.files = event.dataTransfer.files;
+        addArtworkFiles(event.dataTransfer.files);
         renderArtworkFileList();
       }
     });
@@ -951,7 +959,6 @@
       }
 
       var payload = buildQuotePayload(snapshot.state, snapshot.result);
-      var files = document.getElementById('iq-form-artwork-file');
 
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -959,7 +966,7 @@
       }
       setFormStatus('Submitting project brief…', '');
 
-      submitToWebhook(payload, files && files.files)
+      submitToWebhook(payload, artworkFiles)
         .then(function () {
           setFormStatus(
             (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.successMessage) ||
@@ -968,6 +975,7 @@
           );
           showWebflowState(form, 'done');
           form.reset();
+          clearArtworkFiles();
           renderArtworkFileList();
           syncQuoteFields();
           global.dispatchEvent(

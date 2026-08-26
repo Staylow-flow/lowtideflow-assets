@@ -427,6 +427,21 @@
     return wrap;
   }
 
+  var TOTAL_CARD_FLASH_MS = 1000;
+
+  /** Total Cost Est. card border: idle solid white → ~1s gradient wrap on
+   *  click → ~1s fade back to solid white (see .is-calculating in CSS). */
+  function flashTotalCardBorder() {
+    var card = document.querySelector('.iq-total-wrapper');
+    if (!card) return;
+    card.classList.remove('is-calculating');
+    void card.offsetWidth;
+    card.classList.add('is-calculating');
+    window.setTimeout(function () {
+      card.classList.remove('is-calculating');
+    }, TOTAL_CARD_FLASH_MS);
+  }
+
   function initRunQuoteButton() {
     var btn =
       document.getElementById('iq-run-quote') ||
@@ -439,6 +454,7 @@
     btn.addEventListener('click', function (event) {
       event.preventDefault();
       playOrbitClick(btn);
+      flashTotalCardBorder();
       var wrap = btn.closest('.iq-orbit-wrap');
       if (wrap) {
         wrap.classList.add('ltf-btn-gradient-active', 'iq-orbit-click');

@@ -207,13 +207,19 @@
   mask-composite: exclude;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.35s ease;
+  /* Fade-out leg of the click sequence (~1s) — the fast fade-in lives on
+     .is-calculating below so the two legs of the ~2s sequence read distinctly. */
+  transition: opacity 1s ease;
 }
 
-.iq-total-wrapper:hover::after,
-.iq-total-wrapper:focus-within::after {
+/* Idle state (both mobile + desktop) = solid white border only, no gradient.
+   The gradient ring only appears for ~1s after clicking Calculate, then fades
+   back out over ~1s — see .is-calculating below and the click handler in
+   js/instant-quote-ui.js. */
+.iq-total-wrapper.is-calculating::after {
   opacity: 1;
-  animation: iq-edge-spin 4s linear infinite;
+  transition: opacity 0.25s ease;
+  animation: iq-edge-spin 1s linear 1;
 }
 
 @keyframes iq-edge-spin {
@@ -264,21 +270,11 @@
   width: 100%;
 }
 
-.iq-run-quote-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  order: 1;
-  width: auto;
-  margin-top: 0 !important;
-  flex: 0 1 auto;
-}
-
+/* Calculate button now lives as a real DOM child of .iq-total-wrapper
+   (moved via Designer) on both mobile and desktop — no more flex-order /
+   negative-margin overlap illusion needed. */
 .iq-total-wrapper {
-  order: 2;
-  flex: 1 1 280px;
   max-width: 520px;
-  min-width: min(100%, 240px);
 }
 
 #iq-run-quote,
@@ -289,15 +285,7 @@
   justify-content: center;
   min-width: min(100%, 280px);
   border: 0;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--iq-glow-blue), var(--iq-glow-navy));
-  color: #ffffff;
   font: inherit;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 14px 28px;
   cursor: pointer;
   transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
@@ -926,6 +914,14 @@
   justify-content: center;
 }
 
+/* Once files are selected/uploading, pin content to the TOP of the drop
+   zone (rather than vertically centered) so the file-count indicator reads
+   first, with the list of names underneath it. */
+#iq-form-artwork-drop.is-loading .iq-form-upload-shell,
+#iq-form-artwork-drop.is-queue .iq-form-upload-shell {
+  justify-content: flex-start;
+}
+
 .iq-form-upload-idle,
 .iq-form-upload-active {
   width: 100%;
@@ -1136,11 +1132,28 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+/* Big, prominent "# files ready" indicator — sits at the top of the panel,
+   above the persistent list of uploaded file names. */
+.iq-form-upload-queue-count-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.iq-form-upload-queue-count {
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--iq-nebula-teal);
+  text-shadow: 0 0 24px rgba(42, 170, 184, 0.45);
 }
 
 .iq-form-upload-queue-title {
-  font-size: clamp(15px, 1.6vw, 18px);
+  font-size: clamp(17px, 2vw, 21px);
   font-weight: 700;
   color: var(--iq-border);
 }
@@ -1593,7 +1606,8 @@
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.03em;
-  padding: 16px 24px;
+  /* +50px top/bottom on top of the prior normalized ~70px-tall sizing */
+  padding: 66px 24px;
   cursor: pointer;
   transition:
     filter 0.2s ease,
@@ -1750,8 +1764,10 @@
   .iq-slider-row {
     display: grid !important;
     /* Center cols hold the fused label+value pill; outer 1fr cols push it to
-       center while col1/-1 (the track, on row 2) still spans full width. */
-    grid-template-columns: 1fr auto auto 1fr !important;
+       center while col1/-1 (the track, on row 2) still spans full width.
+       Cols 2 and 3 are equal fixed widths so the label/value divider sits
+       exactly on the pill's horizontal center line. */
+    grid-template-columns: 1fr 150px 150px 1fr !important;
     grid-template-rows: auto auto;
     row-gap: 14px !important;
     column-gap: 0 !important;
@@ -1761,25 +1777,27 @@
   }
 
   /* Label + value fuse into ONE bordered box (shared slate-grey text color,
-     single divider line between them) instead of two separate pills. */
+     single divider line between them) instead of two separate pills.
+     Label/value halves share the same fixed width so the divider sits dead
+     center, with a thicker outer border for a more substantial pill. */
   .iq-slider-label {
     grid-column: 2;
     grid-row: 1;
     display: flex !important;
     align-items: center;
     justify-content: center;
-    width: auto !important;
-    min-width: 84px;
+    width: 150px !important;
+    min-width: 150px !important;
     box-sizing: border-box;
     text-align: center !important;
     white-space: pre-line;
-    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    border: 2px solid rgba(255, 255, 255, 0.7) !important;
     border-right: 0 !important;
     background: transparent !important;
-    padding: 6px 12px 6px 16px !important;
-    min-height: 56px !important;
-    border-radius: 8px 0 0 8px;
-    font-size: 12px !important;
+    padding: 8px 10px !important;
+    min-height: 68px !important;
+    border-radius: 10px 0 0 10px;
+    font-size: 15px !important;
     font-weight: 700 !important;
     line-height: 1.15 !important;
     text-transform: uppercase;
@@ -1793,16 +1811,16 @@
     justify-content: center;
     grid-column: 3;
     grid-row: 1;
-    width: auto !important;
-    min-width: 52px !important;
-    min-height: 56px !important;
+    width: 150px !important;
+    min-width: 150px !important;
+    min-height: 68px !important;
     box-sizing: border-box;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.55) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 0 8px 8px 0;
-    padding: 6px 16px 6px 12px !important;
-    font-size: 26px !important;
+    border: 2px solid rgba(255, 255, 255, 0.7) !important;
+    border-left: 2px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 0 10px 10px 0;
+    padding: 8px 10px !important;
+    font-size: 32px !important;
     font-weight: 700 !important;
     color: var(--iq-slate);
   }
@@ -1946,19 +1964,10 @@
     background: transparent !important;
   }
 
-  /* Apparel Style label — matches site-wide H2 (.ltf-section-header) treatment */
-  .iq-apparel-label-title {
-    font-family: acumin-pro-extra-condensed, sans-serif !important;
-    font-size: 67px !important;
-    line-height: 0.92 !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    text-align: left !important;
-    letter-spacing: normal !important;
-    color: #ffffff !important;
-    margin: 0 0 6px !important;
-    padding: 0 !important;
-  }
+  /* Apparel Style heading size now lives on the scoped Designer combo class
+     "apparel-title-mobile-lg" (applied only to that one heading) — this class
+     is shared with the "Artwork / Pricing?" label, so it must not be
+     overridden here or both headings would balloon in size together. */
 
   .iq-apparel-label-box .iq-split-checkbox-wrapper {
     display: none;
@@ -2147,35 +2156,13 @@
     width: 100%;
   }
 
-  .iq-run-quote-wrap,
   .iq-total-wrapper {
-    order: initial;
     width: 100%;
     max-width: 100%;
-  }
-
-  .iq-total-wrapper {
-    min-height: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center;
-    justify-content: flex-start;
     box-sizing: border-box;
-    padding: 30px 16px 130px !important;
-  }
-
-  /* Pull the Calculate button up into the total-wrapper's reserved bottom
-     padding so it renders visually inside the same gradient/glow card. */
-  .iq-run-quote-wrap {
-    position: relative;
-    z-index: 2;
-    margin-top: -120px !important;
-  }
-
-  /* Touch devices can't :hover — keep the gradient ring active on mobile */
-  .iq-total-wrapper::after {
-    opacity: 1 !important;
-    animation: iq-edge-spin 5s linear infinite !important;
+    /* Bottom padding stays 15px (matches desktop, set in Designer) — the
+       Calculate button is a real child now, no overlap hack needed. */
+    padding: 24px 16px 15px !important;
   }
 
   #iq-run-quote,
