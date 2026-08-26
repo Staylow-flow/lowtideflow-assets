@@ -179,7 +179,11 @@
   /* Idle/default border (both mobile + desktop): solid white, 4px — set in
      Designer (border + border-radius), left uncontested here. The gradient
      ring is a separate ::after overlay that only shows during the ~2s
-     .is-calculating click sequence (see below). */
+     .is-calculating click sequence (see below).
+     IMPORTANT: keep this in sync with the actual Designer border-width
+     above (currently 4px) — the ::after ring's `inset` below is derived
+     from this variable specifically so the two can't drift apart again. */
+  --iq-total-border-width: 4px;
   overflow: visible;
   transition: box-shadow 0.4s ease;
 }
@@ -205,14 +209,19 @@
 .iq-total-wrapper::after {
   content: '';
   position: absolute;
-  /* Ring must sit ON TOP of the card's own edge, not floating outside it —
-     previous versions used a negative inset (ring drawn entirely outside
-     the border) which left the white border fully visible underneath during
-     the click flash. Now flush with the border-box (inset: 0, radius
-     matches the card's own 14px) and padding = border-width (4px) + 2px
-     extra, so the ring fully covers the white border and reads visibly
-     thicker than it. */
-  inset: 0;
+  /* `inset`/`top`/`right`/`bottom`/`left` on an absolutely-positioned
+     element resolve against the PADDING edge of its containing block (the
+     nearest positioned ancestor — here .iq-total-wrapper, which has a real
+     border: 4px solid white) — NOT the border edge / the element's true
+     outer visual boundary. The previous `inset: 0` therefore placed this
+     ring flush with the INSIDE of the white border (i.e. starting where
+     the border ends), so the gradient activated *inside* the white outline
+     instead of covering it. Pull the ring's box out by exactly the card's
+     own border-width so its outer edge lands on the border's true outer
+     edge, matching where the white outline actually sits. Uses the same
+     --iq-total-border-width custom property as the border itself so the
+     two can't silently drift apart again like they just did. */
+  inset: calc(-1 * var(--iq-total-border-width));
   z-index: 2;
   border-radius: 14px;
   padding: 6px;

@@ -147,7 +147,55 @@ incremented radius), which relied on offset approximation and is what caused the
 **Still recommend an actual visual click-state screenshot once browser tooling is available**,
 but the fix should be provably correct.
 
-## Files touched (round 4 + 5)
+### Round 6 — gradient ring was activating INSIDE the white border, not on it (commit `<PENDING — filled in after push>`)
+User: click-gradient ring showed up in the wrong location — "activating inside the white
+outline" instead of covering it. **Root cause (user pre-diagnosed this correctly, confirmed by
+re-derivation):** `inset`/`top`/`right`/`bottom`/`left` on an absolutely-positioned element
+resolve against the **padding edge** of the containing block, not the border edge / the
+element's true outer visual boundary. `.iq-total-wrapper` has a real `border: 4px solid white`,
+so its padding edge sits 4px *inside* its visible outer boundary. Round 5's `inset: 0` therefore
+placed the ring's box flush with the INSIDE of the white border — i.e. the ring rendered
+entirely within the padding/content area, nowhere near the border at all (band `[-6, 0]` vs. the
+border's actual band `[0, 4]`, using 0 = padding edge — literally zero overlap). This is a
+*different, worse* bug than round 5 thought it was fixing (round 5's own math, while internally
+consistent, was built on the wrong premise that `inset: 0` aligns with the border's outer edge —
+it doesn't).
+
+**Fix:** changed `inset: 0` → `inset: calc(-1 * var(--iq-total-border-width))` with a new
+`--iq-total-border-width: 4px` custom property defined on `.iq-total-wrapper` (used by nothing
+else yet, since Designer's actual border-width can't be bound to a CSS var through the Designer
+API — but this at least gives the `::after` rule a single named source to update, and a loud
+comment, instead of a bare magic number that can silently drift from Designer's real value
+again like it just did across rounds 3→4→5). Padding (`6px`, ring thickness) and `border-radius`
+(`14px`, matches Designer exactly) were left untouched per the diagnosis — only the position was
+wrong.
+
+**On-paper verification (padding-edge = 0 coordinate space):**
+- Before (`inset: 0`): ring band `[-6, 0]`, border band `[0, 4]` → **zero overlap**, ring
+  entirely inside the border, border fully exposed the whole click sequence.
+- After (`inset: -4px`): ring band `[-2, 4]`, border band `[0, 4]` → ring's outer edge lands
+  **exactly** on the border's outer edge (both derive from the same padding-box + border-width
+  arithmetic, so this is an exact match, not an approximation), with a 2px margin past the
+  border's inner edge. Corners are provably covered too, since the ring's pseudo-element
+  border-box is now geometrically identical (same position AND size) to `.iq-total-wrapper`'s
+  own border-box, not just "same radius value" — see full derivation in the round-5 write-up
+  above for why radius-matching alone isn't sufficient but exact-box-matching is.
+- **Not visually screenshot-verified** — `cursor-ide-browser` was unavailable in this
+  sub-session too (same persistent issue as every round this session, now ~15+ failed attempts
+  total). Flagging this explicitly per instructions rather than claiming visual confirmation:
+  **someone with working browser access should still hold `.is-calculating` active
+  (`document.querySelector('.iq-total-wrapper').classList.add('is-calculating')` via console/CDP)
+  and screenshot all four corners to be certain**, especially since this exact "verified only by
+  math, turned out wrong" failure mode is precisely what happened in round 5.
+
+**Lesson for future rounds:** `inset`/positioning offsets on a pseudo-element always resolve
+against the *padding* edge of the containing block, never the border edge. When building a
+border-hugging ring/glow effect like this one, either (a) offset by the border-width explicitly
+(this round's fix), or (b) put the ring on a separate element that isn't a child of the bordered
+box at all. Don't assume `inset: 0` means "flush with the visible edge" if the element has a
+border.
+
+## Files touched (round 4 + 5 + 6)
 - `webflow/instant-quote-embed.css`
 - `js/instant-quote-form.js`
 - Designer: `.iq-total-wrapper` border-width (2px→4px), artwork file input HTML embed
