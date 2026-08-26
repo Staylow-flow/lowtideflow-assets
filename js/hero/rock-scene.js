@@ -579,7 +579,7 @@ const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no 
 const SCROLL_IMPULSE_GAIN  = 0.27;               // half of prior 0.54 (scroll −50%)
 const SCROLL_VEL_SCALE     = 0.011;              // half of prior 0.022
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
-const DESKTOP_ROCK_SCALE_MULT = 0.88;            /* desktop −20% vs prior 1.10 tune */
+const DESKTOP_ROCK_SCALE_MULT = 0.968;           /* desktop +10% vs prior 0.88 (was −20% off 1.10 tune) */
 /* Opening pose: wide back of the mesh, sitting behind the hero copy.
    The extra quarter-turn is PITCH (X) — same axis the idle script already
    rolls toward the camera — not yaw. Yaw +90° showed the narrow side. */
@@ -658,9 +658,9 @@ const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
 /**
  * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx convention).
- * +150px vs prior 109 so the boulder sits flush behind the mobile H1.
+ * -50px vs prior 259 to drop the boulder down on mobile.
  */
-const MOBILE_ROCK_LIFT_PX = 259;
+const MOBILE_ROCK_LIFT_PX = 209;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
@@ -685,7 +685,7 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   gasInner:         0.26,   /* soft full-body halo, not tight core blob */
   edgeWarp:         0.20,
   alphaScale:       1.0,
-  rockLiftPx:       115,    /* was 100; +15px up on desktop */
+  rockLiftPx:       135,    /* was 100, then 115; +20px up again on desktop → 135 */
   widthTighten:     0.96,   /* stop squeezing width — let glow spread */
   topYFactor:       0.94,   /* extend above rock for nav clearance */
   topFadeStart:     0.80,
