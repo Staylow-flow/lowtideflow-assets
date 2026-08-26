@@ -658,9 +658,9 @@ const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
 /**
  * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx convention).
- * -50px vs prior 259 to drop the boulder down on mobile.
+ * was 259, then 209 (−50 down), now 224 (+15 up).
  */
-const MOBILE_ROCK_LIFT_PX = 209;
+const MOBILE_ROCK_LIFT_PX = 224;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
