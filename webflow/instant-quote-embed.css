@@ -164,17 +164,68 @@
   }
 }
 
-/* ── V2: total cost gradient border + radial glow ───────────────────── */
+/* ── V2: total cost card — border matches site-wide gradient hover style ── */
+
+@property --iq-edge-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
 
 .iq-total-wrapper {
   position: relative;
   isolation: isolate;
-  border: 0 !important;
-  background:
-    linear-gradient(var(--iq-bg), var(--iq-bg)) padding-box,
-    linear-gradient(135deg, var(--iq-glow-blue), var(--iq-glow-navy)) border-box;
-  border: 1px solid transparent !important;
+  background: var(--iq-bg);
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   border-radius: 14px;
+  overflow: visible;
+}
+
+.iq-total-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: 2;
+  border-radius: 17px;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--iq-edge-angle),
+    var(--iq-nebula-purple),
+    var(--iq-nebula-teal),
+    var(--iq-nebula-blue),
+    var(--iq-nebula-green),
+    var(--iq-nebula-purple-mid),
+    var(--iq-nebula-purple)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.iq-total-wrapper:hover::after,
+.iq-total-wrapper:focus-within::after {
+  opacity: 1;
+  animation: iq-edge-spin 4s linear infinite;
+}
+
+@keyframes iq-edge-spin {
+  to {
+    --iq-edge-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iq-total-wrapper::after {
+    animation: none !important;
+  }
 }
 
 .iq-total-wrapper::before {
@@ -917,26 +968,33 @@
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
+/* Base fill/color/shape for .iq-form-upload-btn live in the Designer style.
+   Only the animated gradient-shift-on-hover/click needs custom code. */
 .iq-form-upload-btn {
   margin-top: 8px;
-  padding: 12px 22px;
-  border-radius: 999px;
-  border: 1px solid rgba(42, 170, 184, 0.55);
-  background: rgba(42, 170, 184, 0.12);
-  color: var(--iq-border);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  background-size: 300% 300%;
+  background-position: 0% 50%;
+  transition: box-shadow 0.25s ease, transform 0.15s ease;
 }
 
 .iq-form-upload-btn:hover,
 .iq-form-upload-btn:focus-visible {
-  background: rgba(42, 170, 184, 0.22);
-  border-color: var(--iq-nebula-teal);
-  box-shadow: 0 0 24px rgba(42, 170, 184, 0.35);
+  box-shadow: 0 0 20px rgba(11, 128, 80, 0.4), 0 0 28px rgba(77, 37, 157, 0.32);
   outline: none;
+  animation: iq-orbit-drift 3.5s ease-in-out infinite;
+}
+
+.iq-form-upload-btn:active {
+  animation: iq-orbit-drift 0.7s linear infinite;
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iq-form-upload-btn:hover,
+  .iq-form-upload-btn:focus-visible,
+  .iq-form-upload-btn:active {
+    animation: none !important;
+  }
 }
 
 #iq-form-artwork-drop.is-dragover,
@@ -1888,6 +1946,20 @@
     background: transparent !important;
   }
 
+  /* Apparel Style label — matches site-wide H2 (.ltf-section-header) treatment */
+  .iq-apparel-label-title {
+    font-family: acumin-pro-extra-condensed, sans-serif !important;
+    font-size: 67px !important;
+    line-height: 0.92 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    text-align: left !important;
+    letter-spacing: normal !important;
+    color: #ffffff !important;
+    margin: 0 0 6px !important;
+    padding: 0 !important;
+  }
+
   .iq-apparel-label-box .iq-split-checkbox-wrapper {
     display: none;
   }
@@ -1984,6 +2056,7 @@
     letter-spacing: 0 !important;
   }
 
+  /* Apparel style selectors (T-Shirts, Hoodies, etc.) — sized up 75% */
   .iq-style-option {
     display: flex !important;
     flex-direction: column !important;
@@ -1991,11 +2064,22 @@
     justify-content: center !important;
     min-width: 0 !important;
     max-width: 100% !important;
-    min-height: 52px !important;
-    padding: 5px 2px !important;
-    gap: 3px !important;
+    min-height: 91px !important;
+    padding: 9px 4px !important;
+    gap: 5px !important;
     text-align: center;
     overflow: hidden;
+  }
+
+  .iq-style-option .iq-style-option-label {
+    font-size: 17.5px !important;
+    line-height: 1.08 !important;
+  }
+
+  /* 50/50 Split label keeps its own, smaller size */
+  .iq-split-checkbox-wrapper .iq-style-option-label {
+    font-size: 12px !important;
+    line-height: 1.15 !important;
   }
 
   .iq-style-option-label {
@@ -2009,10 +2093,10 @@
   }
 
   .iq-style-option .iq-check {
-    width: 12px !important;
-    height: 12px !important;
-    min-width: 12px !important;
-    min-height: 12px !important;
+    width: 21px !important;
+    height: 21px !important;
+    min-width: 21px !important;
+    min-height: 21px !important;
     flex-shrink: 0;
   }
 
@@ -2020,10 +2104,23 @@
     padding-top: 20px !important;
   }
 
+  /* Row 2 (split mode): style grid full width on top, #2 price box
+     right-justified underneath — mirrors row 1's split/price pairing,
+     left side intentionally left blank. */
   #split-row-wrapper .iq-apparel-row--split {
-    display: flex !important;
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
     align-items: stretch !important;
+  }
+
+  #split-row-wrapper .iq-apparel-row--split > .iq-style-grid {
+    grid-column: 1 / -1 !important;
+  }
+
+  #split-row-wrapper .iq-apparel-row--split > #iq-unit-cost-2 {
+    grid-column: 2 !important;
+    margin-top: 0 !important;
   }
 
   #iq-unit-price-col,
@@ -2072,7 +2169,7 @@
   .iq-run-quote-wrap {
     position: relative;
     z-index: 2;
-    margin-top: -112px !important;
+    margin-top: -120px !important;
   }
 
   #iq-run-quote,
@@ -2122,24 +2219,16 @@
     margin-bottom: 12px;
   }
 
+  /* Height/margin/font-size for mobile now live on the Designer "small"
+     breakpoint style for .iq-form-submit — kept normal-sized, not 50vh. */
   #iq-form-submit,
   .iq-form-submit,
   #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
-    margin-top: 0 !important;
-    min-height: 50vh;
     display: flex !important;
     align-items: center;
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
-  }
-
-  #iq-form-submit,
-  .iq-form-submit {
-    font-size: 18px;
-    padding: 18px 22px;
-    width: 100%;
-    max-width: 100%;
   }
 
   .iq-breakdown {

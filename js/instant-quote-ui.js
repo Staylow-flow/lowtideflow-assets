@@ -458,6 +458,24 @@
     });
   }
 
+  function initSubmitButton() {
+    var btn = document.getElementById('iq-form-submit');
+    if (!btn) return;
+
+    btn.classList.add('iq-orbit-btn');
+    var wrap = ensureOrbitWrap(btn);
+
+    btn.addEventListener('click', function () {
+      playOrbitClick(btn);
+      if (wrap) {
+        wrap.classList.add('ltf-btn-gradient-active', 'iq-orbit-click');
+        window.setTimeout(function () {
+          wrap.classList.remove('ltf-btn-gradient-active', 'iq-orbit-click');
+        }, ORBIT_MS);
+      }
+    });
+  }
+
   /* ── Mobile layout only (≤991px): real notched sliders stay native ── */
 
   var MOBILE_MQ = '(max-width: 991px)';
@@ -571,6 +589,7 @@
     initStyleRadios();
     initCustomArtToggle();
     initRunQuoteButton();
+    initSubmitButton();
     initMobileLayout();
     recalculateQuote();
   }
