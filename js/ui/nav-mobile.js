@@ -106,6 +106,38 @@ export function init() {
     }
     lastY = window.scrollY || 0;
   });
+
+  initWrapDetection(nav);
+}
+
+/**
+ * Desktop nav can wrap to a 2nd row (logo stays put, links + buttons drop
+ * below it) once the window gets too narrow for everything on one line.
+ * The exact pixel width where that happens shifts any time logo/button
+ * sizing changes, so detect the wrap live via geometry instead of hard-coding
+ * a breakpoint — toggles .is-nav-wrapped on .ltf-nav-inner for CSS to hook.
+ */
+function initWrapDetection(nav) {
+  const inner = nav.querySelector('.ltf-nav-inner');
+  const logo = nav.querySelector('.ltf-nav-logo-link');
+  const links = nav.querySelector('.ltf-nav-links');
+  if (!inner || !logo || !links) return;
+
+  function check() {
+    if (window.innerWidth < 992) {
+      inner.classList.remove('is-nav-wrapped');
+      return;
+    }
+    const wrapped = links.getBoundingClientRect().top - logo.getBoundingClientRect().top > 4;
+    inner.classList.toggle('is-nav-wrapped', wrapped);
+  }
+
+  check();
+  window.addEventListener('resize', check, { passive: true });
+  window.addEventListener('orientationchange', check, { passive: true });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(check).catch(() => {});
+  }
 }
 
 export default init;
