@@ -107,11 +107,29 @@ harmless/overridden by the more specific custom-CSS selector).
   match the outer's 500px floor exactly (no more double-stacking against the old 886px
   value), so total ≈ 48px + 500px + 48px = **~596px** — down from ~886px, in the right
   ballpark of "roughly 500px" (the extra ~96px is the container's own intentional outer
-  padding/breathing room, not dead space). **Flagging this explicitly: this is a calculated
-  estimate, not a verified live measurement — please spot-check with DevTools
-  (`getBoundingClientRect().height`) since you have working access this session.**
+  padding/breathing room, not dead space).
 
-## Files touched (round 4)
+**Live-verified (via `cursor-ide-browser`, working in the parent session):** actual
+`#iq-form-artwork-drop.getBoundingClientRect().height` on a real 1920×1080 load = **600px**
+(inner shell = 500px), matching the calculated estimate almost exactly. Confirms fixed.
+
+### Round 5 — Total Cost Est. gradient ring didn't actually cover the border (commit `0c7680a`)
+User: click-gradient ring still showed white behind it; asked to thicken it +2px. Root cause:
+the `::after` ring has used a **negative `inset`** since it was first built (`-3px` → `-5px`
+across rounds 3–4, each time "keeping pace" with the border getting thicker), which put the
+entire ring band *outside* the card's own border-box with a ~1px gap to spare — it never
+overlapped the 4px white border at all, so the border was always fully visible no matter how
+thick the ring was. Fixed by making the ring flush with the card: `inset: 0`, `border-radius:
+14px` (matches the card's own radius exactly, queried live via `data_style_tool`), `padding:
+6px` (4px border coverage + 2px thicker per the ask). Ring now fully overlaps and hides the
+border during the `.is-calculating` click sequence. Verified live: fetched the deployed CSS
+from jsDelivr post-publish and confirmed `inset: 0; border-radius: 14px; padding: 6px;` present
+in the shipped file, and confirmed the live page's boot-script loader points at this commit.
+Not yet re-verified with an actual on-screen click screenshot (browser tooling was unavailable
+in this sub-session) — worth a quick visual spot-check next time someone has working browser
+access.
+
+## Files touched (round 4 + 5)
 - `webflow/instant-quote-embed.css`
 - `js/instant-quote-form.js`
 - Designer: `.iq-total-wrapper` border-width (2px→4px), artwork file input HTML embed
