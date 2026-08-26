@@ -3,8 +3,10 @@
  */
 
 const MOBILE_QUERY = '(max-width: 991px)';
-const SHOW_DELTA = 25;
-const HIDE_DELTA = 25;
+/** Cumulative upward scroll (px) before the bar slides back in. */
+const SHOW_DELTA = 20;
+/** Cumulative downward scroll (px) before the bar hides. */
+const HIDE_DELTA = 24;
 const TOP_LOCK = 8;
 
 export function init() {
@@ -18,6 +20,8 @@ export function init() {
   const mq = window.matchMedia(MOBILE_QUERY);
   let lastY = window.scrollY || 0;
   let hidden = false;
+  let upAccum = 0;
+  let downAccum = 0;
 
   function setOpen(open) {
     nav.classList.toggle('is-nav-open', open);
@@ -47,17 +51,31 @@ export function init() {
     if (!mq.matches) return;
     const y = window.scrollY || 0;
     const dy = y - lastY;
+    lastY = y;
 
     if (y <= TOP_LOCK) {
+      upAccum = 0;
+      downAccum = 0;
       setHidden(false);
-    } else if (dy > HIDE_DELTA) {
-      setHidden(true);
-      setOpen(false);
-    } else if (dy < -SHOW_DELTA) {
-      setHidden(false);
+      return;
     }
 
-    lastY = y;
+    if (dy > 0) {
+      downAccum += dy;
+      upAccum = 0;
+      if (downAccum >= HIDE_DELTA) {
+        downAccum = 0;
+        setHidden(true);
+        setOpen(false);
+      }
+    } else if (dy < 0) {
+      upAccum += -dy;
+      downAccum = 0;
+      if (upAccum >= SHOW_DELTA) {
+        upAccum = 0;
+        setHidden(false);
+      }
+    }
   }
 
   const close = () => setOpen(false);

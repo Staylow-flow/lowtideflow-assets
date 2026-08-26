@@ -657,10 +657,10 @@ const MOBILE_LAYOUT_MAX_W = 991;
 const MOBILE_CAMERA_Z     = 36;
 const MOBILE_ROCK_SCALE_MULT = 0.82;
 /**
- * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx: 100).
- * −40px vs prior 149 (rock down 40).
+ * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx convention).
+ * +150px vs prior 109 so the boulder sits flush behind the mobile H1.
  */
-const MOBILE_ROCK_LIFT_PX = 109;
+const MOBILE_ROCK_LIFT_PX = 259;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;

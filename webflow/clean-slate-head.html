@@ -59,11 +59,11 @@
     0 0 28px rgba(31, 119, 129, 0.28);
 }
 
-/* Page CTAs — 1px white outline; hover swaps to gradient ring (same size) */
+/* Page CTAs — 2px white outline; hover swaps to gradient ring (same size) */
 .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
 .ltf-section-cta .ltf-btn-gradient-wrap,
 .ltf-funnel-cta .ltf-btn-gradient-wrap {
-  padding: 1px !important;
+  padding: 2px !important;
   border-radius: 12px;
   background: #FFFFFF !important;
   box-shadow: none !important;
@@ -77,7 +77,7 @@
 .ltf-funnel-cta .ltf-btn-gradient-wrap:hover,
 .ltf-funnel-cta .ltf-btn-gradient-wrap:focus-within,
 .ltf-funnel-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
-  padding: 1px !important;
+  padding: 2px !important;
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -134,6 +134,9 @@
 body.ltf-nav-open {
   overflow: hidden;
 }
+
+/* Nav layout: Webflow Designer only (.ltf-site-nav, .ltf-nav-inner, .ltf-nav-mobile-panel,
+   .ltf-nav-links, .ltf-nav-actions, .ltf-nav-logo-link). Head CSS = FX + mobile open states only. */
 
 /* ── Crew + Specs glow ─────────────────────────────────────────────── */
 .ltf-card,
@@ -420,8 +423,8 @@ body.ltf-nav-open {
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
-    height: 52px !important;
-    min-height: 52px !important;
+    height: 50px !important;
+    min-height: 50px !important;
     z-index: 100 !important;
     transform: translate3d(0, 0, 0);
     transition: transform 0.35s ease;
@@ -438,8 +441,8 @@ body.ltf-nav-open {
     justify-content: space-between !important;
     box-sizing: border-box !important;
     width: 100% !important;
-    height: 52px !important;
-    min-height: 52px !important;
+    height: 50px !important;
+    min-height: 50px !important;
     max-width: none !important;
     padding-left: 15px !important;
     padding-right: 10px !important;
@@ -454,7 +457,7 @@ body.ltf-nav-open {
     top: auto !important;
     bottom: auto !important;
     transform: none !important;
-    height: 52px !important;
+    height: 50px !important;
     margin: 0 !important;
     padding: 0 !important;
     line-height: 0 !important;
@@ -494,7 +497,7 @@ body.ltf-nav-open {
   .ltf-nav-mobile-panel {
     display: flex !important;
     position: fixed !important;
-    top: 52px !important;
+    top: 50px !important;
     left: 0 !important;
     right: 0 !important;
     bottom: auto !important;
@@ -555,6 +558,7 @@ body.ltf-nav-open {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
+    justify-content: center !important;
     width: 100% !important;
     height: auto !important;
     gap: 10px !important;
@@ -565,10 +569,15 @@ body.ltf-nav-open {
   .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
     display: block !important;
     width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
   .ltf-nav-mobile-panel .ltf-nav-btn,
   .ltf-nav-mobile-panel .ltf-nav-btn-quote {
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     justify-content: center !important;
     text-align: center !important;
     font-size: 19px !important;
