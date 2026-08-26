@@ -1,5 +1,5 @@
 /**
- * Lowtideflow — Rock Scene  (ES Module)
+ * Lowtideflow — Rock Scene  (classic script, dynamic-imports Three)
  *
  * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
  *             palette with transparent dark voids, wispy tendrils, dense cores.
@@ -7,15 +7,18 @@
  *             hematite texture, and a Three.js light rig standing in for Spline's.
  *             Scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
- * Loaded as its own footer <script type="module"> so Three + the GLB cannot
- * stall nav, cards, or the magnifier. The page importmap maps `three` so
- * GLTFLoader's bare specifier resolves. Mesh stays on jsDelivr; the hematite
- * map is on the Webflow CDN (cross-origin: anonymous on both loaders).
+ * Loaded as its own static footer <script src="..."> (no type="module") so
+ * Webflow renders a plain, directly-inspectable jsDelivr URL in the body —
+ * Three + the GLB still can't stall nav, cards, or the magnifier, since this
+ * whole file is one self-contained async IIFE. `import()` works in classic
+ * scripts and still resolves relative specifiers against this file's own
+ * URL, so nested modules (GLTFLoader, etc.) load exactly as before.
  */
 
-/* Absolute CDN imports — no page importmap required (Webflow kept eating </script>). */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+(async function () {
+/* Absolute CDN imports — dynamic so this file can stay a classic script. */
+const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js');
+const { GLTFLoader } = await import('https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js');
 
 const DEFAULT_MODEL_URL =
   'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-hematite-optimized-v2.glb';
@@ -1602,8 +1605,4 @@ window.LtfRockScene = {
   init, RockScene, layerVisibility, behindOpacity, frontOpacity,
   GAS_LOCKED_BOUNDS, ROCK_MOTION_BASELINE, getPrimaryRockScene,
 };
-
-export {
-  init, RockScene, layerVisibility, behindOpacity, frontOpacity,
-  GAS_LOCKED_BOUNDS, ROCK_MOTION_BASELINE, getPrimaryRockScene,
-};
+})();

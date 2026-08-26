@@ -7,20 +7,27 @@
  * upsell sweep, specs vault slam, garment magnifier) — those stay in
  * js/ltf.js for the Clean-Slate page only.
  *
- *   js/nav.js               — this file, static <script> tag before </body>
+ * Loaded as a static, classic <script src="..."> (no type="module") before
+ * </body> site-wide — import() works in classic scripts too.
+ *
+ *   js/nav.js               — this file
  *   js/ui/nav-mobile.js      — hamburger + scroll-hide/reveal
  *   js/ui/btn-gradient.js    — nav CTA click-pulse
  */
 
-import { init as initNav } from './ui/nav-mobile.js';
-import { init as initBtn } from './ui/btn-gradient.js';
+(async function () {
+  const [{ init: initNav }, { init: initBtn }] = await Promise.all([
+    import('./ui/nav-mobile.js'),
+    import('./ui/btn-gradient.js'),
+  ]);
 
-function boot() {
-  initNav();
-  initBtn();
-}
+  function boot() {
+    initNav();
+    initBtn();
+  }
 
-boot();
-window.addEventListener('load', boot, { once: true });
+  boot();
+  window.addEventListener('load', boot, { once: true });
 
-window.LTFNav = { boot };
+  window.LTFNav = { boot };
+})();
