@@ -30,7 +30,7 @@ Branch: `cursor/instant-quote-v2`
   independent staggered per-file progress lanes, persistent file list with name/ext/size,
   prominent "# files ready" counter moved to top of panel.
 
-### Round 4 — bug fix + visual tweaks (commit `<PENDING — filled in after push>`)
+### Round 4 — bug fix + visual tweaks (commit `8237a53`)
 - **Bug — upload bar not appearing:** Root cause found: a legacy static
   `<ul id="iq-form-artwork-list" hidden>` was left over inside the artwork file input's
   HTML embed (`iq-artwork-file-embed`), sitting as a sibling of `.iq-form-upload-inner`.
