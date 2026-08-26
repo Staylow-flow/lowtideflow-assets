@@ -129,6 +129,24 @@ Not yet re-verified with an actual on-screen click screenshot (browser tooling w
 in this sub-session) — worth a quick visual spot-check next time someone has working browser
 access.
 
+**Independent follow-up check (second agent, same request dispatched twice):** found this fix
+already fully shipped (committed, pushed, re-pinned, published — confirmed live boot-script
+`hostedLocation` already points at `0c7680a` before starting any work) and did NOT duplicate
+it. `cursor-ide-browser` was also unavailable in this sub-session (same persistent issue, now
+~12+ failed attempts across every round this session) so no screenshot could be captured
+here either. Instead, independently re-derived and confirmed the coverage math is sound:
+Designer's current border is `4px` / `14px` radius (re-queried live, unchanged). The ring's
+`inset: 0` makes its own border-box **exactly identical** (not just offset-approximated) to
+`.iq-total-wrapper`'s own border-box — same outer boundary, same 14px radius, zero geometric
+mismatch possible at any point including corners. Its content-box (inner mask boundary) radius
+is `max(0, 14 − 6) = 8px`, versus the border's own inner-edge radius of `max(0, 14 − 4) = 10px`
+— since 8 < 10, the ring's inner boundary sits strictly inside the border's inner boundary
+*everywhere around the shape, corners included*, guaranteeing full coverage with a uniform 2px
+margin. This is a stronger guarantee than the round 3/4 approach (negative-inset + separately
+incremented radius), which relied on offset approximation and is what caused the original gap.
+**Still recommend an actual visual click-state screenshot once browser tooling is available**,
+but the fix should be provably correct.
+
 ## Files touched (round 4 + 5)
 - `webflow/instant-quote-embed.css`
 - `js/instant-quote-form.js`
