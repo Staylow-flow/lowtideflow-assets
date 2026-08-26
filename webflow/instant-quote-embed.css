@@ -15,6 +15,7 @@
   --iq-nebula-blue: #1f7781;
   --iq-nebula-purple: #4d259d;
   --iq-nebula-purple-mid: #7040c0;
+  --iq-slate: #cbd5e1;
 }
 
 /* ── V2: viewport strategy (no height:100vh + overflow:hidden lock) ── */
@@ -1635,37 +1636,48 @@
   }
 
   .iq-container {
-    padding-left: 20px !important;
-    padding-right: 20px !important;
+    padding-left: 25px !important;
+    padding-right: 25px !important;
     max-width: 100%;
     box-sizing: border-box;
     overflow-x: clip;
   }
 
+  /* Intro copy — left-justified, sized to match the site's standard
+     section header (.ltf-section-header / .ltf-body-text @ mobile). */
   .iq-intro {
-    padding: 0 4px;
-    margin-bottom: 16px;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0;
+    margin: 0 0 20px;
     width: 100%;
     max-width: 100%;
   }
 
   .iq-intro-title {
-    font-size: clamp(2.75rem, 11vw, 3.75rem) !important;
+    font-size: 67px !important;
     line-height: 0.92 !important;
-    letter-spacing: -0.02em !important;
+    letter-spacing: normal !important;
+    text-align: left !important;
     max-width: 100%;
     font-weight: 700 !important;
   }
 
   .iq-intro-lead {
-    font-size: clamp(16px, 4.2vw, 18px) !important;
+    font-size: 18px !important;
+    line-height: 1.32 !important;
+    font-weight: 500 !important;
+    text-align: left !important;
+    color: #e5e5e5 !important;
+    white-space: pre-line;
+    max-width: 100%;
   }
 
   .iq-toggle-track,
   .iq-toggle-track.iq-toggle-vertical {
-    width: min(320px, 100%) !important;
-    max-width: 320px;
-    margin: 12px auto 28px;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 12px 0 28px;
   }
 
   .iq-sliders-block {
@@ -1679,56 +1691,76 @@
 
   .iq-slider-row {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 72px !important;
+    /* Center cols hold the fused label+value pill; outer 1fr cols push it to
+       center while col1/-1 (the track, on row 2) still spans full width. */
+    grid-template-columns: 1fr auto auto 1fr !important;
     grid-template-rows: auto auto;
-    gap: 10px 10px !important;
+    row-gap: 14px !important;
+    column-gap: 0 !important;
     align-items: stretch !important;
     width: 100%;
     max-width: 100%;
   }
 
-  /* Label pill + value pill sit side by side on row 1 (mirrors mockup);
-     the track spans the full row width below them. */
+  /* Label + value fuse into ONE bordered box (shared slate-grey text color,
+     single divider line between them) instead of two separate pills. */
   .iq-slider-label {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 1;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
     width: auto !important;
-    min-width: 0 !important;
+    min-width: 84px;
     box-sizing: border-box;
     text-align: center !important;
+    white-space: pre-line;
     border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    border-right: 0 !important;
     background: transparent !important;
-    padding: 8px 14px !important;
+    padding: 6px 12px 6px 16px !important;
     min-height: 56px !important;
-    border-radius: 8px;
-    font-size: 15px !important;
+    border-radius: 8px 0 0 8px;
+    font-size: 12px !important;
     font-weight: 700 !important;
     line-height: 1.15 !important;
-    justify-content: center !important;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--iq-slate);
   }
 
   .iq-slider-value {
     display: flex !important;
     align-items: center;
     justify-content: center;
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 1;
-    width: 72px !important;
-    min-width: 72px !important;
+    width: auto !important;
+    min-width: 52px !important;
     min-height: 56px !important;
     box-sizing: border-box;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.55) !important;
-    border-radius: 8px;
-    font-size: 22px !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 0 8px 8px 0;
+    padding: 6px 16px 6px 12px !important;
+    font-size: 26px !important;
     font-weight: 700 !important;
-    color: var(--iq-nebula-teal);
+    color: var(--iq-slate);
+  }
+
+  /* The slider track is a Webflow HtmlEmbed (.w-embed) wrapping
+     .iq-slider-control — grid placement must target the actual grid
+     child (.w-embed), not the nested .iq-slider-control, or it silently
+     falls back to auto-placement and only fills half the row. */
+  .iq-slider-row > .w-embed {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    width: 100%;
   }
 
   .iq-slider-control {
     position: relative;
-    grid-column: 1 / -1;
-    grid-row: 2;
     height: 72px !important;
     min-height: 72px;
     width: 100%;
@@ -1769,11 +1801,11 @@
   }
 
   .iq-slider-tick.is-tall {
-    height: 22px !important;
+    height: 11px !important;
   }
 
   .iq-slider-tick.is-short {
-    height: 10px !important;
+    height: 5px !important;
   }
 
   .iq-slider-track-line {
@@ -2032,7 +2064,7 @@
     align-items: center;
     justify-content: flex-start;
     box-sizing: border-box;
-    padding: 30px 16px 100px !important;
+    padding: 30px 16px 130px !important;
   }
 
   /* Pull the Calculate button up into the total-wrapper's reserved bottom
@@ -2040,7 +2072,7 @@
   .iq-run-quote-wrap {
     position: relative;
     z-index: 2;
-    margin-top: -76px !important;
+    margin-top: -112px !important;
   }
 
   #iq-run-quote,
