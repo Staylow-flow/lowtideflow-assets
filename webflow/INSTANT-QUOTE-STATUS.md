@@ -71,6 +71,35 @@ Branch: `cursor/instant-quote-v2`
   - "500px of Padding outside the [Submit] button" → interpreted as a typo for ~50px;
     implemented as `margin-top: 50px` separating the button from the field above it.
 
+### Round 4 follow-up — desktop drop container still too tall (commit `<PENDING — filled in after push>`)
+User did live QA on `8237a53` with real DevTools measurements. Items 1, 2, and 4 confirmed
+fully correct live (upload lane renders + animates with name/ext/size; card border measured
+4px with the hover glow layering over `.is-calculating`; submit button measured 64px tall,
+`16px 24px` padding, 50px margin-top). Item 3 was still broken — round 4's fix only touched
+the *inner* panels (`.iq-form-upload-inner` / `.iq-form-upload-active`, correctly measured at
+500px), but missed a separate, older rule on the *outer* drop-zone container itself:
+
+```css
+#iq-form-artwork-drop.iq-form-upload,
+.iq-form-upload#iq-form-artwork-drop {
+  min-height: clamp(520px, 82vh, 920px);   /* ≈ 886px at a 1080px-tall viewport */
+}
+```
+
+This rule predates the round-3/4 shrink work (comment literally said "full viewport drop
+zone") and was never reconciled with it. Since `.iq-form-upload-shell` sets
+`min-height: inherit`, it was inheriting this ~886px value from its parent and centering the
+correctly-sized 500px inner content inside it — hence persistent dead space / oversized
+container even though the inner panels themselves measured right. Fixed by changing that
+outer rule to `min-height: 500px` (desktop only — the mobile media-query override further
+down, `min-height: 220px !important`, was already correct and untouched). Verified no
+competing Designer-side min-height (`.iq-form-upload` Designer style only sets `140px`,
+harmless/overridden by the more specific custom-CSS selector).
+
+**Before/after (desktop, 1920×1080 viewport, `#iq-form-artwork-drop.getBoundingClientRect().height`):**
+- Before: ~886px (idle) — matches `82vh` at 1080px viewport height.
+- After: see live verification note below for the measured number.
+
 ## Files touched (round 4)
 - `webflow/instant-quote-embed.css`
 - `js/instant-quote-form.js`
