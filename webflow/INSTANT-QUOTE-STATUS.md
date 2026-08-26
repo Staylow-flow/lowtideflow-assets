@@ -147,7 +147,7 @@ incremented radius), which relied on offset approximation and is what caused the
 **Still recommend an actual visual click-state screenshot once browser tooling is available**,
 but the fix should be provably correct.
 
-### Round 6 — gradient ring was activating INSIDE the white border, not on it (commit `<PENDING — filled in after push>`)
+### Round 6 — gradient ring was activating INSIDE the white border, not on it (commit `495901d`)
 User: click-gradient ring showed up in the wrong location — "activating inside the white
 outline" instead of covering it. **Root cause (user pre-diagnosed this correctly, confirmed by
 re-derivation):** `inset`/`top`/`right`/`bottom`/`left` on an absolutely-positioned element
