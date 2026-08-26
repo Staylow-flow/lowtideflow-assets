@@ -10,10 +10,28 @@ alwaysApply: true
 
 All jsDelivr scripts **MUST** remain permanently inside the **Before `</body>`** tag.
 
+**Updating is allowed.** Swapping the commit pin, `src` URL, or SRI hash in an existing footer script is normal and expected. Do that in place — in the footer — after pushing JS changes to GitHub.
+
+**What is forbidden:** moving scripts to `<head>`, deleting footer jsDelivr tags without replacing them in the footer, or “consolidating” scripts into head for performance.
+
+## Allowed updates (footer only)
+
+```html
+<!-- ✅ OK — update commit pin in footer after a JS push -->
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@1142f69/js/ltf.js"></script>
+<!-- becomes -->
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@cabd203/js/ltf.js"></script>
+```
+
+- Change `@<commit>` to ship new JS
+- Add, remove, or swap footer script tags **as long as they stay in Before `</body>`**
+- Update importmap URLs in the footer when needed
+
 ## Forbidden
 
 ```html
 <!-- ❌ NEVER in <head> -->
+<!-- ❌ NEVER delete footer jsDelivr tags without replacing them in the footer -->
 <script type="importmap">…</script>
 <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@…/js/ltf.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/gh/…"></script>
