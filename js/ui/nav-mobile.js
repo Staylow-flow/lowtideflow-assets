@@ -128,7 +128,11 @@ function initWrapDetection(nav) {
       inner.classList.remove('is-nav-wrapped');
       return;
     }
-    const wrapped = links.getBoundingClientRect().top - logo.getBoundingClientRect().top > 4;
+    // Single row: links/actions vertically center inside the same line as
+    // the logo, so their top sits partway down the logo's own height — not
+    // near its top. Only treat it as wrapped once links start at or below
+    // the logo's bottom edge (i.e. genuinely on their own line).
+    const wrapped = links.getBoundingClientRect().top >= logo.getBoundingClientRect().bottom - 2;
     inner.classList.toggle('is-nav-wrapped', wrapped);
   }
 
