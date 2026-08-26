@@ -205,12 +205,17 @@
 .iq-total-wrapper::after {
   content: '';
   position: absolute;
-  /* Ring thickness +2px (was 2px padding / -3px inset) → 4px padding, inset
-     adjusted to keep it hugging the (now-thicker) 4px border evenly. */
-  inset: -5px;
+  /* Ring must sit ON TOP of the card's own edge, not floating outside it —
+     previous versions used a negative inset (ring drawn entirely outside
+     the border) which left the white border fully visible underneath during
+     the click flash. Now flush with the border-box (inset: 0, radius
+     matches the card's own 14px) and padding = border-width (4px) + 2px
+     extra, so the ring fully covers the white border and reads visibly
+     thicker than it. */
+  inset: 0;
   z-index: 2;
-  border-radius: 19px;
-  padding: 4px;
+  border-radius: 14px;
+  padding: 6px;
   background: conic-gradient(
     from var(--iq-edge-angle),
     var(--iq-nebula-purple),
