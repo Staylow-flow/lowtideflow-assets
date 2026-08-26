@@ -1,0 +1,738 @@
+<style>
+/* Instant Quote — embed-only CSS (page head) */
+
+:root {
+  --iq-bg: #00001c;
+  --iq-border: #ffffff;
+  --iq-tick-line: rgba(255, 255, 255, 0.35);
+  --iq-tick-mark: rgba(255, 255, 255, 0.5);
+}
+
+.iq-slider-control {
+  position: relative;
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 11px;
+}
+
+.iq-slider-ticks {
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.iq-slider-track-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--iq-tick-line);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+
+.iq-slider-tick {
+  position: relative;
+  z-index: 1;
+  width: 1px;
+  height: 8px;
+  background: var(--iq-tick-mark);
+  flex: 0 0 1px;
+}
+
+.iq-range {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 56px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.iq-range:focus {
+  outline: none;
+}
+
+.iq-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+.iq-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+.iq-range::-webkit-slider-runnable-track {
+  height: 1px;
+  background: transparent;
+  border: 0;
+}
+
+.iq-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 44px;
+  margin-top: -21px;
+  border: 2px solid var(--iq-border);
+  border-radius: 8px;
+  background: var(--iq-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease;
+}
+
+.iq-range:active::-webkit-slider-thumb {
+  transform: scaleY(1.04);
+}
+
+.iq-range::-moz-range-track {
+  height: 1px;
+  background: transparent;
+  border: 0;
+}
+
+.iq-range::-moz-range-thumb {
+  width: 22px;
+  height: 44px;
+  border: 2px solid var(--iq-border);
+  border-radius: 8px;
+  background: var(--iq-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.iq-range::-moz-range-progress {
+  background: transparent;
+}
+
+.iq-toggle-track .iq-toggle-btn {
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+
+.iq-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--iq-border);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.iq-style-option .iq-check {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.iq-check:checked {
+  background: var(--iq-border);
+}
+
+.iq-check:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 9px;
+  border: solid var(--iq-bg);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -58%) rotate(45deg);
+}
+
+#split-row-wrapper {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition:
+    max-height 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.36s ease,
+    transform 0.36s ease;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+#split-row-wrapper.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+#iq-unit-cost-2 {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+#iq-unit-cost-2.is-visible {
+  max-height: 120px;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* ── Apparel style grid: 2×2 (was 1×4) ─────────────────────────────── */
+
+.iq-style-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  width: 100%;
+}
+
+/* ── Total cost receipt ──────────────────────────────────────────────── */
+
+.iq-receipt {
+  padding-bottom: 100px;
+}
+
+.iq-total-wrapper {
+  border: 2px solid var(--iq-border);
+  border-radius: 14px;
+  padding: 32px 28px 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.iq-total-price {
+  border: 2px solid var(--iq-border);
+  border-radius: 10px;
+}
+
+/* ── Artwork row (matches Apparel Style label column) ──────────────── */
+
+.iq-artwork-row {
+  display: grid;
+  grid-template-columns: 168px 1fr;
+  gap: 24px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.iq-artwork-label-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 120px;
+  border: 1px solid var(--iq-border);
+  border-radius: 6px;
+  padding: 18px 12px 14px;
+  box-sizing: border-box;
+}
+
+.iq-apparel-label-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.iq-artwork-label-fill {
+  flex: 1;
+  min-height: 56px;
+}
+
+.iq-artwork-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 120px;
+}
+
+.iq-artwork-panel .iq-form-upload {
+  flex: 1;
+}
+
+.iq-artwork-info-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+}
+
+.iq-artwork-info-link:hover,
+.iq-artwork-info-link:focus-visible {
+  color: var(--iq-border);
+  outline: none;
+}
+
+.iq-artwork-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Order form ──────────────────────────────────────────────────────── */
+
+.iq-order-section {
+  width: 100%;
+  border-top: 1px dashed rgba(255, 255, 255, 0.35);
+  padding-top: 8px;
+}
+
+.iq-order-heading {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.iq-order-lead {
+  margin: 0 0 28px;
+  max-width: 760px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.iq-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.iq-form-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.iq-form-legend {
+  margin-bottom: 14px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.iq-form-hint {
+  margin: -6px 0 14px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+}
+
+.iq-form-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.iq-form-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#iq-order-form .iq-form-fieldset:first-of-type .iq-form-grid--2,
+#iq-order-form .iq-form-fieldset:first-of-type > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.iq-form-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.iq-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.iq-form-label {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.iq-form-required {
+  color: var(--iq-border);
+}
+
+.iq-form-quote-hidden {
+  display: none;
+}
+
+.iq-form-input,
+.iq-form-textarea,
+.iq-form-output {
+  width: 100%;
+  border: 1px solid var(--iq-border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--iq-border);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 14px 16px;
+  box-sizing: border-box;
+}
+
+.iq-form-input:focus,
+.iq-form-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(42, 170, 184, 0.45);
+}
+
+.iq-form-textarea {
+  resize: vertical;
+  min-height: 132px;
+  line-height: 1.45;
+}
+
+.iq-form-field--readonly .iq-form-output {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+}
+
+.iq-form-output--total {
+  font-size: 24px;
+}
+
+.iq-form-upload {
+  position: relative;
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.iq-form-upload.is-dragover {
+  border-color: #2aaab8;
+  background: rgba(42, 170, 184, 0.08);
+}
+
+.iq-form-upload-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.iq-form-upload-inner {
+  position: relative;
+  z-index: 1;
+  padding: 34px 24px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.iq-form-upload-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.iq-form-upload-hint {
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+}
+
+.iq-form-upload-btn {
+  pointer-events: auto;
+  appearance: none;
+  border: 1px solid var(--iq-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--iq-border);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+.iq-form-upload-list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  text-align: left;
+  pointer-events: auto;
+}
+
+.iq-form-upload-list li {
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 14px;
+}
+
+.iq-form-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Homepage hero CTA — gradient ring + navy fill on hover */
+@keyframes ltf-nebula-gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.iq-form-cta-wrap,
+.iq-order-section .ltf-btn-gradient-wrap {
+  display: inline-block;
+  padding: 2px;
+  border-radius: 5px;
+  background: transparent;
+  transition: box-shadow 0.35s ease;
+}
+
+.iq-form-cta-wrap:hover,
+.iq-form-cta-wrap:focus-within,
+.iq-form-cta-wrap.ltf-btn-gradient-active,
+.iq-order-section .ltf-btn-gradient-wrap:hover,
+.iq-order-section .ltf-btn-gradient-wrap:focus-within,
+.iq-order-section .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+  background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+  background-size: 200% 200%;
+  animation: ltf-nebula-gradient-shift 3s linear infinite;
+  box-shadow:
+    0 0 16px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(31, 119, 129, 0.28);
+}
+
+.iq-form-submit,
+.iq-order-section .ltf-btn-primary.is-hero-cta {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--iq-border);
+  border-radius: 3px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 16px 34px;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.iq-form-cta-wrap:hover .iq-form-submit,
+.iq-form-cta-wrap:focus-within .iq-form-submit,
+.iq-form-cta-wrap.ltf-btn-gradient-active .iq-form-submit,
+.iq-order-section .ltf-btn-gradient-wrap:hover .ltf-btn-primary.is-hero-cta,
+.iq-order-section .ltf-btn-gradient-wrap.ltf-btn-gradient-active .ltf-btn-primary.is-hero-cta {
+  background: #06142E;
+  border-color: transparent;
+  color: #fff;
+}
+
+.iq-form-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.iq-form-status {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.iq-form-status.is-success {
+  color: #6ee7b7;
+}
+
+.iq-form-status.is-error {
+  color: #fca5a5;
+}
+
+/* ── Artwork info modal ──────────────────────────────────────────────── */
+
+.iq-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.iq-modal.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.iq-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 28, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.iq-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  border: 1px solid var(--iq-border);
+  border-radius: 12px;
+  background: var(--iq-bg);
+  padding: 28px 28px 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.iq-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--iq-border);
+  font-size: 28px;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.iq-modal-title {
+  margin: 0 32px 16px 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.iq-modal-body p {
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.iq-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Pricing breakdown (3 columns) ───────────────────────────────────── */
+
+.iq-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  border-top: 1px dashed rgba(255, 255, 255, 0.25);
+  padding-top: 8px;
+}
+
+.iq-breakdown-col {
+  border: 1px solid var(--iq-border);
+  border-radius: 12px;
+  padding: 28px 24px 32px;
+  background: transparent;
+  min-height: 260px;
+  box-sizing: border-box;
+}
+
+.iq-breakdown-heading {
+  margin: 0 0 16px;
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+.iq-breakdown-copy {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+@media screen and (max-width: 991px) {
+  .iq-artwork-row,
+  .iq-style-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .iq-form-grid--2,
+  .iq-form-grid--3,
+  #iq-order-form .iq-form-fieldset:first-of-type > div,
+  .iq-breakdown {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 479px) {
+  .iq-form-cta-wrap,
+  .iq-order-section .ltf-btn-gradient-wrap {
+    width: 100%;
+  }
+
+  .iq-form-submit,
+  .iq-order-section .ltf-btn-primary.is-hero-cta {
+    width: 100%;
+  }
+}
+
+</style>

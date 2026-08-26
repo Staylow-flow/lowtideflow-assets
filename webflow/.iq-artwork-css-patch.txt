@@ -1,0 +1,7 @@
+REPLACE_START
+#iq-artwork-row .iq-artwork-panel {
+  display: none !important;
+}
+REPLACE_END
+WITH
+/* panel visible — styles live on Designer classes */

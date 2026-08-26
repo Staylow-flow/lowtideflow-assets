@@ -1,0 +1,14 @@
+<script type="module" src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@d59dd0e/js/rock-scene.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@d59dd0e/js/ltf-btn-gradient.js"></script>
+<script>
+(function(){
+  function wrap(){
+    document.querySelectorAll('.ltf-btn-primary,.ltf-nav-btn-contact,.ltf-nav-btn-quote').forEach(function(b){
+      if(b.closest('.ltf-btn-gradient-wrap'))return;
+      var s=document.createElement('span'); s.className='ltf-btn-gradient-wrap';
+      b.parentNode.insertBefore(s,b); s.appendChild(b);
+    });
+  }
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',wrap):wrap();
+})();
+</script>

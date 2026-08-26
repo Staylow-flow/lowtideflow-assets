@@ -1,6 +1,7 @@
-<!-- Paste into Embed — center column of iq-slider-row (Final Quantity) -->
 <div class="iq-slider-control">
-  <div class="iq-slider-ticks" aria-hidden="true">
+  <div class="iq-slider-ticks" data-tick-count="11" aria-hidden="true">
+    <span class="iq-slider-track-line"></span>
+    <span class="iq-slider-tick"></span>
     <span class="iq-slider-tick"></span>
     <span class="iq-slider-tick"></span>
     <span class="iq-slider-tick"></span>
@@ -17,14 +18,15 @@
     class="iq-range"
     id="iq-slider-final-quantity"
     name="final-quantity"
-    min="50"
+    min="0"
     max="500"
     step="50"
-    value="500"
+    value="0"
+    data-iq-step="50"
     aria-label="Final Quantity"
-    aria-valuemin="50"
+    aria-valuemin="0"
     aria-valuemax="500"
-    aria-valuenow="500"
+    aria-valuenow="0"
     data-iq-value-target="iq-val-final-quantity"
   />
 </div>

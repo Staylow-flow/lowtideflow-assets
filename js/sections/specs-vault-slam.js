@@ -543,6 +543,9 @@ let bindAll = null;
   }
 
   function init() {
+    var mobile = window.matchMedia('(max-width: 991px)');
+    if (mobile.matches) return;
+
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
     Array.prototype.forEach.call(nodes, function (el) {
       var cs = getComputedStyle(el);

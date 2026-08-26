@@ -1,0 +1,13 @@
+{
+  "actions": [
+    {
+      "label": "deploy_iq_footer",
+      "set_page_freeform_code": {
+        "page_id": "6a59f0368e92a3bd60940ad9",
+        "location": "footer",
+        "content": "<<<CONTENT>>>"
+      }
+    }
+  ],
+  "context": "Deploy Instant Quote footer with Google Sheets webhook, honeypot, phone format, email typo UX."
+}

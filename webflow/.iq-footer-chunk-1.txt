@@ -1,0 +1,253 @@
+m',
+    'gamil.com': 'gmail.com',
+    'hotmial.com': 'hotmail.com',
+    'hotmal.com': 'hotmail.com',
+    'yaho.com': 'yahoo.com',
+    'yahooo.com': 'yahoo.com',
+    'outlok.com': 'outlook.com',
+    'outllok.com': 'outlook.com'
+  };
+
+  var pageLoadedAt = Date.now();
+
+  function styleLabel(key) {
+    return STYLE_LABELS[key] || key;
+  }
+
+  function qualityLabel(tier) {
+    return tier === 'hq' ? 'High-Quality' : 'Premium-Quality';
+  }
+
+  function setHidden(id, value) {
+    var node = document.getElementById(id);
+    if (node) node.value = value;
+  }
+
+  function val(id) {
+    var node = document.getElementById(id);
+    return node ? String(node.value || '').trim() : '';
+  }
+
+  function getQuoteSnapshot() {
+    if (!global.IQ.getState || !global.IQ.calculateQuote || !global.IQ.PRICING_DATA) {
+      return null;
+    }
+    var state = global.IQ.getState();
+    var result = global.IQ.calculateQuote(state, global.IQ.PRICING_DATA);
+    return { state: state, result: result };
+  }
+
+  function buildStylesSummary(state) {
+    if (state.split) {
+      return (
+        styleLabel(state.styleRow1) +
+        ' + ' +
+        styleLabel(state.styleRow2) +
+        ' (50/50 Split)'
+      );
+    }
+    return styleLabel(state.styleRow1);
+  }
+
+  function readArtworkFileNames() {
+    var input = document.getElementById('iq-form-artwork-file');
+    if (!input || !input.files) return [];
+    return Array.prototype.map.call(input.files, function (file) {
+      return file.name;
+    });
+  }
+
+  /** Flat payload keys expected by Apps Script row writer (p.*). */
+  function buildSheetPayload(state, result) {
+    var splitQty = state.split ? Math.round(state.quantity / 2) : '';
+    var quotedEstimate =
+      result && result.total != null
+        ? result.total
+        : '';
+    return {
+      client_name: val('iq-form-full-name'),
+      company_name: val('iq-form-company'),
+      email: val('iq-form-email'),
+      phone: val('iq-form-phone'),
+      quoted_estimate: quotedEstimate,
+      project_notes: val('iq-form-notes'),
+      apparel_style: styleLabel(state.styleRow1) + ' · ' + qualityLabel(state.quality),
+      ink_colors: state.inkColors,
+      print_locations: state.printLocations,
+      final_quantity: state.quantity,
+      split_apparel_style: state.split ? styleLabel(state.styleRow2) : '',
+      split_ink_colors: state.split ? state.inkColors : '',
+      split_print_locations: state.split ? state.printLocations : '',
+      split_final_quantity: splitQty,
+      art_url: '',
+      art_file_names: readArtworkFileNames(),
+      timeline: '',
+      quality: qualityLabel(state.quality),
+      unit_price_1: result.unit1,
+      unit_price_2: result.unit2,
+      total_estimate: result.total,
+      custom_art: !!state.customArt,
+      submitted_at: new Date().toISOString()
+    };
+  }
+
+  function buildQuotePayload(state, result) {
+    return {
+      submittedAt: new Date().toISOString(),
+      contact: {
+        fullName: val('iq-form-full-name'),
+        companyName: val('iq-form-company'),
+        email: val('iq-form-email'),
+        phone: val('iq-form-phone')
+      },
+      quote: {
+        quality: qualityLabel(state.quality),
+        inkColors: state.inkColors,
+        printLocations: state.printLocations,
+        quantity: state.quantity,
+        split: state.split,
+        styleRow1: styleLabel(state.styleRow1),
+        styleRow2: state.split ? styleLabel(state.styleRow2) : null,
+        unitPrice1: result.unit1,
+        unitPrice2: result.unit2,
+        totalEstimate: result.total,
+        customArt: state.customArt
+      },
+      projectNotes: val('iq-form-notes'),
+      artworkFileNames: readArtworkFileNames(),
+      sheet: buildSheetPayload(state, result)
+    };
+  }
+
+  function syncQuoteFields() {
+    var snapshot = getQuoteSnapshot();
+    if (!snapshot) return;
+
+    var state = snapshot.state;
+    var result = snapshot.result;
+    var format = global.IQ.formatMoney || function (v) {
+      return '$' + v;
+    };
+
+    setHidden('iq-form-quote-quantity', String(state.quantity));
+    setHidden('iq-form-quote-styles', buildStylesSummary(state));
+    setHidden('iq-form-quote-quality', qualityLabel(state.quality));
+    setHidden('iq-form-quote-ink', String(state.inkColors));
+    setHidden('iq-form-quote-locations', String(state.printLocations));
+    setHidden('iq-form-quote-total', format(result.total));
+
+    var hidden = document.getElementById('iq-form-hidden-payload');
+    if (hidden) {
+      hidden.value = JSON.stringify(buildQuotePayload(state, result));
+    }
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function renderArtworkFileList() {
+    var input = document.getElementById('iq-form-artwork-file');
+    var list = document.getElementById('iq-form-artwork-list');
+    if (!input || !list) return;
+
+    if (!input.files || !input.files.length) {
+      list.hidden = true;
+      list.innerHTML = '';
+      return;
+    }
+
+    list.hidden = false;
+    list.innerHTML = '';
+    Array.prototype.forEach.call(input.files, function (file) {
+      var item = document.createElement('li');
+      item.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+      list.appendChild(item);
+    });
+  }
+
+  function initArtworkUpload() {
+    var drop = document.getElementById('iq-form-artwork-drop');
+    var input = document.getElementById('iq-form-artwork-file');
+    var browse = document.getElementById('iq-form-artwork-browse');
+    if (!drop || !input) return;
+
+    if (browse) {
+      browse.addEventListener('click', function (event) {
+        event.preventDefault();
+        input.click();
+      });
+    }
+
+    drop.addEventListener('click', function (event) {
+      if (event.target === browse || (browse && browse.contains(event.target))) return;
+      input.click();
+    });
+
+    input.addEventListener('change', renderArtworkFileList);
+
+    ['dragenter', 'dragover'].forEach(function (type) {
+      drop.addEventListener(type, function (event) {
+        event.preventDefault();
+        drop.classList.add('is-dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(function (type) {
+      drop.addEventListener(type, function (event) {
+        event.preventDefault();
+        drop.classList.remove('is-dragover');
+      });
+    });
+
+    drop.addEventListener('drop', function (event) {
+      if (event.dataTransfer && event.dataTransfer.files) {
+        input.files = event.dataTransfer.files;
+        renderArtworkFileList();
+      }
+    });
+  }
+
+  function initFormCtaGradient() {
+    document.querySelectorAll('.iq-form-cta-wrap, .iq-order-section .ltf-btn-gradient-wrap').forEach(function (wrap) {
+      if (wrap.dataset.ltfGradientInit) return;
+      wrap.dataset.ltfGradientInit = '1';
+      wrap.addEventListener('click', function () {
+        wrap.classList.add('ltf-btn-gradient-active');
+        clearTimeout(wrap._ltfGradientTimer);
+        wrap._ltfGradientTimer = setTimeout(function () {
+          wrap.classList.remove('ltf-btn-gradient-active');
+        }, 1400);
+      });
+    });
+  }
+
+  function initArtworkModal() {
+    var modal = document.getElementById('iq-artwork-modal');
+    var trigger = document.getElementById('iq-artwork-info-trigger');
+    var closeBtn = document.getElementById('iq-artwork-modal-close');
+    var backdrop = document.getElementById('iq-artwork-modal-backdrop');
+    if (!modal || !trigger) return;
+
+    function openModal() {
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      if (closeBtn) closeBtn.focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      trigger.focus();
+    }
+
+    trigger.addEventListener('click', function (event) {
+      event.preventDefault();
+      openModal();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (backdrop) backdrop.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', function (ev

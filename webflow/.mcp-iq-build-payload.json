@@ -1,0 +1,199 @@
+{
+  "siteId": "6789f449bbb1a21245706751",
+  "pageId": "6a59f0368e92a3bd60940ad9",
+  "context": "Build complete Instant Quote calculator page element tree on empty body per designer spec.",
+  "actions": [
+    {
+      "build_label": "iq-full-page",
+      "parent_element_id": {
+        "component": "6a59f0368e92a3bd60940ad9",
+        "element": "6a59f0368e92a3bd60940ae5"
+      },
+      "creation_position": "append",
+      "return_element_info": true,
+      "element_schema": {
+        "type": "Section",
+        "set_style": { "style_names": ["iq-page"] },
+        "children": [
+          {
+            "type": "DivBlock",
+            "set_style": { "style_names": ["iq-container"] },
+            "children": [
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-quality-toggle"] },
+                "children": [
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-toggle-track"] },
+                    "children": [
+                      {
+                        "type": "LinkBlock",
+                        "set_style": { "style_names": ["iq-toggle-btn"] },
+                        "set_text": { "text": "High-Quality" },
+                        "set_link": { "link_type": "url", "link": "#" }
+                      },
+                      {
+                        "type": "LinkBlock",
+                        "set_style": { "style_names": ["iq-toggle-btn", "is-active"] },
+                        "set_text": { "text": "Premium-Quality" },
+                        "set_link": { "link_type": "url", "link": "#" }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-sliders-block"] },
+                "children": [
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-slider-row"] },
+                    "children": [
+                      { "type": "TextBlock", "set_style": { "style_names": ["iq-slider-label"] }, "set_text": { "text": "Ink Colors" } },
+                      { "type": "HtmlEmbed" },
+                      { "type": "TextBlock", "set_style": { "style_names": ["iq-slider-value"] }, "set_text": { "text": "4" } }
+                    ]
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-slider-row"] },
+                    "children": [
+                      { "type": "TextBlock", "set_style": { "style_names": ["iq-slider-label"] }, "set_text": { "text": "Print Locations" } },
+                      { "type": "HtmlEmbed" },
+                      { "type": "TextBlock", "set_style": { "style_names": ["iq-slider-value"] }, "set_text": { "text": "4" } }
+                    ]
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-slider-row"] },
+                    "children": [
+                      { "type": "TextBlock", "set_style": { "style_names": ["iq-slider-label"] }, "set_text": { "text": "Final Quantity" } },
+                      { "type": "HtmlEmbed" },
+                      { "type": "TextBlock", "set_style": { "style_names": ["iq-slider-value"] }, "set_text": { "text": "500" } }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-apparel-section"] },
+                "children": [
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-apparel-row"] },
+                    "children": [
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-apparel-label-box"] },
+                        "children": [
+                          { "type": "TextBlock", "set_style": { "style_names": ["iq-apparel-label-title"] }, "set_text": { "text": "Apparel Style" } },
+                          {
+                            "type": "DivBlock",
+                            "set_style": { "style_names": ["iq-split-checkbox-wrapper"] },
+                            "children": [
+                              {
+                                "type": "FormCheckboxInput",
+                                "set_style": { "style_names": ["iq-check"] },
+                                "set_attributes": { "attributes": [{ "name": "id", "value": "iq-split-toggle" }] }
+                              },
+                              { "type": "TextBlock", "set_text": { "text": "50/50 Split" } }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-style-grid"] },
+                        "children": [
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-tshirts" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "tshirts" }, { "name": "checked", "value": "checked" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "T-Shirts" } }] },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-longsleeves" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "longsleeves" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Long Sleeves" } }] },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-polos" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "polos" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Polos" } }] },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-hats" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "hats" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Hats" } }] },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-quarterzips" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "quarterzips" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Quarter Zips" } }] },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-windbreakers" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "windbreakers" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Windbreakers" } }] },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-crewnecks" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "crewnecks" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Crewnecks" } }] },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r1-hoodies" }, { "name": "name", "value": "style-row-1" }, { "name": "value", "value": "hoodies" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Hoodies" } }] }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DivBlock",
+                    "children": [
+                      { "type": "DivBlock", "set_style": { "style_names": ["iq-split-divider"] } },
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-apparel-row", "iq-apparel-row--split"] },
+                        "children": [
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-apparel-label-spacer"] } },
+                          {
+                            "type": "DivBlock",
+                            "set_style": { "style_names": ["iq-style-grid"] },
+                            "children": [
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-tshirts" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "tshirts" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "T-Shirts" } }] },
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-longsleeves" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "longsleeves" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Long Sleeves" } }] },
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-polos" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "polos" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Polos" } }] },
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-hats" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "hats" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Hats" } }] },
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-quarterzips" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "quarterzips" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Quarter Zips" } }] },
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-windbreakers" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "windbreakers" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Windbreakers" } }] },
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-crewnecks" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "crewnecks" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Crewnecks" } }] },
+                              { "type": "DivBlock", "set_style": { "style_names": ["iq-style-option"] }, "children": [{ "type": "FormRadioInput", "set_style": { "style_names": ["iq-check"] }, "set_attributes": { "attributes": [{ "name": "id", "value": "iq-style-r2-hoodies" }, { "name": "name", "value": "style-row-2" }, { "name": "value", "value": "hoodies" }] } }, { "type": "FormBlockLabel", "set_style": { "style_names": ["iq-style-option-label"] }, "set_text": { "text": "Hoodies" } }] }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "DivBlock",
+                "set_style": { "style_names": ["iq-receipt"] },
+                "children": [
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-receipt-left"] },
+                    "children": [
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-unit-cost"] },
+                        "children": [
+                          { "type": "TextBlock", "set_style": { "style_names": ["iq-unit-cost-label"] }, "set_text": { "text": "#1 Per Unit Cost:" } },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-price-box"] }, "set_text": { "text": "$13.54" } }
+                        ]
+                      },
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-unit-cost"] },
+                        "children": [
+                          { "type": "TextBlock", "set_style": { "style_names": ["iq-unit-cost-label"] }, "set_text": { "text": "#2 Per Unit Cost:" } },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-price-box"] }, "set_text": { "text": "$9.99" } }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "DivBlock",
+                    "set_style": { "style_names": ["iq-receipt-right"] },
+                    "children": [
+                      {
+                        "type": "DivBlock",
+                        "set_style": { "style_names": ["iq-total-wrapper"] },
+                        "children": [
+                          { "type": "TextBlock", "set_style": { "style_names": ["iq-total-label"] }, "set_text": { "text": "Total Cost Est." } },
+                          { "type": "DivBlock", "set_style": { "style_names": ["iq-total-price"] }, "set_text": { "text": "$2,389.58" } }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

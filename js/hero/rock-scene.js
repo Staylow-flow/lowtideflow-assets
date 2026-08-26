@@ -7,16 +7,22 @@
  *             hematite texture, and a Three.js light rig standing in for Spline's.
  *             Scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
- * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
+ * Loaded as its own footer <script type="module"> so Three + the GLB cannot
+ * stall nav, cards, or the magnifier. The page importmap maps `three` so
+ * GLTFLoader's bare specifier resolves. Mesh stays on jsDelivr; the hematite
+ * map is on the Webflow CDN (cross-origin: anonymous on both loaders).
  */
 
-import * as THREE from 'https://esm.sh/three@0.165.0';
-import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const DEFAULT_MODEL_URL =
   'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-hematite-optimized-v2.glb';
 const DEFAULT_TEXTURE_URL =
-  'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-texture-raw-02.avif';
+  'https://cdn.prod.website-files.com/6789f449bbb1a21245706751/6a8455aa05515d512ce8c0ec_boulder-texture-raw-02.avif';
+
+const GLB_TIMEOUT_MS = 12000;
+const GLB_ATTEMPTS = 2;
 
 /* Triplanar tiling is expressed in repeats across the rock's longest axis. */
 const ROCK_TEXTURE_REPEAT   = 2.4;
@@ -71,6 +77,12 @@ const NEBULA_FRAG = /* glsl */`
   uniform float flareSpeed;       /* animation rate for live flares */
   uniform float purpleFlareStrength;
   uniform float blueSpikeStrength;
+  /* Desktop = 1. Mobile must stay 1 too — zeroing haloGain left a hole;
+     crushing mobile gasReach/stretch made a navy oval under the rock.
+     Mobile inset is WIDTH-only via GAS_MOBILE_OVERRIDES stretch/tighten. */
+  uniform float haloGain;
+  uniform float navyGain;
+  uniform float coreGain;
   uniform vec2  mouseXY;
   varying vec2 vUv;
 
@@ -134,12 +146,15 @@ const NEBULA_FRAG = /* glsl */`
 
     float core = 1.0 - smoothstep(inner * 0.72, reachEff * 0.50, dist);
     float edge = 1.0 - smoothstep(reachEff * 0.35, reachEff * 0.96, dist);
-    float body = pow(max(core * edge, 0.0), 0.48);
+    /* coreGain boosts colored plume under the rock (mobile hole fix) */
+    float body = pow(max(core * edge, 0.0), 0.48) * coreGain;
 
-    /* Outer halo — soft glow rim past rock silhouette */
+    /* Outer halo — soft glow rim past rock silhouette (desktop look).
+       Mobile uses a partial haloGain so gas stays continuous without the
+       muddy dark oval that read as a shadow. */
     float halo = 1.0 - smoothstep(reachEff * 0.42, reachEff * 1.10, dist);
     halo = pow(max(halo, 0.0), 1.28) * 0.62;
-    body = max(body, halo);
+    body = max(body, halo * haloGain);
 
     float above  = max(p.y, 0.0);
     float topCap = 1.0 - smoothstep(reach * 0.62, reach * 0.92, above);
@@ -378,7 +393,7 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLEM, purpleFl * densB * 0.45);
     col = mix(col, TEALL,   blueSp * (densA * 0.48 + densC * 0.42));
     col = mix(col, TEAL,    blueSp * densA * 0.32);
-    col = mix(col, NAVY,    blueSp * 0.16 + purpleFl * densB * 0.14);
+    col = mix(col, NAVY,    (blueSp * 0.16 + purpleFl * densB * 0.14) * navyGain);
 
     /* Outward streaks — follow live flare activity, not static rim */
     float streakBase = max(core * 0.38, max(purpleFl * 0.72, blueSp * 0.55));
@@ -407,7 +422,7 @@ const NEBULA_FRAG = /* glsl */`
     col = mix(col, PURPLE,  streaks * 0.10 + purpleOut * 0.42);
     col = mix(col, TEALL,   streaks * 0.14 + blueSp * densC * 0.22);
     col = mix(col, PURPLEM, wisp2 * 0.08 + purpleOut * 0.30);
-    col = mix(col, NAVY,    purpleOut * 0.12 + blueSp * 0.10);
+    col = mix(col, NAVY,    (purpleOut * 0.12 + blueSp * 0.10) * navyGain);
 
     /* Nav clearance — only fades near very top of viewport */
     float topFade = 1.0 - smoothstep(topFadeStart, topFadeEnd, vUv.y);
@@ -560,49 +575,90 @@ const GAS_FOLLOW_DELAY_MS  = 300;              // gas lags rock by 0.3 s
 const GAS_COAST_TAU_MS     = 3000;             // 2–4 s ease-out coast (midpoint)
 const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
-const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
-const SCROLL_VEL_SCALE     = 0.0055;
-const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15;  /* +25% base, +15% hero tune */
+const SCROLL_IMPULSE_GAIN  = 0.27;               // half of prior 0.54 (scroll −50%)
+const SCROLL_VEL_SCALE     = 0.011;              // half of prior 0.022
+const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15 * 1.30 * 0.75;  /* then −25% hero tune */
+const DESKTOP_ROCK_SCALE_MULT = 1.10;            /* +10% desktop rock size */
+/* Opening pose: wide back of the mesh, sitting behind the hero copy.
+   The extra quarter-turn is PITCH (X) — same axis the idle script already
+   rolls toward the camera — not yaw. Yaw +90° showed the narrow side. */
+const ROCK_FACE_YAW        = 0;
+const ROCK_OPEN_PITCH      = Math.PI / 2;
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 
 /**
- * Rock motion baseline — locked fallback (Jul 14 2026, pre-hover restore).
- * Restore these values if a motion tweak overshoots; idle amps below are +10%.
+ * Rock motion — idle float stays gentle inside hard caps:
+ *   yaw (Y)  ≤ ±10°
+ *   pitch (X) ≤ ±15° (idle only)
+ *   roll (Z)  ≤ ±8° idle
+ * Amps are ×4 (+300%) vs prior float tune — caps still bound the orbit.
+ * Scroll drives ONE-WAY pitch roll-down (no reverse on scroll-up), uncapped.
  */
 const ROCK_MOTION_BASELINE = Object.freeze({
-  idleYawAmp1:     0.07,
-  idleYawAmp2:     0.03,
-  idleNodAmp:      0.025,
-  idleYawLerp:     0.036,
-  idleNodLerp:     0.030,
+  idleYawAmp1:     0.38,    /* ×4 */
+  idleYawAmp2:     0.22,
+  idleYawAmp3:     0.14,
+  idleNodAmp:      0.22,
+  idleNodAmp2:     0.112,
+  idlePitchAmp:    0.48,
+  idlePitchAmp2:   0.28,
+  idleYawLerp:     0.022,
+  idleNodLerp:     0.020,
   mouseLerp:       0.028,
-  maxMouseYawDeg:  15,
-  maxMouseRollDeg: 8,
+  maxYawDeg:       10,
+  maxPitchDeg:     15,
+  maxRollDeg:      8,
 });
 
-const MAX_MOUSE_YAW  = (ROCK_MOTION_BASELINE.maxMouseYawDeg * 0.7 * Math.PI) / 180;
-const MAX_MOUSE_ROLL = (ROCK_MOTION_BASELINE.maxMouseRollDeg * 2.0 * Math.PI) / 180;
-const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1;
-const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1;
-const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1;
+const MAX_YAW   = (ROCK_MOTION_BASELINE.maxYawDeg   * Math.PI) / 180;
+const MAX_PITCH = (ROCK_MOTION_BASELINE.maxPitchDeg * Math.PI) / 180;
+const MAX_ROLL  = (ROCK_MOTION_BASELINE.maxRollDeg  * Math.PI) / 180;
+/* Legacy aliases — mouse follow is disabled; keep names for any external refs */
+const MAX_MOUSE_YAW  = MAX_YAW;
+const MAX_MOUSE_ROLL = MAX_ROLL;
+const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1;
+const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2;
+const IDLE_YAW_AMP3  = ROCK_MOTION_BASELINE.idleYawAmp3;
+const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp;
+const IDLE_NOD_AMP2  = ROCK_MOTION_BASELINE.idleNodAmp2;
+const IDLE_PITCH_AMP = ROCK_MOTION_BASELINE.idlePitchAmp;
+const IDLE_PITCH_AMP2 = ROCK_MOTION_BASELINE.idlePitchAmp2;
 
-/** Tighter mobile layout — nebula/rock bleed ≤ ~15% past viewport edges */
+/** Mobile ≤991 — keep desktop softCore/halo/navy look; only inset WIDTH
+ *  so plume edges sit inside the phone (no haloGain=0 hole, no navy mask). */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
-  gasStretchX:      0.62,
-  gasStretchY:      1.42,
-  gasReach:         0.58,
-  gasInner:         0.24,
-  widthTighten:     1.08,
-  purpleFarMult:    1.55,
-  streakReachMult:  1.18,
-  tentacleExtend:   1.05,
-  purpleReachBoost: 1.0,
-  flareReachMult:   1.70,
+  /* vUv.y: 0 = bottom, 1 = top. Higher = higher on screen. */
+  gasCenterY:       0.88,  /* top of plume sits under nav bar */
+  /* SoftCore stays expansive/colorful like desktop — mild horizontal inset */
+  gasStretchX:      0.58,
+  gasStretchY:      1.05,
+  gasReach:         0.48,
+  gasInner:         0.20,
+  widthTighten:     1.28,  /* gentle side squeeze for phone bezel */
+  /* Outer streaks/tendrils — these were bleeding past the screen edge */
+  purpleFarMult:    0.82,
+  streakReachMult:  0.78,
+  tentacleExtend:   0.72,
+  purpleReachBoost: 0.72,
+  flareReachMult:   0.88,
+  topYFactor:       0.62,
+  topFadeStart:     0.92,
+  topFadeEnd:       0.99,
+  /* Explicit: same softCore/navy as desktop — do not zero these */
+  haloGain:         1.0,
+  navyGain:         1.0,
+  coreGain:         1.0,
 });
 
 const MOBILE_LAYOUT_MAX_W = 991;
-const MOBILE_CAMERA_Z     = 27;
+const MOBILE_CAMERA_Z     = 36;
+const MOBILE_ROCK_SCALE_MULT = 0.82;
+/**
+ * Screen-px lift. POSITIVE = up (matches desktop rockLiftPx: 100).
+ * Was 280 (too high) → drop 75px → 205.
+ */
+const MOBILE_ROCK_LIFT_PX = 185; /* was 205; rock down 20px */
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
@@ -620,14 +676,14 @@ function mobileCameraZ(viewportW) {
 /** Single source of truth — gas volume, layout, and rock lift */
 const GAS_LOCKED_BOUNDS = Object.freeze({
   gasCenterX:       0.50,
-  gasCenterY:       0.63,   /* aligned with rock — glow wraps silhouette */
+  gasCenterY:       0.74,   /* follows the rock 100px down */
   gasStretchX:      0.82,   /* wider horizontal glow */
   gasStretchY:      1.78,   /* taller vertical glow */
   gasReach:         0.76,   /* outer glow radius past rock */
   gasInner:         0.26,   /* soft full-body halo, not tight core blob */
   edgeWarp:         0.20,
   alphaScale:       1.0,
-  rockLiftPx:       200,
+  rockLiftPx:       115,    /* was 100; +15px up on desktop */
   widthTighten:     0.96,   /* stop squeezing width — let glow spread */
   topYFactor:       0.94,   /* extend above rock for nav clearance */
   topFadeStart:     0.80,
@@ -640,6 +696,9 @@ const GAS_LOCKED_BOUNDS = Object.freeze({
   flareSpeed:       1.40,   /* faster flare cycles */
   purpleFlareStrength: 1.0,
   blueSpikeStrength:   0.82,
+  haloGain:         1.0,    /* desktop softCore outer halo ON */
+  navyGain:         1.0,
+  coreGain:         1.0,
 });
 
 const BEHIND_FG_VISIBLE    = true;  // override with ?behind=0
@@ -692,9 +751,9 @@ function frontOpacity() {
   return Number.isFinite(n) ? clamp(n, 0, 1) : FRONT_FG_OPACITY;
 }
 
-function rockLiftWorld(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx) {
+function rockLiftWorld(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx, camZ = CAMERA_Z) {
   const fovRad   = (CAMERA_FOV * Math.PI) / 180;
-  const visibleH = 2 * CAMERA_Z * Math.tan(fovRad / 2);
+  const visibleH = 2 * camZ * Math.tan(fovRad / 2);
   return (px / viewportH) * visibleH;
 }
 
@@ -891,6 +950,7 @@ class RockScene {
     this.running          = false;
     this.raf              = 0;
     this.rockPitchAccum   = 0;
+    this.rockYawAccum     = 0;
     this.scrollPitchOffset = 0;
     this.scrollPitchVelocity = 0;
     this._lastScrollProgress  = 0;
@@ -922,18 +982,18 @@ class RockScene {
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
   _initRenderer() {
-    /* render-resolution-scale=1 — lock DPR for large displays (27" iMac etc.) */
+    const mobile = isMobileLayout();
     const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
     const scale = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : 1;
-    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, 2)) : 1;
+    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, mobile ? 1 : 2)) : 1;
     const existingCanvas =
       this.container.querySelector('#canvas3d')
       || (this.container.id === 'canvas3d' ? this.container : null)
       || document.getElementById('canvas3d');
     const rendererOpts = {
       alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
+      antialias: !mobile,
+      powerPreference: mobile ? 'default' : 'high-performance',
     };
     if (existingCanvas instanceof HTMLCanvasElement) {
       rendererOpts.canvas = existingCanvas;
@@ -971,7 +1031,8 @@ class RockScene {
 
   _applyRockLift() {
     if (this.rockGroup) {
-      this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx);
+      const camZ = this.camera ? this.camera.position.z : CAMERA_Z;
+      this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx, camZ);
     }
   }
 
@@ -995,6 +1056,9 @@ class RockScene {
     uni.flareSpeed.value           = b.flareSpeed;
     uni.purpleFlareStrength.value  = b.purpleFlareStrength;
     uni.blueSpikeStrength.value    = b.blueSpikeStrength;
+    if (uni.haloGain) uni.haloGain.value = b.haloGain != null ? b.haloGain : 1.0;
+    if (uni.navyGain) uni.navyGain.value = b.navyGain != null ? b.navyGain : 1.0;
+    if (uni.coreGain) uni.coreGain.value = b.coreGain != null ? b.coreGain : 1.0;
     if (uni.tentacleExtend) uni.tentacleExtend.value = b.tentacleExtend;
   }
 
@@ -1008,7 +1072,7 @@ class RockScene {
     if (this.camera) {
       this.camera.position.z = mobileCameraZ(vw);
     }
-    this.rockLiftPx = mobile ? 150 : GAS_LOCKED_BOUNDS.rockLiftPx;
+    this.rockLiftPx = mobile ? MOBILE_ROCK_LIFT_PX : GAS_LOCKED_BOUNDS.rockLiftPx;
     this._applyRockLift();
   }
 
@@ -1044,6 +1108,9 @@ class RockScene {
         flareSpeed:            { value: b.flareSpeed },
         purpleFlareStrength:   { value: b.purpleFlareStrength },
         blueSpikeStrength:   { value: b.blueSpikeStrength },
+        haloGain:            { value: b.haloGain },
+        navyGain:            { value: b.navyGain },
+        coreGain:            { value: b.coreGain },
         mouseXY:             { value: new THREE.Vector2(0, 0) },
       };
     }
@@ -1138,48 +1205,88 @@ class RockScene {
     this.scene.add(fill);
   }
 
-  /* ── GLTF/GLB loader — parallel mesh + texture, reveal when both ready ─── */
+  /* ── GLTF/GLB loader — mesh first, texture when it lands ─── */
+  _loadGltf(url) {
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setCrossOrigin('anonymous');
+    return new Promise((resolve, reject) => {
+      gltfLoader.load(url, resolve, undefined, reject);
+    });
+  }
+
+  _loadGltfWithRetry(url) {
+    const attempt = (n) => {
+      const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('GLB timeout after ' + GLB_TIMEOUT_MS + 'ms')), GLB_TIMEOUT_MS);
+      });
+      return Promise.race([this._loadGltf(url), timeout]).catch((err) => {
+        console.warn('[LTF Rock] GLB attempt', n, err && err.message ? err.message : err);
+        if (n >= GLB_ATTEMPTS) throw err;
+        return attempt(n + 1);
+      });
+    };
+    return attempt(1);
+  }
+
+  _mountRockModel(gltf, tex) {
+    const model = buildRockModelFromGltf(gltf);
+
+    const box  = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+
+    const longestDim = Math.max(size.x, size.y, size.z, 0.001);
+    const mobile = isMobileLayout(typeof window !== 'undefined' ? window.innerWidth : 1200);
+    const scale =
+      (ROCK_SCALE_BASE / longestDim) * (mobile ? MOBILE_ROCK_SCALE_MULT : DESKTOP_ROCK_SCALE_MULT);
+
+    /* Orient before centering. position is applied after rotation in the
+       local matrix, so a centering offset measured on the unrotated mesh
+       stops being a centering offset the moment any yaw is added — the
+       rock would swing off to one side. Measuring the box again once the
+       model is already turned keeps it centred at any orientation. */
+    model.scale.setScalar(scale);
+    model.rotation.set(0.05 + ROCK_OPEN_PITCH, -0.2 + ROCK_FACE_YAW, 0.03);
+    model.position.set(0, 0, 0);
+    model.updateMatrixWorld(true);
+
+    const spunCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
+    model.position.copy(spunCenter).negate();
+
+    const ROCK_X_CORRECT = -0.6;
+    model.position.x += ROCK_X_CORRECT;
+
+    if (tex) applyRockTexture(model, tex);
+
+    this._rockMesh = model;
+    this.rockGroup.add(model);
+    this.rockGroup.visible = layerVisibility().rock;
+
+    const lv = layerVisibility();
+    console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
+  }
+
   _loadModel() {
     preloadRockAssets(this.modelUrl, this.textureUrl);
 
-    const gltfLoader = new GLTFLoader();
     const texLoader = new THREE.TextureLoader();
     texLoader.setCrossOrigin('anonymous');
 
-    const gltfP = new Promise((resolve, reject) => {
-      gltfLoader.load(this.modelUrl, resolve, undefined, reject);
-    });
-    const texP = this.textureUrl
-      ? texLoader.loadAsync(this.textureUrl)
-      : Promise.resolve(null);
+    let pendingTex = null;
+    if (this.textureUrl) {
+      texLoader.loadAsync(this.textureUrl)
+        .then((tex) => {
+          pendingTex = tex;
+          if (this._rockMesh) applyRockTexture(this._rockMesh, tex);
+        })
+        .catch((err) => {
+          console.warn('[LTF Rock] texture failed:', err);
+        });
+    }
 
-    Promise.all([gltfP, texP])
-      .then(([gltf, tex]) => {
-        const model = buildRockModelFromGltf(gltf);
-
-        const box    = new THREE.Box3().setFromObject(model);
-        const size   = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-
-        const longestDim = Math.max(size.x, size.y, size.z, 0.001);
-        const scale = ROCK_SCALE_BASE / longestDim;
-        model.scale.setScalar(scale);
-        model.position.copy(center.negate().multiplyScalar(scale));
-
-        const ROCK_X_CORRECT = -0.6;
-        model.position.x += ROCK_X_CORRECT;
-
-        applyRockTexture(model, tex);
-
-        model.rotation.set(0.05, -0.2, 0.03);
-        this.rockGroup.add(model);
-        this.rockGroup.visible = layerVisibility().rock;
-
-        const lv = layerVisibility();
-        console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
-      })
+    this._loadGltfWithRetry(this.modelUrl)
+      .then((gltf) => this._mountRockModel(gltf, pendingTex))
       .catch((err) => {
-        console.error('[LTF Rock] Failed to load model/texture:', err);
+        console.error('[LTF Rock] Failed to load model:', err);
       });
   }
 
@@ -1282,38 +1389,45 @@ class RockScene {
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
     this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
 
-    /* ── Rock rotation ────────────────────────────────────────────────────
-       X: auto-spin + scroll coast only (no mouse hover roll).
-       Y: idle wobble + horizontal scroll tilt (no mouse yaw).
-       Z: subtle idle nod only.                                           */
+    /* ── Rock rotation ─────────────────────────────────────────────────────
+       Idle: gentle multi-orbit float, hard-capped (yaw ±10°, pitch ±15°, roll ±8°).
+       Scroll: ONE-WAY pitch roll-down only (down adds; up ignored). Uncapped. */
     if (this.rockGroup) {
-      /* Slow continuous tumble — ~1 full rotation per 140 s */
-      this.rockPitchAccum += 0.0000225 * dt;
-
-      /* Scroll → impulse only (no spring). Heavy rock coasts, never rubber-bands. */
       const scrollDelta = this.scrollProgress - this._lastScrollProgress;
       this._lastScrollProgress = this.scrollProgress;
 
-      if (Math.abs(scrollDelta) > 0.000001) {
-        const dirGain = scrollDelta >= 0 ? 1.0 : 0.25;
-        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN * dirGain
+      /* Forward scroll only — never reverse the roll when scrolling back up */
+      if (scrollDelta > 0.000001) {
+        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN
                                   * SCROLL_IMPULSE_GAIN * ROCK_SCROLL_COAST;
+      } else if (scrollDelta < -0.000001) {
+        /* Kill any leftover reverse impulse so coast never spins backward */
+        this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity);
       }
 
       this.scrollPitchVelocity *= Math.pow(ROCK_SPIN_DECAY, dt);
+      this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity); /* one-way */
       this.scrollPitchOffset  += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
+      /* scrollPitchOffset is intentionally uncapped — window scroll drives roll-down */
 
-      const basePitch = this.rockPitchAccum + this.scrollPitchOffset;
+      const idlePitch = Math.sin(t * 0.00011) * IDLE_PITCH_AMP
+                      + Math.sin(t * 0.00019 + 0.9) * IDLE_PITCH_AMP2;
+      const idleYaw = Math.sin(t * 0.00014) * IDLE_YAW_AMP1
+                    + Math.sin(t * 0.00027 + 1.1) * IDLE_YAW_AMP2
+                    + Math.sin(t * 0.00041 + 2.3) * IDLE_YAW_AMP3;
+      const idleNod = Math.sin(t * 0.00013 + 1.4) * IDLE_NOD_AMP
+                    + Math.sin(t * 0.00023 + 0.4) * IDLE_NOD_AMP2;
+
+      const targetX = clamp(idlePitch, -MAX_PITCH, MAX_PITCH) + this.scrollPitchOffset;
+      const targetY = clamp(
+        idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS,
+        -MAX_YAW,
+        MAX_YAW
+      );
+      const targetZ = clamp(idleNod, -MAX_ROLL, MAX_ROLL);
+
       this.mouseRollOffset = 0;
-      this.rockGroup.rotation.x = basePitch;
-
-      /* Idle wobble (+10% natural drift) + scroll Y tilt — no mouse nudge */
-      const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
-                    + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
-      const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
-      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
-      const targetZ = idleNod;
-
+      this.rockGroup.rotation.x += (targetX - this.rockGroup.rotation.x) * ROCK_MOTION_BASELINE.idleNodLerp;
       this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * ROCK_MOTION_BASELINE.idleYawLerp;
       this.rockGroup.rotation.z += (targetZ - this.rockGroup.rotation.z) * ROCK_MOTION_BASELINE.idleNodLerp;
     }
@@ -1447,7 +1561,7 @@ function getPrimaryRockScene() {
   return null;
 }
 
-/* ─── Auto-init ─────────────────────────────────────────────────────────── */
+/* ─── Auto-init (own footer tag — do not import from ltf.js) ─────────────── */
 function init() {
   resolveRockContainers().forEach((node) => {
     if (!node.__ltfRock) node.__ltfRock = new RockScene(node);
@@ -1455,9 +1569,12 @@ function init() {
 }
 
 function boot() {
-  init();
-  setTimeout(init, 400);
-  setTimeout(init, 1400);
+  const run = () => init();
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(run, { timeout: 900 });
+    return;
+  }
+  requestAnimationFrame(() => setTimeout(run, 0));
 }
 
 if (document.readyState === 'loading') {
@@ -1465,7 +1582,7 @@ if (document.readyState === 'loading') {
 } else {
   boot();
 }
-window.addEventListener('load', boot);
+window.addEventListener('load', init, { once: true });
 
 window.LtfRockScene = {
   init, RockScene, layerVisibility, behindOpacity, frontOpacity,

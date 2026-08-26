@@ -1,67 +1,398 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   Instant Quote — EMBED-ONLY CSS (Git / Page Head)
-   Paste into: /instant-quote → Page Settings → Custom Code → Inside <head>
-
-   Webflow Designer owns layout, typography, borders, padding, and colors.
-   This file only covers what Webflow cannot style natively:
-   - Custom range slider thumb + track
-   - Tick marks behind sliders
-   - Circular checkbox/radio appearance
-   - JS-driven visibility hooks
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* Instant Quote — behavior-only CSS (page head)
+ * Layout, grids, borders, typography → Webflow Designer classes only.
+ * Layout overrides here when Designer cannot be reached for structural edits.
+ */
 
 :root {
   --iq-bg: #00001c;
   --iq-border: #ffffff;
-  --iq-border-dim: rgba(255, 255, 255, 0.55);
-  --iq-track: rgba(255, 255, 255, 0.22);
+  --iq-tick-line: rgba(255, 255, 255, 0.35);
+  --iq-tick-mark: rgba(255, 255, 255, 0.5);
+  --iq-glow-blue: #3b82f6;
+  --iq-glow-navy: #1e3a8a;
+  --iq-nebula-green: #0b8050;
+  --iq-nebula-teal: #2aaab8;
+  --iq-nebula-blue: #1f7781;
+  --iq-nebula-purple: #4d259d;
+  --iq-nebula-purple-mid: #7040c0;
 }
 
-/* ── Slider embed shell (inside Webflow Embed element) ──────────────────── */
+/* ── V2: viewport strategy (no height:100vh + overflow:hidden lock) ── */
+
+.iq-page {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.iq-container {
+  width: 100%;
+}
+
+/* ── V2: intro above quality toggle ─────────────────────────────────── */
+
+.iq-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 0 auto 8px;
+  padding: 0 12px;
+}
+
+.iq-intro-title {
+  margin: 0;
+  font-size: clamp(22px, 3.2vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--iq-border);
+  line-height: 1.15;
+}
+
+.iq-intro-lead {
+  margin: 0;
+  max-width: 560px;
+  font-size: clamp(14px, 1.6vw, 17px);
+  font-weight: 500;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ── Quality toggle: matched padding + draggable thumb ──────────────── */
+
+.iq-toggle-track {
+  position: relative;
+  padding: 4px !important; /* match L/R to existing T/B — less hug */
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.iq-toggle-track:active {
+  cursor: grabbing;
+}
+
+.iq-toggle-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 8px;
+  background: #ffffff;
+  z-index: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.iq-toggle-track.is-dragging .iq-toggle-thumb {
+  transition: none;
+}
+
+.iq-toggle-track .iq-toggle-btn {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  text-wrap: nowrap;
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+.iq-toggle-track .iq-toggle-btn.is-active {
+  color: #00001c !important;
+  background-color: transparent !important;
+}
+
+/* ── Slider value boxes: match left label width (desktop) ───────────── */
+
+@media screen and (min-width: 992px) {
+  .iq-slider-row {
+    grid-template-columns: 150px 1fr 150px !important;
+  }
+
+  .iq-slider-value {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+}
+
+/* ── V2: total cost gradient border + radial glow ───────────────────── */
+
+.iq-total-wrapper {
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  background:
+    linear-gradient(var(--iq-bg), var(--iq-bg)) padding-box,
+    linear-gradient(135deg, var(--iq-glow-blue), var(--iq-glow-navy)) border-box;
+  border: 1px solid transparent !important;
+  border-radius: 14px;
+}
+
+.iq-total-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 18% 12% 8%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.15) 0%,
+    transparent 70%
+  );
+}
+
+.iq-total-wrapper > * {
+  position: relative;
+  z-index: 1;
+}
+
+#iq-total-price,
+.iq-total-price {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Calculate left / Final Price right ─────────────────────────────── */
+
+.iq-receipt-right {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  width: 100%;
+}
+
+.iq-run-quote-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  order: 1;
+  width: auto;
+  margin-top: 0 !important;
+  flex: 0 1 auto;
+}
+
+.iq-total-wrapper {
+  order: 2;
+  flex: 1 1 280px;
+  max-width: 520px;
+  min-width: min(100%, 240px);
+}
+
+#iq-run-quote,
+.iq-run-quote {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: min(100%, 280px);
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--iq-glow-blue), var(--iq-glow-navy));
+  color: #ffffff;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  text-decoration: none;
+}
+
+#iq-run-quote:hover,
+#iq-run-quote:focus-visible,
+.iq-run-quote:hover,
+.iq-run-quote:focus-visible {
+  filter: brightness(1.08);
+  outline: none;
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.35);
+}
+
+#iq-run-quote.is-running,
+.iq-run-quote.is-running {
+  transform: scale(0.98);
+}
+
+/* ── LTF orbit / glow click FX (Calculate + Submit) ─────────────────── */
+
+.iq-orbit-wrap {
+  position: relative;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 8px;
+  background: transparent;
+  transition: box-shadow 0.35s ease;
+}
+
+.iq-orbit-wrap > .iq-orbit-btn,
+.iq-orbit-wrap > #iq-run-quote,
+.iq-orbit-wrap > #iq-form-submit,
+.iq-orbit-wrap > .iq-run-quote,
+.iq-orbit-wrap > .iq-form-submit {
+  position: relative;
+  z-index: 1;
+}
+
+.iq-orbit-btn,
+#iq-run-quote.iq-orbit-btn,
+#iq-form-submit.iq-orbit-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.iq-orbit-btn::before,
+#iq-run-quote.iq-orbit-btn::before,
+#iq-form-submit.iq-orbit-btn::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--iq-nebula-green),
+    var(--iq-nebula-teal),
+    var(--iq-nebula-blue),
+    var(--iq-nebula-purple),
+    var(--iq-nebula-purple-mid),
+    var(--iq-nebula-green)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transform: rotate(0deg);
+}
+
+.iq-orbit-btn::after,
+#iq-run-quote.iq-orbit-btn::after,
+#iq-form-submit.iq-orbit-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(42, 170, 184, 0.45) 0%,
+    rgba(77, 37, 157, 0.22) 42%,
+    transparent 72%
+  );
+  transform: scale(0.55);
+}
+
+.iq-orbit-btn.iq-orbit-click::before,
+#iq-run-quote.iq-orbit-click::before,
+#iq-form-submit.iq-orbit-click::before,
+.iq-orbit-wrap.iq-orbit-click::before {
+  opacity: 1;
+  animation: iq-orbit-wrap 0.5s linear forwards;
+}
+
+.iq-orbit-btn.iq-orbit-click::after,
+#iq-run-quote.iq-orbit-click::after,
+#iq-form-submit.iq-orbit-click::after {
+  animation: iq-orbit-inner-glow 0.35s ease 0.5s forwards;
+}
+
+.iq-orbit-wrap.ltf-btn-gradient-active,
+.iq-orbit-wrap.iq-orbit-click {
+  box-shadow:
+    0 0 16px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(31, 119, 129, 0.28);
+}
+
+@keyframes iq-orbit-wrap {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iq-orbit-inner-glow {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* ── Slider embeds (HtmlEmbed) ───────────────────────────────────────── */
+
 .iq-slider-control {
   position: relative;
   width: 100%;
   height: 56px;
   display: flex;
   align-items: center;
-  padding: 0 6px;
+  padding: 0 11px;
 }
 
 .iq-slider-ticks {
   position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 14px;
-  pointer-events: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 0 11px;
-}
-
-.iq-slider-ticks::before {
-  content: '';
-  position: absolute;
   left: 11px;
   right: 11px;
   top: 50%;
-  height: 2px;
   transform: translateY(-50%);
-  background: var(--iq-track);
+  height: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.iq-slider-track-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--iq-tick-line);
+  transform: translateY(-50%);
+  z-index: 0;
 }
 
 .iq-slider-tick {
   position: relative;
   z-index: 1;
-  width: 2px;
-  height: 10px;
-  background: var(--iq-border-dim);
-  flex: 0 0 2px;
+  width: 1px;
+  height: 8px;
+  background: var(--iq-tick-mark);
+  flex: 0 0 1px;
 }
 
-/* Range input — industrial white pill thumb */
 .iq-range {
   position: relative;
   z-index: 2;
@@ -87,7 +418,7 @@
 }
 
 .iq-range::-webkit-slider-runnable-track {
-  height: 2px;
+  height: 1px;
   background: transparent;
   border: 0;
 }
@@ -110,7 +441,7 @@
 }
 
 .iq-range::-moz-range-track {
-  height: 2px;
+  height: 1px;
   background: transparent;
   border: 0;
 }
@@ -128,7 +459,8 @@
   background: transparent;
 }
 
-/* ── Form controls Webflow cannot match to mockup ───────────────────────── */
+/* ── Custom check / radio appearance ───────────────────────────────── */
+
 .iq-check {
   appearance: none;
   -webkit-appearance: none;
@@ -170,19 +502,816 @@
   transform: translate(-50%, -58%) rotate(45deg);
 }
 
-/* ── Headless JS visibility hooks (default hidden) ──────────────────────── */
+/* ── 50/50 split row + unit cost #2 reveal (JS toggles .is-visible) ─── */
+
 #split-row-wrapper {
-  display: none;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    max-height 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.36s ease,
+    transform 0.36s ease;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 #split-row-wrapper.is-visible {
-  display: block;
+  max-height: 720px;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+  overflow: visible;
+  /* 40px air between first apparel options set and the 50/50 second set */
+  padding-top: 40px;
+  box-sizing: border-box;
+}
+
+#iq-style-row-2 {
+  /* no translateY hacks — overflow:hidden was clipping the top option row */
+  transform: none !important;
+}
+
+#split-row-wrapper .iq-apparel-row--split {
+  grid-template-columns: 150px 1fr minmax(100px, 120px);
+  align-items: center;
+  width: 100%;
+}
+
+#split-row-wrapper .iq-apparel-row--split #iq-unit-cost-2,
+#split-row-wrapper .iq-apparel-row--split > .iq-unit-cost {
+  width: 100%;
+  justify-self: stretch;
+  align-self: center;
 }
 
 #iq-unit-cost-2 {
-  display: none;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: none;
+  transition:
+    max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 #iq-unit-cost-2.is-visible {
+  max-height: 160px;
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  overflow: visible;
+}
+
+/* Keep unit price column aligned with the 4×2 apparel options block */
+#iq-unit-price-col,
+.iq-unit-cost-col {
+  align-self: center !important;
+  justify-self: stretch;
+  width: 100%;
+}
+
+#iq-style-row-1.iq-style-grid,
+#iq-style-row-2.iq-style-grid {
+  align-self: center;
+}
+
+/* ── Art pricing modal (footer HTML) ───────────────────────────────── */
+
+.iq-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.iq-modal.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.iq-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 28, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.iq-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  border: 1px solid var(--iq-border);
+  border-radius: 12px;
+  background: var(--iq-bg);
+  padding: 28px 28px 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.iq-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--iq-border);
+  font-size: 28px;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.iq-modal-title {
+  margin: 0 32px 16px 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.iq-modal-body p {
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.iq-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Artwork row: remove left pricing border, center upload ─────────── */
+
+#iq-artwork-row.iq-apparel-row,
+.iq-apparel-row.iq-artwork-row {
+  grid-template-columns: 1fr !important;
+  justify-items: center;
+}
+
+#iq-artwork-label,
+.iq-artwork-label-box {
+  display: none !important;
+}
+
+#iq-artwork-row .iq-artwork-panel,
+.iq-artwork-row .iq-artwork-panel {
+  width: min(720px, 100%);
+  max-width: 720px;
+  justify-self: center;
+}
+
+/* ── JS-driven form states only ────────────────────────────────────── */
+
+.iq-form-status.is-success {
+  color: #6ee7b7;
+}
+
+.iq-form-status.is-error {
+  color: #fca5a5;
+}
+
+.iq-form-upload.is-dragover {
+  border-color: #2aaab8;
+  background: rgba(42, 170, 184, 0.08);
+}
+
+/* ── Order form — contact 2×2 (label above input) + notes above submit ─
+   ID / :has(+ #id) placement — immune to JS-injected siblings (typo hint,
+   honeypot, orbit wrap) that break nth-child maps. */
+
+#iq-order-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 8px;
+  width: 100%;
+  align-items: start;
+}
+
+/* Explicit contact grid rhythm (desktop ≥992 via base; mobile overrides below) */
+#iq-order-form > label:has(+ #iq-form-full-name),
+#iq-order-form > .w-form-label:has(+ #iq-form-full-name),
+#iq-order-form > .iq-field-label--name {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#iq-form-full-name {
+  grid-column: 1;
+  grid-row: 2;
+  margin-bottom: 12px;
+  width: 100% !important;
+}
+
+#iq-order-form > label:has(+ #iq-form-company),
+#iq-order-form > .w-form-label:has(+ #iq-form-company),
+#iq-order-form > .iq-field-label--company {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#iq-form-company {
+  grid-column: 2;
+  grid-row: 2;
+  margin-bottom: 12px;
+  width: 100% !important;
+}
+
+#iq-order-form > label:has(+ #iq-form-email),
+#iq-order-form > .w-form-label:has(+ #iq-form-email),
+#iq-order-form > .iq-field-label--email {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+#iq-form-email {
+  grid-column: 1;
+  grid-row: 4;
+  margin-bottom: 12px;
+  width: 100% !important;
+}
+
+#iq-order-form > label:has(+ #iq-form-phone),
+#iq-order-form > .w-form-label:has(+ #iq-form-phone),
+#iq-order-form > .iq-field-label--phone {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+  display: block !important;
+  width: 100% !important;
+  align-self: start;
+  white-space: normal !important;
+}
+
+#iq-form-phone {
+  grid-column: 2 !important;
+  grid-row: 4 !important;
+  margin-bottom: 12px;
+  width: 100% !important;
+  max-width: none !important;
+  display: block !important;
+  justify-self: stretch;
+  box-sizing: border-box;
+}
+
+#iq-email-typo-hint {
+  grid-column: 1;
+  grid-row: 5;
+  justify-self: start;
+  align-self: start;
+  margin: -4px 0 8px;
+}
+
+#iq-email-typo-hint[hidden] {
+  display: none !important;
+}
+
+#iq-order-form > .iq-form-notes-label,
+#iq-order-form.iq-form-layout-ready > .iq-form-notes-label,
+#iq-order-form > label:has(+ #iq-form-notes),
+#iq-order-form > .w-form-label:has(+ #iq-form-notes) {
+  grid-column: 1 / -1;
+  grid-row: 6;
+  margin-top: 8px;
+}
+
+#iq-order-form > #iq-form-notes,
+#iq-order-form.iq-form-layout-ready > #iq-form-notes {
+  grid-column: 1 / -1;
+  grid-row: 7;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+/* Legacy: if an old phone-row wrap is still in DOM, stack like other fields */
+.iq-form-phone-row {
+  display: contents; /* unwrap visually into the parent 2×2 grid */
+}
+
+.iq-form-phone-row > label,
+.iq-form-phone-row > .w-form-label {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 4px !important;
+  white-space: normal !important;
+}
+
+.iq-form-phone-row > input,
+.iq-form-phone-row > #iq-form-phone {
+  grid-column: 2 !important;
+  grid-row: 4 !important;
+  width: 100% !important;
+  min-width: 0;
+  display: block !important;
+}
+
+/* Hide legacy Webflow file upload (art upload lives above) */
+#iq-form-artwork-file-legacy {
+  display: none !important;
+}
+
+#iq-order-form > #iq-form-submit,
+#iq-order-form > .iq-form-submit,
+#iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
+  grid-column: 1 / -1;
+  grid-row: 8;
+  margin-top: 16px;
+  display: flex !important;
+  width: 100%;
+}
+
+#iq-order-form > #suite-number,
+#iq-order-form > #iq-form-artwork-file-legacy {
+  grid-column: 1 / -1;
+  grid-row: 9;
+}
+
+#iq-order-form .w-form-label,
+#iq-order-form label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 4px;
+}
+
+#iq-order-form .w-input,
+#iq-order-form input[type='text'],
+#iq-order-form input[type='email'],
+#iq-order-form input[type='tel'],
+#iq-order-form textarea {
+  width: 100%;
+  border: 1px solid var(--iq-border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--iq-border);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 14px 16px;
+  box-sizing: border-box;
+}
+
+#iq-order-form textarea,
+#iq-form-notes {
+  min-height: 132px;
+  resize: vertical;
+  line-height: 1.45;
+  width: 100%;
+}
+
+#iq-order-form .w-input:focus,
+#iq-order-form textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(42, 170, 184, 0.45);
+}
+
+/* Submit: white fill / navy text; hover = LTF outline glow */
+#iq-form-submit,
+.iq-form-submit {
+  appearance: none;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  background: #ffffff !important;
+  color: #00001c !important;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition:
+    filter 0.2s ease,
+    transform 0.15s ease,
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+#iq-form-submit:hover,
+#iq-form-submit:focus-visible,
+.iq-form-submit:hover,
+.iq-form-submit:focus-visible {
+  outline: none;
+  border-color: transparent;
+  box-shadow:
+    0 0 0 2px transparent,
+    0 0 18px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(42, 170, 184, 0.28);
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(
+      45deg,
+      var(--iq-nebula-purple),
+      var(--iq-nebula-teal),
+      var(--iq-nebula-blue),
+      var(--iq-nebula-green),
+      var(--iq-nebula-purple-mid),
+      var(--iq-nebula-purple)
+    )
+      border-box !important;
+  border: 2px solid transparent;
+  color: #00001c !important;
+  filter: none;
+}
+
+.iq-orbit-wrap:hover > #iq-form-submit,
+.iq-orbit-wrap:focus-within > #iq-form-submit,
+.iq-orbit-wrap.ltf-btn-gradient-active > #iq-form-submit {
+  border-color: transparent;
+}
+
+#iq-form-submit:disabled,
+.iq-form-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Unit price cards — full white border ────────────────────────────── */
+
+#iq-unit-cost-1,
+#iq-unit-cost-2 {
+  border: 1px solid var(--iq-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* ── Artwork upload (basic) ─────────────────────────────────────────── */
+
+#iq-artwork-info-trigger {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+#iq-artwork-info-trigger:hover,
+#iq-artwork-info-trigger:focus-visible {
+  opacity: 0.85;
+  outline: none;
+}
+
+.iq-form-upload-input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  border: 0 !important;
+}
+
+.iq-form-upload-list[hidden] {
+  display: none !important;
+}
+
+@media screen and (max-width: 991px) {
+  .iq-container {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .iq-intro {
+    padding: 0 4px;
+    margin-bottom: 4px;
+  }
+
+  .iq-toggle-track {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .iq-sliders-block {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .iq-slider-row {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto;
+    gap: 10px !important;
+    align-items: stretch !important;
+    width: 100%;
+  }
+
+  .iq-slider-label,
+  .iq-slider-value {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  /* Desktop range stays in DOM for pricing; hide chrome on mobile */
+  .iq-slider-control {
+    position: relative;
+    min-height: 56px;
+  }
+
+  .iq-slider-control .iq-slider-ticks,
+  .iq-slider-control .iq-range {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  .iq-mobile-picker-trigger {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 14px 16px;
+    border: 1px solid var(--iq-border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--iq-border);
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .iq-mobile-picker-label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .iq-mobile-picker-value {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .iq-apparel-section,
+  .iq-apparel-row,
+  .iq-apparel-row.iq-apparel-row--split {
+    width: 100%;
+  }
+
+  .iq-apparel-row,
+  #split-row-wrapper .iq-apparel-row--split {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .iq-apparel-label-spacer {
+    display: none !important;
+  }
+
+  .iq-style-grid,
+  #iq-style-row-1,
+  #iq-style-row-2 {
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+  }
+
+  #iq-unit-price-col,
+  .iq-unit-cost-col,
+  #iq-unit-cost-1,
+  #iq-unit-cost-2 {
+    width: 100% !important;
+    max-width: none;
+    align-self: stretch !important;
+  }
+
+  .iq-receipt-right {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  .iq-run-quote-wrap,
+  .iq-total-wrapper {
+    order: initial;
+    width: 100%;
+    max-width: none;
+  }
+
+  #iq-run-quote,
+  .iq-run-quote {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #iq-total-price,
+  .iq-total-price {
+    font-size: clamp(36px, 12vw, 56px) !important;
+    padding: 18px 16px !important;
+    word-break: break-word;
+  }
+
+  #iq-order-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  #iq-order-form > *:nth-child(n),
+  #iq-order-form.iq-form-layout-ready > .iq-form-phone-row,
+  #iq-order-form > #iq-form-submit,
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit),
+  #iq-order-form > label:has(+ #iq-form-full-name),
+  #iq-order-form > label:has(+ #iq-form-company),
+  #iq-order-form > label:has(+ #iq-form-email),
+  #iq-order-form > label:has(+ #iq-form-phone),
+  #iq-order-form > .iq-field-label--name,
+  #iq-order-form > .iq-field-label--company,
+  #iq-order-form > .iq-field-label--email,
+  #iq-order-form > .iq-field-label--phone,
+  #iq-form-full-name,
+  #iq-form-company,
+  #iq-form-email,
+  #iq-form-phone,
+  #iq-email-typo-hint,
+  #iq-order-form > .iq-form-notes-label,
+  #iq-form-notes {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    margin-bottom: 0;
+  }
+
+  #iq-order-form > input.w-input,
+  #iq-order-form > textarea,
+  #iq-order-form > #iq-form-notes {
+    margin-bottom: 12px;
+  }
+
+  #iq-form-submit,
+  .iq-form-submit {
+    font-size: 18px;
+    padding: 16px 18px;
+  }
+
+  .iq-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+/* Mobile picker triggers hidden on desktop */
+.iq-mobile-picker-trigger {
+  display: none;
+}
+
+/* ── Mobile bottom-sheet picker ─────────────────────────────────────── */
+
+.iq-mobile-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+.iq-mobile-sheet.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.iq-mobile-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 28, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.iq-mobile-sheet-panel {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  max-height: min(78vh, 640px);
+  overflow: auto;
+  border: 1px solid var(--iq-border);
+  border-radius: 16px 16px 0 0;
+  background: var(--iq-bg);
+  padding: 12px 16px 20px;
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.45);
+  transform: translateY(24px);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.iq-mobile-sheet.is-open .iq-mobile-sheet-panel {
+  transform: translateY(0);
+}
+
+.iq-mobile-sheet-handle {
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  margin: 4px auto 14px;
+}
+
+.iq-mobile-sheet-title {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.iq-mobile-sheet-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.iq-mobile-sheet-option {
+  appearance: none;
+  min-height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iq-mobile-sheet-option.is-selected {
+  background: #fff;
+  color: #00001c;
+  border-color: #fff;
+}
+
+.iq-mobile-sheet-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.iq-mobile-sheet-btn {
+  appearance: none;
+  min-height: 48px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iq-mobile-sheet-btn--ghost {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  color: #fff;
+}
+
+.iq-mobile-sheet-btn--primary {
+  border: 1px solid #fff;
+  background: #fff;
+  color: #00001c;
+}
+
+body.iq-sheet-open {
+  overflow: hidden;
+}
+
+@media screen and (min-width: 992px) {
+  .iq-mobile-sheet {
+    display: none !important;
+  }
 }

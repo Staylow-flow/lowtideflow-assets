@@ -1,0 +1,53 @@
+<section class="iq-order-section" id="iq-order-section">
+  <h2 class="iq-order-heading">Lock In Your Quote &amp; Start Your Project</h2>
+  <p class="iq-order-lead">Your calculator settings travel with this brief&mdash;no re-entering numbers. We&rsquo;ll confirm artwork, timeline, and final pricing before production starts.</p>
+
+  <form class="iq-form" id="iq-order-form" novalidate>
+    <div class="iq-form-quote-hidden" aria-hidden="true">
+      <input type="hidden" id="iq-form-quote-quantity" name="quoteQuantity" value="">
+      <input type="hidden" id="iq-form-quote-styles" name="quoteStyles" value="">
+      <input type="hidden" id="iq-form-quote-quality" name="quoteQuality" value="">
+      <input type="hidden" id="iq-form-quote-ink" name="quoteInkColors" value="">
+      <input type="hidden" id="iq-form-quote-locations" name="quotePrintLocations" value="">
+      <input type="hidden" id="iq-form-quote-total" name="quoteTotalEstimate" value="">
+      <input type="hidden" id="iq-form-hidden-payload" name="quotePayload" value="">
+    </div>
+
+    <fieldset class="iq-form-fieldset">
+      <legend class="iq-form-legend">Contact Info</legend>
+      <div class="iq-form-grid iq-form-grid--2">
+        <label class="iq-form-field">
+          <span class="iq-form-label">Full Name <span class="iq-form-required">*</span></span>
+          <input class="iq-form-input" type="text" id="iq-form-full-name" name="fullName" autocomplete="name" required>
+        </label>
+        <label class="iq-form-field">
+          <span class="iq-form-label">Company Name</span>
+          <input class="iq-form-input" type="text" id="iq-form-company" name="companyName" autocomplete="organization">
+        </label>
+        <label class="iq-form-field">
+          <span class="iq-form-label">Email Address <span class="iq-form-required">*</span></span>
+          <input class="iq-form-input" type="email" id="iq-form-email" name="email" autocomplete="email" required>
+        </label>
+        <label class="iq-form-field">
+          <span class="iq-form-label">Phone Number</span>
+          <input class="iq-form-input" type="tel" id="iq-form-phone" name="phone" autocomplete="tel">
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="iq-form-fieldset">
+      <legend class="iq-form-legend">Project Notes</legend>
+      <label class="iq-form-field">
+        <span class="iq-form-label">Deadlines, sizing, color calls, or creative direction</span>
+        <textarea class="iq-form-textarea" id="iq-form-notes" name="projectNotes" rows="5" placeholder="Example: Need delivery by March 15. Mix of M/L/XL. PMS 186 red on front chest only."></textarea>
+      </label>
+    </fieldset>
+
+    <div class="iq-form-actions">
+      <span class="ltf-btn-gradient-wrap iq-form-cta-wrap">
+        <button type="submit" class="ltf-btn-primary is-hero-cta iq-form-submit" id="iq-form-submit">Submit Project Brief</button>
+      </span>
+      <p class="iq-form-status" id="iq-form-status" role="status" aria-live="polite"></p>
+    </div>
+  </form>
+</section>

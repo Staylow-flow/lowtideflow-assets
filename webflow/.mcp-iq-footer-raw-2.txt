@@ -1,0 +1,287 @@
+eturn local + '@' + fixed;
+  }
+
+  function initEmailTypoCatcher() {
+    var email = document.getElementById('iq-form-email');
+    if (!email) return;
+
+    var hint = document.getElementById('iq-email-typo-hint');
+    if (!hint) {
+      hint = document.createElement('button');
+      hint.type = 'button';
+      hint.id = 'iq-email-typo-hint';
+      hint.hidden = true;
+      hint.style.cssText =
+        'display:block;margin:6px 0 0;padding:0;border:0;background:transparent;color:#f87171;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;text-decoration:underline;';
+      email.insertAdjacentElement('afterend', hint);
+    }
+
+    function clearHint() {
+      hint.hidden = true;
+      hint.textContent = '';
+      hint.onclick = null;
+    }
+
+    email.addEventListener('blur', function () {
+      var suggestion = suggestEmailFix(email.value.trim());
+      if (!suggestion) {
+        clearHint();
+        return;
+      }
+      hint.hidden = false;
+      hint.textContent = 'Did you mean ' + suggestion + '? (Click to fix)';
+      hint.onclick = function () {
+        email.value = suggestion;
+        clearHint();
+        email.focus();
+      };
+    });
+
+    email.addEventListener('input', clearHint);
+  }
+
+  function setRequiredAttrs() {
+    ['iq-form-full-name', 'iq-form-email', 'iq-form-phone'].forEach(function (id) {
+      var node = document.getElementById(id);
+      if (!node) return;
+      node.required = true;
+      node.setAttribute('required', 'required');
+    });
+  }
+
+  function setFormStatus(message, type) {
+    var status = document.getElementById('iq-form-status');
+    if (!status) return;
+    status.textContent = message;
+    status.classList.remove('is-success', 'is-error');
+    if (type) status.classList.add('is-' + type);
+  }
+
+  function getFormShell(form) {
+    return form.closest('.w-form') || form.parentElement;
+  }
+
+  function showWebflowState(form, which) {
+    var shell = getFormShell(form);
+    if (!shell) return;
+    var done = shell.querySelector('.w-form-done');
+    var fail = shell.querySelector('.w-form-fail');
+    if (done) done.style.display = which === 'done' ? 'block' : 'none';
+    if (fail) fail.style.display = which === 'fail' ? 'block' : 'none';
+    if (which === 'done' || which === 'fail') {
+      form.style.display = 'none';
+    }
+  }
+
+  function validateForm() {
+    var name = val('iq-form-full-name');
+    var email = val('iq-form-email');
+    var phone = digitsOnly(val('iq-form-phone'));
+
+    if (!name) return 'Please enter your full name.';
+    if (!email || email.indexOf('@') < 1) return 'Please enter a valid email address.';
+    if (phone.length < 10) return 'Please enter a valid 10-digit phone number.';
+    return '';
+  }
+
+  function isBotSubmission(form) {
+    var honeypot = document.getElementById('suite-number');
+    if (honeypot && String(honeypot.value || '').trim()) return true;
+    var minMs = (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.minSubmitMs) || 2500;
+    if (Date.now() - pageLoadedAt < minMs) return true;
+    return false;
+  }
+
+  function silentDrop(form, submitBtn, originalLabel) {
+    // Fake success for bots — no network request.
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.value = originalLabel;
+    }
+    showWebflowState(form, 'done');
+    setFormStatus(
+      (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.successMessage) ||
+        'Project brief received.',
+      'success'
+    );
+  }
+
+  function submitToWebhook(payload, files) {
+    var config = global.IQ.FORM_CONFIG || {};
+    if (!config.webhookUrl) return Promise.reject(new Error('Missing webhook'));
+
+    var body = new FormData();
+    // Apps Script reads either flat JSON or nested .sheet
+    body.append('payload', JSON.stringify(payload.sheet || payload));
+    if (files) {
+      Array.prototype.forEach.call(files, function (file, index) {
+        body.append('artwork_' + index, file, file.name);
+      });
+    }
+
+    return fetch(config.webhookUrl, {
+      method: 'POST',
+      body: body,
+      redirect: 'follow'
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Submit failed');
+      return response.text().then(function (text) {
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          return { ok: true, raw: text };
+        }
+      });
+    }).then(function (data) {
+      if (data && data.ok === false) throw new Error(data.error || 'Submit failed');
+      return data;
+    });
+  }
+
+  function initOrderForm() {
+    var form = document.getElementById('iq-order-form');
+    if (!form) return;
+
+    ensureHoneypot(form);
+    setRequiredAttrs();
+    initPhoneFormatter();
+    initEmailTypoCatcher();
+
+    form.setAttribute('novalidate', 'novalidate');
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      var submitBtn = document.getElementById('iq-form-submit');
+      var originalLabel =
+        (submitBtn && (submitBtn.value || submitBtn.textContent || '').trim()) ||
+        'Submit Project Brief';
+      var loadingText =
+        (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.loadingText) || 'Submitting…';
+
+      if (isBotSubmission(form)) {
+        silentDrop(form, submitBtn, originalLabel);
+        return;
+      }
+
+      var error = validateForm();
+      if (error) {
+        setFormStatus(error, 'error');
+        return;
+      }
+
+      syncQuoteFields();
+      var snapshot = getQuoteSnapshot();
+      if (!snapshot) {
+        setFormStatus('Calculator is not ready. Refresh and try again.', 'error');
+        return;
+      }
+
+      var payload = buildQuotePayload(snapshot.state, snapshot.result);
+      var files = document.getElementById('iq-form-artwork-file');
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        if ('value' in submitBtn) submitBtn.value = loadingText;
+      }
+      setFormStatus('Submitting project brief…', '');
+
+      submitToWebhook(payload, files && files.files)
+        .then(function () {
+          setFormStatus(
+            (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.successMessage) ||
+              'Project brief received.',
+            'success'
+          );
+          showWebflowState(form, 'done');
+          form.reset();
+          renderArtworkFileList();
+          syncQuoteFields();
+          global.dispatchEvent(
+            new CustomEvent('iq:project-brief-submitted', { detail: payload })
+          );
+        })
+        .catch(function () {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            if ('value' in submitBtn) submitBtn.value = originalLabel;
+          }
+          setFormStatus('Something went wrong. Email us directly and we will help.', 'error');
+          showWebflowState(form, 'fail');
+          form.style.display = '';
+        })
+        .finally(function () {
+          if (submitBtn && form.style.display !== 'none') {
+            submitBtn.disabled = false;
+            if ('value' in submitBtn) submitBtn.value = originalLabel;
+          }
+        });
+    });
+  }
+
+  function initQuoteSync() {
+    syncQuoteFields();
+    document.addEventListener('iq:quote-updated', syncQuoteFields);
+  }
+
+  function init() {
+    pageLoadedAt = Date.now();
+    initArtworkUpload();
+    initFormCtaGradient();
+    initArtworkModal();
+    initOrderForm();
+    initQuoteSync();
+  }
+
+  global.IQ.syncQuoteForm = syncQuoteFields;
+  global.IQ.buildQuotePayload = buildQuotePayload;
+  global.IQ.buildSheetPayload = buildSheetPayload;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/**
+ * Instant Quote — UI bridge (sliders, toggles, split animation)
+ * Pricing: instant-quote-pricing-data.js + instant-quote-pricing.js (window.IQ.recalculate)
+ */
+(function () {
+  'use strict';
+
+  function recalculateQuote() {
+    if (window.IQ && typeof window.IQ.recalculate === 'function') {
+      window.IQ.recalculate();
+    }
+  }
+
+  function syncSliderValue(slider) {
+    var targetId = slider.getAttribute('data-iq-value-target');
+    if (!targetId) return;
+
+    var target = document.getElementById(targetId);
+    if (!target) return;
+
+    var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step || '1');
+    var raw = parseFloat(slider.value);
+    var display = step >= 1 ? String(Math.round(raw)) : String(Math.round(raw));
+    target.textContent = display;
+    slider.setAttribute('aria-valuenow', display);
+    recalculateQuote();
+  }
+
+  function snapValue(slider, raw) {
+    var min = parseFloat(slider.min);
+    var max = parseFloat(slider.max);
+    var step = parseFloat(slider.getAttribute('data-iq-step') || slider.step);
+    var snapped = min + Math.round((raw - min) / step) * step;
+    return Math.min(max, Math.max(min, snapped));
+  }
+
+  function animateSliderTo(slider, target, done) {
+    var start = parseFloat(slider.value);
+    if (start === target) {
+      slider.value

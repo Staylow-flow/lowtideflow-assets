@@ -1,10 +1,11 @@
-<!-- Paste into Embed — center column of iq-slider-row (Ink Colors) -->
 <div class="iq-slider-control">
-  <div class="iq-slider-ticks" aria-hidden="true">
+  <div class="iq-slider-ticks" data-tick-count="5" aria-hidden="true">
+    <span class="iq-slider-track-line"></span>
     <span class="iq-slider-tick"></span>
     <span class="iq-slider-tick"></span>
     <span class="iq-slider-tick"></span>
     <span class="iq-slider-tick"></span>
+    <span class="iq-slider-tick" title="5+ Full Color"></span>
   </div>
   <input
     type="range"
@@ -12,13 +13,14 @@
     id="iq-slider-ink-colors"
     name="ink-colors"
     min="1"
-    max="4"
+    max="5"
     step="1"
-    value="4"
-    aria-label="Ink Colors"
+    value="1"
+    data-iq-step="1"
+    aria-label="Ink Colors (1–4 spot, 5+ Full Color)"
     aria-valuemin="1"
-    aria-valuemax="4"
-    aria-valuenow="4"
+    aria-valuemax="5"
+    aria-valuenow="1"
     data-iq-value-target="iq-val-ink-colors"
   />
 </div>
