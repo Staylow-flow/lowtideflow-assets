@@ -229,8 +229,18 @@
     var inner = drop.querySelector('.iq-form-upload-inner');
     if (!inner) return;
 
-    var staleList = inner.querySelector('#iq-form-artwork-list');
-    if (staleList) staleList.parentNode.removeChild(staleList);
+    // Defensive cleanup: a legacy static `<ul id="iq-form-artwork-list">`
+    // sometimes lingers as a direct sibling in the drop zone (from an older
+    // markup version). A duplicate id here silently breaks every
+    // getElementById('iq-form-artwork-list') lookup below — it resolves to
+    // whichever copy comes FIRST in the DOM, not the live one this shell
+    // creates — so the lanes visibly never render. Sweep the whole drop
+    // zone, not just `inner`, before creating the real one.
+    Array.prototype.slice
+      .call(drop.querySelectorAll('#iq-form-artwork-list, #iq-form-artwork-queue, #iq-form-artwork-active, #iq-form-artwork-idle'))
+      .forEach(function (stale) {
+        stale.parentNode.removeChild(stale);
+      });
 
     var shell = document.createElement('div');
     shell.className = 'iq-form-upload-shell';

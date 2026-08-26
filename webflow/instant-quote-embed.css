@@ -176,20 +176,41 @@
   position: relative;
   isolation: isolate;
   background: var(--iq-bg);
-  /* Idle/default border (both mobile + desktop): solid white, 2px — already
-     set in Designer (border + border-radius), left uncontested here. The
-     gradient ring is a separate ::after overlay that only shows during the
-     ~2s .is-calculating click sequence (see below). */
+  /* Idle/default border (both mobile + desktop): solid white, 4px — set in
+     Designer (border + border-radius), left uncontested here. The gradient
+     ring is a separate ::after overlay that only shows during the ~2s
+     .is-calculating click sequence (see below). */
   overflow: visible;
+  transition: box-shadow 0.4s ease;
+}
+
+/* Ambient hover glow — a soft blurred halo (not a hard edge), same nebula
+   palette as the click-triggered gradient ring. Also stays lit during the
+   .is-calculating click sequence so the two effects layer together instead
+   of competing. */
+.iq-total-wrapper:hover,
+.iq-total-wrapper.is-calculating {
+  box-shadow:
+    0 0 28px rgba(42, 170, 184, 0.32),
+    0 0 52px rgba(112, 64, 192, 0.24),
+    0 0 78px rgba(11, 128, 80, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iq-total-wrapper {
+    transition: none;
+  }
 }
 
 .iq-total-wrapper::after {
   content: '';
   position: absolute;
-  inset: -3px;
+  /* Ring thickness +2px (was 2px padding / -3px inset) → 4px padding, inset
+     adjusted to keep it hugging the (now-thicker) 4px border evenly. */
+  inset: -5px;
   z-index: 2;
-  border-radius: 17px;
-  padding: 2px;
+  border-radius: 19px;
+  padding: 4px;
   background: conic-gradient(
     from var(--iq-edge-angle),
     var(--iq-nebula-purple),
@@ -936,8 +957,11 @@
   justify-content: center;
   gap: 14px;
   text-align: center;
-  min-height: clamp(420px, 70vh, 780px);
-  padding: clamp(16px, 3vw, 32px);
+  box-sizing: border-box;
+  /* Desktop target ~500px total (padding included); mobile overrides this
+     back down further in the small-breakpoint block below. */
+  min-height: 500px;
+  padding: 40px clamp(16px, 3vw, 32px);
 }
 
 .iq-form-upload-title {
@@ -1036,13 +1060,27 @@
   display: none !important;
 }
 
+/* Default: hidden. Previously this was unconditionally `display: flex`,
+   which — because author CSS always beats the UA `[hidden] { display: none }`
+   rule at equal specificity — meant this panel (with a ~420-780px min-height)
+   rendered every time, stacked underneath the idle content, even before any
+   file was picked. That's what made the drop zone so oversized. Only the
+   loading/queue states below actually turn it on. */
 .iq-form-upload-active {
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: center;
   gap: 20px;
-  min-height: clamp(420px, 70vh, 780px);
-  padding: clamp(12px, 2vw, 24px);
+  box-sizing: border-box;
+  padding: 32px clamp(12px, 2vw, 24px);
+}
+
+#iq-form-artwork-drop.is-loading .iq-form-upload-active,
+#iq-form-artwork-drop.is-queue .iq-form-upload-active {
+  display: flex;
+  /* Matches the idle state's ~500px desktop target; mobile overrides back
+     down further in the small-breakpoint block below. */
+  min-height: 500px;
 }
 
 .iq-form-upload-progress {
@@ -1539,7 +1577,9 @@
 #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
   grid-column: 1 / -1;
   grid-row: 8;
-  margin-top: 16px;
+  /* ~50px of external spacing separating the button from the field above
+     (distinct from the button's own internal padding, which stays normal). */
+  margin-top: 50px;
   display: flex !important;
   width: 100%;
 }
@@ -1608,8 +1648,10 @@
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.03em;
-  /* +50px top/bottom on top of the prior normalized ~70px-tall sizing */
-  padding: 66px 24px;
+  /* Height/padding intentionally NOT set here — Designer's own base (16px/
+     24px) and mobile "small" breakpoint (18px/22px, min-height 70px)
+     already give a normal ~70px-tall button. A round-3 +50px override here
+     made it comically tall; removed rather than re-fought in custom CSS. */
   cursor: pointer;
   transition:
     filter 0.2s ease,
