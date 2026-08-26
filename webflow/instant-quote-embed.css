@@ -266,7 +266,9 @@
   transform: scale(0.98);
 }
 
-/* ── LTF orbit / glow click FX (Calculate + Submit) ─────────────────── */
+/* ── LTF orbit / glow FX (Calculate + Submit) ────────────────────────
+   Hover = slow continuous nebula drift (ring + ambient glow).
+   Click/action = fast drift burst + inner radial pulse on top of it. */
 
 .iq-orbit-wrap {
   position: relative;
@@ -303,15 +305,17 @@
   z-index: 2;
   border-radius: inherit;
   padding: 2px;
-  background: conic-gradient(
-    from 0deg,
-    var(--iq-nebula-green),
+  background: linear-gradient(
+    100deg,
+    var(--iq-nebula-purple),
     var(--iq-nebula-teal),
     var(--iq-nebula-blue),
-    var(--iq-nebula-purple),
+    var(--iq-nebula-green),
     var(--iq-nebula-purple-mid),
-    var(--iq-nebula-green)
+    var(--iq-nebula-purple)
   );
+  background-size: 300% 300%;
+  background-position: 0% 50%;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -322,7 +326,7 @@
   mask-composite: exclude;
   opacity: 0;
   pointer-events: none;
-  transform: rotate(0deg);
+  transition: opacity 0.3s ease;
 }
 
 .iq-orbit-btn::after,
@@ -344,12 +348,31 @@
   transform: scale(0.55);
 }
 
+/* Hover / focus — slow, continuous nebula drift while the button is live */
+.iq-orbit-wrap:hover > .iq-orbit-btn::before,
+.iq-orbit-wrap:focus-within > .iq-orbit-btn::before,
+.iq-orbit-btn:hover::before,
+.iq-orbit-btn:focus-visible::before,
+#iq-run-quote.iq-orbit-btn:hover::before,
+#iq-form-submit.iq-orbit-btn:hover::before {
+  opacity: 1;
+  animation: iq-orbit-drift 4.5s ease-in-out infinite;
+}
+
+.iq-orbit-wrap:hover,
+.iq-orbit-wrap:focus-within {
+  box-shadow:
+    0 0 14px rgba(77, 37, 157, 0.32),
+    0 0 24px rgba(31, 119, 129, 0.22);
+}
+
+/* Click / action — the drift snaps to a fast burst + inner radial pulse */
 .iq-orbit-btn.iq-orbit-click::before,
 #iq-run-quote.iq-orbit-click::before,
 #iq-form-submit.iq-orbit-click::before,
 .iq-orbit-wrap.iq-orbit-click::before {
   opacity: 1;
-  animation: iq-orbit-wrap 0.5s linear forwards;
+  animation: iq-orbit-drift 0.7s linear infinite;
 }
 
 .iq-orbit-btn.iq-orbit-click::after,
@@ -365,14 +388,15 @@
     0 0 28px rgba(31, 119, 129, 0.28);
 }
 
-@keyframes iq-orbit-wrap {
+@keyframes iq-orbit-drift {
   0% {
-    opacity: 1;
-    transform: rotate(0deg);
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
   100% {
-    opacity: 1;
-    transform: rotate(360deg);
+    background-position: 0% 50%;
   }
 }
 
@@ -384,6 +408,14 @@
   100% {
     opacity: 0;
     transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iq-orbit-btn::before,
+  #iq-run-quote.iq-orbit-btn::before,
+  #iq-form-submit.iq-orbit-btn::before {
+    animation: none !important;
   }
 }
 
