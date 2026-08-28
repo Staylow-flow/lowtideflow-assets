@@ -1,20 +1,19 @@
 <!--
   CLEAN SLATE — Page Footer (Before </body>)
 
-  Multiple pinned footer tags on purpose — each script is a plain jsDelivr URL
-  you can inspect, update, and roll back independently in Webflow.
+  CORE: dual jsDelivr footer tags (original structure):
+    1. rock-scene.js — boulder + nebula
+    2. ltf.js        — nav, buttons, crew cards, upsell, specs slam, magnifier
 
-  After pushing to GitHub, bump COMMIT below on every tag you changed, then Publish.
+  OPTIONAL third tag (add when needed):
+    hero-viewport.js — visualViewport height sync for in-app browsers only
 
-  TAG ORDER (load order matters):
-    1. rock-scene.js   — Three.js boulder + nebula (heavy; own tag so it never blocks UI)
-    2. hero-viewport.js — mobile hero height, figure bleed, funnel copy/CSS
-    3. ltf.js          — nav, buttons, crew cards, upsell sweep, specs slam, magnifier
+  After pushing to GitHub, bump COMMIT on the tag(s) you changed, then Publish.
+  Do NOT duplicate tags. Do NOT merge into one bundle tag.
 
-  Do NOT duplicate tags. Do NOT fold these into one bundle tag.
-
-  Site-wide nav-only pages use webflow/clean-slate-footer-site.html (nav.js only).
+  Site-wide nav-only pages: webflow/clean-slate-footer-site.html (nav.js).
 -->
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2b1733d/js/hero/rock-scene.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2b1733d/js/ui/hero-viewport.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2b1733d/js/ltf.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@COMMIT/js/hero/rock-scene.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@COMMIT/js/ltf.js"></script>
+<!-- Optional — in-app browser hero height sync; requires head mobile CSS -->
+<!-- <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@COMMIT/js/ui/hero-viewport.js"></script> -->

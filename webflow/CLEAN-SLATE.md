@@ -5,6 +5,28 @@ Site ID `6789f449bbb1a21245706751`
 
 Native Webflow UI elements + minimal page custom code. Content migrated from **Apparel-Landing-Page** (below-hero sections), cleaned into Designer-editable `ltf-*` classes.
 
+## Workflow (moving forward)
+
+**Webflow Designer first.** Layout, spacing, typography, copy, breakpoints, and
+component structure should be edited in the Designer Style panel whenever possible.
+
+**Page head custom code** only when Designer cannot do it:
+
+- `@keyframes`, gradient rings, hover FX that need `::before` / GPU compositing
+- Mobile overrides that must win over exported Webflow CSS (`!important` guards)
+- `visualViewport` CSS variables consumed by optional `hero-viewport.js`
+
+**Page footer custom code** — pinned jsDelivr classic `<script src="…">` tags only.
+Never a single headless bundle. Never duplicate tags.
+
+| Layer | Where | Examples |
+|-------|--------|----------|
+| Structure + default styles | **Designer** | Hero figure position, funnel padding, threshold copy/font |
+| FX + mobile guards | **Head** (`clean-slate-mobile-fixes.html`, page FX block) | CTA safe-area, figure bleed, funnel one-line threshold |
+| Behavior | **Footer JS** | Boulder, card slam, magnifier, viewport sync |
+
+Do not inject CSS or patch copy from JS when Designer or head CSS can own it.
+
 ## Layout standard (Hero locks the pattern)
 
 ```css
@@ -63,23 +85,21 @@ body
 
 ## JS layout
 
-Clean-slate uses **multiple footer script tags** — each a plain jsDelivr URL you
-can pin and update independently in Webflow (no single headless bundle).
+Clean-slate footer uses the **dual jsDelivr tag** structure:
 
 ```
 js/
   hero/rock-scene.js           footer tag 1 — nebula + hematite boulder
-  ui/hero-viewport.js          footer tag 2 — mobile hero + funnel fixes
-  ltf.js                       footer tag 3 — nav, cards, upsell, vault, magnifier
+  ltf.js                       footer tag 2 — nav, cards, upsell, vault, magnifier
+  ui/hero-viewport.js          optional tag 3 — visualViewport sync (JS only)
   nav.js                       site-wide footer — nav-only pages
-  sections/specs-vault-slam.js imported by ltf.js
-  ui/nav-mobile.js             imported by ltf.js / nav.js
-  ui/btn-gradient.js           imported by ltf.js / nav.js
-  _archive/                    superseded, loaded by nothing
 ```
 
-To ship a change: push to GitHub, bump `COMMIT` on the footer tag(s) you
-touched in `webflow/clean-slate-footer.html`, then Publish. Do not duplicate tags.
+Child modules (`specs-vault-slam.js`, `nav-mobile.js`, etc.) are imported by
+`ltf.js` or `nav.js` — do not add separate footer tags for them.
+
+To ship a change: push to GitHub, bump `COMMIT` on the footer tag(s) you touched,
+then Publish. Do not duplicate tags.
 
 ## Hero FX
 
@@ -105,17 +125,23 @@ so no head CSS is required.
 
 ## Custom code
 
-**Footer (clean-slate page)** — `webflow/clean-slate-footer.html` — three tags:
+**Head** — existing page FX block + append `webflow/clean-slate-mobile-fixes.html`
+when mobile layout overrides are needed (Designer-first; head wins only where required).
+
+**Footer (clean-slate page)** — `webflow/clean-slate-footer.html` — dual core:
 
 ```html
 <script src="…@COMMIT/js/hero/rock-scene.js"></script>
-<script src="…@COMMIT/js/ui/hero-viewport.js"></script>
 <script src="…@COMMIT/js/ltf.js"></script>
 ```
 
-**Footer (site-wide nav)** — `webflow/clean-slate-footer-site.html` — `nav.js` only.
+Optional third tag when in-app browser hero height sync is active:
 
-Optional head CSS: `webflow/clean-slate-mobile-fixes.html` (hero-viewport.js also injects these rules).
+```html
+<script src="…@COMMIT/js/ui/hero-viewport.js"></script>
+```
+
+**Footer (site-wide nav)** — `webflow/clean-slate-footer-site.html` — `nav.js` only.
 
 ## Feeding fresh content later
 
