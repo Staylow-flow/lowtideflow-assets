@@ -12,22 +12,6 @@
  */
 
 (async function () {
-  const [
-    { init: initNav },
-    { init: initBtn },
-    { init: initCrew },
-    { init: initUpsell },
-    { init: initVault },
-    { init: initMag },
-  ] = await Promise.all([
-    import('./ui/nav-mobile.js'),
-    import('./ui/btn-gradient.js'),
-    import('./sections/crew-cards.js'),
-    import('./sections/upsell-lines.js'),
-    import('./sections/specs-vault-slam.js'),
-    import('./sections/garment-magnifier.js'),
-  ]);
-
   function wrapSpecsTitle() {
     const h = document.querySelector('.ltf-specs-vault-header .ltf-section-header-navy, .ltf-specs-vault-header h2');
     if (!h || h.dataset.ltfWrap === '1') return;
@@ -36,18 +20,50 @@
     h.dataset.ltfWrap = '1';
   }
 
-  function boot() {
-    wrapSpecsTitle();
-    initNav();
-    initBtn();
-    initCrew();
-    initUpsell();
-    initVault();
-    initMag();
+  window.LTF = {
+    boot() {
+      try {
+        wrapSpecsTitle();
+        if (initNav) initNav();
+        if (initBtn) initBtn();
+        if (initCrew) initCrew();
+        if (initUpsell) initUpsell();
+        if (initVault) initVault();
+        if (initMag) initMag();
+      } catch (err) {
+        console.error('[ltf] boot failed', err);
+      }
+    },
+  };
+
+  let initNav;
+  let initBtn;
+  let initCrew;
+  let initUpsell;
+  let initVault;
+  let initMag;
+
+  try {
+    [
+      { init: initNav },
+      { init: initBtn },
+      { init: initCrew },
+      { init: initUpsell },
+      { init: initVault },
+      { init: initMag },
+    ] = await Promise.all([
+      import('./ui/nav-mobile.js'),
+      import('./ui/btn-gradient.js'),
+      import('./sections/crew-cards.js'),
+      import('./sections/upsell-lines.js'),
+      import('./sections/specs-vault-slam.js'),
+      import('./sections/garment-magnifier.js'),
+    ]);
+  } catch (err) {
+    console.error('[ltf] module load failed', err);
+    return;
   }
 
-  boot();
-  window.addEventListener('load', boot, { once: true });
-
-  window.LTF = { boot };
+  window.LTF.boot();
+  window.addEventListener('load', window.LTF.boot, { once: true });
 })();

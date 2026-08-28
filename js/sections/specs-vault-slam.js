@@ -19,8 +19,14 @@ import { onFrame } from '../core/ticker.js';
 
 let bindAll = null;
 
+/** Teardown fns for sections where slam bound then viewport narrowed. */
+const sectionTeardowns = new WeakMap();
+let resizeGuardBound = false;
+
 (function () {
   'use strict';
+
+  var SLAM_NARROW = window.matchMedia('(max-width: 1279px)');
 
   var C = {
     teal: [42, 170, 184],
@@ -534,12 +540,56 @@ let bindAll = null;
     /* Shared ticker: one rAF loop for the whole page, gated by its own
        IntersectionObserver (200px margin) and paused with the tab — replaces
        this section's private rAF loop + scroll listener + IntersectionObserver. */
-    onFrame(frame, { element: section, onEnter: remeasure });
+    var stopFrame = onFrame(frame, { element: section, onEnter: remeasure });
+
+    function teardown() {
+      stopFrame();
+      clearFxLayers(cardsHost);
+      for (i = 0; i < cards.length; i++) {
+        cards[i].style.willChange = '';
+        cards[i].style.transition = '';
+        cards[i].style.position = '';
+        cards[i].style.zIndex = '';
+        cards[i].style.transform = '';
+        cards[i].style.backgroundClip = '';
+      }
+      cardsHost.style.position = '';
+      cardsHost.style.isolation = '';
+      cardsHost.style.overflow = '';
+      cardsHost.style.minHeight = '';
+      cardsHost.style.height = '';
+      section.style.removeProperty('--ltf-vault-progress');
+      delete section.dataset.ltfSlamBound;
+      sectionTeardowns.delete(section);
+    }
+
+    sectionTeardowns.set(section, teardown);
+    ensureResizeGuard();
+  }
+
+  function ensureResizeGuard() {
+    if (resizeGuardBound) return;
+    resizeGuardBound = true;
+    window.addEventListener(
+      'resize',
+      function () {
+        if (SLAM_NARROW.matches) {
+          document
+            .querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault')
+            .forEach(function (el) {
+              var td = sectionTeardowns.get(el);
+              if (td) td();
+            });
+        } else {
+          init();
+        }
+      },
+      { passive: true }
+    );
   }
 
   function init() {
-    var mobile = window.matchMedia('(max-width: 991px)');
-    if (mobile.matches) return;
+    if (SLAM_NARROW.matches) return;
 
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
     Array.prototype.forEach.call(nodes, function (el) {
