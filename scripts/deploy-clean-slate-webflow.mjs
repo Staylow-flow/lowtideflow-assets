@@ -5,21 +5,34 @@
  * Usage:
  *   WEBFLOW_API_TOKEN=xxx node scripts/deploy-clean-slate-webflow.mjs
  *   WEBFLOW_API_TOKEN=xxx node scripts/deploy-clean-slate-webflow.mjs --publish
+ *   ...--footer-only   update only the jsDelivr footer tags
+ *   ...--head-only     add only the minimal head residue
+ *
+ * This only touches page head/footer custom code. Designer-first LAYOUT changes
+ * (hero figure bleed, funnel padding, threshold copy) are NOT automated here —
+ * do those in Designer per webflow/CLEAN-SLATE-DESIGNER-FIRST.md.
  *
  * Page: clean-slate · Site: lowtideflow-co-v2-build
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..');
-
 const PAGE_ID = '6a5711c9136987eae97760e3';
 const SITE_ID = '6789f449bbb1a21245706751';
 const COMMIT = '2047dec';
-const MOBILE_MARKER = 'bottom: -15px';
+
+// Minimal head residue — only what Designer cannot express. Layout is done in
+// Designer first (see webflow/CLEAN-SLATE-DESIGNER-FIRST.md). Kept idempotent
+// via the sentinel below; never appends the old 95-line block.
+const HEAD_SENTINEL = '/* LTF-HEAD-INTEGRATION v1 */';
+const HEAD_RESIDUE = `<style>
+${HEAD_SENTINEL}
+@media (max-width: 991px) {
+  .ltf-hero { min-height: var(--ltf-hero-h, calc(100svh + 52px)) !important; }
+  .ltf-btn-gradient-wrap.is-hero-cta-wrap {
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .ltf-funnel-cta-threshold { white-space: nowrap !important; }
+}
+</style>`;
 
 const token = process.env.WEBFLOW_API_TOKEN;
 if (!token) {
@@ -36,11 +49,6 @@ const api = (path, opts = {}) =>
       ...(opts.headers || {}),
     },
   });
-
-function readWebflowSnippet(name) {
-  const raw = readFileSync(join(ROOT, 'webflow', name), 'utf8');
-  return raw.replace(/^<!--[\s\S]*?-->\s*/m, '').trim();
-}
 
 function stripHtmlComments(html) {
   return html.replace(/<!--[\s\S]*?-->/g, '').trim();
@@ -64,13 +72,13 @@ function replaceJsdelivrFooter(body) {
   return `${body.trim()}\n${footerDeploy}`;
 }
 
-function appendMobileHead(head) {
-  if (head.includes(MOBILE_MARKER)) {
-    console.log('Head already contains mobile fixes — skipping append.');
+function ensureHeadResidue(head) {
+  if (head.includes(HEAD_SENTINEL)) {
+    console.log('Head integration sentinel present — leaving head untouched.');
     return head;
   }
-  const mobile = readWebflowSnippet('clean-slate-head-mobile-append.html');
-  return `${head.trim()}\n${mobile}`;
+  console.log('Adding minimal head integration residue (3 rules).');
+  return `${head.trim()}\n${HEAD_RESIDUE}`;
 }
 
 async function main() {
@@ -81,8 +89,12 @@ async function main() {
   }
 
   const current = await res.json();
-  const head = appendMobileHead(stripHtmlComments(current.head || ''));
-  const body = replaceJsdelivrFooter(stripHtmlComments(current.body || ''));
+  const headOnly = process.argv.includes('--head-only');
+  const footerOnly = process.argv.includes('--footer-only');
+  const rawHead = stripHtmlComments(current.head || '');
+  const rawBody = stripHtmlComments(current.body || '');
+  const head = footerOnly ? rawHead : ensureHeadResidue(rawHead);
+  const body = headOnly ? rawBody : replaceJsdelivrFooter(rawBody);
 
   const put = await api(`/pages/${PAGE_ID}/custom_code`, {
     method: 'PUT',
@@ -95,8 +107,9 @@ async function main() {
   }
 
   console.log(`Updated clean-slate custom code (pinned @${COMMIT}).`);
-  console.log('  Head: mobile CSS appended if missing');
-  console.log('  Footer: rock-scene + ltf + hero-viewport (no duplicates, no page nav.js)');
+  console.log(`  Head: ${footerOnly ? 'untouched (--footer-only)' : 'minimal integration residue ensured'}`);
+  console.log(`  Footer: ${headOnly ? 'untouched (--head-only)' : `rock-scene + ltf + hero-viewport @${COMMIT} (deduped)`}`);
+  console.log('  NOTE: Designer-first layout changes are NOT automated — see CLEAN-SLATE-DESIGNER-FIRST.md');
 
   if (process.argv.includes('--publish')) {
     const pub = await api(`/sites/${SITE_ID}/publish`, {

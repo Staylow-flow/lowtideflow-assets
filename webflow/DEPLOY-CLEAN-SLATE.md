@@ -1,46 +1,42 @@
-# Deploy clean-slate mobile fixes to Webflow
+# Deploy clean-slate mobile fixes — Designer-first
 
-GitHub has the fixes on **`main` @ `2047dec`**. Webflow must be updated manually or via API — publish alone does not pull from GitHub.
+GitHub has the JS on **`main` @ `2047dec`**. Webflow must be updated to point at it;
+publishing alone does not pull from GitHub.
 
-## What changes
+**Do layout in Designer first**, then add the tiny head residue, then swap the footer
+tags, then publish. Full per-element spec: `CLEAN-SLATE-DESIGNER-FIRST.md`.
 
-| Layer | File | Action |
-|-------|------|--------|
-| **Head (append)** | `webflow/clean-slate-head-mobile-append.html` | Paste at **bottom** of page Head custom code |
-| **Footer (replace jsDelivr block)** | `webflow/clean-slate-page-footer-deploy.html` | Replace old `@683a890` tags + remove duplicates |
-| **Designer copy** | Launch funnel `.ltf-funnel-cta-threshold` | Change to **DIAL YOUR SPECS ON OUR LIVE BUILDER** |
+## Why not just paste a head block
 
-## Option A — Webflow Designer (paste)
+The page head already holds ~900 lines / 11 media queries of curated mobile CSS and
+reserves the hero for the Designer. A bottom-appended block would conflict. So the
+mobile layout is done in Designer, and only 3 Designer-impossible rules go in head.
 
-1. Open [clean-slate in Designer](https://lowtideflow-co-v2-build.design.webflow.com?app=dc8209c65e3ec02254d15275ca056539c89f6d15741893a0adf29ad6f381eb99)
-2. **Page settings (gear) → Custom Code**
-3. **Inside `<head>`** — scroll to the bottom, paste all of `clean-slate-head-mobile-append.html`
-4. **Before `</body>`** — delete every `cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@683a890` script (including duplicates and page-level `nav.js`). Paste `clean-slate-page-footer-deploy.html` in place of the old jsDelivr block (keeps Acumin swap script).
-5. **Designer** — edit funnel threshold text (see above)
-6. **Publish** to production
+## Step 1 — Designer (do first)
 
-## Option B — Webflow API (automated)
+See `CLEAN-SLATE-DESIGNER-FIRST.md` for exact properties. Summary:
+- Hero orange figure → bleed `-15px`, release max-height cap, hero overflow visible
+- Hero CTA → absolute, bottom-center `25px`, leave hero mobile Height = Auto
+- Funnel → `10px` L/R gutter, `75px` T/B, heading size, threshold font-size to fit one line
+- Copy → **DIAL YOUR SPECS ON OUR LIVE BUILDER**
 
-```bash
-export WEBFLOW_API_TOKEN="your-token"
-node scripts/deploy-clean-slate-webflow.mjs          # update custom code only
-node scripts/deploy-clean-slate-webflow.mjs --publish  # update + publish
+## Step 2 — Head integration (3 rules, not an append)
+
+Integrate into the existing hero mobile zone — see `clean-slate-head-integration.html`:
+
+```css
+@media (max-width: 991px) {
+  .ltf-hero { min-height: var(--ltf-hero-h, calc(100svh + 52px)) !important; }
+  .ltf-btn-gradient-wrap.is-hero-cta-wrap {
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .ltf-funnel-cta-threshold { white-space: nowrap !important; }
+}
 ```
 
-Token: Webflow → Site settings → Apps & integrations → API access.
+## Step 3 — Footer tags (replace old @683a890, dedup)
 
-## Verify after publish
-
-View source on `https://lowtideflow.co/clean-slate`:
-
-- `@2047dec` in script URLs (not `@683a890`)
-- `hero-viewport.js` present
-- `bottom: -15px` in head `<style>`
-- Each of `rock-scene.js` and `ltf.js` loads **once**
-
-## Footer tag reference (maintenance)
-
-Dual core + optional third tag (see `webflow/clean-slate-footer.html`):
+Keep the Acumin swap inline script; replace the jsDelivr block with:
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2047dec/js/hero/rock-scene.js"></script>
@@ -48,4 +44,25 @@ Dual core + optional third tag (see `webflow/clean-slate-footer.html`):
 <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2047dec/js/ui/hero-viewport.js"></script>
 ```
 
-Site-wide nav-only pages: `webflow/clean-slate-footer-site.html` (`nav.js` only).
+Remove the duplicate `@683a890` tags and page-level `nav.js` (`ltf.js` loads nav).
+
+## Step 4 — Publish + verify
+
+View source on `https://lowtideflow.co/clean-slate`:
+- `@2047dec` in script URLs (not `@683a890`); each of rock-scene/ltf loads once
+- `hero-viewport.js` present
+- `white-space:nowrap` on `.ltf-funnel-cta-threshold`; `env(safe-area` on hero CTA
+- Figure bleeds ~15px; funnel not clipped; threshold one line; new copy
+
+## Optional — API automation (head residue + footer only)
+
+Layout stays in Designer; the script only manages custom code:
+
+```bash
+export WEBFLOW_API_TOKEN="your-token"
+node scripts/deploy-clean-slate-webflow.mjs             # head residue + footer tags
+node scripts/deploy-clean-slate-webflow.mjs --publish   # + publish
+node scripts/deploy-clean-slate-webflow.mjs --footer-only --publish
+```
+
+Token: Webflow → Site settings → Apps & integrations → API access.
