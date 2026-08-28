@@ -112,9 +112,24 @@ async function main() {
   console.log('  NOTE: Designer-first layout changes are NOT automated — see CLEAN-SLATE-DESIGNER-FIRST.md');
 
   if (process.argv.includes('--publish')) {
+    // Publish to the production custom domain(s), not just the webflow.io subdomain.
+    let customDomains = [];
+    const domRes = await api(`/sites/${SITE_ID}/custom_domains`);
+    if (domRes.ok) {
+      const dom = await domRes.json();
+      const list = dom.customDomains || dom.domains || [];
+      customDomains = list.map((d) => ({ id: d.id })).filter((d) => d.id);
+      console.log(`Publishing to ${customDomains.length} custom domain(s) + webflow.io subdomain.`);
+    } else {
+      console.warn('Could not list custom domains:', domRes.status, '— publishing subdomain only.');
+    }
+
     const pub = await api(`/sites/${SITE_ID}/publish`, {
       method: 'POST',
-      body: JSON.stringify({ publishToWebflowSubdomain: true }),
+      body: JSON.stringify({
+        publishToWebflowSubdomain: true,
+        ...(customDomains.length ? { customDomains } : {}),
+      }),
     });
     if (!pub.ok) {
       console.error('Publish failed:', pub.status, await pub.text());
