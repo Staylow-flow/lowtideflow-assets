@@ -1,0 +1,92 @@
+<!--
+  CLEAN SLATE — Append to Page Head custom code (end of field)
+
+  Do NOT replace existing page FX styles. Paste this block at the very bottom
+  of Page Settings → Custom Code → Inside <head>, then Publish.
+
+  Pairs with hero-viewport.js in the page footer (@2047dec).
+-->
+<style>
+@media (max-width: 991px) {
+  .ltf-hero {
+    height: var(--ltf-hero-h, calc(100svh + 52px)) !important;
+    min-height: var(--ltf-hero-h, calc(100svh + 52px)) !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .ltf-hero > .ltf-site-cage.ltf-cage {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+
+  .ltf-hero-figure,
+  .ltf-hero-figure-img {
+    top: auto !important;
+    bottom: -15px !important;
+    max-height: none !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: bottom right !important;
+  }
+
+  .ltf-btn-gradient-wrap.is-hero-cta-wrap {
+    position: absolute !important;
+    top: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
+  }
+
+  .ltf-funnel-cta {
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    padding-top: 75px !important;
+    padding-bottom: 75px !important;
+    overflow: visible !important;
+  }
+
+  .ltf-funnel-cta-inner {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: 64px !important;
+    padding-bottom: 64px !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .ltf-funnel-cta-heading {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    font-size: clamp(2.35rem, 11.5vw, 4.2rem) !important;
+    line-height: 0.92 !important;
+  }
+
+  .ltf-funnel-cta-threshold {
+    white-space: nowrap !important;
+    font-size: clamp(9px, 2.55vw, 13px) !important;
+    letter-spacing: 0.1em !important;
+    line-height: 1.2 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-top: 28px !important;
+    margin-bottom: 28px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+
+@media (max-width: 479px) {
+  .ltf-funnel-cta-threshold {
+    font-size: clamp(8px, 2.35vw, 11px) !important;
+    letter-spacing: 0.08em !important;
+  }
+}
+</style>
