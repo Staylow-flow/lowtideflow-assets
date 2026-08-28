@@ -525,6 +525,29 @@
     .ltf-hero {
       margin-top: -52px;
     }
+
+    @media (max-width: 991px) {
+      .ltf-hero {
+        height: var(--ltf-hero-h, calc(100svh + 52px));
+        min-height: var(--ltf-hero-h, calc(100svh + 52px));
+        overflow: visible;
+      }
+
+      .ltf-hero-figure {
+        top: auto;
+        bottom: -15px;
+        max-height: none;
+      }
+
+      .ltf-btn-gradient-wrap.is-hero-cta-wrap,
+      .ltf-hero-bottom-bar .ltf-btn-gradient-wrap {
+        position: absolute;
+        left: 50%;
+        bottom: calc(25px + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        margin: 0;
+      }
+    }
   </style>
 </head>
 <body>
