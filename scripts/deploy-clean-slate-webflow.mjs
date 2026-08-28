@@ -34,6 +34,43 @@ ${HEAD_SENTINEL}
 }
 </style>`;
 
+// Self-contained footer block: Acumin font-display swap + the three pinned tags.
+// Replaces the old @683a890 jsDelivr block (and any duplicates).
+const FOOTER_BLOCK = `<script defer>
+(function () {
+  'use strict';
+  function forceAcuminSwap() {
+    try {
+      var sheets = document.styleSheets;
+      for (var i = 0; i < sheets.length; i++) {
+        var rules;
+        try { rules = sheets[i].cssRules || sheets[i].rules; } catch (e) { continue; }
+        if (!rules) continue;
+        for (var j = 0; j < rules.length; j++) {
+          var rule = rules[j];
+          if (!rule || rule.type !== CSSRule.FONT_FACE_RULE) continue;
+          var ff = (rule.style.getPropertyValue('font-family') || '').replace(/["']/g, '');
+          if (ff.indexOf('acumin') === -1) continue;
+          if (rule.style.getPropertyValue('font-display') !== 'swap') {
+            rule.style.setProperty('font-display', 'swap', 'important');
+          }
+        }
+      }
+    } catch (e) {}
+  }
+  forceAcuminSwap();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(forceAcuminSwap).catch(function () {});
+  var mo = new MutationObserver(function () { forceAcuminSwap(); });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(forceAcuminSwap, 250);
+  setTimeout(forceAcuminSwap, 1000);
+  window.addEventListener('load', forceAcuminSwap);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@${COMMIT}/js/hero/rock-scene.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@${COMMIT}/js/ltf.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@${COMMIT}/js/ui/hero-viewport.js"></script>`;
+
 const TOKEN_ENV_NAMES = ['WEBFLOW_API_TOKEN', 'CURSOR_WEBFLOW_MCP', 'WEBFLOW_TOKEN'];
 const tokenName = TOKEN_ENV_NAMES.find((n) => process.env[n]);
 const token = tokenName ? process.env[tokenName] : null;
@@ -63,21 +100,17 @@ function stripHtmlComments(html) {
 }
 
 function replaceJsdelivrFooter(body) {
-  const footerDeploy = readWebflowSnippet('clean-slate-page-footer-deploy.html');
-  const acuminStart = body.indexOf('<!--\n  LTF site-wide footer');
-  const jsdelivrStart = body.search(
-    /<script src="https:\/\/cdn\.jsdelivr\.net\/gh\/Staylow-flow\/lowtideflow-assets@/,
-  );
+  // Drop the Acumin swap script and every jsDelivr tag (old @683a890 + dups),
+  // then re-add the single canonical FOOTER_BLOCK.
+  let cleaned = body
+    .replace(/<script\s+defer\s*>[\s\S]*?forceAcuminSwap[\s\S]*?<\/script>/gi, '')
+    .replace(
+      /<script[^>]*src="https:\/\/cdn\.jsdelivr\.net\/gh\/Staylow-flow\/lowtideflow-assets@[^"]*"[^>]*><\/script>/gi,
+      '',
+    )
+    .trim();
 
-  if (acuminStart !== -1 && jsdelivrStart !== -1) {
-    return body.slice(0, acuminStart) + footerDeploy;
-  }
-
-  if (jsdelivrStart !== -1) {
-    return body.slice(0, jsdelivrStart) + footerDeploy;
-  }
-
-  return `${body.trim()}\n${footerDeploy}`;
+  return cleaned ? `${cleaned}\n${FOOTER_BLOCK}` : FOOTER_BLOCK;
 }
 
 function ensureHeadResidue(head) {
