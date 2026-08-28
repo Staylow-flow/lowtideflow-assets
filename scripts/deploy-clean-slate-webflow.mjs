@@ -34,11 +34,19 @@ ${HEAD_SENTINEL}
 }
 </style>`;
 
-const token = process.env.WEBFLOW_API_TOKEN;
+const TOKEN_ENV_NAMES = ['WEBFLOW_API_TOKEN', 'CURSOR_WEBFLOW_MCP', 'WEBFLOW_TOKEN'];
+const tokenName = TOKEN_ENV_NAMES.find((n) => process.env[n]);
+const token = tokenName ? process.env[tokenName] : null;
 if (!token) {
-  console.error('Set WEBFLOW_API_TOKEN (Site settings → Apps & integrations → API access).');
+  console.error(
+    `No Webflow token found. Set one of these as a Cursor secret (Value = the token string ` +
+      `from Webflow → Site settings → Apps & integrations → API access):\n  ${TOKEN_ENV_NAMES.join(
+        '\n  ',
+      )}`,
+  );
   process.exit(1);
 }
+console.log(`Using Webflow token from ${tokenName}.`);
 
 const api = (path, opts = {}) =>
   fetch(`https://api.webflow.com/v2${path}`, {
