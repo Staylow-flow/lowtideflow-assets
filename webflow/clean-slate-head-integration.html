@@ -1,0 +1,45 @@
+<!--
+  CLEAN SLATE — Head integration (NOT a bottom append)
+
+  Do the layout in Webflow Designer first (see CLEAN-SLATE-DESIGNER-FIRST.md).
+  These are the ONLY rules Designer cannot express. Integrate them into the
+  EXISTING hero mobile zone in the page head — do not paste a second big block.
+
+  WHERE: find this comment already in your head CSS —
+
+    /* Hero layout: Webflow Designer only (.ltf-hero, .hero-canvas-wrapper,
+       .ltf-hero-headline, .ltf-hero-bottom-bar, .ltf-hero-figure, combo classes).
+       Do not set position, padding, size, or alignment on hero elements here. */
+
+  Replace that comment with the documented-exception version below, and add the
+  three rules inside that same @media (max-width: 991px) block. The funnel
+  nowrap rule can sit next to your other funnel/upsell mobile rules.
+
+  Pairs with js/ui/hero-viewport.js (@2047dec) which sets --ltf-hero-h.
+-->
+
+<!-- ── Inside your existing @media (max-width: 991px) hero zone ─────────── -->
+
+  /*
+    Hero layout: Webflow Designer only — EXCEPT the two rules below, which
+    Designer cannot express:
+      • min-height uses the `svh` unit + a CSS variable that js/ui/hero-viewport.js
+        keeps in sync with visualViewport, so the hero tracks the *visible*
+        viewport in Instagram / Facebook in-app browsers (they lie about 100vh).
+      • env(safe-area-inset-bottom) offsets the hero CTA above notches.
+    Everything else on .ltf-hero* stays in Designer. Leave hero mobile Height = Auto.
+  */
+  .ltf-hero {
+    min-height: var(--ltf-hero-h, calc(100svh + 52px)) !important;
+  }
+  .ltf-btn-gradient-wrap.is-hero-cta-wrap {
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+<!-- ── Next to your funnel/upsell mobile rules (same ≤991 tier is fine) ── -->
+
+  /* One-line grey threshold — Webflow Style panel can't set white-space.
+     The font-size that makes it fit is set in Designer. */
+  .ltf-funnel-cta-threshold {
+    white-space: nowrap !important;
+  }

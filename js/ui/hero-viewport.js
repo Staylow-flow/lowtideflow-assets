@@ -4,9 +4,9 @@
  * Optional third footer tag on clean-slate. Sets --ltf-hero-h from
  * visualViewport — behavior Webflow Designer cannot express.
  *
- * Layout, copy, and mobile CSS live in Designer + page head
- * (webflow/clean-slate-mobile-fixes.html). Do not inject styles or
- * patch copy from this file.
+ * Layout, copy, and mobile CSS live in Designer + the minimal page-head
+ * residue (webflow/clean-slate-head-integration.html). Do not inject styles
+ * or patch copy from this file.
  */
 
 (async function () {

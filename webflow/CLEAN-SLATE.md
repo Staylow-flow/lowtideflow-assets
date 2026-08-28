@@ -21,8 +21,8 @@ Never a single headless bundle. Never duplicate tags.
 
 | Layer | Where | Examples |
 |-------|--------|----------|
-| Structure + default styles | **Designer** | Hero figure position, funnel padding, threshold copy/font |
-| FX + mobile guards | **Head** (`clean-slate-mobile-fixes.html`, page FX block) | CTA safe-area, figure bleed, funnel one-line threshold |
+| Structure + default styles + mobile layout | **Designer** | Hero figure bleed/position, CTA base position, funnel padding, threshold copy/font |
+| Designer-impossible guards only | **Head** (`clean-slate-head-integration.html`, integrated into existing hero zone) | `svh`/`--ltf-hero-h` hero height, `env(safe-area)` CTA offset, threshold `white-space:nowrap` |
 | Behavior | **Footer JS** | Boulder, card slam, magnifier, viewport sync |
 
 Do not inject CSS or patch copy from JS when Designer or head CSS can own it.
@@ -125,8 +125,9 @@ so no head CSS is required.
 
 ## Custom code
 
-**Head** — existing page FX block + append `webflow/clean-slate-mobile-fixes.html`
-when mobile layout overrides are needed (Designer-first; head wins only where required).
+**Head** — Designer-first for mobile layout. Only the 3 Designer-impossible rules
+in `webflow/clean-slate-head-integration.html` get integrated into the existing hero
+mobile zone (do not append a second big block). See `CLEAN-SLATE-DESIGNER-FIRST.md`.
 
 **Footer (clean-slate page)** — `webflow/clean-slate-footer.html` — dual core:
 
