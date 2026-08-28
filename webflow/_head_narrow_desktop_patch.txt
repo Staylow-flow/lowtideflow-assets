@@ -336,25 +336,7 @@
 }
 
 
-/* Desktop slam stack (≥1281) — uniform tiles; text length must not resize cards */
-@media (min-width: 1281px) {
-  .ltf-specs-vault-cards {
-    flex: 0 0 auto !important;
-  }
-  .ltf-spec-card,
-  .ltf-spec-card.ltf-spec-card-01,
-  .ltf-spec-card.ltf-spec-card-02,
-  .ltf-spec-card.ltf-spec-card-03,
-  .ltf-spec-card.ltf-spec-card-04 {
-    width: 480px !important;
-    max-width: 480px !important;
-    height: 340px !important;
-    min-height: 340px !important;
-    max-height: 340px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-  }
-}
+/* Desktop slam stack (≥1281) — layout via specs-vault-slam.js inline styles, not head */
 
 /* Narrow desktop (992–1280) — stack Specs; clip card copy; Trenches grows with content */
 @media (min-width: 992px) and (max-width: 1280px) {

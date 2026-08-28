@@ -148,10 +148,24 @@ let bindAll = null;
     });
   }
 
+  var SLAM_CARD_W = 480;
+  var SLAM_CARD_H = 340;
+
+  function applySlamCardDimensions(card) {
+    card.style.width = SLAM_CARD_W + 'px';
+    card.style.maxWidth = SLAM_CARD_W + 'px';
+    card.style.height = SLAM_CARD_H + 'px';
+    card.style.minHeight = SLAM_CARD_H + 'px';
+    card.style.maxHeight = SLAM_CARD_H + 'px';
+    card.style.overflow = 'hidden';
+    card.style.boxSizing = 'border-box';
+  }
+
   function prepCards(cards, fx) {
     var i;
     for (i = 0; i < cards.length; i++) {
       var cardZ = (i + 1) * 3;
+      applySlamCardDimensions(cards[i]);
       cards[i].style.willChange = 'transform';
       cards[i].style.transition = 'none';
       cards[i].style.position = 'absolute';
