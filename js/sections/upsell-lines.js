@@ -5,7 +5,20 @@
  * `is-sweep` for pointer + touch so mobile still fires when :hover does not.
  */
 
+const STYLE_ID = 'ltf-upsell-layout';
+
+function injectUpsellLayout() {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent =
+    '@media (min-width:992px){.ltf-upsell-list.ltf-split-asset{position:relative!important;top:0!important;box-sizing:border-box!important}}';
+  document.head.appendChild(style);
+}
+
 export function init() {
+  injectUpsellLayout();
+
   document.querySelectorAll('.ltf-upsell-list-item').forEach((item) => {
     if (item.dataset.ltfUpsellSweep === '1') return;
     item.dataset.ltfUpsellSweep = '1';
