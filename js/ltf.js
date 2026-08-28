@@ -39,6 +39,11 @@ const MODULES = [
       document.querySelector('.hero-canvas-wrapper, [data-ltf-rock], #canvas3d'),
   },
   {
+    name: 'hero-viewport',
+    load: () => import('./ui/hero-viewport.js'),
+    test: () => document.querySelector('.ltf-hero'),
+  },
+  {
     name: 'specs-vault',
     load: () => import('./sections/specs-vault-slam.js'),
     test: () => document.querySelector('.ltf-specs-vault, [data-ltf-specs-slam]'),

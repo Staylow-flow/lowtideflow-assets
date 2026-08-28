@@ -86,7 +86,7 @@ in `ltf.js` — no new script tag.
 - `js/hero/rock-scene.js` — FBM nebula + hematite boulder, one WebGL context
 - The nebula is a GLSL shader inside that file, **not** a separate script
 - **No mouse hover rotation** — idle + scroll coast only
-- Rock cage: absolute inside `.ltf-site-cage`; DPR locked via `data-render-resolution-scale="1"`
+- Rock cage: absolute inside `.ltf-site-cage`; DPR locked via `data-render-resolution-scale="1"` on desktop; mobile Retina auto-renders at 1.5× in JS
 - Model + texture: `boulder-hematite-optimized-v2.glb` / `boulder-texture-raw-02.avif`,
   overridable per page with `data-model-url` / `data-rock-texture-url` on the hero element
 
@@ -105,7 +105,8 @@ so no head CSS is required.
 
 ## Custom code
 
-**Head** — `webflow/clean-slate-head.html`  
+**Head** — `webflow/clean-slate-head.html` (site nav + button FX)  
+**Mobile fixes** — append `webflow/clean-slate-mobile-fixes.html` to the clean-slate page head  
 `:root` tokens + cage CSS + gradient button / nav FX. Button **hover** lives
 here as a CSS `::before` opacity fade; the JS only handles the click pulse.
 

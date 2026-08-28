@@ -603,6 +603,9 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
 
 const MOBILE_LAYOUT_MAX_W = 991;
 const MOBILE_CAMERA_Z     = 27;
+/** Retina mobile DPR cap — sharper rock without full 2×+ fill cost */
+const MOBILE_RENDER_DPR   = 1.5;
+const MOBILE_TEX_ANISO    = 8;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
@@ -726,11 +729,11 @@ function solidifyRockMaterial(material) {
   }
 }
 
-function configureRockTexture(tex) {
+function configureRockTexture(tex, viewportW) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.anisotropy = 4;
+  tex.anisotropy = isMobileLayout(viewportW) ? MOBILE_TEX_ANISO : 4;
   return tex;
 }
 
@@ -849,8 +852,8 @@ function buildRockModelFromGltf(gltf) {
   return model;
 }
 
-function applyRockTexture(root, tex) {
-  if (tex) configureRockTexture(tex);
+function applyRockTexture(root, tex, viewportW) {
+  if (tex) configureRockTexture(tex, viewportW);
   root.traverse((child) => {
     if (!child.isMesh || !child.geometry || !child.material) return;
     finishRockMaterial(child, tex);
@@ -921,11 +924,24 @@ class RockScene {
   }
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
-  _initRenderer() {
-    /* render-resolution-scale=1 — lock DPR for large displays (27" iMac etc.) */
+  _resolveRenderDpr() {
     const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
-    const scale = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : 1;
-    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, 2)) : 1;
+    const pinned = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : null;
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+
+    if (isMobileLayout(vw)) {
+      /* Mobile Retina: 1.5× internal res — sharper rock, half the cost of 2×+ */
+      if ((window.devicePixelRatio || 1) >= 1.5) return MOBILE_RENDER_DPR;
+      return 1;
+    }
+
+    /* Desktop: honour pin (default 1× — avoids 27" iMac 2× fill cost) */
+    const scale = pinned != null && Number.isFinite(pinned) ? pinned : 1;
+    return Math.max(0.5, Math.min(scale, 2));
+  }
+
+  _initRenderer() {
+    const dpr = this._resolveRenderDpr();
     const existingCanvas =
       this.container.querySelector('#canvas3d')
       || (this.container.id === 'canvas3d' ? this.container : null)
@@ -1169,7 +1185,11 @@ class RockScene {
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
 
-        applyRockTexture(model, tex);
+        applyRockTexture(
+          model,
+          tex,
+          typeof window !== 'undefined' ? window.innerWidth : this.w,
+        );
 
         model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
