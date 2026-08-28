@@ -63,23 +63,23 @@ body
 
 ## JS layout
 
-Everything loads through one entry, `js/ltf.js`, which imports the rest by
-relative path. That is what keeps the whole bundle on a single commit.
+Clean-slate uses **multiple footer script tags** — each a plain jsDelivr URL you
+can pin and update independently in Webflow (no single headless bundle).
 
 ```
 js/
-  ltf.js                       entry — the only file Webflow points at
-  core/ticker.js               shared rAF loop + once-per-frame scroll sampling
-  hero/rock-scene.js           nebula shader + hematite boulder
-  sections/specs-vault-slam.js specs card slam + gas/ring FX
-  ui/nav-mobile.js             mobile hamburger
-  ui/btn-gradient.js           button click pulse
+  hero/rock-scene.js           footer tag 1 — nebula + hematite boulder
+  ui/hero-viewport.js          footer tag 2 — mobile hero + funnel fixes
+  ltf.js                       footer tag 3 — nav, cards, upsell, vault, magnifier
+  nav.js                       site-wide footer — nav-only pages
+  sections/specs-vault-slam.js imported by ltf.js
+  ui/nav-mobile.js             imported by ltf.js / nav.js
+  ui/btn-gradient.js           imported by ltf.js / nav.js
   _archive/                    superseded, loaded by nothing
 ```
 
-Each module is gated on a selector, so pages only download what they use.
-To add an effect, drop the file in the right folder and add a row to `MODULES`
-in `ltf.js` — no new script tag.
+To ship a change: push to GitHub, bump `COMMIT` on the footer tag(s) you
+touched in `webflow/clean-slate-footer.html`, then Publish. Do not duplicate tags.
 
 ## Hero FX
 
@@ -105,20 +105,17 @@ so no head CSS is required.
 
 ## Custom code
 
-**Head** — `webflow/clean-slate-head.html` (site nav + button FX)  
-**Mobile fixes** — append `webflow/clean-slate-mobile-fixes.html` to the clean-slate page head  
-`:root` tokens + cage CSS + gradient button / nav FX. Button **hover** lives
-here as a CSS `::before` opacity fade; the JS only handles the click pulse.
-
-**Footer** — `webflow/clean-slate-footer.html`
+**Footer (clean-slate page)** — `webflow/clean-slate-footer.html` — three tags:
 
 ```html
-<script type="module" src="…@<commit>/js/ltf.js"></script>
+<script src="…@COMMIT/js/hero/rock-scene.js"></script>
+<script src="…@COMMIT/js/ui/hero-viewport.js"></script>
+<script src="…@COMMIT/js/ltf.js"></script>
 ```
 
-One tag. Shipping a JS change means pushing the repo and swapping that commit
-hash. Do not add a second tag — that is how the hero and section effects
-previously drifted onto different revisions.
+**Footer (site-wide nav)** — `webflow/clean-slate-footer-site.html` — `nav.js` only.
+
+Optional head CSS: `webflow/clean-slate-mobile-fixes.html` (hero-viewport.js also injects these rules).
 
 ## Feeding fresh content later
 

@@ -1,19 +1,17 @@
 /**
  * Lowtideflow — Hero viewport sync (mobile + in-app browsers)
  *
- * Instagram, Facebook, and other embedded browsers report inconsistent
- * 100vh / 100svh values. visualViewport.height is the visible chrome-
- * adjusted height, so the hero shell and bottom-pinned CTA land in the
- * same place in Safari, Chrome, and in-app WebViews.
+ * Own footer <script src="..."> on clean-slate — keeps mobile hero layout
+ * and funnel copy patches separate from rock-scene.js and ltf.js.
  */
 
-const MOBILE_QUERY = '(max-width: 991px)';
-const NAV_H = 52;
-const FUNNEL_COPY = 'DIAL YOUR SPECS ON OUR LIVE BUILDER';
-const MOBILE_STYLE_ID = 'ltf-mobile-fixes';
+(async function () {
+  const MOBILE_QUERY = '(max-width: 991px)';
+  const NAV_H = 52;
+  const FUNNEL_COPY = 'DIAL YOUR SPECS ON OUR LIVE BUILDER';
+  const MOBILE_STYLE_ID = 'ltf-mobile-fixes';
 
-/* Injected when head snippet isn't pasted yet — keeps deploy to one footer tag */
-const MOBILE_FIXES_CSS = `@media (max-width:991px){
+  const MOBILE_FIXES_CSS = `@media (max-width:991px){
 .ltf-hero{height:var(--ltf-hero-h,calc(100svh + 52px))!important;min-height:var(--ltf-hero-h,calc(100svh + 52px))!important;max-height:none!important;overflow:visible!important}
 .ltf-hero>.ltf-site-cage.ltf-cage{height:100%!important;min-height:100%!important;overflow:visible!important}
 .ltf-hero-figure,.ltf-hero-figure-img{top:auto!important;bottom:-15px!important;max-height:none!important;height:auto!important;object-fit:contain!important;object-position:bottom right!important}
@@ -27,67 +25,67 @@ const MOBILE_FIXES_CSS = `@media (max-width:991px){
 .ltf-funnel-cta-threshold{font-size:clamp(8px,2.35vw,11px)!important;letter-spacing:.08em!important}
 }`;
 
-function isMobile() {
-  return window.matchMedia(MOBILE_QUERY).matches;
-}
-
-function injectMobileStyles() {
-  if (!isMobile() || document.getElementById(MOBILE_STYLE_ID)) return;
-  const style = document.createElement('style');
-  style.id = MOBILE_STYLE_ID;
-  style.textContent = MOBILE_FIXES_CSS;
-  document.head.appendChild(style);
-}
-
-function patchFunnelCopy() {
-  const el = document.querySelector('.ltf-funnel-cta-threshold');
-  if (!el) return;
-  const normalized = el.textContent.replace(/\s+/g, ' ').trim().toUpperCase();
-  if (normalized.includes('DIAL IN YOUR SPECS') || normalized.includes('DIAL YOUR SPECS')) {
-    el.textContent = FUNNEL_COPY;
+  function isMobile() {
+    return window.matchMedia(MOBILE_QUERY).matches;
   }
-}
 
-function syncHeroViewport() {
-  if (!isMobile()) return;
-
-  const hero = document.querySelector('.ltf-hero');
-  if (!hero) return;
-
-  const vv = window.visualViewport;
-  const visibleH = vv ? vv.height : window.innerHeight;
-  const totalH = Math.round(visibleH + NAV_H);
-
-  hero.style.setProperty('--ltf-vv-h', `${Math.round(visibleH)}px`);
-  hero.style.setProperty('--ltf-hero-h', `${totalH}px`);
-}
-
-function bind() {
-  injectMobileStyles();
-  patchFunnelCopy();
-  syncHeroViewport();
-
-  const vv = window.visualViewport;
-  if (vv) {
-    vv.addEventListener('resize', syncHeroViewport, { passive: true });
-    vv.addEventListener('scroll', syncHeroViewport, { passive: true });
+  function injectMobileStyles() {
+    if (!isMobile() || document.getElementById(MOBILE_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = MOBILE_STYLE_ID;
+    style.textContent = MOBILE_FIXES_CSS;
+    document.head.appendChild(style);
   }
-  window.addEventListener('resize', syncHeroViewport, { passive: true });
-  window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-      patchFunnelCopy();
-      syncHeroViewport();
-    }, 120);
-  });
-}
 
-function init() {
-  if (!document.querySelector('.ltf-hero')) return;
+  function patchFunnelCopy() {
+    const el = document.querySelector('.ltf-funnel-cta-threshold');
+    if (!el) return;
+    const normalized = el.textContent.replace(/\s+/g, ' ').trim().toUpperCase();
+    if (normalized.includes('DIAL IN YOUR SPECS') || normalized.includes('DIAL YOUR SPECS')) {
+      el.textContent = FUNNEL_COPY;
+    }
+  }
+
+  function syncHeroViewport() {
+    if (!isMobile()) return;
+    const hero = document.querySelector('.ltf-hero');
+    if (!hero) return;
+
+    const vv = window.visualViewport;
+    const visibleH = vv ? vv.height : window.innerHeight;
+    const totalH = Math.round(visibleH + NAV_H);
+
+    hero.style.setProperty('--ltf-vv-h', `${Math.round(visibleH)}px`);
+    hero.style.setProperty('--ltf-hero-h', `${totalH}px`);
+  }
+
+  function boot() {
+    if (!document.querySelector('.ltf-hero')) return;
+    injectMobileStyles();
+    patchFunnelCopy();
+    syncHeroViewport();
+  }
+
+  function bind() {
+    boot();
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', syncHeroViewport, { passive: true });
+      vv.addEventListener('scroll', syncHeroViewport, { passive: true });
+    }
+    window.addEventListener('resize', syncHeroViewport, { passive: true });
+    window.addEventListener('orientationchange', () => {
+      setTimeout(boot, 120);
+    });
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bind, { once: true });
   } else {
     bind();
   }
-}
+  window.addEventListener('load', boot, { once: true });
 
-export { init, syncHeroViewport, patchFunnelCopy, injectMobileStyles };
+  window.LTFHeroViewport = { boot, syncHeroViewport, patchFunnelCopy };
+})();

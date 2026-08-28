@@ -1,82 +1,55 @@
 /**
- * Lowtideflow — bundle entry point.
+ * Lowtideflow — Clean-slate page UI entry (classic footer tag).
  *
- * This is the only script tag the site needs:
+ * Loaded as its own <script src="..."> — separate from rock-scene.js and
+ * hero-viewport.js so each effect can be pinned and updated independently
+ * in Webflow.
  *
- *   <script type="module"
- *     src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@<commit>/js/ltf.js"></script>
- *
- * Every other module is imported with a RELATIVE path, so they all resolve
- * against whatever commit this file was loaded from. Bumping the one pin in
- * Webflow moves the entire bundle forward atomically — there is no way to end
- * up with the hero on one commit and a section effect on another, which is the
- * failure mode the old multi-tag footer kept producing.
- *
- * Modules are imported on demand: a page with no specs section never downloads
- * the specs code, and a page with no hero never downloads Three.js. Adding a
- * new effect means adding one row to MODULES below.
+ *   js/ltf.js                        — this file
+ *   js/hero/rock-scene.js            — own footer tag (Three + GLB)
+ *   js/ui/hero-viewport.js           — own footer tag (mobile hero + funnel)
+ *   js/nav.js                        — site-wide footer (non-clean-slate pages)
  */
 
-/**
- * `test` decides whether the page needs the module at all. Keep the selectors
- * cheap — they run on every page load before anything else.
- */
-const MODULES = [
-  {
-    name: 'nav-mobile',
-    load: () => import('./ui/nav-mobile.js'),
-    test: () => document.querySelector('.ltf-site-nav'),
-  },
-  {
-    name: 'btn-gradient',
-    load: () => import('./ui/btn-gradient.js'),
-    test: () => document.querySelector('.ltf-btn-gradient-wrap'),
-  },
-  {
-    name: 'hero-rock',
-    load: () => import('./hero/rock-scene.js'),
-    test: () =>
-      document.querySelector('.hero-canvas-wrapper, [data-ltf-rock], #canvas3d'),
-  },
-  {
-    name: 'hero-viewport',
-    load: () => import('./ui/hero-viewport.js'),
-    test: () => document.querySelector('.ltf-hero'),
-  },
-  {
-    name: 'specs-vault',
-    load: () => import('./sections/specs-vault-slam.js'),
-    test: () => document.querySelector('.ltf-specs-vault, [data-ltf-specs-slam]'),
-  },
-];
+(async function () {
+  const [
+    { init: initNav },
+    { init: initBtn },
+    { init: initCrew },
+    { init: initUpsell },
+    { init: initVault },
+    { init: initMag },
+  ] = await Promise.all([
+    import('./ui/nav-mobile.js'),
+    import('./ui/btn-gradient.js'),
+    import('./sections/crew-cards.js'),
+    import('./sections/upsell-lines.js'),
+    import('./sections/specs-vault-slam.js'),
+    import('./sections/garment-magnifier.js'),
+  ]);
 
-const loaded = new Map();
-
-async function start(mod) {
-  if (!mod.test()) return;
-
-  try {
-    if (!loaded.has(mod.name)) {
-      loaded.set(mod.name, mod.load());
-    }
-    const ns = await loaded.get(mod.name);
-    /* rock-scene boots itself on import; the others expose init(). */
-    if (typeof ns.init === 'function') ns.init();
-  } catch (err) {
-    /* A failed section effect must never take the hero down with it. */
-    console.error(`[ltf] module "${mod.name}" failed`, err);
+  function wrapSpecsTitle() {
+    const h = document.querySelector(
+      '.ltf-specs-vault-header .ltf-section-header-navy, .ltf-specs-vault-header h2',
+    );
+    if (!h || h.dataset.ltfWrap === '1') return;
+    if (!/STANDARDS/i.test(h.textContent || '')) return;
+    h.innerHTML = h.innerHTML.replace(/(&amp;|&)\s*STANDARDS/i, '$1<br>STANDARDS');
+    h.dataset.ltfWrap = '1';
   }
-}
 
-function boot() {
-  for (const mod of MODULES) start(mod);
-}
+  function boot() {
+    wrapSpecsTitle();
+    initNav();
+    initBtn();
+    initCrew();
+    initUpsell();
+    initVault();
+    initMag();
+  }
 
-boot();
+  boot();
+  window.addEventListener('load', boot, { once: true });
 
-/* Webflow interactions and CMS-bound content can attach after DOMContentLoaded,
-   so sweep again once at load. Every init() is idempotent, so re-running only
-   picks up nodes that appeared late. */
-window.addEventListener('load', boot, { once: true });
-
-window.LTF = { boot, loaded, MODULES };
+  window.LTF = { boot };
+})();
