@@ -651,26 +651,13 @@
 
   <!-- ── Scripts ────────────────────────────────────────────────────────── -->
   <!--
-    Import map — resolves ES module imports for Three.js + GLTFLoader.
-    Requires a local HTTP server (CORS blocks fetch on file://).
-
-    Run from project root:
-      python3 -m http.server 3000
-      npx serve .
-
-    Then open: http://127.0.0.1:5500/demo/hero-preview.html  (Live Server)
-    Or:        python3 -m http.server 8080  →  http://localhost:8080/demo/hero-preview.html
+    Import map not required — rock-scene.js is a classic script that dynamic-imports Three.
+    Run from project root: python3 -m http.server 8080
+    Then open: http://localhost:8080/demo/hero-preview.html
   -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three":         "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-    }
-  }
-  </script>
-
-  <script type="module" src="../js/hero/rock-scene.js?v=rock-test-35-roll-tune"></script>
+  <script src="../js/hero/rock-scene.js"></script>
+  <script src="../js/ui/hero-viewport.js"></script>
+  <script src="../js/ltf.js"></script>
 
   <script>
     (function () {

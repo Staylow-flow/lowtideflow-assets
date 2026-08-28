@@ -1,5 +1,5 @@
 /**
- * Lowtideflow — Rock Scene  (ES Module)
+ * Lowtideflow — Rock Scene  (classic footer tag, dynamic-imports Three)
  *
  * Background: FBM domain-warped nebula shader — fractal gas turbulence in brand
  *             palette with transparent dark voids, wispy tendrils, dense cores.
@@ -7,11 +7,14 @@
  *             hematite texture, and a Three.js light rig standing in for Spline's.
  *             Scroll tumble + idle oscillation only (mouse hover nudge disabled).
  *
- * Loaded as <script type="module"> — importmap resolves 'three' and 'three/addons/'.
+ * Loaded as its own static footer <script src="..."> (no type="module") so
+ * Webflow renders a plain, directly-inspectable jsDelivr URL — separate from
+ * ltf.js and hero-viewport.js.
  */
 
-import * as THREE from 'https://esm.sh/three@0.165.0';
-import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+(async function () {
+const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js');
+const { GLTFLoader } = await import('https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js');
 
 const DEFAULT_MODEL_URL =
   'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@bb717c1/boulder-3d-assets/boulder-hematite-optimized-v2.glb';
@@ -1491,8 +1494,4 @@ window.LtfRockScene = {
   init, RockScene, layerVisibility, behindOpacity, frontOpacity,
   GAS_LOCKED_BOUNDS, ROCK_MOTION_BASELINE, getPrimaryRockScene,
 };
-
-export {
-  init, RockScene, layerVisibility, behindOpacity, frontOpacity,
-  GAS_LOCKED_BOUNDS, ROCK_MOTION_BASELINE, getPrimaryRockScene,
-};
+})();

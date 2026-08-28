@@ -1,19 +1,20 @@
 <!--
   CLEAN SLATE — Page Footer (Before </body>)
 
-  One tag, on purpose. js/ltf.js imports every other module by relative path,
-  so the commit below pins the whole bundle at once: hero boulder + nebula,
-  specs vault, mobile nav, and button pulse.
+  Multiple pinned footer tags on purpose — each script is a plain jsDelivr URL
+  you can inspect, update, and roll back independently in Webflow.
 
-  To ship a JS change: push to the repo, then swap the commit hash below and
-  publish. That hash is the only thing in Webflow that needs to change.
+  After pushing to GitHub, bump COMMIT below on every tag you changed, then Publish.
 
-  Do not add more <script> tags here. A second pinned tag is how the hero and
-  the section effects previously ended up on different revisions. New effects
-  get a row in the MODULES list inside js/ltf.js instead.
+  TAG ORDER (load order matters):
+    1. rock-scene.js   — Three.js boulder + nebula (heavy; own tag so it never blocks UI)
+    2. hero-viewport.js — mobile hero height, figure bleed, funnel copy/CSS
+    3. ltf.js          — nav, buttons, crew cards, upsell sweep, specs slam, magnifier
 
-  The mobile nav used to live here as an inline block. It is now
-  js/ui/nav-mobile.js — do not paste it back, it would double-bind the toggle.
+  Do NOT duplicate tags. Do NOT fold these into one bundle tag.
+
+  Site-wide nav-only pages use webflow/clean-slate-footer-site.html (nav.js only).
 -->
-<script type="module"
-  src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@160b5e8/js/ltf.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2b1733d/js/hero/rock-scene.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2b1733d/js/ui/hero-viewport.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2b1733d/js/ltf.js"></script>
