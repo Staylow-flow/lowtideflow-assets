@@ -1,0 +1,714 @@
+<style id="ltf-clean-slate-fx">
+/* FX only — layout lives in Webflow Designer. Do not add size/pad/align here.
+   Nav-specific FX/layout (hamburger morph, hide-on-scroll, nav link/button
+   hover gradient, desktop 2-row collapse, mobile nav bar + panel) moved to
+   the site-wide head (#ltf-site-nav-fx) so every page gets it — do not
+   re-add nav rules here. */
+
+@keyframes ltf-upsell-sweep {
+  /*
+    Seamless L→R loop: background-size is 300% (one full tile = 3x the
+    item's width) and background-position percentages move the image by
+    (container - bgSize) * pos/100 = -2x-item-width * pos/100. Animating
+    all the way to 150% therefore shifts by exactly one full 3x-width tile
+    (-3x-item-width), so the frame at 150% is pixel-identical to the frame
+    at 0% — the loop restart is invisible instead of jump-cutting 1/3 short.
+  */
+  from { background-position: 150% 50%; }
+  to { background-position: 0% 50%; }
+}
+
+@property --ltf-edge-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ltf-edge-spin {
+  to { --ltf-edge-angle: 360deg; }
+}
+
+/* Page CTAs — 2px white outline; hover swaps to gradient ring (same size) */
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+.ltf-section-cta .ltf-btn-gradient-wrap,
+.ltf-funnel-cta .ltf-btn-gradient-wrap {
+  padding: 2px !important;
+  border-radius: 12px;
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+}
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap:hover,
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap:focus-within,
+.ltf-hero-bottom-bar .ltf-btn-gradient-wrap.ltf-btn-gradient-active,
+.ltf-section-cta .ltf-btn-gradient-wrap:hover,
+.ltf-section-cta .ltf-btn-gradient-wrap:focus-within,
+.ltf-section-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active,
+.ltf-funnel-cta .ltf-btn-gradient-wrap:hover,
+.ltf-funnel-cta .ltf-btn-gradient-wrap:focus-within,
+.ltf-funnel-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+  padding: 2px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.ltf-hero-bottom-bar .ltf-btn-primary,
+.ltf-section-cta .ltf-btn-primary,
+.ltf-funnel-cta .ltf-btn-primary {
+  border: none !important;
+  border-radius: 10px !important;
+  background: #00001C !important;
+  color: #E5E5E5 !important;
+}
+
+/* ── Crew + Specs glow ─────────────────────────────────────────────── */
+.ltf-card,
+.ltf-spec-card {
+  position: relative;
+  overflow: visible !important;
+  isolation: isolate;
+  /* Hold border transparent until the ring finishes fading (avoids white flash on hover out). */
+  transition: border-color 0.15s ease 0.35s;
+}
+.ltf-card::before,
+.ltf-spec-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 22% 18%, rgba(112, 64, 192, 0.72) 0%, transparent 52%),
+    radial-gradient(ellipse at 82% 28%, rgba(42, 170, 184, 0.62) 0%, transparent 50%),
+    radial-gradient(ellipse at 48% 92%, rgba(11, 128, 80, 0.58) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 70%, rgba(31, 119, 129, 0.4) 0%, transparent 48%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+.ltf-card:hover::before,
+.ltf-card.is-glow::before,
+.ltf-spec-card:hover::before,
+.ltf-spec-card.is-glow::before {
+  opacity: 0.84;
+}
+.ltf-card > *,
+.ltf-spec-card > * {
+  position: relative;
+  z-index: 1;
+}
+.ltf-card::after,
+.ltf-spec-card::after {
+  content: '';
+  position: absolute;
+  /* Cards have a 3px border; -3px puts this pseudo on the border box edge
+     (absolute children sit from the padding edge, so 0/inherit sits inward).
+     The old -6px/18px version floated the ring outside the card, exposing
+     page background in the gap. border-radius: inherit matches 12px exactly. */
+  inset: -3px;
+  z-index: 2;
+  border-radius: inherit;
+  /* 3px ring thickness = Designer border width — flush replacement. */
+  padding: 3px;
+  background: conic-gradient(
+    from var(--ltf-edge-angle),
+    #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.ltf-card:hover,
+.ltf-card.is-glow,
+.ltf-spec-card:hover,
+.ltf-spec-card.is-glow {
+  border-color: transparent !important;
+  transition: border-color 0s;
+}
+.ltf-card:hover::after,
+.ltf-card.is-glow::after,
+.ltf-spec-card:hover::after,
+.ltf-spec-card.is-glow::after {
+  opacity: 1;
+  animation: ltf-edge-spin 4s linear infinite;
+}
+
+/* ── Beyond the Gear sweep ──────────────────────────────────────────── */
+.ltf-upsell-list {
+  overflow: hidden;
+  border-radius: 12px;
+  isolation: isolate;
+}
+.ltf-upsell-list-item {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  overflow: hidden;
+  list-style: none !important;
+  /* Solid fill so sweep band sits above this, under text */
+  background-color: #00001C;
+}
+.ltf-upsell-list-item::marker {
+  content: none !important;
+  font-size: 0 !important;
+}
+.ltf-upsell-list-item:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+.ltf-upsell-list-item:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border-bottom-width: 0 !important;
+}
+.ltf-upsell-list-item > * {
+  position: relative;
+  z-index: 2;
+}
+.ltf-upsell-list-item::before {
+  content: '▪' !important;
+  color: #0B8050 !important; /* green → purple on hover / touch */
+  font-size: 14px !important;
+  line-height: 1.7;
+  flex-shrink: 0;
+  margin-right: 14px;
+  position: relative;
+  z-index: 2;
+  transition: color 0.35s ease;
+}
+/*
+  Sweep band UNDER the text. The item's actual copy is a raw text node
+  (Webflow renders `.ltf-upsell-list-item` as a `<p>` with no wrapping
+  span), and per the CSS2.1 stacking-context paint order, in-flow inline
+  text (step 5) already paints ABOVE any descendant with z-index:0 or
+  higher (step 6/7) but BELOW negative-z-index descendants (step 2) — so
+  a positive z-index here was actually putting the gradient IN FRONT of
+  the copy. z-index:-1 fixes that while `isolation: isolate` above keeps
+  it scoped to this item's own stacking context (so it still paints above
+  this item's own #00001C fill from step 1, not some page-level ancestor).
+*/
+.ltf-upsell-list-item::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  border-radius: inherit !important;
+  background-image: linear-gradient(
+    90deg,
+    rgba(112, 64, 192, 0) 0%,
+    rgba(11, 128, 80, 0.55) 10%,
+    rgba(42, 170, 184, 0.75) 22%,
+    rgba(77, 37, 157, 0.78) 36%,
+    rgba(112, 64, 192, 0.85) 50%,
+    rgba(77, 37, 157, 0.78) 64%,
+    rgba(42, 170, 184, 0.75) 78%,
+    rgba(11, 128, 80, 0.55) 90%,
+    rgba(112, 64, 192, 0) 100%
+  ) !important;
+  background-size: 300% 100% !important;
+  /*
+    NOT !important: CSS-Cascade ranks keyframe animations BELOW author
+    !important declarations, so an !important here would permanently pin
+    the value and the `ltf-upsell-sweep` animation below could visibly
+    "run" (Web Animations API reports it active) while never actually
+    moving anything on screen. This plain value only sets the idle
+    (opacity:0, pre-hover) position; the animation freely overrides it.
+  */
+  background-position: 0% 50%;
+  background-repeat: repeat-x !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s ease;
+}
+.ltf-upsell-list-item:hover::after,
+.ltf-upsell-list-item.is-sweep::after,
+.ltf-upsell-list-item:active::after {
+  opacity: 1 !important;
+  animation: ltf-upsell-sweep 6s linear infinite !important;
+}
+.ltf-upsell-list-item:hover::before,
+.ltf-upsell-list-item.is-sweep::before,
+.ltf-upsell-list-item:active::before {
+  color: #7040C0 !important;
+}
+
+@media (min-width: 992px) {
+  /* Beyond — upsell sweep list sits 50px below the desktop CTA baseline */
+  .ltf-upsell-list.ltf-split-asset {
+    position: relative;
+    top: 50px;
+    box-sizing: border-box;
+  }
+}
+
+/* ── Trenches loupe — host never clips; radius lives on fabric image only ─ */
+.ltf-section.is-trenches,
+.ltf-section.is-trenches .ltf-section-inner,
+.ltf-section.is-trenches .ltf-split-2,
+.ltf-authority-image-box,
+.ltf-magnifier {
+  position: relative;
+  overflow: visible !important;
+}
+.ltf-authority-image-box {
+  border-radius: 0 !important;
+  max-width: 515px; /* desktop fabric −1% */
+  padding-top: 50px;
+  padding-bottom: 50px;
+  box-sizing: border-box;
+}
+.ltf-authority-image-box > img,
+.ltf-magnifier-base,
+.ltf-trench-image {
+  border-radius: 24px;
+}
+.ltf-magnifier:not(.is-lit) .ltf-magnifier-lens {
+  opacity: 0;
+}
+.ltf-magnifier-lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+}
+.ltf-magnifier-hole {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 50%;
+  isolation: isolate;
+  -webkit-mask-image: radial-gradient(circle, #000 68%, transparent 78%);
+  mask-image: radial-gradient(circle, #000 68%, transparent 78%);
+}
+.ltf-magnifier-print {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  object-fit: cover;
+  pointer-events: none;
+}
+.ltf-magnifier-glass {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Launch Your Fleet vignette glow ────────────────────────────────── */
+.ltf-funnel-cta {
+  position: relative;
+  isolation: isolate;
+}
+.ltf-funnel-cta::before,
+.ltf-funnel-cta-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: 900px;
+  height: 520px;
+  max-width: 140%;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(ellipse at 28% 32%, rgba(42, 170, 184, 0.62) 0%, transparent 52%),
+    radial-gradient(ellipse at 72% 68%, rgba(112, 64, 192, 0.55) 0%, transparent 55%),
+    radial-gradient(ellipse at center, rgba(11, 128, 80, 0.28) 0%, transparent 72%);
+  filter: blur(100px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.55s ease;
+}
+.ltf-funnel-cta::before {
+  content: '';
+}
+.ltf-funnel-cta:hover::before,
+.ltf-funnel-cta.is-glow::before,
+.ltf-funnel-cta:hover .ltf-funnel-cta-glow,
+.ltf-funnel-cta.is-glow .ltf-funnel-cta-glow {
+  opacity: 0.32;
+}
+.ltf-funnel-cta-inner {
+  position: relative;
+  z-index: 2;
+  transition: border-color 0.45s ease;
+}
+.ltf-funnel-cta:hover .ltf-funnel-cta-inner,
+.ltf-funnel-cta.is-glow .ltf-funnel-cta-inner {
+  border-color: rgba(42, 170, 184, 0.55);
+}
+
+
+/* Narrow desktop (992–1280) — stack Specs; clip card copy; Trenches grows with content */
+@media (min-width: 992px) and (max-width: 1280px) {
+  .ltf-specs-vault {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .ltf-specs-vault-sticky {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+    top: auto !important;
+    padding-top: 96px !important;
+    padding-bottom: 64px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+    align-items: stretch !important;
+  }
+  .ltf-vault-cage,
+  .ltf-vault-cage.ltf-cage,
+  .ltf-vault-cage.ltf-split-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 32px !important;
+    align-items: stretch !important;
+  }
+  .ltf-specs-vault-cards,
+  .ltf-specs-vault-cards.ltf-split-asset {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 32px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    position: relative !important;
+    overflow: visible !important;
+  }
+  .ltf-spec-card,
+  .ltf-spec-card.ltf-spec-card-01,
+  .ltf-spec-card.ltf-spec-card-02,
+  .ltf-spec-card.ltf-spec-card-03,
+  .ltf-spec-card.ltf-spec-card-04 {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 280px !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 36px 40px !important;
+    overflow: hidden !important;
+    transform: none !important;
+  }
+  .ltf-spec-card .ltf-card-title {
+    font-size: clamp(1.5rem, 2.2vw, 1.85rem) !important;
+    line-height: 1.15 !important;
+  }
+  .ltf-spec-card .ltf-body-text {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: clamp(16px, 1.6vw, 18px) !important;
+    line-height: 1.35 !important;
+  }
+  .ltf-section.is-trenches {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding-top: 96px !important;
+    padding-bottom: 96px !important;
+    overflow: visible !important;
+  }
+  .ltf-section.is-trenches .ltf-section-inner.ltf-cage {
+    padding-left: clamp(2rem, 4vw, 5rem) !important;
+    padding-right: clamp(2rem, 4vw, 5rem) !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    max-width: 1400px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .ltf-section.is-trenches .ltf-split.ltf-split-2 {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    gap: clamp(20px, 3vw, 40px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+  .ltf-section.is-trenches .ltf-section-header-navy,
+  .ltf-section.is-trenches h2 {
+    font-size: clamp(2rem, 4vw, 2.75rem) !important;
+    line-height: 1.08 !important;
+  }
+  .ltf-body-text.is-trenches-body {
+    font-size: clamp(16px, 1.5vw, 18px) !important;
+    line-height: 1.4 !important;
+    padding-right: 0 !important;
+    max-width: 100% !important;
+  }
+  .ltf-stack.ltf-split-copy.is-trenches-copy {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: clamp(12px, 2vw, 28px) !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+  .ltf-section.is-trenches .ltf-authority-image-box.ltf-split-asset {
+    flex: 0 0 auto !important;
+    max-width: min(380px, 42vw) !important;
+    width: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ltf-card:hover::after,
+  .ltf-card.is-glow::after,
+  .ltf-spec-card:hover::after,
+  .ltf-spec-card.is-glow::after,
+  .ltf-upsell-list-item:hover::after,
+  .ltf-upsell-list-item.is-sweep::after {
+    animation: none !important;
+  }
+}
+
+/* Mobile — keep orange figure inside frame (no sideways scroll) */
+@media (max-width: 991px) {
+  html, body {
+    overflow-x: clip !important;
+    max-width: 100vw !important;
+  }
+
+  /*
+    Hero layout: Webflow Designer only (.ltf-hero, .hero-canvas-wrapper,
+    .ltf-hero-headline, .ltf-hero-bottom-bar, .ltf-hero-figure, combo classes).
+    Do not set position, padding, size, or alignment on hero elements here.
+  */
+  .ltf-hero { min-height: var(--ltf-hero-h, calc(100svh + 52px)) !important; }
+  .ltf-btn-gradient-wrap.is-hero-cta-wrap { bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important; }
+  .ltf-funnel-cta-threshold { white-space: nowrap !important; }
+
+
+  /* Trenches fabric — −15% + 50px vertical pad; ~40px from screen edges */
+  .ltf-authority-image-box {
+    width: min(73.1vw, 306px) !important;
+    max-width: calc(100vw - 80px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-top: 50px !important;
+    padding-bottom: 50px !important;
+  }
+
+  /* Specs & Standards — exact Crew mobile stack + full-width left copy */
+  .ltf-specs-vault {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .ltf-specs-vault-sticky {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+    top: auto !important;
+    padding-top: 75px !important;
+    padding-bottom: 50px !important;
+    padding-left: 25px !important;
+    padding-right: 25px !important;
+    align-items: stretch !important;
+  }
+  .ltf-vault-cage,
+  .ltf-vault-cage.ltf-cage,
+  .ltf-vault-cage.ltf-split-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+  }
+  .ltf-specs-vault-header,
+  .ltf-specs-vault-header.ltf-split-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 5px !important;
+    align-items: flex-start !important;
+    align-self: stretch !important;
+    text-align: left !important;
+  }
+  .ltf-specs-vault-header .ltf-section-header-navy,
+  .ltf-specs-vault-header .ltf-subheading-navy,
+  .ltf-specs-vault-header .ltf-body-text-navy {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: left !important;
+  }
+  .ltf-specs-vault-header .ltf-subheading-navy {
+    white-space: nowrap !important;
+  }
+  .ltf-specs-vault-cards,
+  .ltf-specs-vault-cards.ltf-split-asset {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 40px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .ltf-spec-card,
+  .ltf-spec-card.ltf-spec-card-01,
+  .ltf-spec-card.ltf-spec-card-02,
+  .ltf-spec-card.ltf-spec-card-03,
+  .ltf-spec-card.ltf-spec-card-04 {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    /* No forced aspect-ratio here (unlike the desktop collage tiles) — Crew's
+       mobile stack never had one either. Specs card copy runs longer than
+       Crew's (numbered, multi-word titles + full paragraphs), so pinning a
+       4:3 box clipped/overflowed the border on the longer cards. min-height
+       keeps short cards from looking skeletal; height stays content-driven. */
+    min-height: 240px !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 28px 20px !important;
+    border-style: solid !important;
+    border-width: 3px !important;
+    border-color: #e5e5e5 !important;
+    border-radius: 12px !important;
+    background-color: #00001C !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+  .ltf-spec-card .ltf-card-title {
+    font-size: clamp(1.62rem, 2.4vw, 1.98rem) !important;
+  }
+  .ltf-spec-card .ltf-body-text {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    font-size: 18px !important;
+    line-height: 1.35 !important;
+  }
+}
+
+/* Phone width — Crew's own cards tighten padding here too (Designer's small
+   breakpoint); the single ≤991px rule above pins Specs to the tablet-tier
+   28/20 padding at every mobile width, so match Crew's tighter phone-tier
+   padding here instead of leaving Specs stuck wider than Crew on phones. */
+@media (max-width: 767px) {
+  .ltf-spec-card,
+  .ltf-spec-card.ltf-spec-card-01,
+  .ltf-spec-card.ltf-spec-card-02,
+  .ltf-spec-card.ltf-spec-card-03,
+  .ltf-spec-card.ltf-spec-card-04 {
+    padding: 24px 16px !important;
+  }
+}
+
+@media (max-width: 991px) {
+  /*
+    Beyond the Gear — mobile: same 75px H1 section pad as other sections.
+    NO fixed 100vh (was clipping H1 + CTA). List gets 50px top/bottom air.
+  */
+  .ltf-upsell {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 75px !important;
+    padding-bottom: 75px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+  }
+  .ltf-upsell .ltf-upsell-inner.ltf-cage,
+  .ltf-upsell .ltf-upsell-inner {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 25px !important;
+    padding-right: 25px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+  .ltf-upsell .ltf-section-head,
+  .ltf-upsell .ltf-section-header {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+  .ltf-upsell-list {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 50px !important;
+    margin-bottom: 50px !important;
+  }
+  .ltf-upsell-list-item {
+    display: flex !important;
+    align-items: center !important;
+    font-size: 19.2px !important; /* 24px −20% — fit 2 lines on phone */
+    line-height: 1.22 !important;
+    padding-top: 18px !important;
+    padding-bottom: 18px !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+  .ltf-upsell-list-item::before {
+    content: '▪' !important;
+    color: #0B8050 !important;
+    display: inline-block !important;
+    font-size: 22px !important;
+    margin-right: 12px !important;
+  }
+  .ltf-upsell-list-item.is-sweep::before,
+  .ltf-upsell-list-item:active::before {
+    color: #7040C0 !important;
+  }
+  .ltf-section-cta.is-beyond-mobile {
+    display: flex !important;
+    width: 100% !important;
+    margin-top: 40px !important;
+    margin-bottom: 20px !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+}
+</style>

@@ -9,24 +9,12 @@
  * The effect body is left as the original IIFE so its tuning stays untouched;
  * the wrapper below only exposes init() to the bundle entry point instead of
  * self-booting on load.
- *
- * Scheduling runs through the shared ticker (see core/ticker.js) instead of a
- * private rAF + scroll listener — one frame loop for the whole page, and no
- * scroll-driven layout reads outside of it.
  */
-
-import { onFrame } from '../core/ticker.js';
 
 let bindAll = null;
 
-/** Teardown fns for sections where slam bound then viewport narrowed. */
-const sectionTeardowns = new WeakMap();
-let resizeGuardBound = false;
-
 (function () {
   'use strict';
-
-  var SLAM_NARROW = window.matchMedia('(max-width: 1279px)');
 
   var C = {
     teal: [42, 170, 184],
@@ -176,25 +164,19 @@ let resizeGuardBound = false;
     }
   }
 
-  /* Returns the size we just wrote so callers never have to read it back
-     (layer.wrap.clientWidth/Height) — reading layout back right after writing
-     inline left/top/width/height forces a synchronous reflow. With 4 cards x
-     2 canvas layers running every animation frame, that reflow was happening
-     up to 8x per frame and is the main source of the scroll/hover jank. */
   function syncLayerToCard(host, layer, card, pad) {
     var hr = host.getBoundingClientRect();
     var r = card.getBoundingClientRect();
     var p = pad || 0;
-    var w = r.width + p * 2;
-    var h = r.height + p * 2;
     layer.wrap.style.left = r.left - hr.left - p + 'px';
     layer.wrap.style.top = r.top - hr.top - p + 'px';
-    layer.wrap.style.width = w + 'px';
-    layer.wrap.style.height = h + 'px';
-    return { w: w, h: h };
+    layer.wrap.style.width = r.width + p * 2 + 'px';
+    layer.wrap.style.height = r.height + p * 2 + 'px';
   }
 
-  function resizeLayer(layer, w, h) {
+  function resizeLayer(layer) {
+    var w = layer.wrap.clientWidth;
+    var h = layer.wrap.clientHeight;
     if (w < 2 || h < 2) return false;
     if (layer.cssW === w && layer.cssH === h) return true;
     layer.canvas.width = w;
@@ -205,17 +187,15 @@ let resizeGuardBound = false;
     return true;
   }
 
-  /* `m` is the card's cached { r, bw } metrics — measured once per card (at
-     bind + on resize) instead of via getComputedStyle every animation frame. */
-  function cardDrawBox(layer, pad, m) {
+  function cardDrawBox(layer, card, pad) {
     var p = pad || 0;
     return {
       x: p,
       y: p,
       w: layer.cssW - p * 2,
       h: layer.cssH - p * 2,
-      r: m.r,
-      bw: m.bw,
+      r: cardRadius(card),
+      bw: cardBorderW(card),
     };
   }
 
@@ -382,16 +362,6 @@ let resizeGuardBound = false;
     }
     prepCards(cards, fx);
 
-    /* Border radius/width per card, read once instead of via getComputedStyle
-       every animation frame (they don't change without a resize). */
-    var metrics = [];
-    function measureMetrics() {
-      for (i = 0; i < cards.length; i++) {
-        metrics[i] = { r: cardRadius(cards[i]), bw: cardBorderW(cards[i]) };
-      }
-    }
-    measureMetrics();
-
     var state = {
       target: 0,
       prevTarget: 0,
@@ -401,15 +371,14 @@ let resizeGuardBound = false;
       scrollSweep: {},
       idleSweep: {},
       cardSettledAt: {},
+      lastT: 0,
     };
 
     function remeasure() {
       prepHost(cardsHost, sticky);
-      measureMetrics();
       for (i = 0; i < cards.length; i++) {
         if (BEATS[i] && beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
-      sampleTarget();
     }
 
     function sampleTarget() {
@@ -420,21 +389,18 @@ let resizeGuardBound = false;
       }
     }
 
-    function paintFx(fxItem, card, m, scrollSweep, idleSweep, scrollAlpha, idleAlpha, idleDrift) {
+    function paintFx(fxItem, card, scrollSweep, idleSweep, scrollAlpha, idleAlpha, idleDrift) {
     var showScroll = scrollAlpha > 0.02;
     var showIdle = idleAlpha > 0.02;
 
+    syncLayerToCard(cardsHost, fxItem.gas, card, GAS_PAD);
+    syncLayerToCard(cardsHost, fxItem.ring, card);
+
     if (!showScroll && !showIdle) {
-      /* Nothing to draw — skip the getBoundingClientRect + style writes too,
-         not just the canvas draw. Position resyncs the moment this card has
-         something to show again (next call, before any draw happens). */
       if (fxItem.gas.cssW) fxItem.gas.ctx.clearRect(0, 0, fxItem.gas.cssW, fxItem.gas.cssH);
       if (fxItem.ring.cssW) fxItem.ring.ctx.clearRect(0, 0, fxItem.ring.cssW, fxItem.ring.cssH);
       return;
     }
-
-    var gasDims = syncLayerToCard(cardsHost, fxItem.gas, card, GAS_PAD);
-    var ringDims = syncLayerToCard(cardsHost, fxItem.ring, card);
 
     var gasScroll = clamp(scrollSweep - GAS_DELAY, 0, 1);
     var gasIdle = clamp(idleSweep - GAS_DELAY, 0, 1);
@@ -442,14 +408,14 @@ let resizeGuardBound = false;
     var peri = 1;
     var idleOffset = idleDrift;
 
-    if (resizeLayer(fxItem.ring, ringDims.w, ringDims.h)) {
-      box = cardDrawBox(fxItem.ring, 0, m);
+    if (resizeLayer(fxItem.ring)) {
+      box = cardDrawBox(fxItem.ring, card);
       peri = borderMetrics(box, RING_W).peri || 1;
       idleOffset = idleDrift * peri;
     }
 
-    if (resizeLayer(fxItem.gas, gasDims.w, gasDims.h)) {
-      box = cardDrawBox(fxItem.gas, GAS_PAD, m);
+    if (resizeLayer(fxItem.gas)) {
+      box = cardDrawBox(fxItem.gas, card, GAS_PAD);
       var gctx = fxItem.gas.ctx;
       gctx.clearRect(0, 0, fxItem.gas.cssW, fxItem.gas.cssH);
       if (showScroll && gasScroll > 0.02) drawGasBloom(gctx, box, gasScroll, scrollAlpha, 0);
@@ -457,7 +423,7 @@ let resizeGuardBound = false;
     }
 
     if (fxItem.ring.cssW) {
-      box = cardDrawBox(fxItem.ring, 0, m);
+      box = cardDrawBox(fxItem.ring, card);
       var rctx = fxItem.ring.ctx;
       rctx.clearRect(0, 0, fxItem.ring.cssW, fxItem.ring.cssH);
       if (showScroll && scrollSweep > 0.02 && scrollSweep < 0.995) {
@@ -469,7 +435,14 @@ let resizeGuardBound = false;
     }
   }
 
-    function frame(dt, now) {
+    function frame(now) {
+      if (!state.active) {
+        state.raf = 0;
+        return;
+      }
+      if (!state.lastT) state.lastT = now;
+      state.lastT = now;
+
       sampleTarget();
       if (state.target < RESET_AT) {
         state.scrollSweep = {};
@@ -506,7 +479,6 @@ let resizeGuardBound = false;
         paintFx(
           fx[i],
           cards[i],
-          metrics[i],
           state.scrollSweep[key],
           state.idleSweep[key],
           baseAlpha * state.syncBlend,
@@ -516,10 +488,24 @@ let resizeGuardBound = false;
       }
 
       section.style.setProperty('--ltf-vault-progress', state.target.toFixed(4));
+      state.raf = state.active ? requestAnimationFrame(frame) : 0;
     }
 
-    /* Resize doesn't move scroll progress, but card/travel geometry may have
-       changed — force the canvases to re-measure on their next paint. */
+    /* Freeze the vault canvases whenever the section is offscreen. */
+    function syncActive() {
+      var shouldRun = state.inView && !document.hidden;
+      if (shouldRun === state.active) return;
+      state.active = shouldRun;
+      if (shouldRun) {
+        state.lastT = 0;
+        state.raf = requestAnimationFrame(frame);
+      } else if (state.raf) {
+        cancelAnimationFrame(state.raf);
+        state.raf = 0;
+      }
+    }
+
+    window.addEventListener('scroll', sampleTarget, { passive: true });
     window.addEventListener(
       'resize',
       function () {
@@ -531,65 +517,34 @@ let resizeGuardBound = false;
           fx[i].ring.cssW = 0;
           fx[i].ring.cssH = 0;
         }
+        sampleTarget();
       },
       { passive: true }
     );
 
     sampleTarget();
 
-    /* Shared ticker: one rAF loop for the whole page, gated by its own
-       IntersectionObserver (200px margin) and paused with the tab — replaces
-       this section's private rAF loop + scroll listener + IntersectionObserver. */
-    var stopFrame = onFrame(frame, { element: section, onEnter: remeasure });
+    state.inView = true;
+    state.active = false;
+    state.raf = 0;
 
-    function teardown() {
-      stopFrame();
-      clearFxLayers(cardsHost);
-      for (i = 0; i < cards.length; i++) {
-        cards[i].style.willChange = '';
-        cards[i].style.transition = '';
-        cards[i].style.position = '';
-        cards[i].style.zIndex = '';
-        cards[i].style.transform = '';
-        cards[i].style.backgroundClip = '';
-      }
-      cardsHost.style.position = '';
-      cardsHost.style.isolation = '';
-      cardsHost.style.overflow = '';
-      cardsHost.style.minHeight = '';
-      cardsHost.style.height = '';
-      section.style.removeProperty('--ltf-vault-progress');
-      delete section.dataset.ltfSlamBound;
-      sectionTeardowns.delete(section);
+    if (typeof IntersectionObserver === 'function') {
+      state.inView = false;
+      new IntersectionObserver(function (entries) {
+        for (var e = 0; e < entries.length; e++) {
+          state.inView = entries[e].isIntersecting;
+        }
+        syncActive();
+      }, { rootMargin: '200px' }).observe(section);
     }
 
-    sectionTeardowns.set(section, teardown);
-    ensureResizeGuard();
-  }
-
-  function ensureResizeGuard() {
-    if (resizeGuardBound) return;
-    resizeGuardBound = true;
-    window.addEventListener(
-      'resize',
-      function () {
-        if (SLAM_NARROW.matches) {
-          document
-            .querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault')
-            .forEach(function (el) {
-              var td = sectionTeardowns.get(el);
-              if (td) td();
-            });
-        } else {
-          init();
-        }
-      },
-      { passive: true }
-    );
+    document.addEventListener('visibilitychange', syncActive);
+    syncActive();
   }
 
   function init() {
-    if (SLAM_NARROW.matches) return;
+    /* Slam collage needs ≥1281px — matches Webflow large breakpoint + head CSS band. */
+    if (window.matchMedia('(max-width: 1280px)').matches) return;
 
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
     Array.prototype.forEach.call(nodes, function (el) {
