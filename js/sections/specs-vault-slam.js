@@ -154,7 +154,13 @@ let bindAll = null;
   function slamCardSize() {
     var vw = window.innerWidth || 1280;
     if (vw <= 767) return { w: 0, h: 0 };
-    var w = vw >= 1281 ? SLAM_CARD_W : Math.min(SLAM_CARD_W, Math.max(300, Math.round(vw * 0.38)));
+    /* Keep desktop card proportions; only shrink when the cards column is narrow. */
+    var col =
+      document.querySelector('.ltf-specs-vault-cards') ||
+      document.querySelector('.ltf-specs-vault-cards.ltf-split-asset');
+    var colW = col ? col.clientWidth : 0;
+    var cap = colW > 0 ? Math.min(SLAM_CARD_W, colW) : SLAM_CARD_W;
+    var w = Math.min(SLAM_CARD_W, Math.max(280, cap));
     var h = Math.round(w * (SLAM_CARD_H / SLAM_CARD_W));
     return { w: w, h: h };
   }
@@ -401,6 +407,7 @@ let bindAll = null;
     function remeasure() {
       prepHost(cardsHost, sticky);
       for (i = 0; i < cards.length; i++) {
+        applySlamCardDimensions(cards[i]);
         if (BEATS[i] && beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
     }
@@ -583,10 +590,36 @@ let bindAll = null;
   }
 
   bindAll = init;
+
+  var specsMobileMq = window.matchMedia('(max-width: 767px)');
+
+  function rebindDesktopSlam() {
+    if (specsMobileMq.matches) return;
+    var nodes = document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]');
+    Array.prototype.forEach.call(nodes, function (el) {
+      delete el.dataset.ltfSlamBound;
+    });
+    init();
+  }
+
+  if (typeof specsMobileMq.addEventListener === 'function') {
+    specsMobileMq.addEventListener('change', rebindDesktopSlam);
+  } else if (typeof specsMobileMq.addListener === 'function') {
+    specsMobileMq.addListener(rebindDesktopSlam);
+  }
 })();
 
-/** Idempotent — safe to call again after Webflow swaps DOM in. */
+/** Idempotent — safe to call again after Webflow swaps DOM or viewport crosses 767px. */
 export function init() {
+  if (bindAll) bindAll();
+}
+
+/** Force slam rebind after phone-mode cleanup (scale-up fix). */
+export function reinit() {
+  if (window.matchMedia('(max-width: 767px)').matches) return;
+  document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]').forEach(function (el) {
+    delete el.dataset.ltfSlamBound;
+  });
   if (bindAll) bindAll();
 }
 

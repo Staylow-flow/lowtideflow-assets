@@ -9,6 +9,9 @@
  *   js/hero/rock-scene.js            — own footer tag (Three + GLB)
  *   js/ui/hero-viewport.js           — own footer tag (mobile hero + funnel)
  *   js/nav.js                        — site-wide footer (non-clean-slate pages)
+ *
+ * Layout lives in Webflow Designer + page head FX CSS only.
+ * Do NOT inject layout CSS from this file — it competes with responsive styles.
  */
 
 (function () {
@@ -28,37 +31,7 @@
     ? scriptSrc.replace(/\/[^/?#]+$/, '/')
     : 'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@main/js/';
 
-  var NARROW_STYLE_ID = 'ltf-narrow-desktop-fixes';
-  var NARROW_DESKTOP_CSS =
-    '@media (min-width:992px) and (max-width:1280px){' +
-    '.ltf-section.is-trenches{height:auto!important;min-height:0!important;max-height:none!important;padding-top:96px!important;padding-bottom:96px!important;overflow:visible!important}' +
-    '.ltf-section.is-trenches .ltf-section-inner.ltf-cage{padding-left:clamp(2rem,4vw,5rem)!important;padding-right:clamp(2rem,4vw,5rem)!important;overflow:visible!important;box-sizing:border-box!important;max-width:1400px!important;margin-left:auto!important;margin-right:auto!important}' +
-    '.ltf-section.is-trenches .ltf-split.ltf-split-2{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:flex-start!important;gap:clamp(20px,3vw,40px)!important;width:100%!important;max-width:100%!important;overflow:visible!important;box-sizing:border-box!important}' +
-    '.ltf-stack.ltf-split-copy.is-trenches-copy{flex:1 1 0!important;min-width:0!important;width:auto!important;max-width:100%!important;padding-left:0!important;padding-right:clamp(12px,2vw,28px)!important;box-sizing:border-box!important;overflow:visible!important}' +
-    '.ltf-section.is-trenches .ltf-section-header-navy,.ltf-section.is-trenches h2{font-size:clamp(2rem,4vw,2.75rem)!important;line-height:1.08!important}' +
-    '.ltf-body-text.is-trenches-body{font-size:clamp(16px,1.5vw,18px)!important;line-height:1.4!important;padding-right:0!important;max-width:100%!important}' +
-    '.ltf-section.is-trenches .ltf-authority-image-box.ltf-split-asset{flex:0 0 auto!important;max-width:min(380px,42vw)!important;width:auto!important}' +
-    '}';
-
   var inits = null;
-
-  function injectNarrowDesktopFixes() {
-    if (document.getElementById(NARROW_STYLE_ID)) return;
-    var style = document.createElement('style');
-    style.id = NARROW_STYLE_ID;
-    style.textContent = NARROW_DESKTOP_CSS;
-    document.head.appendChild(style);
-  }
-
-  function wrapSpecsTitle() {
-    var h = document.querySelector(
-      '.ltf-specs-vault-header .ltf-section-header-navy, .ltf-specs-vault-header h2',
-    );
-    if (!h || h.dataset.ltfWrap === '1') return;
-    if (!/STANDARDS/i.test(h.textContent || '')) return;
-    h.innerHTML = h.innerHTML.replace(/(&amp;|&)\s*STANDARDS/i, '$1<br>STANDARDS');
-    h.dataset.ltfWrap = '1';
-  }
 
   function safeRun(label, fn) {
     if (typeof fn !== 'function') return;
@@ -70,8 +43,6 @@
   }
 
   function boot() {
-    safeRun('narrow-desktop', injectNarrowDesktopFixes);
-    safeRun('specs-title', wrapSpecsTitle);
     if (!inits) return;
     safeRun('nav', inits.initNav);
     safeRun('btn-gradient', inits.initBtn);
@@ -81,7 +52,12 @@
     safeRun('magnifier', inits.initMag);
   }
 
-  window.LTF = { boot: boot };
+  window.LTF = {
+    boot: boot,
+    reinitVault: function () {
+      safeRun('specs-vault-reinit', inits && inits.reinitVault);
+    },
+  };
 
   (async function load() {
     try {
@@ -99,6 +75,7 @@
         initCrew: modules[2].init,
         initUpsell: modules[3].init,
         initVault: modules[4].init,
+        reinitVault: modules[4].reinit,
         initMag: modules[5].init,
       };
       boot();

@@ -1,17 +1,19 @@
 /**
- * Lowtideflow — The Crew cards scroll-dock + Specs mobile Crew match.
+ * Lowtideflow — The Crew cards scroll-dock + Specs mobile stack (≤767 only).
  *
  * Each card tracks its own position in the viewport so the bottom row
  * still slides in instead of appearing already docked. Hover glow lives
  * in CSS; this file only writes translate so type never scales.
  *
- * On mobile (≤991): Specs vault is restacked as Crew-style boxes — no
+ * On phone (≤767): Specs vault is restacked as Crew-style boxes — no
  * slam travel, no sticky scroll track transforms. Glow only.
+ * Tablet (768–991) keeps desktop slam — handled by specs-vault-slam.js.
  */
 
 import { onFrame, reducedMotion } from '../core/ticker.js';
 
 const DESKTOP = '(min-width: 992px)';
+const SPECS_MOBILE = '(max-width: 767px)';
 /* Card top at this fraction of the viewport → fully off-canvas. */
 const START_AT = 1.05;
 /* Card top at this fraction → fully docked. Lower = more travel on-screen. */
@@ -72,12 +74,19 @@ function bindGlow(card) {
   card.addEventListener('pointercancel', hideNow);
 }
 
-/** Mobile Specs: kill slam leftovers, stack like Crew, glow only. */
-function normalizeSpecsMobile() {
-  const mobile = matchMedia('(max-width: 991px)');
+/** Phone-only Specs: kill slam leftovers, stack like Crew, glow only. */
+function normalizeSpecsMobile(reinitVault) {
+  const mobile = matchMedia(SPECS_MOBILE);
   const vaults = document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]');
 
+  function clearInline(el, props) {
+    if (!el) return;
+    for (const p of props) el.style.removeProperty(p);
+  }
+
   function apply() {
+    let leavingMobile = false;
+
     for (const vault of vaults) {
       const host =
         vault.querySelector('.ltf-specs-vault-cards') ||
@@ -98,22 +107,34 @@ function normalizeSpecsMobile() {
         for (const card of cards) {
           card.style.transform = 'none';
           card.style.willChange = 'auto';
-          card.style.transition = '';
-          card.style.position = '';
-          card.style.top = '';
-          card.style.left = '';
-          card.style.zIndex = '';
+          clearInline(card, [
+            'transition',
+            'position',
+            'top',
+            'left',
+            'right',
+            'bottom',
+            'z-index',
+            'width',
+            'max-width',
+            'height',
+            'min-height',
+            'max-height',
+          ]);
           bindGlow(card);
         }
+        delete vault.dataset.ltfSlamBound;
       } else {
-        vault.style.height = '';
-        vault.style.minHeight = '';
-        if (host) {
-          host.style.height = '';
-          host.style.minHeight = '';
-          host.style.overflow = '';
-        }
+        clearInline(vault, ['height', 'min-height']);
+        clearInline(host, ['height', 'min-height', 'overflow']);
+        leavingMobile = true;
       }
+    }
+
+    if (!mobile.matches && leavingMobile && typeof reinitVault === 'function') {
+      reinitVault();
+    } else if (!mobile.matches && leavingMobile && window.LTF && typeof window.LTF.reinitVault === 'function') {
+      window.LTF.reinitVault();
     }
   }
 
