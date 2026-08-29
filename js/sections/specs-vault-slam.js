@@ -151,12 +151,22 @@ let bindAll = null;
   var SLAM_CARD_W = 480;
   var SLAM_CARD_H = 340;
 
+  function slamCardSize() {
+    var vw = window.innerWidth || 1280;
+    if (vw <= 767) return { w: 0, h: 0 };
+    var w = vw >= 1281 ? SLAM_CARD_W : Math.min(SLAM_CARD_W, Math.max(300, Math.round(vw * 0.38)));
+    var h = Math.round(w * (SLAM_CARD_H / SLAM_CARD_W));
+    return { w: w, h: h };
+  }
+
   function applySlamCardDimensions(card) {
-    card.style.width = SLAM_CARD_W + 'px';
-    card.style.maxWidth = SLAM_CARD_W + 'px';
-    card.style.height = SLAM_CARD_H + 'px';
-    card.style.minHeight = SLAM_CARD_H + 'px';
-    card.style.maxHeight = SLAM_CARD_H + 'px';
+    var size = slamCardSize();
+    if (!size.w) return;
+    card.style.width = size.w + 'px';
+    card.style.maxWidth = size.w + 'px';
+    card.style.height = size.h + 'px';
+    card.style.minHeight = size.h + 'px';
+    card.style.maxHeight = size.h + 'px';
     card.style.overflow = 'hidden';
     card.style.boxSizing = 'border-box';
   }
@@ -557,8 +567,8 @@ let bindAll = null;
   }
 
   function init() {
-    /* Slam collage needs ≥1281px — matches Webflow large breakpoint + head CSS band. */
-    if (window.matchMedia('(max-width: 1280px)').matches) return;
+    /* Slam collage needs ≥768px — mobile stack is Designer + head ≤767 only. */
+    if (window.matchMedia('(max-width: 767px)').matches) return;
 
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
     Array.prototype.forEach.call(nodes, function (el) {

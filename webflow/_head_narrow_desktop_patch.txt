@@ -338,81 +338,8 @@
 
 /* Desktop slam stack (≥1281) — layout via specs-vault-slam.js inline styles, not head */
 
-/* Narrow desktop (992–1280) — stack Specs; clip card copy; Trenches grows with content */
+/* Narrow desktop (992–1280) — Trenches grows with content; Specs layout = Designer only */
 @media (min-width: 992px) and (max-width: 1280px) {
-  .ltf-specs-vault {
-    height: auto !important;
-    min-height: 0 !important;
-  }
-  .ltf-specs-vault-sticky {
-    position: relative !important;
-    height: auto !important;
-    min-height: 0 !important;
-    top: auto !important;
-    padding-top: 96px !important;
-    padding-bottom: 64px !important;
-    padding-left: 40px !important;
-    padding-right: 40px !important;
-    align-items: stretch !important;
-  }
-  .ltf-vault-cage,
-  .ltf-vault-cage.ltf-cage,
-  .ltf-vault-cage.ltf-split-2 {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    gap: 32px !important;
-    align-items: stretch !important;
-  }
-  .ltf-specs-vault-cards,
-  .ltf-specs-vault-cards.ltf-split-asset {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 32px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    position: relative !important;
-    overflow: visible !important;
-  }
-  .ltf-spec-card,
-  .ltf-spec-card.ltf-spec-card-01,
-  .ltf-spec-card.ltf-spec-card-02,
-  .ltf-spec-card.ltf-spec-card-03,
-  .ltf-spec-card.ltf-spec-card-04 {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    z-index: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 280px !important;
-    max-height: none !important;
-    margin: 0 !important;
-    padding: 36px 40px !important;
-    overflow: hidden !important;
-    transform: none !important;
-  }
-  .ltf-spec-card .ltf-card-title {
-    font-size: clamp(1.5rem, 2.2vw, 1.85rem) !important;
-    line-height: 1.15 !important;
-  }
-  .ltf-spec-card .ltf-body-text {
-    width: 100% !important;
-    max-width: 100% !important;
-    font-size: clamp(16px, 1.6vw, 18px) !important;
-    line-height: 1.35 !important;
-  }
   .ltf-section.is-trenches {
     height: auto !important;
     min-height: 0 !important;
@@ -506,8 +433,10 @@
     padding-top: 50px !important;
     padding-bottom: 50px !important;
   }
+}
 
-  /* Specs & Standards — exact Crew mobile stack + full-width left copy */
+/* Specs & Standards — mobile stack (≤767); tablet+ keeps desktop L/R grid + scroll slam */
+@media (max-width: 767px) {
   .ltf-specs-vault {
     height: auto !important;
     min-height: 0 !important;
@@ -588,15 +517,10 @@
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
-    /* No forced aspect-ratio here (unlike the desktop collage tiles) — Crew's
-       mobile stack never had one either. Specs card copy runs longer than
-       Crew's (numbered, multi-word titles + full paragraphs), so pinning a
-       4:3 box clipped/overflowed the border on the longer cards. min-height
-       keeps short cards from looking skeletal; height stays content-driven. */
     min-height: 240px !important;
     max-height: none !important;
     margin: 0 !important;
-    padding: 28px 20px !important;
+    padding: 24px 16px !important;
     border-style: solid !important;
     border-width: 3px !important;
     border-color: #e5e5e5 !important;
@@ -616,20 +540,6 @@
     text-align: left !important;
     font-size: 18px !important;
     line-height: 1.35 !important;
-  }
-}
-
-/* Phone width — Crew's own cards tighten padding here too (Designer's small
-   breakpoint); the single ≤991px rule above pins Specs to the tablet-tier
-   28/20 padding at every mobile width, so match Crew's tighter phone-tier
-   padding here instead of leaving Specs stuck wider than Crew on phones. */
-@media (max-width: 767px) {
-  .ltf-spec-card,
-  .ltf-spec-card.ltf-spec-card-01,
-  .ltf-spec-card.ltf-spec-card-02,
-  .ltf-spec-card.ltf-spec-card-03,
-  .ltf-spec-card.ltf-spec-card-04 {
-    padding: 24px 16px !important;
   }
 }
 
