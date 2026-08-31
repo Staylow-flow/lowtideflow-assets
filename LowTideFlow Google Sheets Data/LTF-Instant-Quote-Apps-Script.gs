@@ -84,6 +84,13 @@ function doPost(e) {
 
     sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
 
+    // Render the boolean status columns as real checkboxes instead of TRUE/FALSE text.
+    // T (20) Auto-Email Sent?, V (22) Email Confirmation Sent.
+    try {
+      sheet.getRange(targetRow, 20).insertCheckboxes();
+      sheet.getRange(targetRow, 22).insertCheckboxes();
+    } catch (cbErr) {}
+
     try {
       if (!p.email) {
         sheet.getRange(targetRow, 23).setValue('SKIPPED: no email in payload');
