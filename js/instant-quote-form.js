@@ -378,7 +378,7 @@
     if (!input) return null;
     var prev = input.previousElementSibling;
     while (prev) {
-      if (prev.id === 'iq-email-typo-hint' || prev.id === 'suite-number') {
+      if (prev.id === 'iq-email-typo-flag' || prev.id === 'suite-number') {
         prev = prev.previousElementSibling;
         continue;
       }
