@@ -402,7 +402,7 @@
     var stalePhoneRow = form.querySelector('.iq-form-phone-row');
     if (stalePhoneRow) {
       while (stalePhoneRow.firstChild) {
-        form.insertBefore(stalePhoneRow.firstChild, stalePhoneRow);
+        stalePhoneRow.parentNode.insertBefore(stalePhoneRow.firstChild, stalePhoneRow);
       }
       stalePhoneRow.remove();
     }
@@ -455,11 +455,21 @@
         notesLabel.classList.add('iq-form-notes-label');
       }
       if (submit) {
+        /* insertBefore needs a reference node that is a direct child of form.
+           Climb from the submit button to whichever ancestor sits directly
+           under the form so nested CTA wrappers can't throw NotFoundError. */
         var submitAnchor = submit.closest('.iq-orbit-wrap') || submit;
-        if (notesLabel && notesLabel.parentNode === form) {
-          form.insertBefore(notesLabel, submitAnchor);
+        while (submitAnchor && submitAnchor.parentNode && submitAnchor.parentNode !== form) {
+          submitAnchor = submitAnchor.parentNode;
         }
-        form.insertBefore(notes, submitAnchor);
+        if (submitAnchor && submitAnchor.parentNode === form) {
+          if (notesLabel && notesLabel.parentNode === form) {
+            form.insertBefore(notesLabel, submitAnchor);
+          }
+          if (notes.parentNode === form) {
+            form.insertBefore(notes, submitAnchor);
+          }
+        }
       }
     }
 
