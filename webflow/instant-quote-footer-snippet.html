@@ -1,18 +1,32 @@
 <!--
-  Instant Quote — Page Footer scripts
+  Instant Quote — Page Footer (Before </body>)
   /instant-quote → Page Settings → Custom Code → Before </body>
 
-  V2 pin (2026-08-21): @ebd9bac via jsDelivr (phone ID-grid + 50/50 40px + total lock)
+  V2 pin (2026-08-31): @4bf8156 via jsDelivr
+  (base64 artwork upload to Drive + email typo flag + layout-reorder hardening)
+  Prev pin: @ebd9bac
 
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-pricing-data.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-pricing.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-form.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-ui.js"></script>
-  + artwork modal HTML (webflow/instant-quote-artwork-modal.html)
+  RULE: jsDelivr <script> tags + the artwork modal stay in the FOOTER (Before </body>).
+        Never move scripts to <head>. Updating the @<commit> pin + SRI here is expected.
 
-  Head CSS:
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/webflow/instant-quote-embed.css" />
-
-  window.IQ exposes getState(), calculateQuote(), recalculate(), runQuote().
-  Total display updates only via runQuote() (Calculate button).
+  Paste the block below verbatim into Before </body>. It keeps the existing artwork
+  modal markup/styling and only bumps the pinned script commit + SRI hashes.
 -->
+
+<!-- Instant Quote V2 footer modal — scripts via registered pins @4bf8156 -->
+<div class="iq-modal" id="iq-artwork-modal" role="dialog" aria-modal="true" aria-labelledby="iq-artwork-modal-title" aria-hidden="true">
+  <div class="iq-modal-backdrop" id="iq-artwork-modal-backdrop" tabindex="-1"></div>
+  <div class="iq-modal-panel">
+    <button type="button" class="iq-modal-close" id="iq-artwork-modal-close" aria-label="Close artwork guidelines">&times;</button>
+    <h2 class="iq-modal-title" id="iq-artwork-modal-title">Artwork Guidelines &amp; Policies</h2>
+    <div class="iq-modal-body">
+      <p><strong>Free Setup &amp; Prep:</strong> If you have your logo, graphics, or branding finalized and ready to print, we provide free professional type-setting, sizing optimization, and digital mockups to make sure it prints flawlessly.</p>
+      <p><strong>Custom Concept Design:</strong> Need killer, ground-up creative work or complex illustration? That is our specialty, but we don&rsquo;t work on spec. True custom apparel design requires a upfront design deposit, locked-in milestone approvals, and a strict &ldquo;pay to play&rdquo; structure. Let us know in your project brief if you need a creative consult.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@4bf8156/js/instant-quote-pricing-data.js" integrity="sha384-nClLl3aDSbkd6GA0se6O5ea1jkOh9vpswvvJpD+oa91bgUHXyzFfIQrMcfaAJ5iB" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@4bf8156/js/instant-quote-pricing.js" integrity="sha384-cJxCtlJR2yci7+rH4zVibtBuXPiS2lyMBEO1qhWGdGQLWuDhtAFv8DjFFjQBQnhT" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@4bf8156/js/instant-quote-form.js" integrity="sha384-dNwuwJgBroZBnbeu7VP5Q69dwfkAWnsfeZHYBy6d7XkMcxgf+pd2OQ1vVKlwcVcs" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@4bf8156/js/instant-quote-ui.js" integrity="sha384-i+H2vnVuVgVONec214+wiE9o3DwfFxVZJaZj51hLYVQONBOB7DhIGXwyd0z725x1" crossorigin="anonymous"></script>
