@@ -17,7 +17,7 @@
 var CONFIG = {
   SHEET_NAME: 'Leads',
   /** Parent Drive folder for per-submission artwork folders */
-  DRIVE_FOLDER_ID: 'REPLACE_WITH_ARTWORK_PARENT_FOLDER_ID',
+  DRIVE_FOLDER_ID: '1gk5zLqtsMmy1FE67omboNQSlDBcxgeR3',
   /** First Submission ID number if sheet is empty */
   ID_START: 1001,
   ID_PREFIX: 'LTF-',
