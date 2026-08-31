@@ -51,6 +51,9 @@ function doPost(e) {
     if (p._parse_error) {
       internalNotes = 'PARSE: ' + p._parse_error + (p._raw_preview ? ' | ' + p._raw_preview : '');
     }
+    if (p.art_note) {
+      internalNotes = (internalNotes ? internalNotes + ' | ' : '') + p.art_note;
+    }
 
     var rowData = [
       jobId, // A Order ID
@@ -222,22 +225,25 @@ function uploadArtwork_(e, jobId, p) {
   if (!CONFIG.DRIVE_FOLDER_ID || CONFIG.DRIVE_FOLDER_ID.indexOf('REPLACE') === 0) {
     return '';
   }
-  if (!e || !e.files) return '';
 
-  var keys = Object.keys(e.files).filter(function (k) {
-    return k.indexOf('artwork_') === 0;
-  });
-  if (!keys.length) return '';
+  var blobs = collectArtworkBlobs_(e, p);
+  if (!blobs.length) return '';
 
   var parent = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
-  var safeName = String(p.client_name || 'Client')
-    .replace(/[^\w\s\-]/g, '')
-    .trim()
-    .slice(0, 40);
-  var folder = parent.createFolder(jobId + '_' + safeName + '_' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'));
+  var safeName =
+    String(p.client_name || 'Client')
+      .replace(/[^\w\s\-]/g, '')
+      .trim()
+      .slice(0, 40) || 'Client';
+  var folder = parent.createFolder(
+    jobId +
+      '_' +
+      safeName +
+      '_' +
+      Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')
+  );
 
-  keys.forEach(function (key) {
-    var blob = e.files[key];
+  blobs.forEach(function (blob) {
     if (blob) folder.createFile(blob);
   });
 
@@ -246,6 +252,47 @@ function uploadArtwork_(e, jobId, p) {
   } catch (shareErr) {}
 
   return folder.getUrl();
+}
+
+/**
+ * Build Drive blobs from the submission. Preferred path: base64 files carried in
+ * the JSON payload (p.art_files = [{ name, mimeType, data }]). Legacy fallback:
+ * raw multipart parts (e.files.artwork_N) from older form builds.
+ */
+function collectArtworkBlobs_(e, p) {
+  var blobs = [];
+
+  var arr = (p && p.art_files) || [];
+  if (arr && arr.length) {
+    for (var i = 0; i < arr.length; i++) {
+      var f = arr[i];
+      if (!f || !f.data) continue;
+      try {
+        var bytes = Utilities.base64Decode(f.data);
+        var blob = Utilities.newBlob(
+          bytes,
+          f.mimeType || 'application/octet-stream',
+          f.name || 'artwork_' + (i + 1)
+        );
+        blobs.push(blob);
+      } catch (decErr) {
+        // Skip a single bad file rather than failing the whole upload.
+      }
+    }
+    if (blobs.length) return blobs;
+  }
+
+  if (e && e.files) {
+    var keys = Object.keys(e.files).filter(function (k) {
+      return k.indexOf('artwork_') === 0;
+    });
+    keys.forEach(function (key) {
+      var b = e.files[key];
+      if (b) blobs.push(b);
+    });
+  }
+
+  return blobs;
 }
 
 function sendConfirmation_(p, jobId) {

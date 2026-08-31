@@ -27,17 +27,53 @@
     quarterzips: '1/4 Zips'
   };
 
+  /** Curated fast-path corrections (exact bad domain → good domain). */
   var EMAIL_TYPOS = {
     'gmial.com': 'gmail.com',
     'gmal.com': 'gmail.com',
     'gamil.com': 'gmail.com',
+    'gmail.co': 'gmail.com',
+    'gmail.con': 'gmail.com',
+    'gmail.cm': 'gmail.com',
+    'gmaill.com': 'gmail.com',
     'hotmial.com': 'hotmail.com',
     'hotmal.com': 'hotmail.com',
+    'hotmail.co': 'hotmail.com',
+    'hotmail.con': 'hotmail.com',
     'yaho.com': 'yahoo.com',
     'yahooo.com': 'yahoo.com',
+    'yahoo.co': 'yahoo.com',
+    'yahoo.con': 'yahoo.com',
     'outlok.com': 'outlook.com',
-    'outllok.com': 'outlook.com'
+    'outllok.com': 'outlook.com',
+    'outlook.co': 'outlook.com',
+    'outlook.con': 'outlook.com',
+    'iclould.com': 'icloud.com',
+    'icloud.co': 'icloud.com'
   };
+
+  /**
+   * Popular consumer email domains. An address is only flagged as a possible
+   * typo when its domain is a *near miss* of one of these (shares the first two
+   * letters and is 1–2 edits away). Clearly custom domains — e.g.
+   * "you@construction.com" — never match and are left alone.
+   */
+  var POPULAR_DOMAINS = [
+    'gmail.com',
+    'yahoo.com',
+    'hotmail.com',
+    'outlook.com',
+    'icloud.com',
+    'aol.com',
+    'live.com',
+    'msn.com',
+    'comcast.net',
+    'me.com',
+    'ymail.com',
+    'proton.me',
+    'protonmail.com',
+    'gmx.com'
+  ];
 
   var pageLoadedAt = Date.now();
 
@@ -85,6 +121,78 @@
     if (!input || !input.files) return [];
     return Array.prototype.map.call(input.files, function (file) {
       return file.name;
+    });
+  }
+
+  /* Artwork transfer limits (Apps Script POST bodies cap around ~50 MB). */
+  var ART_MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB per file
+  var ART_MAX_TOTAL_BYTES = 40 * 1024 * 1024; // 40 MB per submission
+
+  /**
+   * Read one File as base64 (no data-URL prefix) so it can ride inside the JSON
+   * payload. Apps Script doPost cannot reliably parse raw multipart binaries, so
+   * we hand it a base64 string it can decode with Utilities.base64Decode.
+   */
+  function readFileAsBase64(file) {
+    return new Promise(function (resolve) {
+      try {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var result = String(reader.result || '');
+          var comma = result.indexOf(',');
+          resolve({
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+            data: comma >= 0 ? result.slice(comma + 1) : result
+          });
+        };
+        reader.onerror = function () {
+          resolve(null);
+        };
+        reader.readAsDataURL(file);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+
+  /**
+   * Encode every selected artwork file to base64, skipping anything that would
+   * blow past the per-file / per-submission limits. Resolves to
+   * { files: [...], skipped: [names], oversized: bool }.
+   */
+  function readArtworkFilesBase64() {
+    var input = document.getElementById('iq-form-artwork-file');
+    if (!input || !input.files || !input.files.length) {
+      return Promise.resolve({ files: [], skipped: [], oversized: false });
+    }
+
+    var all = Array.prototype.slice.call(input.files);
+    var skipped = [];
+    var keep = all.filter(function (file) {
+      if (file.size > ART_MAX_FILE_BYTES) {
+        skipped.push(file.name);
+        return false;
+      }
+      return true;
+    });
+
+    return Promise.all(keep.map(readFileAsBase64)).then(function (encoded) {
+      var files = [];
+      var total = 0;
+      var oversized = false;
+      encoded.forEach(function (entry) {
+        if (!entry || !entry.data) return;
+        total += entry.data.length;
+        if (total > ART_MAX_TOTAL_BYTES) {
+          oversized = true;
+          skipped.push(entry.name);
+          return;
+        }
+        files.push(entry);
+      });
+      return { files: files, skipped: skipped, oversized: oversized };
     });
   }
 
@@ -457,57 +565,171 @@
     });
   }
 
+  /** Levenshtein edit distance (iterative, two-row). */
+  function editDistance(a, b) {
+    a = String(a);
+    b = String(b);
+    var m = a.length;
+    var n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    var prev = new Array(n + 1);
+    var curr = new Array(n + 1);
+    var i, j;
+    for (j = 0; j <= n; j++) prev[j] = j;
+    for (i = 1; i <= m; i++) {
+      curr[0] = i;
+      for (j = 1; j <= n; j++) {
+        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+      }
+      for (j = 0; j <= n; j++) prev[j] = curr[j];
+    }
+    return prev[n];
+  }
+
+  /**
+   * Classify an email address:
+   *   incomplete — no usable "local@domain.tld" yet (say nothing)
+   *   exact      — domain is a known-good popular service
+   *   typo       — domain is a near miss of a popular service (offer suggestion)
+   *   custom     — a legitimate-looking custom/business domain (say nothing)
+   */
+  function analyzeEmail(email) {
+    var value = String(email || '').trim();
+    var at = value.indexOf('@');
+    if (at < 1) return { kind: 'incomplete' };
+
+    var local = value.slice(0, at);
+    var domain = value.slice(at + 1).toLowerCase();
+    if (!local || !domain || /[@\s]/.test(domain)) return { kind: 'incomplete' };
+    // Need a dot with something after it before we judge the domain.
+    if (domain.indexOf('.') < 1 || /\.$/.test(domain)) return { kind: 'incomplete' };
+
+    if (EMAIL_TYPOS[domain]) {
+      return { kind: 'typo', domain: domain, suggestion: local + '@' + EMAIL_TYPOS[domain] };
+    }
+    if (POPULAR_DOMAINS.indexOf(domain) >= 0) {
+      return { kind: 'exact', domain: domain };
+    }
+
+    var best = null;
+    var bestDist = Infinity;
+    for (var i = 0; i < POPULAR_DOMAINS.length; i++) {
+      var d = editDistance(domain, POPULAR_DOMAINS[i]);
+      if (d < bestDist) {
+        bestDist = d;
+        best = POPULAR_DOMAINS[i];
+      }
+    }
+
+    if (best && bestDist > 0 && bestDist <= 2) {
+      var samePrefix = domain.slice(0, 2) === best.slice(0, 2); // first-two-letters guard
+      var closeLength = Math.abs(domain.length - best.length) <= 2;
+      if (samePrefix && closeLength) {
+        return { kind: 'typo', domain: domain, suggestion: local + '@' + best };
+      }
+    }
+
+    return { kind: 'custom', domain: domain };
+  }
+
+  // Back-compat helper (returns corrected address or null).
   function suggestEmailFix(email) {
-    var parts = String(email || '').split('@');
-    if (parts.length !== 2) return null;
-    var local = parts[0];
-    var domain = parts[1].toLowerCase();
-    var fixed = EMAIL_TYPOS[domain];
-    if (!fixed) return null;
-    return local + '@' + fixed;
+    var res = analyzeEmail(email);
+    return res.kind === 'typo' ? res.suggestion : null;
   }
 
   function initEmailTypoCatcher() {
     var email = document.getElementById('iq-form-email');
     if (!email) return;
 
-    var hint = document.getElementById('iq-email-typo-hint');
-    if (!hint) {
-      hint = document.createElement('button');
-      hint.type = 'button';
-      hint.id = 'iq-email-typo-hint';
-      hint.hidden = true;
-      hint.setAttribute('aria-live', 'polite');
-      hint.style.cssText =
-        'margin:0;padding:0;border:0;background:transparent;color:#f87171;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;text-decoration:underline;';
-      email.insertAdjacentElement('afterend', hint);
-    }
+    var label = findFieldLabel(email);
 
-    function clearHint() {
-      hint.hidden = true;
-      hint.style.display = 'none';
-      hint.textContent = '';
-      hint.onclick = null;
-    }
-
-    email.addEventListener('blur', function () {
-      var suggestion = suggestEmailFix(email.value.trim());
-      if (!suggestion) {
-        clearHint();
-        return;
+    /* Inline flag lives on the same line as the "Email Address *" label. */
+    var flag = document.getElementById('iq-email-typo-flag');
+    if (!flag) {
+      flag = document.createElement('span');
+      flag.id = 'iq-email-typo-flag';
+      flag.className = 'iq-email-typo-flag';
+      flag.setAttribute('role', 'button');
+      flag.setAttribute('tabindex', '0');
+      flag.setAttribute('aria-live', 'polite');
+      flag.hidden = true;
+      flag.style.cssText =
+        'display:none;margin-left:8px;color:#dc2626;font-weight:700;font-size:0.9em;' +
+        'cursor:pointer;text-decoration:none;white-space:nowrap;';
+      if (label) {
+        label.appendChild(flag);
+      } else {
+        email.insertAdjacentElement('afterend', flag);
       }
-      hint.hidden = false;
-      hint.style.display = 'block';
-      hint.textContent = 'Did you mean ' + suggestion + '? (Click to fix)';
-      hint.onclick = function () {
-        email.value = suggestion;
-        clearHint();
-        email.focus();
-      };
+    }
+
+    var pending = null; // corrected address awaiting a click
+
+    function clearFlag() {
+      pending = null;
+      flag.hidden = true;
+      flag.style.display = 'none';
+      flag.textContent = '';
+      email.style.borderColor = '';
+      email.classList.remove('iq-input-typo');
+      email.removeAttribute('aria-invalid');
+    }
+
+    function showTypo(suggestion) {
+      pending = suggestion;
+      var fixedDomain = suggestion.split('@')[1];
+      /* Red asterisk + inline instruction, clickable to auto-correct. */
+      flag.textContent = '\u2731 Did you mean @' + fixedDomain + '? Tap to fix';
+      flag.hidden = false;
+      flag.style.display = 'inline';
+      email.style.borderColor = '#dc2626';
+      email.classList.add('iq-input-typo');
+      email.setAttribute('aria-invalid', 'true');
+    }
+
+    function applyFix() {
+      if (!pending) return;
+      email.value = pending;
+      clearFlag();
+      email.focus();
+    }
+
+    function evaluate() {
+      var res = analyzeEmail(email.value);
+      if (res.kind === 'typo') {
+        showTypo(res.suggestion);
+      } else {
+        clearFlag();
+      }
+    }
+
+    flag.addEventListener('click', function (event) {
+      event.preventDefault();
+      applyFix();
+    });
+    flag.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        applyFix();
+      }
     });
 
-    email.addEventListener('input', clearHint);
-    clearHint();
+    email.addEventListener('blur', evaluate);
+    email.addEventListener('input', function () {
+      var v = email.value;
+      var at = v.indexOf('@');
+      // Live feedback only once a full-looking domain (has a dot) is typed.
+      if (at >= 1 && v.slice(at + 1).indexOf('.') >= 1) {
+        evaluate();
+      } else {
+        clearFlag();
+      }
+    });
+
+    clearFlag();
   }
 
   function setRequiredAttrs() {
@@ -576,34 +798,19 @@
     );
   }
 
-  function submitToWebhook(payload, files) {
+  function submitToWebhook(payload) {
     var config = global.IQ.FORM_CONFIG || {};
     if (!config.webhookUrl) return Promise.reject(new Error('Missing webhook'));
 
+    // Single JSON body (artwork rides along as base64 in payload.sheet.art_files).
+    // text/plain keeps this a CORS-safe "simple" request (no preflight) and
+    // lands in Apps Script as e.postData.contents for JSON.parse.
     var sheetJson = JSON.stringify(payload.sheet || payload);
-    var hasFiles = !!(files && files.length);
-    var body;
-    var headers;
-
-    if (hasFiles) {
-      // Multipart for artwork — Apps Script reads e.parameter.payload + e.files
-      body = new FormData();
-      body.append('payload', sheetJson);
-      Array.prototype.forEach.call(files, function (file, index) {
-        body.append('artwork_' + index, file, file.name);
-      });
-      headers = undefined;
-    } else {
-      // urlencoded is the most reliable path for Apps Script e.parameter.payload
-      body = new URLSearchParams();
-      body.append('payload', sheetJson);
-      headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' };
-    }
 
     return fetch(config.webhookUrl, {
       method: 'POST',
-      body: body,
-      headers: headers,
+      body: sheetJson,
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       redirect: 'follow',
       mode: 'cors',
       credentials: 'omit'
@@ -679,7 +886,6 @@
       }
 
       var payload = buildQuotePayload(snapshot.state, snapshot.result);
-      var files = document.getElementById('iq-form-artwork-file');
 
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -687,7 +893,24 @@
       }
       setFormStatus('Submitting project brief…', '');
 
-      submitToWebhook(payload, files && files.files)
+      readArtworkFilesBase64()
+        .then(function (art) {
+          payload.sheet = payload.sheet || {};
+          if (art.files.length) {
+            payload.sheet.art_files = art.files;
+            payload.sheet.art_file_names = art.files.map(function (f) {
+              return f.name;
+            });
+            payload.artworkFileNames = payload.sheet.art_file_names;
+          }
+          if (art.skipped.length) {
+            payload.sheet.art_note =
+              'Some files were too large to auto-upload (' +
+              art.skipped.join(', ') +
+              '). Client will send them separately.';
+          }
+          return submitToWebhook(payload);
+        })
         .then(function () {
           setFormStatus(
             (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.successMessage) ||
@@ -737,6 +960,9 @@
   global.IQ.syncQuoteForm = syncQuoteFields;
   global.IQ.buildQuotePayload = buildQuotePayload;
   global.IQ.buildSheetPayload = buildSheetPayload;
+  global.IQ.analyzeEmail = analyzeEmail;
+  global.IQ.suggestEmailFix = suggestEmailFix;
+  global.IQ.readArtworkFilesBase64 = readArtworkFilesBase64;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
