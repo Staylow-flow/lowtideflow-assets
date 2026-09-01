@@ -1,19 +1,18 @@
 <!--
-  Instant Quote — Page Footer (Before </body>)
+  Instant Quote — Page Footer (Before </body>)  — SINGLE-TAG BUNDLE
   /instant-quote → Page Settings → Custom Code → Before </body>
 
-  V2 pin (2026-08-31): @6c20553 via jsDelivr
-  (base64 artwork upload to Drive + email typo flag + layout-reorder hardening)
-  Prev pin: @ebd9bac
+  Bundle pin (2026-09-01): @a0e9fa6  (one file = pricing-data + pricing + form + ui)
+  Head CSS stays separate: @6c20553 instant-quote-embed.css (unchanged, keep as-is).
 
-  RULE: jsDelivr <script> tags + the artwork modal stay in the FOOTER (Before </body>).
-        Never move scripts to <head>. Updating the @<commit> pin + SRI here is expected.
+  RULE: this modal + the ONE jsDelivr <script> stay in the FOOTER (Before </body>).
+        Never move the script to <head>. To ship new JS: re-bundle, push, bump the
+        @<commit> pin + SRI here. Only ONE IQ script tag should ever be on the page.
 
-  Paste the block below verbatim into Before </body>. It keeps the existing artwork
-  modal markup/styling and only bumps the pinned script commit + SRI hashes.
+  Paste the block below as the ENTIRE Before </body> box (replace everything).
 -->
 
-<!-- Instant Quote V2 footer modal — scripts via registered pins @6c20553 -->
+<!-- Instant Quote — artwork modal + single bundle @a0e9fa6 -->
 <div class="iq-modal" id="iq-artwork-modal" role="dialog" aria-modal="true" aria-labelledby="iq-artwork-modal-title" aria-hidden="true">
   <div class="iq-modal-backdrop" id="iq-artwork-modal-backdrop" tabindex="-1"></div>
   <div class="iq-modal-panel">
@@ -26,7 +25,4 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@6c20553/js/instant-quote-pricing-data.js" integrity="sha384-nClLl3aDSbkd6GA0se6O5ea1jkOh9vpswvvJpD+oa91bgUHXyzFfIQrMcfaAJ5iB" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@6c20553/js/instant-quote-pricing.js" integrity="sha384-cJxCtlJR2yci7+rH4zVibtBuXPiS2lyMBEO1qhWGdGQLWuDhtAFv8DjFFjQBQnhT" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@6c20553/js/instant-quote-form.js" integrity="sha384-B4d9+EDgemhi9MosqVFcNOjy7fjQ8dlcoSrthmPAvrclQ1c/VOlt/zFpVLcXRknL" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@6c20553/js/instant-quote-ui.js" integrity="sha384-i+H2vnVuVgVONec214+wiE9o3DwfFxVZJaZj51hLYVQONBOB7DhIGXwyd0z725x1" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@a0e9fa6/js/instant-quote-bundle.js" integrity="sha384-kgxa6nDw2RwhP83qBLIBRzvGNvvdf2D/BcPfe1iqN8KJsBPXpD3RYBmDJvk9kGpv" crossorigin="anonymous"></script>
