@@ -36,22 +36,25 @@
 .iq-intro {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   gap: 10px;
-  max-width: 720px;
-  margin: 0 auto 8px;
-  padding: 0 12px;
+  max-width: none;
+  margin: 0 0 8px;
+  padding: 0;
 }
 
 .iq-intro-title {
   margin: 0;
-  font-size: clamp(22px, 3.2vw, 34px);
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: acumin-pro-extra-condensed, sans-serif;
+  font-size: clamp(48px, 6vw, 88px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: var(--iq-border);
-  line-height: 1.15;
+  color: #ffffff;
+  line-height: 0.95;
+  text-align: left;
+  max-width: 14ch;
 }
 
 .iq-intro-lead {
@@ -323,6 +326,7 @@
   min-width: min(100%, 280px);
   border: 0;
   font: inherit;
+  font-weight: 900;
   cursor: pointer;
   transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
@@ -460,6 +464,21 @@
 
 .iq-orbit-wrap.ltf-btn-gradient-active,
 .iq-orbit-wrap.iq-orbit-click {
+  box-shadow:
+    0 0 16px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(31, 119, 129, 0.28);
+}
+
+/* Submit-in-progress — keep L→R gradient cycling until request completes */
+.iq-orbit-wrap.is-submitting > .iq-orbit-btn::before,
+.iq-orbit-wrap.is-submitting > #iq-form-submit::before,
+#iq-form-submit.is-submitting.iq-orbit-btn::before {
+  opacity: 1;
+  animation: iq-orbit-drift 0.7s linear infinite;
+}
+
+.iq-orbit-wrap.is-submitting,
+.iq-orbit-wrap.is-submitting:hover {
   box-shadow:
     0 0 16px rgba(77, 37, 157, 0.45),
     0 0 28px rgba(31, 119, 129, 0.28);
@@ -789,6 +808,7 @@
   margin: 0 32px 16px 0;
   font-size: 24px;
   font-weight: 700;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .iq-modal-body p {
@@ -1724,6 +1744,44 @@
   cursor: not-allowed;
 }
 
+/* Success message — dark navy, enlarged, same footprint as submit button */
+.iq-order-section .w-form-done {
+  grid-column: 1 / -1;
+  margin-top: 50px;
+  padding: 18px 24px;
+  min-height: 70px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #00001c !important;
+  font-size: clamp(22px, 2.8vw, 28px) !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+@media screen and (min-width: 992px) {
+  /* Desktop submit width matches artwork upload panel (920px cap) */
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit),
+  #iq-order-form > #iq-form-submit {
+    width: min(920px, 100%);
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+    justify-self: center;
+  }
+
+  .iq-order-section .w-form-done {
+    width: min(920px, 100%);
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 /* ── Unit price cards — full white border ────────────────────────────── */
 
 #iq-unit-cost-1,
@@ -1782,8 +1840,8 @@
     overflow-x: clip;
   }
 
-  /* Intro copy — left-justified, sized to match the site's standard
-     section header (.ltf-section-header / .ltf-body-text @ mobile). */
+  /* Intro copy — left-justified, sized to match Production / Tech Specs page hero
+     (.ltf-main-header.is-page @ mobile). */
   .iq-intro {
     align-items: flex-start;
     text-align: left;
@@ -1794,12 +1852,12 @@
   }
 
   .iq-intro-title {
-    font-size: 67px !important;
-    line-height: 0.92 !important;
-    letter-spacing: normal !important;
+    font-size: clamp(3.078rem, 14.25vw, 3.99rem) !important;
+    line-height: 0.88 !important;
+    letter-spacing: 0 !important;
     text-align: left !important;
     max-width: 100%;
-    font-weight: 700 !important;
+    font-weight: 900 !important;
   }
 
   .iq-intro-lead {
@@ -2289,6 +2347,13 @@
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
+    padding-top: 0;
+  }
+
+  /* Mobile: stop gradient stroke extending above button on hover */
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit):hover > #iq-form-submit.iq-orbit-btn::before,
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit):focus-within > #iq-form-submit.iq-orbit-btn::before {
+    inset: 0 -3px -3px -3px;
   }
 
   .iq-breakdown {

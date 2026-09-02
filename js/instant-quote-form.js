@@ -11,8 +11,7 @@
     webhookUrl:
       'https://script.google.com/macros/s/AKfycbzapmVFFViHwkV8CEk_UQSoQ-ERJzGArgvD5cfOpvUzT5iEtq3xAGq5foavIfiuL9M/exec',
     minSubmitMs: 2500,
-    successMessage:
-      'Project brief received. We will review your quote configuration and reach out shortly.',
+    successMessage: 'Thank you! Your submission has been received!',
     loadingText: 'Submitting…'
   };
 
@@ -83,6 +82,68 @@
   function readArtworkFileNames() {
     return artworkFiles.map(function (file) {
       return file.name;
+    });
+  }
+
+  /* Artwork transfer limits (Apps Script POST bodies cap around ~50 MB). */
+  var ART_MAX_FILE_BYTES = 20 * 1024 * 1024;
+  var ART_MAX_TOTAL_BYTES = 40 * 1024 * 1024;
+
+  /** Read one File as base64 (no data-URL prefix) for payload.sheet.art_files. */
+  function readFileAsBase64(file) {
+    return new Promise(function (resolve) {
+      try {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var result = String(reader.result || '');
+          var comma = result.indexOf(',');
+          resolve({
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+            data: comma >= 0 ? result.slice(comma + 1) : result
+          });
+        };
+        reader.onerror = function () {
+          resolve(null);
+        };
+        reader.readAsDataURL(file);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+
+  /** Encode artworkFiles[] to base64 for Apps Script Drive upload. */
+  function readArtworkFilesBase64() {
+    if (!artworkFiles.length) {
+      return Promise.resolve({ files: [], skipped: [], oversized: false });
+    }
+
+    var skipped = [];
+    var keep = artworkFiles.filter(function (file) {
+      if (file.size > ART_MAX_FILE_BYTES) {
+        skipped.push(file.name);
+        return false;
+      }
+      return true;
+    });
+
+    return Promise.all(keep.map(readFileAsBase64)).then(function (encoded) {
+      var files = [];
+      var total = 0;
+      var oversized = false;
+      encoded.forEach(function (entry) {
+        if (!entry || !entry.data) return;
+        total += entry.data.length;
+        if (total > ART_MAX_TOTAL_BYTES) {
+          oversized = true;
+          skipped.push(entry.name);
+          return;
+        }
+        files.push(entry);
+      });
+      return { files: files, skipped: skipped, oversized: oversized };
     });
   }
 
@@ -866,34 +927,33 @@
     );
   }
 
-  function submitToWebhook(payload, files) {
+  function setSubmitOrbitState(submitBtn, active) {
+    if (!submitBtn) return;
+    var wrap = submitBtn.closest('.iq-orbit-wrap');
+    if (active) {
+      submitBtn.classList.add('is-submitting');
+      if (wrap) wrap.classList.add('is-submitting', 'ltf-btn-gradient-active', 'iq-orbit-click');
+    } else {
+      submitBtn.classList.remove('is-submitting');
+      if (wrap) {
+        wrap.classList.remove('is-submitting', 'ltf-btn-gradient-active', 'iq-orbit-click');
+        clearTimeout(wrap._ltfGradientTimer);
+      }
+    }
+  }
+
+  function submitToWebhook(payload) {
     var config = global.IQ.FORM_CONFIG || {};
     if (!config.webhookUrl) return Promise.reject(new Error('Missing webhook'));
 
+    // Single JSON body — artwork rides as base64 in payload.sheet.art_files.
+    // text/plain keeps this a CORS-safe simple request (no preflight).
     var sheetJson = JSON.stringify(payload.sheet || payload);
-    var hasFiles = !!(files && files.length);
-    var body;
-    var headers;
-
-    if (hasFiles) {
-      // Multipart for artwork — Apps Script reads e.parameter.payload + e.files
-      body = new FormData();
-      body.append('payload', sheetJson);
-      Array.prototype.forEach.call(files, function (file, index) {
-        body.append('artwork_' + index, file, file.name);
-      });
-      headers = undefined;
-    } else {
-      // urlencoded is the most reliable path for Apps Script e.parameter.payload
-      body = new URLSearchParams();
-      body.append('payload', sheetJson);
-      headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' };
-    }
 
     return fetch(config.webhookUrl, {
       method: 'POST',
-      body: body,
-      headers: headers,
+      body: sheetJson,
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       redirect: 'follow',
       mode: 'cors',
       credentials: 'omit'
@@ -973,14 +1033,33 @@
       if (submitBtn) {
         submitBtn.disabled = true;
         if ('value' in submitBtn) submitBtn.value = loadingText;
+        else submitBtn.textContent = loadingText;
       }
+      setSubmitOrbitState(submitBtn, true);
       setFormStatus('Submitting project brief…', '');
 
-      submitToWebhook(payload, artworkFiles)
+      readArtworkFilesBase64()
+        .then(function (art) {
+          payload.sheet = payload.sheet || {};
+          if (art.files.length) {
+            payload.sheet.art_files = art.files;
+            payload.sheet.art_file_names = art.files.map(function (f) {
+              return f.name;
+            });
+            payload.artworkFileNames = payload.sheet.art_file_names;
+          }
+          if (art.skipped.length) {
+            payload.sheet.art_note =
+              'Some files were too large to auto-upload (' +
+              art.skipped.join(', ') +
+              '). Client will send them separately.';
+          }
+          return submitToWebhook(payload);
+        })
         .then(function () {
           setFormStatus(
             (global.IQ.FORM_CONFIG && global.IQ.FORM_CONFIG.successMessage) ||
-              'Project brief received.',
+              'Thank you! Your submission has been received!',
             'success'
           );
           showWebflowState(form, 'done');
@@ -996,15 +1075,19 @@
           if (submitBtn) {
             submitBtn.disabled = false;
             if ('value' in submitBtn) submitBtn.value = originalLabel;
+            else submitBtn.textContent = originalLabel;
           }
+          setSubmitOrbitState(submitBtn, false);
           setFormStatus('Something went wrong. Email us directly and we will help.', 'error');
           showWebflowState(form, 'fail');
           form.style.display = '';
         })
         .finally(function () {
+          setSubmitOrbitState(submitBtn, false);
           if (submitBtn && form.style.display !== 'none') {
             submitBtn.disabled = false;
             if ('value' in submitBtn) submitBtn.value = originalLabel;
+            else submitBtn.textContent = originalLabel;
           }
         });
     });
