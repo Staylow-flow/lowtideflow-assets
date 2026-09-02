@@ -4,28 +4,46 @@
   Paste AFTER #ltf-clean-slate-fx on /clean-slate.
   hero-viewport.js also injects this block if missing (id ltf-mobile-fixes).
 
-  Fixes: orange shirt bleed to gallery, CTA pin, funnel gutters, hero overflow.
+  Fixes: united page scroll (stable hero height), orange shirt bleed to gallery,
+  CTA pin, funnel gutters, hero overflow. Scoped to max-width: 991px only.
 -->
 <style id="ltf-mobile-fixes">
 @media (max-width: 991px) {
   .ltf-hero {
-    height: var(--ltf-hero-h, calc(100svh + 52px)) !important;
-    min-height: var(--ltf-hero-h, calc(100svh + 52px)) !important;
+    height: calc(100svh + 52px) !important;
+    min-height: calc(100svh + 52px) !important;
     max-height: none !important;
-    overflow: visible !important;
+    overflow-x: clip !important;
+    overflow-y: visible !important;
   }
 
   .ltf-hero > .ltf-site-cage.ltf-cage {
     height: 100% !important;
     min-height: 100% !important;
-    overflow: visible !important;
+    overflow-x: clip !important;
+    overflow-y: visible !important;
   }
 
-  .ltf-hero-figure,
+  .ltf-hero .hero-canvas-wrapper,
+  .ltf-hero #canvas3d {
+    overflow: hidden !important;
+  }
+
+  .ltf-hero-figure {
+    position: absolute !important;
+    top: auto !important;
+    right: 0 !important;
+    bottom: -40px !important;
+    width: min(92vw, 420px) !important;
+    max-width: min(92vw, 420px) !important;
+    transform: translateX(12%) !important;
+    will-change: auto !important;
+  }
+
   .ltf-hero-figure-img,
   .ltf-hero-figure img {
     top: auto !important;
-    bottom: -15px !important;
+    bottom: 0 !important;
     max-height: none !important;
     height: auto !important;
     object-fit: contain !important;
