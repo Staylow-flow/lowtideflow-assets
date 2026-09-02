@@ -128,49 +128,13 @@ let bindAll = null;
     };
   }
 
-  function isSlamFanLayout(cardsHost) {
-    if (!window.matchMedia('(min-width: 992px)').matches) return false;
-    if (!cardsHost) return false;
-    return getComputedStyle(cardsHost).flexDirection !== 'column';
-  }
-
-  function clearSlamCardInline(card) {
-    card.style.width = '';
-    card.style.maxWidth = '';
-    card.style.height = '';
-    card.style.minHeight = '';
-    card.style.maxHeight = '';
-    card.style.overflow = '';
-    card.style.left = '';
-    card.style.top = '';
-  }
-
-  function prepHost(host, sticky, cards, fanLayout) {
-    if (!fanLayout) {
-      host.style.minHeight = '';
-      host.style.height = '';
-      host.style.overflow = 'visible';
-      return;
-    }
+  function prepHost(host, sticky) {
     var runway = sticky.clientHeight || window.innerHeight || 800;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     host.style.isolation = 'isolate';
     host.style.overflow = 'hidden';
-    syncCardsHostRunway(host, sticky, cards, runway);
-  }
-
-  function syncCardsHostRunway(host, sticky, cards, runway) {
-    var base = runway || sticky.clientHeight || window.innerHeight || 800;
-    var maxBottom = 0;
-    var i;
-    for (i = 0; i < cards.length; i++) {
-      var c = cards[i];
-      if (getComputedStyle(c).position !== 'absolute') continue;
-      maxBottom = Math.max(maxBottom, (c.offsetTop || 0) + (c.offsetHeight || 0));
-    }
-    var hostH = Math.max(base, maxBottom + 32);
-    host.style.minHeight = hostH + 'px';
-    host.style.height = hostH + 'px';
+    host.style.minHeight = runway + 'px';
+    host.style.height = runway + 'px';
   }
 
   /* Only ever run before building a fresh set of layers. This used to live in
@@ -199,7 +163,7 @@ let bindAll = null;
 
   function slamCardSize() {
     var vw = window.innerWidth || 1280;
-    if (vw <= 991) return { w: 0, h: 0 };
+    if (vw <= 767) return { w: 0, h: 0 };
     /* Shrink card + fan together so card 04 fits inside the column (overflow:hidden host). */
     var col =
       document.querySelector('.ltf-specs-vault-cards') ||
@@ -233,37 +197,27 @@ let bindAll = null;
     card.style.top = off + 'px';
   }
 
-  function applySlamCardDimensions(card, cardIndex, cardsHost) {
+  function applySlamCardDimensions(card, cardIndex) {
     var size = slamCardSize();
     if (!size.w) return size;
-    if (!isSlamFanLayout(cardsHost)) {
-      clearSlamCardInline(card);
-      return size;
-    }
-    var minH = size.h;
     card.style.width = size.w + 'px';
     card.style.maxWidth = size.w + 'px';
-    card.style.height = 'auto';
-    card.style.minHeight = minH + 'px';
-    card.style.maxHeight = 'none';
-    card.style.overflow = 'visible';
+    card.style.height = size.h + 'px';
+    card.style.minHeight = size.h + 'px';
+    card.style.maxHeight = size.h + 'px';
+    card.style.overflow = 'hidden';
     card.style.boxSizing = 'border-box';
     if (typeof cardIndex === 'number') {
       applySlamFanOffset(card, cardIndex, size.w);
     }
-    var contentH = Math.max(minH, card.scrollHeight || 0);
-    if (contentH > minH) {
-      card.style.minHeight = contentH + 'px';
-    }
-    size.h = contentH;
     return size;
   }
 
-  function prepCards(cards, fx, cardsHost) {
+  function prepCards(cards, fx) {
     var i;
     for (i = 0; i < cards.length; i++) {
       var cardZ = (i + 1) * 3;
-      applySlamCardDimensions(cards[i], i, cardsHost);
+      applySlamCardDimensions(cards[i], i);
       cards[i].style.willChange = 'transform';
       cards[i].style.transition = 'none';
       cards[i].style.position = 'absolute';
@@ -452,7 +406,7 @@ let bindAll = null;
     }
     if (cards.length < 2) return;
 
-    prepHost(cardsHost, sticky, cards, isSlamFanLayout(cardsHost));
+    prepHost(cardsHost, sticky);
     clearFxLayers(cardsHost);
 
     var fx = [];
@@ -472,8 +426,7 @@ let bindAll = null;
         ring: createFxLayer(cardsHost, cardZ + 2, 'ring'),
       };
     }
-    prepCards(cards, fx, cardsHost);
-    syncCardsHostRunway(cardsHost, sticky, cards);
+    prepCards(cards, fx);
 
     var state = {
       target: 0,
@@ -488,13 +441,11 @@ let bindAll = null;
     };
 
     function remeasure() {
-      var fanLayout = isSlamFanLayout(cardsHost);
-      prepHost(cardsHost, sticky, cards, fanLayout);
+      prepHost(cardsHost, sticky);
       for (i = 0; i < cards.length; i++) {
-        applySlamCardDimensions(cards[i], i, cardsHost);
+        applySlamCardDimensions(cards[i], i);
         if (BEATS[i] && beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
-      if (fanLayout) syncCardsHostRunway(cardsHost, sticky, cards);
     }
 
     function sampleTarget() {
@@ -659,8 +610,8 @@ let bindAll = null;
   }
 
   function init() {
-    /* Fan + scroll slam: desktop/tablet L/R grid only (≥992). ≤991 = Designer stack + head CSS. */
-    if (window.matchMedia('(max-width: 991px)').matches) return;
+    /* Slam collage needs ≥768px — mobile stack is Designer + head ≤767 only. */
+    if (window.matchMedia('(max-width: 767px)').matches) return;
 
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
     Array.prototype.forEach.call(nodes, function (el) {
@@ -676,10 +627,10 @@ let bindAll = null;
 
   bindAll = init;
 
-  var specsSlamMq = window.matchMedia('(min-width: 992px)');
+  var specsMobileMq = window.matchMedia('(max-width: 767px)');
 
   function rebindDesktopSlam() {
-    if (!specsSlamMq.matches) return;
+    if (specsMobileMq.matches) return;
     var nodes = document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]');
     Array.prototype.forEach.call(nodes, function (el) {
       delete el.dataset.ltfSlamBound;
@@ -687,10 +638,10 @@ let bindAll = null;
     init();
   }
 
-  if (typeof specsSlamMq.addEventListener === 'function') {
-    specsSlamMq.addEventListener('change', rebindDesktopSlam);
-  } else if (typeof specsSlamMq.addListener === 'function') {
-    specsSlamMq.addListener(rebindDesktopSlam);
+  if (typeof specsMobileMq.addEventListener === 'function') {
+    specsMobileMq.addEventListener('change', rebindDesktopSlam);
+  } else if (typeof specsMobileMq.addListener === 'function') {
+    specsMobileMq.addListener(rebindDesktopSlam);
   }
 })();
 
@@ -699,9 +650,9 @@ export function init() {
   if (bindAll) bindAll();
 }
 
-/** Force slam rebind after layout mode change (scale-up fix). */
+/** Force slam rebind after phone-mode cleanup (scale-up fix). */
 export function reinit() {
-  if (window.matchMedia('(max-width: 991px)').matches) return;
+  if (window.matchMedia('(max-width: 767px)').matches) return;
   document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]').forEach(function (el) {
     delete el.dataset.ltfSlamBound;
   });

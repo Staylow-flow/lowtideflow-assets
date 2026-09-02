@@ -140,7 +140,7 @@ File checksums: `webflow/_LOCKED/CHECKSUMS.sha256`
 
 | Date | Change | Doc |
 |------|--------|-----|
-| 2026-09-02 | Specs Vault tablet fan scaling (Option A) — JS only, desktop/mobile unchanged | `SPECS-VAULT-SLAM.md` |
+| 2026-09-02 | Specs Vault content-height fan + tablet stack dead-space fix | `SPECS-VAULT-SLAM.md` |
 | 2026-09-02 | Footer spacing, legal alignment, email regular case, nav-item class | `LTF-SITE-FOOTER.md` |
 | 2026-09-02 | IQ Round 12 @ `329bdae` | `INSTANT-QUOTE-STATUS.md` |
 | 2026-08-26 | Site-wide nav rollout | `PAUSE-STATUS.md` (historical) |

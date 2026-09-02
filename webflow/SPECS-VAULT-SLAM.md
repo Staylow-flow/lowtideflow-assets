@@ -44,8 +44,8 @@ blocks module execution.
 
 | Viewport | Behavior |
 |----------|----------|
-| **≤767px** | Slam JS **does not run** — mobile stack unchanged (Designer + `live-page-head.html`) |
-| **768–1280px** | Cards + fan scale down together; slam FX preserved |
+| **≤991px** | Static stack — Designer + head CSS; slam JS **off** |
+| **992–1280px** | Fan scales + **content-height grows** with copy; slam FX on |
 | **≥1280px / wide column** | Full 480×340 cards, 0/12/24/36px fan — matches pre-fix desktop |
 
 **Revert:** copy `webflow/_LOCKED/specs-vault-slam.js.pre-option-a-6f08be9` → `js/sections/specs-vault-slam.js`, or `git checkout 6f08be9 -- js/sections/specs-vault-slam.js`.

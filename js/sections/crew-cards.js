@@ -7,13 +7,13 @@
  *
  * On phone (≤767): Specs vault is restacked as Crew-style boxes — no
  * slam travel, no sticky scroll track transforms. Glow only.
- * Tablet (768–991) keeps desktop slam — handled by specs-vault-slam.js.
+ * Tablet stack (768–991): same cleanup — head CSS owns layout; slam off.
  */
 
 import { onFrame, reducedMotion } from '../core/ticker.js';
 
 const DESKTOP = '(min-width: 992px)';
-const SPECS_MOBILE = '(max-width: 767px)';
+const SPECS_STACK = '(max-width: 991px)';
 /* Card top at this fraction of the viewport → fully off-canvas. */
 const START_AT = 1.05;
 /* Card top at this fraction → fully docked. Lower = more travel on-screen. */
@@ -74,9 +74,9 @@ function bindGlow(card) {
   card.addEventListener('pointercancel', hideNow);
 }
 
-/** Phone-only Specs: kill slam leftovers, stack like Crew, glow only. */
+/** ≤991 Specs stack: kill slam leftovers, content-fit boxes, glow only. */
 function normalizeSpecsMobile(reinitVault) {
-  const mobile = matchMedia(SPECS_MOBILE);
+  const stack = matchMedia(SPECS_STACK);
   const vaults = document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]');
 
   function clearInline(el, props) {
@@ -93,7 +93,7 @@ function normalizeSpecsMobile(reinitVault) {
         vault.querySelector('[data-ltf-slam-cards]');
       const cards = vault.querySelectorAll('.ltf-spec-card');
 
-      if (mobile.matches) {
+      if (stack.matches) {
         vault.style.height = 'auto';
         vault.style.minHeight = '0';
         if (host) {
@@ -131,15 +131,15 @@ function normalizeSpecsMobile(reinitVault) {
       }
     }
 
-    if (!mobile.matches && leavingMobile && typeof reinitVault === 'function') {
+    if (!stack.matches && leavingMobile && typeof reinitVault === 'function') {
       reinitVault();
-    } else if (!mobile.matches && leavingMobile && window.LTF && typeof window.LTF.reinitVault === 'function') {
+    } else if (!stack.matches && leavingMobile && window.LTF && typeof window.LTF.reinitVault === 'function') {
       window.LTF.reinitVault();
     }
   }
 
   apply();
-  mobile.addEventListener('change', apply);
+  stack.addEventListener('change', apply);
 }
 
 export function init() {

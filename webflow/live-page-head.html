@@ -431,7 +431,68 @@
   }
 }
 
-/* Specs & Standards — mobile stack (≤767); tablet+ keeps desktop L/R grid + scroll slam */
+/* Specs & Standards — tablet stack (768–991); mobile stack (≤767); slam fan ≥992 */
+@media (max-width: 991px) and (min-width: 768px) {
+  .ltf-specs-vault {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .ltf-specs-vault-sticky {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+    top: auto !important;
+    align-items: stretch !important;
+  }
+  .ltf-vault-cage,
+  .ltf-vault-cage.ltf-cage,
+  .ltf-vault-cage.ltf-split-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+  }
+  .ltf-specs-vault-cards,
+  .ltf-specs-vault-cards.ltf-split-asset {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 32px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .ltf-spec-card,
+  .ltf-spec-card.ltf-spec-card-01,
+  .ltf-spec-card.ltf-spec-card-02,
+  .ltf-spec-card.ltf-spec-card-03,
+  .ltf-spec-card.ltf-spec-card-04 {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+}
+
+/* Specs & Standards — mobile stack (≤767) */
 @media (max-width: 767px) {
   .ltf-specs-vault {
     height: auto !important;
@@ -507,7 +568,7 @@
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
-    min-height: 240px !important;
+    min-height: 0 !important;
     max-height: none !important;
     margin: 0 !important;
     padding: 24px 16px !important;
