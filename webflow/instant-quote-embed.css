@@ -1503,6 +1503,7 @@
   row-gap: 8px;
   width: 100%;
   align-items: start;
+  margin-top: 50px;
 }
 
 /* Explicit contact grid rhythm (desktop ≥992 via base; mobile overrides below) */
@@ -1787,9 +1788,44 @@
     justify-self: center;
   }
 
+  /* +50px vertical padding on Submit Project Brief (desktop) */
+  #iq-form-submit,
+  .iq-form-submit {
+    padding-top: calc(24px + 50px) !important;
+    padding-bottom: calc(24px + 50px) !important;
+    min-height: 0 !important;
+  }
+
   .iq-order-section .w-form-done {
     width: min(920px, 100%);
     max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: calc(24px + 50px) !important;
+    padding-bottom: calc(24px + 50px) !important;
+  }
+
+  /* Apparel style radio section — centered on desktop */
+  .iq-apparel-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .iq-apparel-section > .iq-apparel-row:first-of-type,
+  .iq-apparel-section > #split-row-wrapper {
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .iq-apparel-section > .iq-apparel-row:first-of-type {
+    justify-content: center;
+  }
+
+  #split-row-wrapper .iq-apparel-row--split {
     margin-left: auto;
     margin-right: auto;
   }
@@ -1886,7 +1922,7 @@
   }
 
   .iq-order-lead {
-    padding-bottom: 25px;
+    padding-bottom: 50px;
   }
 
   .iq-toggle-track,
