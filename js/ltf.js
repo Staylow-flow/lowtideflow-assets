@@ -46,6 +46,7 @@
     if (!inits) return;
     safeRun('nav', inits.initNav);
     safeRun('btn-gradient', inits.initBtn);
+    safeRun('nav-comms', inits.initComms);
     safeRun('crew-cards', inits.initCrew);
     safeRun('upsell-lines', inits.initUpsell);
     safeRun('specs-vault', inits.initVault);
@@ -64,6 +65,7 @@
       var modules = await Promise.all([
         import(BASE + 'ui/nav-mobile.js'),
         import(BASE + 'ui/btn-gradient.js'),
+        import(BASE + 'ui/nav-comms.js'),
         import(BASE + 'sections/crew-cards.js'),
         import(BASE + 'sections/upsell-lines.js'),
         import(BASE + 'sections/specs-vault-slam.js'),
@@ -72,11 +74,12 @@
       inits = {
         initNav: modules[0].init,
         initBtn: modules[1].init,
-        initCrew: modules[2].init,
-        initUpsell: modules[3].init,
-        initVault: modules[4].init,
-        reinitVault: modules[4].reinit,
-        initMag: modules[5].init,
+        initComms: modules[2].init,
+        initCrew: modules[3].init,
+        initUpsell: modules[4].init,
+        initVault: modules[5].init,
+        reinitVault: modules[5].reinit,
+        initMag: modules[6].init,
       };
       boot();
       window.addEventListener('load', boot, { once: true });

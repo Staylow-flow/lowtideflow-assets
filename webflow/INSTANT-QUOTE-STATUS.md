@@ -1,5 +1,7 @@
 # Instant Quote status — Spec Run page
 
+> **Locked build reference:** [`LOCKED-BUILD.md`](LOCKED-BUILD.md) · [`PIN-MANIFEST.md`](PIN-MANIFEST.md) · Current pin: **`329bdae`** (Round 12)
+
 Purpose: running log of what's shipped on the Instant Quote page (`/instant-quote`,
 page id `6a59f0368e92a3bd60940ad9`, site id `6789f449bbb1a21245706751`) so any other
 concurrent/future agent (or the user) can see current state without re-deriving it.
@@ -236,8 +238,8 @@ border.
 ### Deploy
 - Registered scripts: `iqcssbootaefd7a7`, `iqpricingdataaefd7a7`, `iqpricingaefd7a7`,
   `iqformaefd7a7`, `iquiaefd7a7` (page `6a59f0368e92a3bd60940ad9`).
-- Site publish: subdomain OK @ 05:21 UTC; **custom domain publish pending** (429 rate limit
-  at time of writing — retry needed for www.lowtideflow.co).
+- Site publish: subdomain + custom domains (`www.lowtideflow.co`, `lowtideflow.co`) @ 05:28 UTC.
+- **Style/Script Watchdog PASSED** live @ `aefd7a7` (62KB CSS, 4-script stack, FX markers).
 
 ### Watchdogs
 - `webflow/iq-style-script-watchdog.sh` — checks 4-script stack, full embed.css, FX markers.
@@ -251,4 +253,90 @@ border.
 - `webflow/instant-quote-footer-snippet.html`
 - `webflow/iq-style-script-watchdog.sh` (new)
 - `webflow/iq-freeze-watchdog.sh` (new)
+
+---
+
+## Round 8 — Spacing + 2px total card + mobile submit balance (commit `17a1c06`, 2026-09-02)
+
+### Desktop
+- 50px padding below `.iq-intro-lead` ("Your settings automatically lock…")
+- 50px padding below `.iq-order-lead` ("We'll confirm artwork…")
+- `.iq-total-wrapper` outline halved to **2px** (`--iq-total-border-width: 2px`)
+
+### Mobile
+- 50px top padding on `.iq-intro` (Spec Engine H1 block)
+- `.iq-intro-lead` right inset **30%** (body copy pulled in)
+- 25px padding below `.iq-order-lead`
+- Submit orbit-wrap: symmetric gradient ring (`inset: -2px`), Y-centered label, no top-heavy halo
+- Calculate container: same **2px** outline as desktop
+
+### Deploy
+- CSS pin: `iqcssboot6508ffd` @ `6508ffd` (JS stack unchanged @ `aefd7a7`)
+- Published: `www.lowtideflow.co` + `lowtideflow.co`
+- SRI: `webflow/.iq-pin-6508ffd-sri.txt`
+
+---
+
+## Round 10 — Revert Round 9 + style-grid-only center (commit `5c6ffa7`, 2026-09-02)
+
+### Reverted (Round 9)
+- Section-level apparel centering (`fit-content` rows) — restored flush label/unit-price alignment
+- Desktop submit +50px vertical padding bump
+
+### Kept
+- `#iq-order-form { margin-top: 50px }` — intro copy → form gap (desktop + mobile)
+
+### Fixed
+- Desktop: center **only** `.iq-style-grid` (radio options), not label box or unit price columns
+- Mobile: `.iq-intro-lead` right padding **35%** (+5% from 30%)
+
+### Deploy
+- CSS pin: `iqcssboot5c6ffa7` @ `5c6ffa7`
+
+---
+
+## Round 11 — Submit in-place + price center + radio nudge (commit `1ccb191`, 2026-09-02)
+
+### Radio options (desktop)
+- `.iq-style-grid` nudged **+15px** right (`margin-left: 15px`)
+
+### Price calculator values
+- `#iq-total-price`, `.iq-price-box`, slider value boxes — centered **X & Y**
+
+### Submit button
+- **External** `margin-top: 50px` on orbit wrap only (no internal button padding changes)
+- On success: `.w-form-done` moves **into the orbit wrap** (same grid slot as pre-submit)
+- Success text: navy `#00001c`, white button footprint, **20px** (matches pre-submit, not enlarged)
+- Width unchanged @ 920px desktop cap
+
+### Deploy
+- CSS: `iqcssboot1ccb191` @ `1ccb191`
+- Form JS: `iqform1ccb191` @ `1ccb191` (success-in-place logic)
+- Published: `www.lowtideflow.co` + `lowtideflow.co` @ 2026-09-02
+
+---
+
+## Round 12 — Radio 30px, form stays visible, email typo restore (commit `329bdae`, 2026-09-02)
+
+### Radio options (desktop)
+- `.iq-style-grid` nudged **+30px** right (was 15px) — includes 50/50 split row
+
+### Total Cost price numbers
+- `#iq-total-price` `padding-top: 15px` — numbers sit 15px lower
+
+### Submit success — form no longer disappears
+- Removed loop that hid all form children on success
+- Removed `form.reset()` after submit — entered data stays visible
+- Only hides submit button; success message shows in orbit wrap slot
+
+### Email spell-check restored
+- `initEmailTypoCatcher()` creates `#iq-email-typo-hint` after email field
+- Checks on blur/change + debounced input (450ms)
+- Red underlined "Did you mean …? (Click to fix)" styling in CSS (not inline JS)
+
+### Deploy
+- CSS: `iqcssboot329bdae` @ `329bdae`
+- Form JS: `iqform329bdae` @ `329bdae`
+- SRI: `webflow/.iq-pin-329bdae-sri.txt`
+- Published: `www.lowtideflow.co` + `lowtideflow.co` @ 2026-09-02
 

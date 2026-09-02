@@ -1,0 +1,13 @@
+# SHA256 checksums — canonical lock-in files
+# Generated: 2026-09-02
+# Verify after edits: shasum -a 256 -c webflow/_LOCKED/CHECKSUMS.sha256
+
+a7289f41ca1724716746f5a74929121317d1cce8fa81aefbcbbc6a1f9a90c12e  webflow/site-nav-fx.html
+65ff60ed3d69e93fd4f78ed4ce5134edd0b3fa828a54f88a0517ff6fd21fc532  webflow/ltf-site-footer-fx.html
+4e90e681eab7aab1f6b22082e5ef16b0e0bdf56175ef685eb297ed52b4d133f1  webflow/live-page-head.html
+80842718a85274e7937635ca632010c09554e7ede1fab7a817ca8ed0db34609d  webflow/clean-slate-footer.html
+9a38671870d9fc0c015049dd90fd2514a621498b212d1b25f77e19ce91d70db7  webflow/instant-quote-embed.css
+98ed9afb1f202d3cc92060abd6222c0bc0905800df897b09d6e1aa40bc150c78  js/nav.js
+633c0ccfea0407833ed0156f6f87cb0301682d35705ee02ea264a83885003c2c  js/ltf.js
+8c465a7c2fb02d43c002ea653da9d46a8a26258b1def826855ef7ebf87bf17cf  js/ui/nav-mobile.js
+10acc2e54962f9f34009c99507f5361782b791d3315b3ecf26d7d44d67f298f0  js/ui/nav-comms.js

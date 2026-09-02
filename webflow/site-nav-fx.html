@@ -1,0 +1,523 @@
+<style id="ltf-site-nav-fx">
+/* Shared site nav — FX + responsive layout only. Nav Designer layout
+   (flex/wrap/gap on .ltf-nav-inner et al) lives in Webflow Designer.
+   This block powers: hamburger morph, hide-on-scroll (mobile+desktop),
+   nav link/button hover gradient, desktop 2-row collapse behavior, and
+   the mobile fixed nav bar + slide-down panel. Paired with js/nav.js
+   (site-wide footer boot) — see js/ui/nav-mobile.js for the JS side. */
+
+@keyframes ltf-nebula-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Gradient button ring (::before technique) ────────────────────────
+   Ring lives on ::before and fades via opacity. Inner button sits above
+   it (z-index:1) so only the 2px padding gap shows the gradient.
+   Do NOT transform the inner button — that shifts the mask inside the
+   ring and makes top/bottom gaps asymmetric (4px top / 0px bottom). */
+.ltf-btn-gradient-wrap {
+  position: relative;
+  display: inline-block;
+  padding: 2px;
+  border-radius: 5px;
+  background: transparent;
+  transition: box-shadow 0.35s ease;
+}
+.ltf-btn-gradient-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.ltf-btn-gradient-wrap > * {
+  position: relative;
+  z-index: 1;
+}
+.ltf-btn-gradient-wrap:hover::before,
+.ltf-btn-gradient-wrap:focus-within::before,
+.ltf-btn-gradient-wrap.ltf-btn-gradient-active::before {
+  opacity: 1;
+}
+.ltf-btn-gradient-wrap:hover,
+.ltf-btn-gradient-wrap:focus-within,
+.ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+  box-shadow:
+    0 0 16px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(31, 119, 129, 0.28);
+}
+
+/* Nav wraps — kill hero-CTA bleed from Designer (margin-top/padding-top) */
+.ltf-nav-actions .ltf-btn-gradient-wrap,
+.ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
+  margin-top: 0 !important;
+  padding: 2px !important;
+}
+
+/* Nav link text gradient */
+.ltf-nav-links .ltf-nav-link {
+  background-image: none;
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.ltf-nav-links .ltf-nav-link:hover,
+.ltf-nav-links .ltf-nav-link:focus-visible {
+  background-image: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+  background-size: 200% 200%;
+  animation: ltf-nebula-gradient-shift 3s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(0 0 5px rgba(77, 37, 157, 0.21))
+    drop-shadow(0 0 12px rgba(42, 170, 184, 0.14));
+}
+.ltf-nav-actions .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn,
+.ltf-nav-actions .ltf-btn-gradient-wrap.ltf-btn-gradient-active > .ltf-nav-btn-quote {
+  background-color: #06142E;
+  color: #FFFFFF;
+}
+
+/* Hamburger open morph (not layout) */
+.ltf-nav-toggle-bar {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+body.ltf-nav-open {
+  overflow: hidden;
+}
+
+/*
+  Nav hide-on-scroll (mobile AND desktop): hides on scroll down, reveals on
+  a 20px upward scroll. JS (nav-mobile.js) toggles .is-nav-hidden at all
+  breakpoints; desktop nav stays position:sticky, translate3d just slides
+  it off-screen the same way the mobile fixed bar does.
+*/
+.ltf-site-nav {
+  transition: transform 0.35s ease;
+}
+.ltf-site-nav.is-nav-hidden {
+  transform: translate3d(0, -100%, 0);
+}
+
+/*
+  Desktop nav (≥992px): layout lives in Webflow Designer on .ltf-nav-inner /
+  .ltf-nav-logo-link / .ltf-nav-links / .ltf-nav-actions (flex, flex-wrap,
+  10px gap, min-height 50px). Do NOT re-declare layout/display here.
+  Only the mobile toggle needs hiding here.
+*/
+@media (min-width: 992px) {
+  .ltf-nav-inner > .ltf-nav-toggle {
+    display: none !important;
+  }
+}
+
+/*
+  Single-row desktop: nudge link text down 2px for optical balance.
+  Links only — never transform elements inside .ltf-btn-gradient-wrap;
+  that shifts the inner button mask and breaks the hover ring symmetry.
+*/
+@media (min-width: 992px) {
+  .ltf-nav-inner:not(.is-nav-wrapped) .ltf-nav-link {
+    transform: translateY(2px);
+  }
+}
+
+/*
+  Desktop 2-row collapsed state: do NOT resize/repad the links or buttons
+  themselves — they render at the exact same size as the single-row state.
+  nav-mobile.js toggles .is-nav-wrapped on .ltf-nav-inner via live geometry
+  (not a hard-coded width), so this keeps working no matter how logo/button
+  sizing changes later.
+
+  IMPORTANT: .ltf-nav-links and .ltf-nav-actions are NOT direct children of
+  .ltf-nav-inner — both live nested inside .ltf-nav-mobile-panel, which is
+  itself the single flex item that wraps onto row 2. That panel has its own
+  internal `justify-content: flex-end;` (used to hug the group to the right
+  of the logo on row 1). Once wrapped, that same flex-end shoves the tight
+  [links + actions] cluster off toward the right of the now much-wider row,
+  so justify-content is corrected to flex-start here — this must happen on
+  the PANEL itself. align-items stays at the panel's own `center` so the
+  button and the shorter link text share the same vertical center on row 2,
+  same as they do in the single-row layout — do not override it to
+  flex-start here.
+*/
+@media (min-width: 992px) {
+  .ltf-nav-inner.is-nav-wrapped {
+    padding-bottom: 8px !important;
+  }
+  .ltf-nav-inner.is-nav-wrapped .ltf-nav-mobile-panel {
+    justify-content: flex-start !important;
+  }
+  .ltf-nav-inner.is-nav-wrapped .ltf-nav-links {
+    flex-grow: 0 !important;
+    flex-basis: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ltf-nav-links .ltf-nav-link:hover {
+    animation: none !important;
+  }
+}
+
+/* ── Mobile nav bar + panel ──────────────────────────────────────────── */
+@media (max-width: 991px) {
+  .ltf-site-nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    z-index: 100 !important;
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.35s ease;
+  }
+  .ltf-site-nav.is-nav-hidden {
+    transform: translate3d(0, -100%, 0);
+  }
+  .ltf-site-nav.is-nav-open {
+    transform: translate3d(0, 0, 0) !important;
+  }
+  .ltf-nav-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-width: none !important;
+    padding-left: 15px !important;
+    padding-right: 10px !important;
+    gap: 12px !important;
+  }
+  .ltf-nav-logo-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    height: 52px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    z-index: 1;
+  }
+  .ltf-nav-logo-link .ltf-nav-logo,
+  .ltf-nav-logo-link img,
+  .ltf-nav-logo {
+    display: block !important;
+    height: 21px !important;
+    width: auto !important;
+    max-height: 21px !important;
+    object-fit: contain;
+    margin: 0 !important;
+  }
+  .ltf-nav-inner > .ltf-nav-toggle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    z-index: 102 !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    margin: 0 0 0 auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-toggle {
+    display: none !important;
+  }
+  .ltf-nav-mobile-panel {
+    display: flex !important;
+    position: fixed !important;
+    top: 52px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    z-index: 99 !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: min(80vh, 640px) !important;
+    padding: 14px clamp(20px, 5vw, 32px) 16px !important;
+    overflow: hidden !important;
+    background: rgba(6, 20, 46, 0.97) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transform: translate3d(0, -12px, 0) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition:
+      transform 0.4s ease,
+      opacity 0.35s ease,
+      visibility 0.4s ease !important;
+  }
+  .ltf-site-nav.is-nav-open .ltf-nav-mobile-panel {
+    transform: translate3d(0, 0, 0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+  .ltf-site-nav.is-nav-hidden .ltf-nav-mobile-panel {
+    transform: translate3d(0, -12px, 0) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-links {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+    width: 100% !important;
+    margin: 0 0 14px !important;
+    padding: 0 !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-link {
+    font-size: 19px !important;
+    letter-spacing: 0.14em !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    height: auto !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
+    display: block !important;
+    width: 100% !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-btn,
+  .ltf-nav-mobile-panel .ltf-nav-btn-quote {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+    font-size: 19px !important;
+    letter-spacing: 0.14em !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+}
+
+@media (max-width: 991px) and (prefers-reduced-motion: reduce) {
+  .ltf-site-nav,
+  .ltf-nav-mobile-panel {
+    transition: none !important;
+  }
+}
+
+/* ── Open Comms popout (desktop + mobile) ───────────────────────────────
+   Paired with js/ui/nav-comms.js + site footer inline boot. Targets the
+   OPEN COMMS button inside the global .ltf-site-nav symbol — site head/
+   footer code applies on every page that embeds the symbol; no per-page
+   snippets required. */
+.ltf-comms-wrap {
+  position: relative;
+}
+.ltf-comms-popout {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 220;
+  box-sizing: border-box;
+  width: min(360px, calc(100vw - 32px));
+  padding: 18px 20px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #06142E;
+  color: #E5E5E5;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  transform: translate3d(0, -10px, 0);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 0.38s ease,
+    opacity 0.32s ease,
+    visibility 0.38s ease;
+}
+.ltf-comms-wrap.is-comms-open .ltf-comms-popout:not(.ltf-comms-popout--mobile),
+.ltf-comms-popout.is-comms-open:not(.ltf-comms-popout--mobile) {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.ltf-comms-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ltf-comms-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ltf-comms-row:last-child {
+  border-bottom: none;
+}
+.ltf-comms-label {
+  font-family: acumin-pro-condensed, 'Arial Narrow', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #E5E5E5;
+}
+.ltf-comms-value {
+  font-family: acumin-pro, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: #B8BFC9;
+  word-break: break-word;
+}
+.ltf-comms-value a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.ltf-comms-value a:hover,
+.ltf-comms-value a:focus-visible {
+  color: #FFFFFF;
+  text-decoration: underline;
+}
+.ltf-comms-foot {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: acumin-pro, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: #AEB6C2;
+}
+.ltf-comms-dismiss {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .ltf-comms-popout.ltf-comms-popout--mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+    border-radius: 0 0 10px 10px;
+    border-top: none;
+    z-index: 200;
+    padding:
+      max(18px, env(safe-area-inset-top, 0px))
+      clamp(20px, 5vw, 32px)
+      max(10px, env(safe-area-inset-bottom, 0px));
+    transform: scaleY(0);
+    transform-origin: center var(--ltf-comms-origin-y, 50vh);
+    opacity: 1;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      transform 0.42s ease,
+      visibility 0.42s ease;
+  }
+  .ltf-comms-popout.ltf-comms-popout--mobile.is-comms-open {
+    transform: scaleY(1);
+    visibility: visible;
+    pointer-events: auto;
+  }
+  body.ltf-comms-open {
+    overflow: hidden;
+  }
+  .ltf-comms-popout--mobile .ltf-comms-label {
+    font-size: 15.6px;
+  }
+  .ltf-comms-popout--mobile .ltf-comms-value {
+    font-size: 18px;
+  }
+  .ltf-comms-popout--mobile .ltf-comms-foot {
+    font-size: 16.8px;
+    font-weight: 600;
+    color: #D8DCE3;
+    padding-right: 10%;
+    box-sizing: border-box;
+  }
+  .ltf-comms-popout--mobile .ltf-comms-dismiss {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 16px 0 8px;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    color: #C8CED6;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s ease;
+  }
+  .ltf-comms-popout--mobile .ltf-comms-dismiss:hover,
+  .ltf-comms-popout--mobile .ltf-comms-dismiss:focus-visible {
+    color: #FFFFFF;
+    outline: none;
+  }
+  .ltf-comms-popout--mobile .ltf-comms-dismiss-icon {
+    display: block;
+    width: 80px;
+    height: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ltf-comms-popout {
+    transition: none !important;
+  }
+}
+</style>

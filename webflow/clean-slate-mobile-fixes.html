@@ -10,15 +10,14 @@
     height: calc(100svh + 52px) !important;
     min-height: calc(100svh + 52px) !important;
     max-height: none !important;
-    overflow-x: clip !important;
-    overflow-y: visible !important;
+    /* overflow-x:clip + overflow-y:visible computes to clip both axes — use visible */
+    overflow: visible !important;
   }
 
   .ltf-hero > .ltf-site-cage.ltf-cage {
     height: 100% !important;
     min-height: 100% !important;
-    overflow-x: clip !important;
-    overflow-y: visible !important;
+    overflow: visible !important;
   }
 
   .ltf-hero .hero-canvas-wrapper,
@@ -26,14 +25,29 @@
     overflow: hidden !important;
   }
 
+  /* Webflow sets max-height:78% + hero overflow:hidden — clips shirt at fold */
+  .ltf-hero-figure {
+    max-height: none !important;
+  }
+
+  /*
+    Webflow anchors CTA with position:absolute + bottom — ties it to hero box
+    height (100vh/svh), so it drifts when the mobile URL bar resizes on scroll.
+    Flow layout keeps CTA in the copy stack; Designer still controls spacing.
+  */
+  .ltf-btn-gradient-wrap.is-hero-cta-wrap {
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+
   .ltf-funnel-cta {
     box-sizing: border-box !important;
     height: auto !important;
     min-height: 0 !important;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    padding-top: 75px !important;
-    padding-bottom: 75px !important;
     overflow: visible !important;
   }
 
@@ -41,37 +55,11 @@
     box-sizing: border-box !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding-top: 64px !important;
-    padding-bottom: 64px !important;
-    padding-left: 20px !important;
-    padding-right: 20px !important;
   }
 
   .ltf-funnel-cta-heading {
     padding-left: 0 !important;
     padding-right: 0 !important;
-    font-size: clamp(2.35rem, 11.5vw, 4.2rem) !important;
-    line-height: 0.92 !important;
-  }
-
-  .ltf-funnel-cta-threshold {
-    white-space: nowrap !important;
-    font-size: clamp(9px, 2.55vw, 13px) !important;
-    letter-spacing: 0.1em !important;
-    line-height: 1.2 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-top: 28px !important;
-    margin-bottom: 28px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-}
-
-@media (max-width: 479px) {
-  .ltf-funnel-cta-threshold {
-    font-size: clamp(8px, 2.35vw, 11px) !important;
-    letter-spacing: 0.08em !important;
   }
 }
 </style>

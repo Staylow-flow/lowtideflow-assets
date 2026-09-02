@@ -1,0 +1,17 @@
+# Instant Quote — Round 12 pin @329bdae (2026-09-02)
+
+CSS boot (header inline):
+  display_name: IQCSSBoot329bdae
+  script_id: iqcssboot329bdae
+  integrity: sha384-9vQA/6/ITaHNmNvZh5LqvuqbcjNj8sdfjCV/k9uFu01kvvlzw+BUx06mtIrGSjkT
+
+Form JS (footer hosted):
+  display_name: IQForm329bdae
+  script_id: iqform329bdae
+  url: https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@329bdae/js/instant-quote-form.js
+  integrity: sha384-QLwkH4SoKEYQfNOxqHm0YknECO8TLvylbWJtZu7kvCLKGuFVfeTa4j71UYXMpjah
+
+Keep unchanged from @aefd7a7:
+  iqpricingdataaefd7a7
+  iqpricingaefd7a7
+  iquiaefd7a7

@@ -16,14 +16,16 @@
  */
 
 (async function () {
-  const [{ init: initNav }, { init: initBtn }] = await Promise.all([
+  const [{ init: initNav }, { init: initBtn }, { init: initComms }] = await Promise.all([
     import('./ui/nav-mobile.js'),
     import('./ui/btn-gradient.js'),
+    import('./ui/nav-comms.js'),
   ]);
 
   function boot() {
     initNav();
     initBtn();
+    initComms();
   }
 
   boot();

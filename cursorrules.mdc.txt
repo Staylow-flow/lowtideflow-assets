@@ -1,0 +1,3 @@
+CRITICAL RULE: NEVER move, relocate, or convert jsDelivr <script> links or importmaps out of the Before </body> (footer) tag into the <head> tag. All jsDelivr scripts MUST remain permanently inside the Before </body> tag.
+
+See also: .cursor/rules/ltf-locked-build.mdc and webflow/LOCKED-BUILD.md

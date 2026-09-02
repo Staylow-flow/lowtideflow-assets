@@ -1,0 +1,124 @@
+<style id="ltf-site-footer-fx">
+/* Footer FX only — layout, type, spacing, colors live in Webflow Designer
+   (LTF Site Footer component + ltf-footer-* classes). Uses site nav nebula
+   keyframes from #ltf-site-nav-fx (ltf-nebula-gradient-shift). */
+
+/* Gradient top border (teal → violet) — not expressible as a single Designer border */
+.ltf-site-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 242, 254, 0.3) 0%,
+    rgba(138, 43, 226, 0.3) 100%
+  );
+  pointer-events: none;
+}
+
+/* Logo home link — no hover FX */
+.ltf-footer-logo-link,
+.ltf-footer-logo-link:hover,
+.ltf-footer-logo-link:focus-visible {
+  opacity: 1 !important;
+  filter: none !important;
+  background-image: none !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+/* Nav-matching nebula text gradient on footer links (not logo) */
+.ltf-footer-link,
+.ltf-footer-comms-link,
+.ltf-footer-social-link,
+.ltf-footer-legal-link {
+  background-image: none;
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.ltf-footer-link:hover,
+.ltf-footer-link:focus-visible,
+.ltf-footer-comms-link:hover,
+.ltf-footer-comms-link:focus-visible,
+.ltf-footer-social-link:hover,
+.ltf-footer-social-link:focus-visible,
+.ltf-footer-legal-link:hover,
+.ltf-footer-legal-link:focus-visible {
+  background-image: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+  background-size: 200% 200%;
+  animation: ltf-nebula-gradient-shift 3s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(0 0 5px rgba(77, 37, 157, 0.21))
+    drop-shadow(0 0 12px rgba(42, 170, 184, 0.14));
+}
+
+/* ALL SYSTEMS OPERATIONAL — status row hue shift on hover */
+.ltf-footer-status {
+  transition: filter 0.25s ease;
+}
+
+.ltf-footer-status:hover,
+.ltf-footer-status:focus-within {
+  filter: drop-shadow(0 0 8px rgba(77, 37, 157, 0.18));
+}
+
+.ltf-footer-status:hover > span:last-child,
+.ltf-footer-status:focus-within > span:last-child {
+  background-image: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+  background-size: 200% 200%;
+  animation: ltf-nebula-gradient-shift 3s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes ltf-footer-status-dot-hue {
+  0% { background-color: #7040C0; box-shadow: 0 0 0 0 rgba(112, 64, 192, 0.45); }
+  33% { background-color: #0B8050; box-shadow: 0 0 0 0 rgba(11, 128, 80, 0.45); }
+  66% { background-color: #2AAAB8; box-shadow: 0 0 0 0 rgba(42, 170, 184, 0.45); }
+  100% { background-color: #7040C0; box-shadow: 0 0 0 0 rgba(112, 64, 192, 0.45); }
+}
+
+.ltf-footer-status-dot {
+  animation: ltf-footer-status-dot-hue 3.6s ease-in-out infinite;
+}
+
+.ltf-footer-status:hover .ltf-footer-status-dot,
+.ltf-footer-status:focus-within .ltf-footer-status-dot {
+  animation-duration: 1.8s;
+}
+
+/* Schedule CTA uses global .ltf-btn-gradient-wrap / .ltf-nav-btn — no footer overrides */
+
+/* Legal row — kill global link padding bleed so | aligns with link text */
+.ltf-site-footer .ltf-footer-legal-links {
+  align-items: center;
+}
+.ltf-site-footer .ltf-footer-legal-link,
+.ltf-site-footer .ltf-footer-legal-sep {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0;
+  margin-bottom: 0;
+  align-self: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ltf-footer-link:hover,
+  .ltf-footer-comms-link:hover,
+  .ltf-footer-social-link:hover,
+  .ltf-footer-legal-link:hover,
+  .ltf-footer-status:hover > span:last-child,
+  .ltf-footer-status-dot {
+    animation: none !important;
+  }
+}
+</style>

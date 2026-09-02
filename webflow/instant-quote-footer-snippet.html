@@ -2,14 +2,15 @@
   Instant Quote — Page Footer (Before </body>)
   /instant-quote → Page Settings → Custom Code → Before </body>
 
-  Restore pin (2026-09-02): @aefd7a7 — four-script stack with full FX JS
-  (Calculate gradient ring, total counter, marching ants upload, file lanes).
-  Previous broken pin: single bundle @a0e9fa6 (stale snapshot, no FX handlers).
+  IMPORTANT: Do NOT paste <script> tags here if Registered Scripts are on this page.
+  Footer = artwork modal HTML ONLY. JS/CSS load via Registered Scripts @329bdae.
 
-  Paste the ENTIRE block below into Before </body>.
+  Registered Scripts (Page Settings → Custom Code → Registered Scripts):
+    Header: iqcssboot329bdae
+    Footer: iqpricingdataaefd7a7, iqpricingaefd7a7, iqform329bdae, iquiaefd7a7
 -->
 
-<!-- Instant Quote — artwork modal + V2 scripts @aefd7a7 -->
+<!-- Instant Quote — artwork modal only @329bdae -->
 <div class="iq-modal" id="iq-artwork-modal" role="dialog" aria-modal="true" aria-labelledby="iq-artwork-modal-title" aria-hidden="true">
   <div class="iq-modal-backdrop" id="iq-artwork-modal-backdrop" tabindex="-1"></div>
   <div class="iq-modal-panel">
@@ -21,8 +22,3 @@
     </div>
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-pricing-data.js" integrity="sha384-V9r2GScat84tdcxu4uEFi4X0veyDcjFpJng7J4c6VEwCQqqPitof76kuQtKXRGiF" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-pricing.js" integrity="sha384-Zv2YqFRiW69cfMKTyqzllNFLkXLL0052PUMvQK9HCvQ3dLJX+vynW17/1SeTVvJc" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-form.js" integrity="sha384-1i7ogHc1QdZUCjuSxF/TJgl59Bbr5ARsNqzbC3Si5GZa6q8sTUxdL5aZhtAMB+1E" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-ui.js" integrity="sha384-zlekKprFppCNxYCBez+W8hpd4j5HYr+VWh/g2K9LTGP6CMI4i0wyDbN9VR7uOFHR" crossorigin="anonymous"></script>

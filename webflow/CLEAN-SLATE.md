@@ -27,9 +27,9 @@ body
 ├── header.ltf-site-nav
 │   └── .ltf-nav-inner (max-width 1400) → brand / links / actions / mobile panel
 ├── section.ltf-hero
+│   ├── .hero-canvas-wrapper[data-ltf-rock][data-render-resolution-scale="1"]
+│   │     └── HtmlEmbed → #canvas3d loading="eager"   ← full-bleed (100% hero), z-index 0
 │   └── .ltf-site-cage                          ← 1400px relative cage
-│       ├── .hero-canvas-wrapper[data-ltf-rock][data-render-resolution-scale="1"]
-│       │     └── HtmlEmbed → #canvas3d loading="eager"
 │       ├── img.ltf-hero-figure
 │       ├── .ltf-hero-headline → h1.ltf-main-header
 │       └── .ltf-hero-bottom-bar → logo / body / CTA
@@ -103,9 +103,20 @@ so no head CSS is required.
 
 ## Custom code
 
-**Head** — `webflow/clean-slate-head.html`  
-`:root` tokens + cage CSS + gradient button / nav FX. Button **hover** lives
-here as a CSS `::before` opacity fade; the JS only handles the click pulse.
+**Head** — `webflow/live-page-head.html` (`#ltf-clean-slate-fx` — nav lives in site head, not here)  
+FX only (gradients, glow, nav link glass/hover, hamburger morph, card edges). **Hero position/padding live in Designer**
+on `.ltf-hero`, `.hero-canvas-wrapper`, `.ltf-hero-headline`, `.ltf-hero-bottom-bar`, `.ltf-hero-figure`, and combo classes.
+**Nav layout also lives in Designer** on `LTF Site Nav` classes (`.ltf-site-nav`, `.ltf-nav-inner`, `.ltf-nav-mobile-panel`,
+`.ltf-nav-links`, `.ltf-nav-actions`, `.ltf-nav-logo-link`). Desktop = **1 row** (logo + links + buttons) with **wrap-on-collision**
+(~10px gap; panel `min-width: max-content` so links/buttons drop under the logo only when they no longer fit). Min bar height **50px**.
+Do not add hero or nav layout rules to head CSS.
+
+**Breakpoint gotcha:** Webflow's *additive* desktop breakpoints (`large` = min-width 1280px, `xl` = 1440px,
+`xxl` = 1920px) layer **on top of** `main` and are easy to forget when auditing styles — `query_styles` only
+returns `main`/`medium`/`small`/`tiny` unless you explicitly pass `include_breakpoints: ["large","xl","xxl"]`.
+A stray `large` override once knocked `.ltf-nav-link` down to 16px above 1280px while `main` stayed 20px,
+which is what made the links look "bigger" whenever the nav wrapped to 2 rows at narrower widths. Always check
+`large`/`xl`/`xxl` too when a style seems inconsistent across desktop widths.
 
 **Footer** — `webflow/clean-slate-footer.html`
 

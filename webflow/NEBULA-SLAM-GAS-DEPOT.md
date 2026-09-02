@@ -1,5 +1,7 @@
 # Nebula Slam Gas — Depot drop-in (Clean-slate Specs Vault)
 
+> **STALE** — superseded by [`SPECS-VAULT-SLAM.md`](SPECS-VAULT-SLAM.md) and `js/sections/specs-vault-slam.js`. Do not deploy from this doc.
+
 ## What this is
 
 `js/nebula/nebula-slam-gas.js` is a **new folder** script that only paints nebula gas when Specs cards slam.

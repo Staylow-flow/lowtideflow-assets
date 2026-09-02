@@ -90,7 +90,14 @@ export function init() {
   });
 
   panel.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', close);
+    link.addEventListener('click', (e) => {
+      const text = (link.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (text === 'open comms') {
+        e.preventDefault();
+        return;
+      }
+      close();
+    });
   });
 
   document.addEventListener('keydown', (e) => {

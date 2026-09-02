@@ -58,11 +58,11 @@
     0 0 28px rgba(31, 119, 129, 0.28);
 }
 
-/* Page CTAs — 1px white outline; hover swaps to gradient ring (same size) */
+/* Page CTAs — 2px white outline; hover swaps to gradient ring (same size) */
 .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
 .ltf-section-cta .ltf-btn-gradient-wrap,
 .ltf-funnel-cta .ltf-btn-gradient-wrap {
-  padding: 1px !important;
+  padding: 2px !important;
   border-radius: 12px;
   background: #FFFFFF !important;
   box-shadow: none !important;
@@ -76,7 +76,7 @@
 .ltf-funnel-cta .ltf-btn-gradient-wrap:hover,
 .ltf-funnel-cta .ltf-btn-gradient-wrap:focus-within,
 .ltf-funnel-cta .ltf-btn-gradient-wrap.ltf-btn-gradient-active {
-  padding: 1px !important;
+  padding: 2px !important;
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -134,12 +134,17 @@ body.ltf-nav-open {
   overflow: hidden;
 }
 
+/* Nav layout: Webflow Designer only (.ltf-site-nav, .ltf-nav-inner, .ltf-nav-mobile-panel,
+   .ltf-nav-links, .ltf-nav-actions, .ltf-nav-logo-link). Head CSS = FX + mobile open states only. */
+
 /* ── Crew + Specs glow ─────────────────────────────────────────────── */
 .ltf-card,
 .ltf-spec-card {
   position: relative;
   overflow: visible !important;
   isolation: isolate;
+  /* Hold border transparent until the ring finishes fading (avoids white flash on hover out). */
+  transition: border-color 0.15s ease 0.35s;
 }
 .ltf-card::before,
 .ltf-spec-card::before {
@@ -172,9 +177,17 @@ body.ltf-nav-open {
 .ltf-spec-card::after {
   content: '';
   position: absolute;
-  inset: -6px;
+  /* Cards have a 3px border; -3px puts this pseudo's own edge exactly on
+     that border (absolute children are positioned from the padding edge,
+     3px *inside* the border, so 0/inherit alone sits inward of the real
+     edge — that gap is what let the old -6px/18px version float the ring
+     3-6px past the card with visible background showing through it).
+     border-radius: inherit then matches the card's own 12px radius exactly,
+     since -3px cancels out the border-width radius shrink. */
+  inset: -3px;
   z-index: 2;
-  border-radius: 18px;
+  border-radius: inherit;
+  /* Match the 3px Designer border exactly — ring replaces it flush, no gap. */
   padding: 3px;
   background: conic-gradient(
     from var(--ltf-edge-angle),
@@ -193,6 +206,7 @@ body.ltf-nav-open {
 .ltf-spec-card:hover,
 .ltf-spec-card.is-glow {
   border-color: transparent !important;
+  transition: border-color 0s;
 }
 .ltf-card:hover::after,
 .ltf-card.is-glow::after,
@@ -277,6 +291,15 @@ body.ltf-nav-open {
 .ltf-upsell-list-item:hover::before,
 .ltf-upsell-list-item.is-sweep::before {
   color: #7040C0 !important;
+}
+
+@media (min-width: 992px) {
+  /* Beyond — upsell sweep list sits 50px below the desktop CTA baseline */
+  .ltf-upsell-list.ltf-split-asset {
+    position: relative;
+    top: 50px;
+    box-sizing: border-box;
+  }
 }
 
 /* ── Trenches loupe — host never clips; radius lives on fabric image only ─ */
