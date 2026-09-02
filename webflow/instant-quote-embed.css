@@ -66,6 +66,20 @@
   color: rgba(255, 255, 255, 0.78);
 }
 
+.iq-order-lead {
+  margin: 0;
+}
+
+@media screen and (min-width: 992px) {
+  .iq-intro-lead {
+    padding-bottom: 50px;
+  }
+
+  .iq-order-lead {
+    padding-bottom: 50px;
+  }
+}
+
 /* ── Quality toggle: matched padding + draggable thumb ──────────────── */
 
 .iq-toggle-track {
@@ -179,14 +193,13 @@
   position: relative;
   isolation: isolate;
   background: var(--iq-bg);
-  /* Idle/default border (both mobile + desktop): solid white, 4px — set in
-     Designer (border + border-radius), left uncontested here. The gradient
-     ring is a separate ::after overlay that only shows during the ~2s
-     .is-calculating click sequence (see below).
-     IMPORTANT: keep this in sync with the actual Designer border-width
-     above (currently 4px) — the ::after ring's `inset` below is derived
-     from this variable specifically so the two can't drift apart again. */
-  --iq-total-border-width: 4px;
+  /* Idle/default border (both mobile + desktop): solid white, 2px — halved from
+     the previous 4px outline per Round 8 spec. The gradient ring is a separate
+     ::after overlay that only shows during the ~2s .is-calculating click
+     sequence (see below).
+     IMPORTANT: keep --iq-total-border-width in sync with border-width below. */
+  border-width: 2px !important;
+  --iq-total-border-width: 2px;
   overflow: visible;
   transition: box-shadow 0.4s ease;
 }
@@ -1845,7 +1858,7 @@
   .iq-intro {
     align-items: flex-start;
     text-align: left;
-    padding: 0;
+    padding: 50px 0 0;
     margin: 0 0 20px;
     width: 100%;
     max-width: 100%;
@@ -1868,6 +1881,12 @@
     color: #e5e5e5 !important;
     white-space: pre-line;
     max-width: 100%;
+    padding-right: 30%;
+    box-sizing: border-box;
+  }
+
+  .iq-order-lead {
+    padding-bottom: 25px;
   }
 
   .iq-toggle-track,
@@ -2347,13 +2366,23 @@
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
-    padding-top: 0;
+    padding: 0 !important;
+    margin-top: 50px;
   }
 
-  /* Mobile: stop gradient stroke extending above button on hover */
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit {
+    flex: 1 1 auto;
+    min-height: 70px;
+    align-self: stretch;
+  }
+
+  /* Mobile submit: symmetric gradient ring, Y-centered label (no top-heavy halo) */
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit.iq-orbit-btn::before,
   #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit):hover > #iq-form-submit.iq-orbit-btn::before,
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit):focus-within > #iq-form-submit.iq-orbit-btn::before {
-    inset: 0 -3px -3px -3px;
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit):focus-within > #iq-form-submit.iq-orbit-btn::before,
+  #iq-order-form > .iq-orbit-wrap.is-submitting > #iq-form-submit.iq-orbit-btn::before {
+    inset: -2px;
+    padding: 2px;
   }
 
   .iq-breakdown {
