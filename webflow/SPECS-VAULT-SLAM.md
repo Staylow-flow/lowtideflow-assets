@@ -36,6 +36,20 @@ blocks module execution.
 - `data-ltf-specs-slam`
 - `data-ltf-slam-threshold="0.88"`
 
+## Tablet band — Option A (proportional fan scaling)
+
+**Problem (768–1280px, worst ~992–1100):** `.ltf-specs-vault-cards` uses `overflow: hidden`. JS shrinks card width to the column, but Designer fan offsets (12 / 24 / 36px) stayed fixed → card 04 clipped.
+
+**Fix (JS only — no Designer change):** `js/sections/specs-vault-slam.js` scales fan offsets with card width (`scale = w / 480`) and reserves gutter when sizing cards (`colW / 1.075`).
+
+| Viewport | Behavior |
+|----------|----------|
+| **≤767px** | Slam JS **does not run** — mobile stack unchanged (Designer + `live-page-head.html`) |
+| **768–1280px** | Cards + fan scale down together; slam FX preserved |
+| **≥1280px / wide column** | Full 480×340 cards, 0/12/24/36px fan — matches pre-fix desktop |
+
+**Revert:** copy `webflow/_LOCKED/specs-vault-slam.js.pre-option-a-6f08be9` → `js/sections/specs-vault-slam.js`, or `git checkout 6f08be9 -- js/sections/specs-vault-slam.js`.
+
 ## You must do in Designer
 
 1. Open Interactions on `ltf-specs-vault`

@@ -150,56 +150,24 @@ let bindAll = null;
 
   var SLAM_CARD_W = 480;
   var SLAM_CARD_H = 340;
-  /** Designer fan offsets at full card width (card 01 = 0). */
-  var FAN_OFFSET_BASE = [0, 12, 24, 36];
-  var FAN_GUTTER = 1 + FAN_OFFSET_BASE[3] / SLAM_CARD_W;
-
-  function fanOffsetForWidth(cardWidth, cardIndex) {
-    var base = FAN_OFFSET_BASE[cardIndex] || 0;
-    if (!base) return 0;
-    var scale = cardWidth / SLAM_CARD_W;
-    return Math.round(base * scale);
-  }
 
   function slamCardSize() {
     var vw = window.innerWidth || 1280;
     if (vw <= 767) return { w: 0, h: 0 };
-    /* Shrink card + fan together so card 04 fits inside the column (overflow:hidden host). */
+    /* Keep desktop card proportions; only shrink when the cards column is narrow. */
     var col =
       document.querySelector('.ltf-specs-vault-cards') ||
       document.querySelector('.ltf-specs-vault-cards.ltf-split-asset');
     var colW = col ? col.clientWidth : 0;
-    if (colW <= 0) {
-      return { w: SLAM_CARD_W, h: SLAM_CARD_H };
-    }
-    var w = Math.min(SLAM_CARD_W, colW / FAN_GUTTER);
-    w = Math.max(280, Math.min(SLAM_CARD_W, w));
-    /* If min width still overflows, shrink below 280 rather than clip (tablet only). */
-    if (fanOffsetForWidth(w, 3) + w > colW) {
-      w = Math.max(240, colW / FAN_GUTTER);
-    }
-    w = Math.round(w);
-    while (w > 240 && fanOffsetForWidth(w, 3) + w > colW) {
-      w--;
-    }
+    var cap = colW > 0 ? Math.min(SLAM_CARD_W, colW) : SLAM_CARD_W;
+    var w = Math.min(SLAM_CARD_W, Math.max(280, cap));
     var h = Math.round(w * (SLAM_CARD_H / SLAM_CARD_W));
     return { w: w, h: h };
   }
 
-  function applySlamFanOffset(card, cardIndex, cardWidth) {
-    if (cardIndex < 1) {
-      card.style.left = '0px';
-      card.style.top = '0px';
-      return;
-    }
-    var off = fanOffsetForWidth(cardWidth, cardIndex);
-    card.style.left = off + 'px';
-    card.style.top = off + 'px';
-  }
-
-  function applySlamCardDimensions(card, cardIndex) {
+  function applySlamCardDimensions(card) {
     var size = slamCardSize();
-    if (!size.w) return size;
+    if (!size.w) return;
     card.style.width = size.w + 'px';
     card.style.maxWidth = size.w + 'px';
     card.style.height = size.h + 'px';
@@ -207,17 +175,13 @@ let bindAll = null;
     card.style.maxHeight = size.h + 'px';
     card.style.overflow = 'hidden';
     card.style.boxSizing = 'border-box';
-    if (typeof cardIndex === 'number') {
-      applySlamFanOffset(card, cardIndex, size.w);
-    }
-    return size;
   }
 
   function prepCards(cards, fx) {
     var i;
     for (i = 0; i < cards.length; i++) {
       var cardZ = (i + 1) * 3;
-      applySlamCardDimensions(cards[i], i);
+      applySlamCardDimensions(cards[i]);
       cards[i].style.willChange = 'transform';
       cards[i].style.transition = 'none';
       cards[i].style.position = 'absolute';
@@ -443,7 +407,7 @@ let bindAll = null;
     function remeasure() {
       prepHost(cardsHost, sticky);
       for (i = 0; i < cards.length; i++) {
-        applySlamCardDimensions(cards[i], i);
+        applySlamCardDimensions(cards[i]);
         if (BEATS[i] && beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
     }
