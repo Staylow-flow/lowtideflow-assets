@@ -1,11 +1,8 @@
 <!--
   CLEAN SLATE — Mobile layout fixes (append to Page Head custom code)
 
-  Paste AFTER #ltf-clean-slate-fx on /clean-slate.
-  hero-viewport.js also injects this block if missing (id ltf-mobile-fixes).
-
-  Fixes: united page scroll (stable hero height), orange shirt bleed to gallery,
-  CTA pin, funnel gutters, hero overflow. Scoped to max-width: 991px only.
+  Hero shirt + CTA position/size: Webflow Designer ONLY — no locks here.
+  Keeps stable hero shell height, overflow, canvas clip, and funnel gutters.
 -->
 <style id="ltf-mobile-fixes">
 @media (max-width: 991px) {
@@ -27,37 +24,6 @@
   .ltf-hero .hero-canvas-wrapper,
   .ltf-hero #canvas3d {
     overflow: hidden !important;
-  }
-
-  .ltf-hero-figure {
-    position: absolute !important;
-    top: auto !important;
-    right: 0 !important;
-    bottom: -40px !important;
-    width: min(92vw, 420px) !important;
-    max-width: min(92vw, 420px) !important;
-    transform: translateX(12%) !important;
-    will-change: auto !important;
-  }
-
-  .ltf-hero-figure-img,
-  .ltf-hero-figure img {
-    top: auto !important;
-    bottom: 0 !important;
-    max-height: none !important;
-    height: auto !important;
-    object-fit: contain !important;
-    object-position: bottom right !important;
-  }
-
-  .ltf-btn-gradient-wrap.is-hero-cta-wrap {
-    position: absolute !important;
-    top: auto !important;
-    left: 50% !important;
-    right: auto !important;
-    bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
-    transform: translateX(-50%) !important;
-    margin: 0 !important;
   }
 
   .ltf-funnel-cta {
