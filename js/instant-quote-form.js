@@ -887,9 +887,32 @@
     if (!shell) return;
     var done = shell.querySelector('.w-form-done');
     var fail = shell.querySelector('.w-form-fail');
-    if (done) done.style.display = which === 'done' ? 'block' : 'none';
+    var submitBtn = document.getElementById('iq-form-submit');
+    var orbitWrap = submitBtn && submitBtn.closest('.iq-orbit-wrap');
+
+    if (which === 'done') {
+      if (fail) fail.style.display = 'none';
+
+      Array.from(form.children).forEach(function (el) {
+        if (el === orbitWrap) return;
+        el.style.display = 'none';
+      });
+      form.style.display = '';
+
+      if (submitBtn) submitBtn.style.display = 'none';
+      if (done && orbitWrap) {
+        done.classList.add('iq-form-success-slot', 'iq-form-submit');
+        done.style.display = 'flex';
+        orbitWrap.appendChild(done);
+      } else if (done) {
+        done.style.display = 'block';
+      }
+      return;
+    }
+
+    if (done) done.style.display = 'none';
     if (fail) fail.style.display = which === 'fail' ? 'block' : 'none';
-    if (which === 'done' || which === 'fail') {
+    if (which === 'fail') {
       form.style.display = 'none';
     }
   }
