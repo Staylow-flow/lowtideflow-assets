@@ -1,18 +1,28 @@
 <!--
-  Instant Quote — Page Footer scripts
+  Instant Quote — Page Footer (Before </body>)
   /instant-quote → Page Settings → Custom Code → Before </body>
 
-  V2 pin (2026-08-21): @ebd9bac via jsDelivr (phone ID-grid + 50/50 40px + total lock)
+  Restore pin (2026-09-02): @aefd7a7 — four-script stack with full FX JS
+  (Calculate gradient ring, total counter, marching ants upload, file lanes).
+  Previous broken pin: single bundle @a0e9fa6 (stale snapshot, no FX handlers).
 
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-pricing-data.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-pricing.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-form.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/js/instant-quote-ui.js"></script>
-  + artwork modal HTML (webflow/instant-quote-artwork-modal.html)
-
-  Head CSS:
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@ebd9bac/webflow/instant-quote-embed.css" />
-
-  window.IQ exposes getState(), calculateQuote(), recalculate(), runQuote().
-  Total display updates only via runQuote() (Calculate button).
+  Paste the ENTIRE block below into Before </body>.
 -->
+
+<!-- Instant Quote — artwork modal + V2 scripts @aefd7a7 -->
+<div class="iq-modal" id="iq-artwork-modal" role="dialog" aria-modal="true" aria-labelledby="iq-artwork-modal-title" aria-hidden="true">
+  <div class="iq-modal-backdrop" id="iq-artwork-modal-backdrop" tabindex="-1"></div>
+  <div class="iq-modal-panel">
+    <button type="button" class="iq-modal-close" id="iq-artwork-modal-close" aria-label="Close artwork guidelines">&times;</button>
+    <h2 class="iq-modal-title" id="iq-artwork-modal-title">Artwork Guidelines &amp; Policies</h2>
+    <div class="iq-modal-body">
+      <p><strong>Free Setup &amp; Prep:</strong> If you have your logo, graphics, or branding finalized and ready to print, we provide free professional type-setting, sizing optimization, and digital mockups to make sure it prints flawlessly.</p>
+      <p><strong>Custom Concept Design:</strong> Need killer, ground-up creative work or complex illustration? That is our specialty, but we don&rsquo;t work on spec. True custom apparel design requires a upfront design deposit, locked-in milestone approvals, and a strict &ldquo;pay to play&rdquo; structure. Let us know in your project brief if you need a creative consult.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-pricing-data.js" integrity="sha384-V9r2GScat84tdcxu4uEFi4X0veyDcjFpJng7J4c6VEwCQqqPitof76kuQtKXRGiF" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-pricing.js" integrity="sha384-Zv2YqFRiW69cfMKTyqzllNFLkXLL0052PUMvQK9HCvQ3dLJX+vynW17/1SeTVvJc" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-form.js" integrity="sha384-1i7ogHc1QdZUCjuSxF/TJgl59Bbr5ARsNqzbC3Si5GZa6q8sTUxdL5aZhtAMB+1E" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@aefd7a7/js/instant-quote-ui.js" integrity="sha384-zlekKprFppCNxYCBez+W8hpd4j5HYr+VWh/g2K9LTGP6CMI4i0wyDbN9VR7uOFHR" crossorigin="anonymous"></script>

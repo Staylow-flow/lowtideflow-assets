@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-PIN="${1:-8b55a89}"
+PIN="${1:-aefd7a7}"
 URL="https://www.lowtideflow.co/instant-quote"
 FAIL=0
 

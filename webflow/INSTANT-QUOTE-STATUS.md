@@ -202,3 +202,53 @@ border.
   (stale `<ul>` removed), `.iq-form-submit` mobile `margin-top` (16px→50px)
 
 ## Nothing currently blocked.
+
+---
+
+## Round 7 — IQ polish batch + Drive upload restore (commit `aefd7a7`, 2026-09-02)
+
+### Section A — Spec Engine H1
+- Desktop: `.iq-intro` / `.iq-intro-title` left-justified, sized to match `.ltf-main-header.is-page`
+  (`clamp(48px, 6vw, 88px)`, weight 900, acumin-pro-extra-condensed).
+- Mobile: replaced 67px section-header sizing with Production hero mobile sizing
+  (`clamp(3.078rem, 14.25vw, 3.99rem)`).
+
+### Section B — Art upload → Sheets/Drive (CRITICAL)
+- **Root cause:** `@8237a53` form.js used multipart FormData; Apps Script prefers base64 in
+  `payload.sheet.art_files` (`collectArtworkBlobs_` in `LTF-Instant-Quote-Apps-Script.gs`).
+- **Fix:** Restored base64 path from `@6c20553`, wired to cumulative `artworkFiles[]` array
+  (keeps upload shell UI, lanes, marching ants). Submits as `text/plain` JSON body.
+- Pin: `iqformaefd7a7` @ `aefd7a7`, SRI `sha384-1i7ogHc1QdZUCjuSxF/TJgl59Bbr5ARsNqzbC3Si5GZa6q8sTUxdL5aZhtAMB+1E`.
+
+### Section C — Calculate Production Run
+- `#iq-run-quote` / `.iq-run-quote` → `font-weight: 900` in embed.css.
+
+### Section D — Submit button
+- Desktop width capped at 920px (matches art upload panel).
+- Mobile: gradient ring `inset` top clamped (no hover extension above button).
+- Submit-in-progress: `.is-submitting` keeps L→R gradient cycling until request completes.
+- Success: `.w-form-done` styled dark navy `#00001c`, enlarged, same padding footprint.
+- Success copy: "Thank you! Your submission has been received!"
+
+### Section E — Modal
+- `.iq-modal-title` → light grey `rgba(255,255,255,0.62)`.
+
+### Deploy
+- Registered scripts: `iqcssbootaefd7a7`, `iqpricingdataaefd7a7`, `iqpricingaefd7a7`,
+  `iqformaefd7a7`, `iquiaefd7a7` (page `6a59f0368e92a3bd60940ad9`).
+- Site publish: subdomain OK @ 05:21 UTC; **custom domain publish pending** (429 rate limit
+  at time of writing — retry needed for www.lowtideflow.co).
+
+### Watchdogs
+- `webflow/iq-style-script-watchdog.sh` — checks 4-script stack, full embed.css, FX markers.
+- `webflow/iq-freeze-watchdog.sh` — 15-min stale terminal / live-page ping.
+- SRI pin file: `webflow/.iq-pin-aefd7a7-sri.txt`
+
+### Files touched
+- `js/instant-quote-form.js`
+- `webflow/instant-quote-embed.css`
+- `webflow/instant-quote-head-snippet.html`
+- `webflow/instant-quote-footer-snippet.html`
+- `webflow/iq-style-script-watchdog.sh` (new)
+- `webflow/iq-freeze-watchdog.sh` (new)
+
