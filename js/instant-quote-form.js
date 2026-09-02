@@ -820,44 +820,47 @@
 
   function initEmailTypoCatcher() {
     var email = document.getElementById('iq-form-email');
-    if (!email) return;
+    var form = document.getElementById('iq-order-form');
+    if (!email || !form) return;
 
     var hint = document.getElementById('iq-email-typo-hint');
     if (!hint) {
       hint = document.createElement('button');
       hint.type = 'button';
       hint.id = 'iq-email-typo-hint';
+      hint.className = 'iq-email-typo-hint';
       hint.hidden = true;
       hint.setAttribute('aria-live', 'polite');
-      hint.style.cssText =
-        'margin:0;padding:0;border:0;background:transparent;color:#f87171;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;text-decoration:underline;';
       email.insertAdjacentElement('afterend', hint);
     }
 
     function clearHint() {
       hint.hidden = true;
-      hint.style.display = 'none';
       hint.textContent = '';
       hint.onclick = null;
     }
 
-    email.addEventListener('blur', function () {
+    function showHint() {
       var suggestion = suggestEmailFix(email.value.trim());
       if (!suggestion) {
         clearHint();
         return;
       }
       hint.hidden = false;
-      hint.style.display = 'block';
       hint.textContent = 'Did you mean ' + suggestion + '? (Click to fix)';
       hint.onclick = function () {
         email.value = suggestion;
         clearHint();
         email.focus();
       };
-    });
+    }
 
-    email.addEventListener('input', clearHint);
+    email.addEventListener('blur', showHint);
+    email.addEventListener('change', showHint);
+    email.addEventListener('input', function () {
+      window.clearTimeout(hint._iqTypoTimer);
+      hint._iqTypoTimer = window.setTimeout(showHint, 450);
+    });
     clearHint();
   }
 
@@ -892,11 +895,6 @@
 
     if (which === 'done') {
       if (fail) fail.style.display = 'none';
-
-      Array.from(form.children).forEach(function (el) {
-        if (el === orbitWrap) return;
-        el.style.display = 'none';
-      });
       form.style.display = '';
 
       if (submitBtn) submitBtn.style.display = 'none';
@@ -1086,7 +1084,6 @@
             'success'
           );
           showWebflowState(form, 'done');
-          form.reset();
           clearArtworkFiles();
           renderArtworkFileList();
           syncQuoteFields();
