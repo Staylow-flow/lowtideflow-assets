@@ -1788,46 +1788,19 @@
     justify-self: center;
   }
 
-  /* +50px vertical padding on Submit Project Brief (desktop) */
-  #iq-form-submit,
-  .iq-form-submit {
-    padding-top: calc(24px + 50px) !important;
-    padding-bottom: calc(24px + 50px) !important;
-    min-height: 0 !important;
-  }
-
   .iq-order-section .w-form-done {
     width: min(920px, 100%);
     max-width: 920px;
     margin-left: auto;
     margin-right: auto;
-    padding-top: calc(24px + 50px) !important;
-    padding-bottom: calc(24px + 50px) !important;
   }
 
-  /* Apparel style radio section — centered on desktop */
-  .iq-apparel-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-  }
-
-  .iq-apparel-section > .iq-apparel-row:first-of-type,
-  .iq-apparel-section > #split-row-wrapper {
-    width: fit-content;
-    max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .iq-apparel-section > .iq-apparel-row:first-of-type {
-    justify-content: center;
-  }
-
-  #split-row-wrapper .iq-apparel-row--split {
-    margin-left: auto;
-    margin-right: auto;
+  /* Center only the apparel radio option grid — label box + unit price stay
+     flush under Print Locations / Quantity columns (no section-level shift). */
+  .iq-apparel-row:not(.iq-artwork-row) > .iq-style-grid,
+  #split-row-wrapper .iq-apparel-row--split > .iq-style-grid {
+    justify-self: center;
+    margin-inline: auto;
   }
 }
 
@@ -1917,7 +1890,7 @@
     color: #e5e5e5 !important;
     white-space: pre-line;
     max-width: 100%;
-    padding-right: 30%;
+    padding-right: 35%;
     box-sizing: border-box;
   }
 
