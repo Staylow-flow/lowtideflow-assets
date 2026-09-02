@@ -4,8 +4,8 @@
   Paste AFTER #ltf-clean-slate-fx on /clean-slate.
   hero-viewport.js also injects this block if missing (id ltf-mobile-fixes).
 
-  Overrides Webflow Designer mobile rules (figure inset:380px, CTA in copy stack)
-  so shirt + CTA scroll united with the hero section.
+  Fixes: united page scroll (stable hero height), orange shirt bleed to gallery,
+  CTA pin, funnel gutters, hero overflow. Scoped to max-width: 991px only.
 -->
 <style id="ltf-mobile-fixes">
 @media (max-width: 991px) {
@@ -18,7 +18,6 @@
   }
 
   .ltf-hero > .ltf-site-cage.ltf-cage {
-    position: relative !important;
     height: 100% !important;
     min-height: 100% !important;
     overflow-x: clip !important;
@@ -30,78 +29,35 @@
     overflow: hidden !important;
   }
 
-  /*
-    Orange shirt — img.ltf-hero-figure (Designer uses inset:380px which sits too high).
-    -90px = archive -40px + 50px lower bleed toward gallery (~15px gap).
-  */
-  .ltf-hero-figure,
-  .ltf-hero-figure-img,
-  .ltf-hero-figure img,
-  img.ltf-hero-figure {
+  .ltf-hero-figure {
     position: absolute !important;
     top: auto !important;
-    left: auto !important;
     right: 0 !important;
-    bottom: -90px !important;
-    inset: auto !important;
+    bottom: -40px !important;
     width: min(92vw, 420px) !important;
     max-width: min(92vw, 420px) !important;
-    max-height: none !important;
-    height: auto !important;
-    object-fit: contain !important;
-    object-position: bottom right !important;
     transform: translateX(12%) !important;
     will-change: auto !important;
   }
 
-  /*
-    Copy stack — absolute band inside hero (NOT fixed). CTA parks on bottom-bar edge.
-  */
-  .ltf-hero-bottom-bar,
-  .ltf-hero-bottom-bar.ltf-split-2 {
-    position: absolute !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    align-items: start !important;
-    left: 25px !important;
-    right: 25px !important;
-    top: var(--ltf-hero-copy-top, calc(12% + 200px)) !important;
+  .ltf-hero-figure-img,
+  .ltf-hero-figure img {
+    top: auto !important;
     bottom: 0 !important;
-    width: auto !important;
-    transform: none !important;
-    translate: none !important;
-    will-change: auto !important;
-    z-index: 3 !important;
-    pointer-events: none !important;
+    max-height: none !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: bottom right !important;
   }
 
-  .ltf-hero-bottom-bar .is-hero-copy,
-  .ltf-hero-bottom-bar .ltf-stack,
-  .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy,
-  .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy.is-hero-copy {
-    position: relative !important;
-    width: 100% !important;
-    max-width: none !important;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-  }
-
-  /* CTA — absolute to stretched bottom-bar (hero bottom), not the copy flex stack */
-  .ltf-hero .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
   .ltf-btn-gradient-wrap.is-hero-cta-wrap {
     position: absolute !important;
     top: auto !important;
     left: 50% !important;
     right: auto !important;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 28px) !important;
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px)) !important;
     transform: translateX(-50%) !important;
     margin: 0 !important;
-    z-index: 4 !important;
-    pointer-events: auto !important;
   }
 
   .ltf-funnel-cta {
