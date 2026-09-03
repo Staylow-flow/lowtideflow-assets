@@ -493,6 +493,20 @@
     requestAnimationFrame(frame);
   }
 
+  function getArtworkLaneList(drop) {
+    if (!drop) return null;
+    return drop.querySelector('.iq-form-upload-lanes');
+  }
+
+  function purgeStaleArtworkLists(drop) {
+    if (!drop) return;
+    var shell = drop.querySelector('.iq-form-upload-shell');
+    Array.prototype.slice
+      .call(drop.querySelectorAll('#iq-form-artwork-list, .iq-form-upload-lanes'))
+      .forEach(function (list) {
+        if (shell && shell.contains(list)) return;
+        if (list.parentNode) list.parentNode.removeChild(list);
+      });
   function findArtworkLaneByKey(list, key) {
     if (!list) return null;
     var lanes = list.querySelectorAll('[data-file-key]');
@@ -557,20 +571,20 @@
       '    <span class="iq-form-upload-lane-name">' +
       escapeHtml(file.name) +
       '</span>' +
-      '    <div class="iq-form-upload-lane-status-col">' +
-      '      <span class="iq-form-upload-lane-pct">0%</span>' +
-      '      <div class="iq-form-upload-lane-check-stack">' +
-      '        <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
-      '        <span class="iq-form-upload-lane-remove" role="button" tabindex="0" aria-label="Remove ' +
-      escapeHtml(file.name) +
-      '">&times;</span>' +
-      '      </div>' +
-      '    </div>' +
       '  </div>' +
       '  <span class="iq-form-upload-lane-meta">' +
       fileExt(file.name) + ' · ' + formatFileSize(file.size) +
       '</span>' +
       '  <div class="iq-form-upload-lane-bar" aria-hidden="true"><span></span></div>' +
+      '</div>' +
+      '<div class="iq-form-upload-lane-status-col">' +
+      '  <span class="iq-form-upload-lane-pct">0%</span>' +
+      '  <div class="iq-form-upload-lane-check-stack">' +
+      '    <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
+      '    <span class="iq-form-upload-lane-remove" role="button" tabindex="0" aria-label="Remove ' +
+      escapeHtml(file.name) +
+      '">&times;</span>' +
+      '  </div>' +
       '</div>';
 
     bindArtworkLaneRemove(lane, key);
@@ -629,10 +643,14 @@
    *  the last render get a lane + independent, staggered upload animation
    *  (C3/C4) — nothing already uploaded is ever replaced or restarted. */
   function renderArtworkFileList() {
-    var list = document.getElementById('iq-form-artwork-list');
     var drop = document.getElementById('iq-form-artwork-drop');
     var queue = document.getElementById('iq-form-artwork-queue');
-    if (!list || !drop) return;
+    if (!drop) return;
+
+    ensureArtworkUploadShell(drop);
+    purgeStaleArtworkLists(drop);
+    var list = getArtworkLaneList(drop);
+    if (!list) return;
 
     if (!artworkFiles.length) {
       list.innerHTML = '';
@@ -710,8 +728,11 @@
     var input = document.getElementById('iq-form-artwork-file');
     var browse = document.getElementById('iq-form-artwork-browse');
     if (!drop || !input) return;
+    if (drop.dataset.iqUploadInit === '1') return;
+    drop.dataset.iqUploadInit = '1';
 
     ensureArtworkUploadShell(drop);
+    purgeStaleArtworkLists(drop);
     ensureFileInputPlacement(drop, input);
     ensureArtworkAntsOverlay(drop);
     setArtworkDropMode(drop, 'idle');

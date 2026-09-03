@@ -875,6 +875,14 @@
   justify-self: center;
 }
 
+@media screen and (min-width: 992px) {
+  #iq-artwork-row .iq-artwork-panel,
+  .iq-artwork-row .iq-artwork-panel {
+    width: min(520px, 100%);
+    max-width: 520px;
+  }
+}
+
 /* ── Artwork upload — full viewport drop zone + animated feedback ─────── */
 
 #iq-form-artwork-drop.iq-form-upload,
@@ -1303,19 +1311,21 @@
 .iq-form-upload-lanes {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 6px 0 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
   max-height: min(52vh, 520px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .iq-form-upload-lane {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr) 36px;
   gap: 14px;
-  align-items: center;
+  align-items: start;
   padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1356,17 +1366,21 @@
 .iq-form-upload-lane-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
 }
 
 .iq-form-upload-lane-status-col {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
   flex-shrink: 0;
+  grid-column: 3;
+  grid-row: 1;
+  align-self: start;
+  padding-top: 2px;
 }
 
 .iq-form-upload-lane-check-stack {
