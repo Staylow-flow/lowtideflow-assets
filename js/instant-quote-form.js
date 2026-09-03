@@ -261,8 +261,20 @@
   var artworkFiles = [];
   var artworkLaneMap = {};
 
+  function normalizeArtworkFileKey(file) {
+    return (
+      String(file.name || '')
+        .trim()
+        .toLowerCase() +
+      '|' +
+      String(file.size || 0) +
+      '|' +
+      String(file.lastModified || 0)
+    );
+  }
+
   function artworkFileKey(file) {
-    return file.name + '|' + file.size + '|' + (file.lastModified || 0);
+    return normalizeArtworkFileKey(file);
   }
 
   function addArtworkFiles(fileList) {
@@ -481,6 +493,56 @@
     requestAnimationFrame(frame);
   }
 
+  function findArtworkLaneByKey(list, key) {
+    if (!list) return null;
+    var lanes = list.querySelectorAll('[data-file-key]');
+    for (var i = 0; i < lanes.length; i += 1) {
+      if (lanes[i].dataset.fileKey === key) return lanes[i];
+    }
+    return null;
+  }
+
+  function reconcileArtworkLanes(list) {
+    if (!list) return;
+
+    var valid = {};
+    artworkFiles.forEach(function (file) {
+      valid[artworkFileKey(file)] = true;
+    });
+
+    Object.keys(artworkLaneMap).forEach(function (key) {
+      if (valid[key]) return;
+      var lane = artworkLaneMap[key];
+      if (lane && lane.parentNode) lane.parentNode.removeChild(lane);
+      delete artworkLaneMap[key];
+    });
+
+    Array.prototype.slice.call(list.children).forEach(function (lane) {
+      var key = lane.dataset && lane.dataset.fileKey;
+      if (!key || valid[key]) return;
+      lane.parentNode.removeChild(lane);
+      delete artworkLaneMap[key];
+    });
+  }
+
+  function bindArtworkLaneRemove(lane, key) {
+    var removeBtn = lane.querySelector('.iq-form-upload-lane-remove');
+    if (!removeBtn) return;
+
+    function onRemove(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      removeArtworkFile(key);
+    }
+
+    removeBtn.addEventListener('click', onRemove);
+    removeBtn.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') onRemove(event);
+    });
+  }
+
   function buildArtworkLane(file) {
     var key = artworkFileKey(file);
     var lane = document.createElement('li');
@@ -496,13 +558,13 @@
       escapeHtml(file.name) +
       '</span>' +
       '    <div class="iq-form-upload-lane-status-col">' +
-      '      <span class="iq-form-upload-lane-status">' +
-      '        <span class="iq-form-upload-lane-pct">0%</span>' +
+      '      <span class="iq-form-upload-lane-pct">0%</span>' +
+      '      <div class="iq-form-upload-lane-check-stack">' +
       '        <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
-      '      </span>' +
-      '      <button type="button" class="iq-form-upload-lane-remove" aria-label="Remove ' +
+      '        <span class="iq-form-upload-lane-remove" role="button" tabindex="0" aria-label="Remove ' +
       escapeHtml(file.name) +
-      '">&times;</button>' +
+      '">&times;</span>' +
+      '      </div>' +
       '    </div>' +
       '  </div>' +
       '  <span class="iq-form-upload-lane-meta">' +
@@ -511,15 +573,7 @@
       '  <div class="iq-form-upload-lane-bar" aria-hidden="true"><span></span></div>' +
       '</div>';
 
-    var removeBtn = lane.querySelector('.iq-form-upload-lane-remove');
-    if (removeBtn) {
-      removeBtn.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        removeArtworkFile(key);
-      });
-    }
-
+    bindArtworkLaneRemove(lane, key);
     return lane;
   }
 
@@ -590,11 +644,19 @@
 
     if (queue) queue.hidden = false;
     setArtworkDropMode(drop, 'queue');
+    reconcileArtworkLanes(list);
 
     var newIndex = 0;
     artworkFiles.forEach(function (file) {
       var key = artworkFileKey(file);
-      if (artworkLaneMap[key]) return;
+      var mappedLane = artworkLaneMap[key];
+      if (mappedLane && mappedLane.isConnected) return;
+
+      var existingLane = findArtworkLaneByKey(list, key);
+      if (existingLane) {
+        artworkLaneMap[key] = existingLane;
+        return;
+      }
 
       var lane = buildArtworkLane(file);
       artworkLaneMap[key] = lane;
@@ -626,11 +688,12 @@
     if (!input || !input.files || !input.files.length) return;
     // Copy first — iOS can clear FileList when input.value is reset.
     var picked = Array.prototype.slice.call(input.files);
-    addArtworkFiles(picked);
-    renderArtworkFileList();
-    window.setTimeout(function () {
+    window.clearTimeout(input._iqChangeTimer);
+    input._iqChangeTimer = window.setTimeout(function () {
+      addArtworkFiles(picked);
+      renderArtworkFileList();
       input.value = '';
-    }, 0);
+    }, 100);
   }
 
   function openArtworkPicker(input, event) {
