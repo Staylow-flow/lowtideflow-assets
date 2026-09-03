@@ -1354,6 +1354,48 @@
   gap: 10px;
 }
 
+.iq-form-upload-lane-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.iq-form-upload-lane-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.iq-form-upload-lane-remove:hover,
+.iq-form-upload-lane-remove:focus-visible {
+  background: rgba(252, 165, 165, 0.18);
+  border-color: rgba(252, 165, 165, 0.55);
+  color: #fecaca;
+  outline: none;
+}
+
+.iq-form-upload-lane-remove:active {
+  transform: scale(0.94);
+}
+
 .iq-form-upload-lane-name {
   flex: 1 1 auto;
   min-width: 0;
@@ -1900,6 +1942,11 @@
   overflow: hidden !important;
   clip: rect(0, 0, 0, 0) !important;
   border: 0 !important;
+  white-space: nowrap !important;
+}
+
+#iq-form-artwork-drop .iq-form-upload-input {
+  z-index: 2;
 }
 
 .iq-form-upload-list[hidden] {
@@ -2242,6 +2289,57 @@
     height: auto;
     padding: 28px 20px;
     box-sizing: border-box;
+    overflow: visible;
+  }
+
+  /* iOS Safari: full-zone invisible tap target opens the native file picker
+     reliably; clip/1px sizing alone often fails on mobile. */
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-input {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    clip: auto !important;
+    overflow: visible !important;
+    cursor: pointer !important;
+    z-index: 4 !important;
+    pointer-events: auto !important;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-shell,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-idle,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
+    pointer-events: none;
+  }
+
+  #iq-form-artwork-drop.is-queue .iq-form-upload-input,
+  #iq-form-artwork-drop.is-loading .iq-form-upload-input {
+    inset: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    clip: rect(0, 0, 0, 0) !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+  }
+
+  #iq-form-artwork-drop.is-queue .iq-form-upload-add-more,
+  #iq-form-artwork-drop.is-loading .iq-form-upload-add-more {
+    position: relative;
+    z-index: 5;
+  }
+
+  #iq-form-artwork-drop.is-queue .iq-form-upload-lanes,
+  #iq-form-artwork-drop.is-loading .iq-form-upload-lanes {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .iq-form-upload-lane-remove {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
   }
 
   .iq-form-upload-inner,

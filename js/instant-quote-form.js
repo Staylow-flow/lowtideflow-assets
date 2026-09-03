@@ -284,6 +284,55 @@
     artworkLaneMap = {};
   }
 
+  function removeArtworkFile(key) {
+    artworkFiles = artworkFiles.filter(function (file) {
+      return artworkFileKey(file) !== key;
+    });
+
+    var lane = artworkLaneMap[key];
+    if (lane) {
+      if (lane.classList.contains('is-uploading')) {
+        artworkUploadsInFlight = Math.max(0, artworkUploadsInFlight - 1);
+      }
+      if (lane.parentNode) lane.parentNode.removeChild(lane);
+      delete artworkLaneMap[key];
+    }
+
+    updateArtworkQueueCount();
+    if (!artworkFiles.length) {
+      renderArtworkFileList();
+    }
+  }
+
+  /** Keep the native file input on the drop zone (not buried in a Webflow embed)
+   *  so mobile Safari can attach files reliably. */
+  function ensureFileInputPlacement(drop, input) {
+    if (!drop || !input) return;
+    input.classList.add('iq-form-upload-input');
+    if (input.id !== 'iq-form-artwork-file') {
+      input.id = 'iq-form-artwork-file';
+    }
+    if (input.parentNode !== drop) {
+      drop.appendChild(input);
+    }
+  }
+
+  /** iOS Safari opens the file picker most reliably from a <label for="…"> tap. */
+  function wireBrowseAsLabel(browse, input) {
+    if (!browse || !input || browse.tagName === 'LABEL') return browse;
+
+    var label = document.createElement('label');
+    label.setAttribute('for', input.id);
+    label.className = browse.className;
+    label.id = browse.id;
+    label.innerHTML = browse.innerHTML;
+    browse.parentNode.replaceChild(label, browse);
+    label.addEventListener('click', function (event) {
+      event.stopPropagation();
+    });
+    return label;
+  }
+
   function ensureArtworkUploadShell(drop) {
     if (drop.querySelector('.iq-form-upload-shell')) return;
 
@@ -323,7 +372,7 @@
       '      <span class="iq-form-upload-queue-count" id="iq-form-artwork-queue-count">0</span>' +
       '      <span class="iq-form-upload-queue-title" id="iq-form-artwork-queue-title">files ready</span>' +
       '    </div>' +
-      '    <button type="button" class="iq-form-upload-add-more" id="iq-form-artwork-add-more">Add more</button>' +
+      '    <label class="iq-form-upload-add-more" id="iq-form-artwork-add-more" for="iq-form-artwork-file">Add more</label>' +
       '  </div>' +
       '  <ul class="iq-form-upload-lanes" id="iq-form-artwork-list"></ul>' +
       '</div>';
@@ -397,8 +446,10 @@
   }
 
   function buildArtworkLane(file) {
+    var key = artworkFileKey(file);
     var lane = document.createElement('li');
     lane.className = 'iq-form-upload-lane is-uploading';
+    lane.dataset.fileKey = key;
     lane.innerHTML =
       '<span class="iq-form-upload-lane-icon iq-form-upload-lane-icon--' +
       fileTypeIcon(file.name) +
@@ -408,9 +459,14 @@
       '    <span class="iq-form-upload-lane-name">' +
       escapeHtml(file.name) +
       '</span>' +
-      '    <span class="iq-form-upload-lane-status">' +
-      '      <span class="iq-form-upload-lane-pct">0%</span>' +
-      '      <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
+      '    <span class="iq-form-upload-lane-actions">' +
+      '      <span class="iq-form-upload-lane-status">' +
+      '        <span class="iq-form-upload-lane-pct">0%</span>' +
+      '        <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
+      '      </span>' +
+      '      <button type="button" class="iq-form-upload-lane-remove" aria-label="Remove ' +
+      escapeHtml(file.name) +
+      '">&times;</button>' +
       '    </span>' +
       '  </div>' +
       '  <span class="iq-form-upload-lane-meta">' +
@@ -418,6 +474,16 @@
       '</span>' +
       '  <div class="iq-form-upload-lane-bar" aria-hidden="true"><span></span></div>' +
       '</div>';
+
+    var removeBtn = lane.querySelector('.iq-form-upload-lane-remove');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        removeArtworkFile(key);
+      });
+    }
+
     return lane;
   }
 
@@ -519,47 +585,52 @@
       .replace(/"/g, '&quot;');
   }
 
+  function handleArtworkInputChange(input) {
+    if (!input || !input.files || !input.files.length) return;
+    addArtworkFiles(input.files);
+    renderArtworkFileList();
+    // Reset so picking the exact same file(s) again still fires 'change'
+    // next time (browsers won't re-fire on an identical FileList).
+    input.value = '';
+  }
+
   function initArtworkUpload() {
     var drop = document.getElementById('iq-form-artwork-drop');
     var input = document.getElementById('iq-form-artwork-file');
     var browse = document.getElementById('iq-form-artwork-browse');
     if (!drop || !input) return;
 
+    ensureFileInputPlacement(drop, input);
     ensureArtworkUploadShell(drop);
+    ensureFileInputPlacement(drop, input);
     ensureArtworkAntsOverlay(drop);
     setArtworkDropMode(drop, 'idle');
 
     var dragDepth = 0;
 
-    if (browse) {
-      browse.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        input.click();
-      });
-    }
+    browse = wireBrowseAsLabel(browse, input);
 
     drop.addEventListener('click', function (event) {
       if (drop.classList.contains('is-queue') || drop.classList.contains('is-loading')) return;
-      if (event.target === browse || (browse && browse.contains(event.target))) return;
+      if (event.target === input || input.contains(event.target)) return;
+      if (browse && (event.target === browse || browse.contains(event.target))) return;
+      if (event.target.closest && event.target.closest('.iq-form-upload-lane-remove')) return;
       input.click();
     });
 
     var addMore = document.getElementById('iq-form-artwork-add-more');
     if (addMore) {
       addMore.addEventListener('click', function (event) {
-        event.preventDefault();
         event.stopPropagation();
-        input.click();
       });
     }
 
     input.addEventListener('change', function () {
-      addArtworkFiles(input.files);
-      renderArtworkFileList();
-      // Reset so picking the exact same file(s) again still fires 'change'
-      // next time (browsers won't re-fire on an identical FileList).
-      input.value = '';
+      handleArtworkInputChange(input);
+    });
+
+    input.addEventListener('input', function () {
+      handleArtworkInputChange(input);
     });
 
     drop.addEventListener('dragenter', function (event) {
