@@ -1027,6 +1027,11 @@
   width: 100%;
 }
 
+#iq-form-artwork-drop .iq-form-upload-input {
+  z-index: 20;
+  touch-action: manipulation;
+}
+
 .iq-form-upload-inner {
   display: flex;
   flex-direction: column;
@@ -1035,6 +1040,7 @@
   gap: 14px;
   text-align: center;
   box-sizing: border-box;
+  position: relative;
   /* Desktop target ~500px total (padding included); mobile overrides this
      back down further in the small-breakpoint block below. */
   min-height: 500px;
@@ -1354,46 +1360,50 @@
   gap: 10px;
 }
 
-.iq-form-upload-lane-actions {
+.iq-form-upload-lane-status-col {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 2px;
   flex-shrink: 0;
+  min-width: 28px;
 }
 
 .iq-form-upload-lane-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: auto;
+  height: auto;
+  min-width: 22px;
   margin: 0;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 22px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--iq-nebula-teal);
+  font-size: 20px;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.15s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .iq-form-upload-lane-remove:hover,
 .iq-form-upload-lane-remove:focus-visible {
-  background: rgba(252, 165, 165, 0.18);
-  border-color: rgba(252, 165, 165, 0.55);
-  color: #fecaca;
+  color: #5eead4;
+  background: transparent;
   outline: none;
 }
 
 .iq-form-upload-lane-remove:active {
-  transform: scale(0.94);
+  opacity: 0.72;
+}
+
+.iq-form-upload-lane.is-uploading .iq-form-upload-lane-remove {
+  opacity: 0.55;
 }
 
 .iq-form-upload-lane-name {
@@ -2295,29 +2305,32 @@
   /* iOS Safari: full-zone invisible tap target opens the native file picker
      reliably; clip/1px sizing alone often fails on mobile. */
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-input {
+    position: absolute !important;
     inset: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: 100% !important;
+    min-height: 220px !important;
     margin: 0 !important;
-    opacity: 0 !important;
+    opacity: 0.001 !important;
     clip: auto !important;
     overflow: visible !important;
     cursor: pointer !important;
-    z-index: 4 !important;
+    z-index: 20 !important;
     pointer-events: auto !important;
-  }
-
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-shell,
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-idle,
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
-    pointer-events: none;
+    font-size: 16px !important;
   }
 
   #iq-form-artwork-drop.is-queue .iq-form-upload-input,
   #iq-form-artwork-drop.is-loading .iq-form-upload-input {
+    position: absolute !important;
     inset: auto !important;
     width: 1px !important;
     height: 1px !important;
+    min-height: 0 !important;
     opacity: 0 !important;
     clip: rect(0, 0, 0, 0) !important;
     z-index: 1 !important;
@@ -2327,7 +2340,8 @@
   #iq-form-artwork-drop.is-queue .iq-form-upload-add-more,
   #iq-form-artwork-drop.is-loading .iq-form-upload-add-more {
     position: relative;
-    z-index: 5;
+    z-index: 21;
+    touch-action: manipulation;
   }
 
   #iq-form-artwork-drop.is-queue .iq-form-upload-lanes,
@@ -2337,9 +2351,7 @@
   }
 
   .iq-form-upload-lane-remove {
-    width: 36px;
-    height: 36px;
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .iq-form-upload-inner,

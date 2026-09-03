@@ -270,7 +270,12 @@
     artworkFiles.forEach(function (f) {
       seen[artworkFileKey(f)] = true;
     });
-    Array.prototype.forEach.call(fileList || [], function (file) {
+    var files = fileList;
+    if (files && typeof files.length === 'number' && !Array.isArray(files)) {
+      files = Array.prototype.slice.call(files);
+    }
+    (files || []).forEach(function (file) {
+      if (!file) return;
       var key = artworkFileKey(file);
       if (!seen[key]) {
         seen[key] = true;
@@ -308,13 +313,34 @@
    *  so mobile Safari can attach files reliably. */
   function ensureFileInputPlacement(drop, input) {
     if (!drop || !input) return;
+
     input.classList.add('iq-form-upload-input');
     if (input.id !== 'iq-form-artwork-file') {
       input.id = 'iq-form-artwork-file';
     }
+
+    var embed = drop.querySelector('#iq-artwork-file-embed');
+    if (embed && embed !== input.parentNode) {
+      if (embed.contains(input)) {
+        embed.removeChild(input);
+      }
+      if (!embed.textContent.trim() && !embed.children.length) {
+        embed.parentNode.removeChild(embed);
+      }
+    }
+
     if (input.parentNode !== drop) {
       drop.appendChild(input);
     }
+
+    input.setAttribute(
+      'accept',
+      '.ai,.eps,.pdf,.svg,.png,.jpg,.jpeg,.tif,.tiff,.psd,.heic,.HEIC,image/*,application/pdf,application/postscript'
+    );
+  }
+
+  function isMobileUpload() {
+    return window.matchMedia('(max-width: 991px)').matches;
   }
 
   /** iOS Safari opens the file picker most reliably from a <label for="…"> tap. */
@@ -327,9 +353,19 @@
     label.id = browse.id;
     label.innerHTML = browse.innerHTML;
     browse.parentNode.replaceChild(label, browse);
+
     label.addEventListener('click', function (event) {
       event.stopPropagation();
     });
+
+    label.addEventListener(
+      'touchend',
+      function (event) {
+        event.stopPropagation();
+      },
+      { passive: true }
+    );
+
     return label;
   }
 
@@ -459,7 +495,7 @@
       '    <span class="iq-form-upload-lane-name">' +
       escapeHtml(file.name) +
       '</span>' +
-      '    <span class="iq-form-upload-lane-actions">' +
+      '    <div class="iq-form-upload-lane-status-col">' +
       '      <span class="iq-form-upload-lane-status">' +
       '        <span class="iq-form-upload-lane-pct">0%</span>' +
       '        <span class="iq-form-upload-lane-check" aria-hidden="true"></span>' +
@@ -467,7 +503,7 @@
       '      <button type="button" class="iq-form-upload-lane-remove" aria-label="Remove ' +
       escapeHtml(file.name) +
       '">&times;</button>' +
-      '    </span>' +
+      '    </div>' +
       '  </div>' +
       '  <span class="iq-form-upload-lane-meta">' +
       fileExt(file.name) + ' · ' + formatFileSize(file.size) +
@@ -575,6 +611,7 @@
     });
 
     updateArtworkQueueCount();
+    ensureFileInputPlacement(drop, document.getElementById('iq-form-artwork-file'));
   }
 
   function escapeHtml(str) {
@@ -587,11 +624,22 @@
 
   function handleArtworkInputChange(input) {
     if (!input || !input.files || !input.files.length) return;
-    addArtworkFiles(input.files);
+    // Copy first — iOS can clear FileList when input.value is reset.
+    var picked = Array.prototype.slice.call(input.files);
+    addArtworkFiles(picked);
     renderArtworkFileList();
-    // Reset so picking the exact same file(s) again still fires 'change'
-    // next time (browsers won't re-fire on an identical FileList).
-    input.value = '';
+    window.setTimeout(function () {
+      input.value = '';
+    }, 0);
+  }
+
+  function openArtworkPicker(input, event) {
+    if (!input) return;
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    input.click();
   }
 
   function initArtworkUpload() {
@@ -600,7 +648,6 @@
     var browse = document.getElementById('iq-form-artwork-browse');
     if (!drop || !input) return;
 
-    ensureFileInputPlacement(drop, input);
     ensureArtworkUploadShell(drop);
     ensureFileInputPlacement(drop, input);
     ensureArtworkAntsOverlay(drop);
@@ -612,11 +659,24 @@
 
     drop.addEventListener('click', function (event) {
       if (drop.classList.contains('is-queue') || drop.classList.contains('is-loading')) return;
-      if (event.target === input || input.contains(event.target)) return;
+      if (event.target === input || (input.contains && input.contains(event.target))) return;
       if (browse && (event.target === browse || browse.contains(event.target))) return;
       if (event.target.closest && event.target.closest('.iq-form-upload-lane-remove')) return;
-      input.click();
+      if (!isMobileUpload()) openArtworkPicker(input, event);
     });
+
+    drop.addEventListener(
+      'touchend',
+      function (event) {
+        if (!isMobileUpload()) return;
+        if (drop.classList.contains('is-queue') || drop.classList.contains('is-loading')) return;
+        if (event.target.closest && event.target.closest('.iq-form-upload-lane-remove')) return;
+        if (browse && (event.target === browse || browse.contains(event.target))) return;
+        if (event.target === input) return;
+        openArtworkPicker(input, event);
+      },
+      { passive: false }
+    );
 
     var addMore = document.getElementById('iq-form-artwork-add-more');
     if (addMore) {
@@ -626,10 +686,6 @@
     }
 
     input.addEventListener('change', function () {
-      handleArtworkInputChange(input);
-    });
-
-    input.addEventListener('input', function () {
       handleArtworkInputChange(input);
     });
 
