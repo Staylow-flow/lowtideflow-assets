@@ -507,6 +507,8 @@
         if (shell && shell.contains(list)) return;
         if (list.parentNode) list.parentNode.removeChild(list);
       });
+  }
+
   function findArtworkLaneByKey(list, key) {
     if (!list) return null;
     var lanes = list.querySelectorAll('[data-file-key]');
