@@ -2,15 +2,24 @@
   Instant Quote — Page Footer (Before </body>)
   /instant-quote → Page Settings → Custom Code → Before </body>
 
-  IMPORTANT: Do NOT paste <script> tags here if Registered Scripts are on this page.
-  Footer = artwork modal HTML ONLY. JS/CSS load via Registered Scripts @329bdae.
+  IQ stack = Registered Scripts (pricing, form, UI). Footer freeform also holds:
+  System Engine preloader markup + jsDelivr boot @71fd535, then artwork modal HTML.
 
   Registered Scripts (Page Settings → Custom Code → Registered Scripts):
-    Header: iqcssboot329bdae
-    Footer: iqpricingdataaefd7a7, iqpricingaefd7a7, iqform329bdae, iquiaefd7a7
+    Header: iqcssboot*
+    Footer: iqpricingdataaefd7a7, iqpricingaefd7a7, iqform*, iquiaefd7a7
 -->
 
-<!-- Instant Quote — artwork modal only @329bdae -->
+<!-- System Engine preloader @71fd535 -->
+<div class="system-preloader" role="status" aria-live="polite" aria-busy="true">
+  <div class="preloader-content">
+    <div class="gradient-spinner-ring" aria-hidden="true"></div>
+    <div class="preloader-status-text">INITIALIZING SYSTEM ENGINE...</div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@71fd535/js/ui/system-engine-preloader.js" integrity="sha384-Oy2XMejNazJgKIZaiMjWpw+TSGwHcCAcevHmwcvV0rh7qmGS1k+GL5dlOMWIYL6h" crossorigin="anonymous"></script>
+
+<!-- Instant Quote — artwork modal -->
 <div class="iq-modal" id="iq-artwork-modal" role="dialog" aria-modal="true" aria-labelledby="iq-artwork-modal-title" aria-hidden="true">
   <div class="iq-modal-backdrop" id="iq-artwork-modal-backdrop" tabindex="-1"></div>
   <div class="iq-modal-panel">

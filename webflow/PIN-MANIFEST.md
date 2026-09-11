@@ -47,7 +47,12 @@ Importmap for Three.js lives in **site head** (not page footer).
 
 **Full pin file:** `webflow/.iq-pin-329bdae-sri.txt`  
 **CSS source:** `webflow/instant-quote-embed.css`  
-**Footer HTML only:** `webflow/instant-quote-footer-snippet.html` (artwork modal — no scripts)
+**Footer HTML:** `webflow/instant-quote-footer-snippet.html` (System Engine preloader + artwork modal)
+
+| System Engine CSS | Page head freeform `<link>` | `71fd535` | `sha384-FwqJGhfQj906uyNeM4vdv87cB1+EoO2OpURwf/u7rVmWiuWrU0atGbN8JtSjpLME` |
+| System Engine JS | Page footer freeform `<script>` | `71fd535` | `sha384-Oy2XMejNazJgKIZaiMjWpw+TSGwHcCAcevHmwcvV0rh7qmGS1k+GL5dlOMWIYL6h` |
+
+**SRI file:** `webflow/.iq-pin-system-engine-71fd535-sri.txt`
 
 **Watchdogs:** `webflow/iq-style-script-watchdog.sh`, `webflow/iq-freeze-watchdog.sh`
 
