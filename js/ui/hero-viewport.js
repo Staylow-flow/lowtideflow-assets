@@ -5,15 +5,20 @@
  * position/size CSS (that locked Designer and caused CTA drift on scroll).
  */
 
-const FUNNEL_COPY = 'DIAL YOUR SPECS ON OUR LIVE BUILDER';
+const FUNNEL_LINE1 = 'DIAL YOUR SPECS';
+const FUNNEL_LINE2 = 'ON OUR LIVE BUILDER';
 
 function patchFunnelCopy() {
   const el = document.querySelector('.ltf-funnel-cta-threshold');
   if (!el) return;
+  if (el.dataset.ltfFunnelCopyPatched === '1') return;
   const normalized = el.textContent.replace(/\s+/g, ' ').trim().toUpperCase();
-  if (normalized.includes('DIAL IN YOUR SPECS') || normalized.includes('DIAL YOUR SPECS')) {
-    el.textContent = FUNNEL_COPY;
+  if (!normalized.includes('DIAL IN YOUR SPECS') && !normalized.includes('DIAL YOUR SPECS')) {
+    return;
   }
+  el.dataset.ltfFunnelCopyPatched = '1';
+  el.textContent = '';
+  el.append(FUNNEL_LINE1, document.createElement('br'), FUNNEL_LINE2);
 }
 
 function bind() {
