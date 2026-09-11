@@ -251,11 +251,8 @@ let bindAll = null;
     if (typeof cardIndex === 'number') {
       applySlamFanOffset(card, cardIndex, size.w);
     }
-    var contentH = Math.max(minH, card.scrollHeight || 0);
-    if (contentH > minH) {
-      card.style.minHeight = contentH + 'px';
-    }
-    size.h = contentH;
+    /* Uniform fan stack — do not grow per card from copy length (breaks reload layout). */
+    size.h = minH;
     return size;
   }
 
@@ -475,6 +472,14 @@ let bindAll = null;
     prepCards(cards, fx, cardsHost);
     syncCardsHostRunway(cardsHost, sticky, cards);
 
+    function scheduleRemeasure() {
+      remeasure();
+      requestAnimationFrame(function () {
+        remeasure();
+        requestAnimationFrame(remeasure);
+      });
+    }
+
     var state = {
       target: 0,
       prevTarget: 0,
@@ -622,21 +627,29 @@ let bindAll = null;
     }
 
     window.addEventListener('scroll', sampleTarget, { passive: true });
-    window.addEventListener(
-      'resize',
-      function () {
-        remeasure();
-        for (i = 0; i < fx.length; i++) {
-          if (!fx[i]) continue;
-          fx[i].gas.cssW = 0;
-          fx[i].gas.cssH = 0;
-          fx[i].ring.cssW = 0;
-          fx[i].ring.cssH = 0;
-        }
-        sampleTarget();
-      },
-      { passive: true }
-    );
+    function onLayoutChange() {
+      remeasure();
+      for (i = 0; i < fx.length; i++) {
+        if (!fx[i]) continue;
+        fx[i].gas.cssW = 0;
+        fx[i].gas.cssH = 0;
+        fx[i].ring.cssW = 0;
+        fx[i].ring.cssH = 0;
+      }
+      sampleTarget();
+    }
+
+    window.addEventListener('resize', onLayoutChange, { passive: true });
+
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(onLayoutChange).observe(cardsHost);
+    }
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(scheduleRemeasure);
+    }
+    window.addEventListener('load', scheduleRemeasure, { once: true });
+    scheduleRemeasure();
 
     sampleTarget();
 

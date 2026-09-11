@@ -6,7 +6,6 @@
  */
 
 const STYLE_ID = 'ltf-upsell-layout';
-
 function injectUpsellLayout() {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');

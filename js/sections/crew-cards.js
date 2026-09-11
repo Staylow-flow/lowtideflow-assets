@@ -146,31 +146,36 @@ function normalizeSpecsMobile(reinitVault) {
   stack.addEventListener('change', apply);
 }
 
-/** 768–991 only: Specs + Crew share the same content-fit card box (no slam dims). */
+/** 768–991: Specs + Crew share .ltf-midstack-card + content-fit box (no slam dims). */
 function normalizeTabletMidCards() {
   const mq = matchMedia(TABLET_MID);
+  const MID_CLASS = 'ltf-midstack-card';
 
   function clearInline(el, props) {
     if (!el) return;
     for (const p of props) el.style.removeProperty(p);
   }
 
+  function midstackCards() {
+    return document.querySelectorAll('.ltf-spec-card, .ltf-cards-grid .ltf-card');
+  }
+
   function apply() {
-    if (!mq.matches) return;
+    const on = mq.matches;
 
-    document.querySelectorAll('.ltf-spec-card').forEach((card) => {
-      card.style.transform = 'none';
-      card.style.willChange = 'auto';
-      clearInline(card, CARD_DIM_PROPS);
-      bindGlow(card);
-    });
+    for (const card of midstackCards()) {
+      card.classList.toggle(MID_CLASS, on);
+      if (on) {
+        card.style.transform = 'none';
+        card.style.willChange = 'auto';
+        clearInline(card, CARD_DIM_PROPS);
+        bindGlow(card);
+      } else if (!matchMedia(SPECS_STACK).matches) {
+        clearInline(card, CARD_DIM_PROPS);
+      }
+    }
 
-    document.querySelectorAll('.ltf-cards-grid .ltf-card').forEach((card) => {
-      card.style.transform = 'none';
-      card.style.willChange = 'auto';
-      clearInline(card, CARD_DIM_PROPS);
-      bindGlow(card);
-    });
+    if (!on) return;
 
     document.querySelectorAll('.ltf-specs-vault-cards, [data-ltf-slam-cards]').forEach((host) => {
       host.style.height = 'auto';
