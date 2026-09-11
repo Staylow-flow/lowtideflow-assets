@@ -14,23 +14,6 @@ import { onFrame, reducedMotion } from '../core/ticker.js';
 
 const DESKTOP = '(min-width: 992px)';
 const SPECS_STACK = '(max-width: 991px)';
-const TABLET_MID = '(max-width: 991px) and (min-width: 768px)';
-
-const CARD_DIM_PROPS = [
-  'transition',
-  'position',
-  'top',
-  'left',
-  'right',
-  'bottom',
-  'z-index',
-  'width',
-  'max-width',
-  'height',
-  'min-height',
-  'max-height',
-  'aspect-ratio',
-];
 /* Card top at this fraction of the viewport → fully off-canvas. */
 const START_AT = 1.05;
 /* Card top at this fraction → fully docked. Lower = more travel on-screen. */
@@ -124,7 +107,20 @@ function normalizeSpecsMobile(reinitVault) {
         for (const card of cards) {
           card.style.transform = 'none';
           card.style.willChange = 'auto';
-          clearInline(card, CARD_DIM_PROPS);
+          clearInline(card, [
+            'transition',
+            'position',
+            'top',
+            'left',
+            'right',
+            'bottom',
+            'z-index',
+            'width',
+            'max-width',
+            'height',
+            'min-height',
+            'max-height',
+          ]);
           bindGlow(card);
         }
         delete vault.dataset.ltfSlamBound;
@@ -144,48 +140,6 @@ function normalizeSpecsMobile(reinitVault) {
 
   apply();
   stack.addEventListener('change', apply);
-}
-
-/** 768–991: Specs + Crew share .ltf-midstack-card + content-fit box (no slam dims). */
-function normalizeTabletMidCards() {
-  const mq = matchMedia(TABLET_MID);
-  const MID_CLASS = 'ltf-midstack-card';
-
-  function clearInline(el, props) {
-    if (!el) return;
-    for (const p of props) el.style.removeProperty(p);
-  }
-
-  function midstackCards() {
-    return document.querySelectorAll('.ltf-spec-card, .ltf-cards-grid .ltf-card');
-  }
-
-  function apply() {
-    const on = mq.matches;
-
-    for (const card of midstackCards()) {
-      card.classList.toggle(MID_CLASS, on);
-      if (on) {
-        card.style.transform = 'none';
-        card.style.willChange = 'auto';
-        clearInline(card, CARD_DIM_PROPS);
-        bindGlow(card);
-      } else if (!matchMedia(SPECS_STACK).matches) {
-        clearInline(card, CARD_DIM_PROPS);
-      }
-    }
-
-    if (!on) return;
-
-    document.querySelectorAll('.ltf-specs-vault-cards, [data-ltf-slam-cards]').forEach((host) => {
-      host.style.height = 'auto';
-      host.style.minHeight = '0';
-      host.style.overflow = 'visible';
-    });
-  }
-
-  apply();
-  mq.addEventListener('change', apply);
 }
 
 export function init() {
@@ -239,7 +193,6 @@ export function init() {
   /* Specs cards — same glow; mobile = Crew stack, no scroll slide. */
   document.querySelectorAll('.ltf-spec-card').forEach(bindGlow);
   normalizeSpecsMobile();
-  normalizeTabletMidCards();
 
   /* Launch Your Fleet — touch/pointer glow (CSS ::before + .ltf-funnel-cta-glow). */
   document.querySelectorAll('.ltf-funnel-cta').forEach((el) => {

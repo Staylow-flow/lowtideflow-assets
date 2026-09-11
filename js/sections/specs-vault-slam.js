@@ -251,9 +251,29 @@ let bindAll = null;
     if (typeof cardIndex === 'number') {
       applySlamFanOffset(card, cardIndex, size.w);
     }
-    /* Uniform fan stack — do not grow per card from copy length (breaks reload layout). */
-    size.h = minH;
+    var contentH = Math.max(minH, card.scrollHeight || 0);
+    if (contentH > minH) {
+      card.style.minHeight = contentH + 'px';
+    }
+    size.h = contentH;
     return size;
+  }
+
+  /** Fan stack: one shared height = tallest card (width already synced in slamCardSize). */
+  function applyUniformFanHeights(cards, cardsHost) {
+    if (!isSlamFanLayout(cardsHost)) return;
+    var maxH = 0;
+    var i;
+    for (i = 0; i < cards.length; i++) {
+      var h = cards[i].offsetHeight || 0;
+      var mh = parseFloat(cards[i].style.minHeight);
+      if (isFinite(mh)) h = Math.max(h, mh);
+      maxH = Math.max(maxH, h);
+    }
+    if (maxH < 1) return;
+    for (i = 0; i < cards.length; i++) {
+      cards[i].style.minHeight = maxH + 'px';
+    }
   }
 
   function prepCards(cards, fx, cardsHost) {
@@ -271,6 +291,7 @@ let bindAll = null;
         fx[i].ring.wrap.style.zIndex = String(cardZ + 2);
       }
     }
+    applyUniformFanHeights(cards, cardsHost);
   }
 
   function syncLayerToCard(host, layer, card, pad) {
@@ -472,14 +493,6 @@ let bindAll = null;
     prepCards(cards, fx, cardsHost);
     syncCardsHostRunway(cardsHost, sticky, cards);
 
-    function scheduleRemeasure() {
-      remeasure();
-      requestAnimationFrame(function () {
-        remeasure();
-        requestAnimationFrame(remeasure);
-      });
-    }
-
     var state = {
       target: 0,
       prevTarget: 0,
@@ -499,6 +512,7 @@ let bindAll = null;
         applySlamCardDimensions(cards[i], i, cardsHost);
         if (BEATS[i] && beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
+      applyUniformFanHeights(cards, cardsHost);
       if (fanLayout) syncCardsHostRunway(cardsHost, sticky, cards);
     }
 
@@ -627,28 +641,32 @@ let bindAll = null;
     }
 
     window.addEventListener('scroll', sampleTarget, { passive: true });
-    function onLayoutChange() {
+    window.addEventListener(
+      'resize',
+      function () {
+        remeasure();
+        for (i = 0; i < fx.length; i++) {
+          if (!fx[i]) continue;
+          fx[i].gas.cssW = 0;
+          fx[i].gas.cssH = 0;
+          fx[i].ring.cssW = 0;
+          fx[i].ring.cssH = 0;
+        }
+        sampleTarget();
+      },
+      { passive: true }
+    );
+
+    function scheduleRemeasure() {
       remeasure();
-      for (i = 0; i < fx.length; i++) {
-        if (!fx[i]) continue;
-        fx[i].gas.cssW = 0;
-        fx[i].gas.cssH = 0;
-        fx[i].ring.cssW = 0;
-        fx[i].ring.cssH = 0;
-      }
-      sampleTarget();
+      requestAnimationFrame(function () {
+        remeasure();
+      });
     }
-
-    window.addEventListener('resize', onLayoutChange, { passive: true });
-
-    if (typeof ResizeObserver === 'function') {
-      new ResizeObserver(onLayoutChange).observe(cardsHost);
-    }
-
+    window.addEventListener('load', scheduleRemeasure, { once: true });
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(scheduleRemeasure);
     }
-    window.addEventListener('load', scheduleRemeasure, { once: true });
     scheduleRemeasure();
 
     sampleTarget();

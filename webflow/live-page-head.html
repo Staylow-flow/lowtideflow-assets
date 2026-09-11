@@ -57,25 +57,15 @@
   border-radius: 10px !important;
   background: #00001C !important;
   color: #E5E5E5 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
 }
-/* Non-nav page CTAs — width synced via js/ui/page-cta-width.js (--ltf-page-cta-width) */
 .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
 .ltf-section-cta .ltf-btn-gradient-wrap,
 .ltf-funnel-cta .ltf-btn-gradient-wrap {
-  box-sizing: border-box;
-  width: var(--ltf-page-cta-width, auto);
-  max-width: 100%;
   display: inline-flex !important;
   justify-content: center !important;
   align-items: center !important;
-}
-.ltf-hero-bottom-bar .ltf-btn-primary,
-.ltf-section-cta .ltf-btn-primary,
-.ltf-funnel-cta .ltf-btn-primary {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center !important;
-  white-space: nowrap !important;
 }
 
 /* ── Crew + Specs glow ─────────────────────────────────────────────── */
@@ -187,19 +177,15 @@
   z-index: 2;
 }
 .ltf-upsell-list-item::before {
-  content: '' !important;
-  display: inline-block !important;
-  width: 10px !important;
-  height: 10px !important;
-  min-width: 10px !important;
-  margin-right: 12px !important;
-  background-color: #0B8050 !important;
-  border-radius: 1px;
+  content: '▪' !important;
+  color: #0B8050 !important; /* green → purple on hover / touch */
+  font-size: 14px !important;
+  line-height: 1.7;
   flex-shrink: 0;
+  margin-right: 14px;
   position: relative;
   z-index: 2;
-  transition: background-color 0.35s ease;
-  align-self: center;
+  transition: color 0.35s ease;
 }
 /*
   Sweep band UNDER the text. The item's actual copy is a raw text node
@@ -254,7 +240,7 @@
 .ltf-upsell-list-item:hover::before,
 .ltf-upsell-list-item.is-sweep::before,
 .ltf-upsell-list-item:active::before {
-  background-color: #7040C0 !important;
+  color: #7040C0 !important;
 }
 
 /* ── Trenches loupe — host never clips; radius lives on fabric image only ─ */
@@ -323,20 +309,6 @@
 .ltf-funnel-cta {
   position: relative;
   isolation: isolate;
-  box-sizing: border-box;
-  min-height: 100vh;
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.ltf-funnel-cta > .ltf-site-cage.ltf-cage,
-.ltf-funnel-cta > .ltf-cage {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 1400px;
-  padding-left: 40px;
-  padding-right: 40px;
 }
 .ltf-funnel-cta::before,
 .ltf-funnel-cta-glow {
@@ -468,7 +440,7 @@
   }
 }
 
-/* Mid tablet + landscape phone (768–991): one class, Specs + Crew — JS toggles .ltf-midstack-card */
+/* Specs & Standards — tablet stack (768–991); mobile stack (≤767); slam fan ≥992 */
 @media (max-width: 991px) and (min-width: 768px) {
   .ltf-specs-vault {
     height: auto !important;
@@ -492,8 +464,7 @@
     align-items: stretch !important;
   }
   .ltf-specs-vault-cards,
-  .ltf-specs-vault-cards.ltf-split-asset,
-  .ltf-cards-grid {
+  .ltf-specs-vault-cards.ltf-split-asset {
     display: flex !important;
     flex-direction: column !important;
     gap: 32px !important;
@@ -504,7 +475,11 @@
     padding: 0 !important;
     overflow: visible !important;
   }
-  .ltf-midstack-card {
+  .ltf-spec-card,
+  .ltf-spec-card.ltf-spec-card-01,
+  .ltf-spec-card.ltf-spec-card-02,
+  .ltf-spec-card.ltf-spec-card-03,
+  .ltf-spec-card.ltf-spec-card-04 {
     position: relative !important;
     left: auto !important;
     top: auto !important;
@@ -514,28 +489,15 @@
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
-    align-items: stretch !important;
     box-sizing: border-box !important;
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    aspect-ratio: auto !important;
     margin: 0 !important;
-    padding: 24px 16px !important;
     overflow: visible !important;
     transform: none !important;
-  }
-  .ltf-section-cta.is-beyond-mobile {
-    display: none !important;
-  }
-  .ltf-funnel-cta > .ltf-site-cage.ltf-cage,
-  .ltf-funnel-cta > .ltf-cage,
-  .ltf-funnel-cta .ltf-funnel-cta-inner {
-    padding-left: 40px !important;
-    padding-right: 40px !important;
-    box-sizing: border-box !important;
   }
 }
 
@@ -656,32 +618,15 @@
     padding-right: 18px !important;
   }
   .ltf-upsell-list-item::before {
-    content: '' !important;
+    content: '▪' !important;
+    color: #0B8050 !important;
     display: inline-block !important;
-    width: 10px !important;
-    height: 10px !important;
-    min-width: 10px !important;
+    font-size: 22px !important;
     margin-right: 12px !important;
-    background-color: #0B8050 !important;
-    border-radius: 1px !important;
-    align-self: center !important;
   }
-  .ltf-upsell-list-item:hover::before,
   .ltf-upsell-list-item.is-sweep::before,
   .ltf-upsell-list-item:active::before {
-    background-color: #7040C0 !important;
-  }
-}
-
-@media (max-width: 767px) {
-  #ltf-clean-slate-fx .ltf-upsell-list-item::before {
-    content: '' !important;
-    background-color: #0B8050 !important;
-  }
-  #ltf-clean-slate-fx .ltf-upsell-list-item:hover::before,
-  #ltf-clean-slate-fx .ltf-upsell-list-item.is-sweep::before,
-  #ltf-clean-slate-fx .ltf-upsell-list-item:active::before {
-    background-color: #7040C0 !important;
+    color: #7040C0 !important;
   }
   .ltf-section-cta.is-beyond-mobile {
     display: flex !important;
@@ -738,7 +683,7 @@
   .ltf-funnel-cta {
     box-sizing: border-box !important;
     height: auto !important;
-    min-height: 100svh !important;
+    min-height: 0 !important;
     overflow: visible !important;
   }
 
