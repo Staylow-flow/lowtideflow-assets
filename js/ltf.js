@@ -51,6 +51,7 @@
     safeRun('upsell-lines', inits.initUpsell);
     safeRun('specs-vault', inits.initVault);
     safeRun('magnifier', inits.initMag);
+    safeRun('page-cta-width', inits.initPageCtaWidth);
   }
 
   window.LTF = {
@@ -70,6 +71,7 @@
         import(BASE + 'sections/upsell-lines.js'),
         import(BASE + 'sections/specs-vault-slam.js'),
         import(BASE + 'sections/garment-magnifier.js'),
+        import(BASE + 'ui/page-cta-width.js'),
       ]);
       inits = {
         initNav: modules[0].init,
@@ -80,6 +82,7 @@
         initVault: modules[5].init,
         reinitVault: modules[5].reinit,
         initMag: modules[6].init,
+        initPageCtaWidth: modules[7].init,
       };
       boot();
       window.addEventListener('load', boot, { once: true });
