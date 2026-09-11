@@ -17,8 +17,7 @@ function patchFunnelCopy() {
     return;
   }
   el.dataset.ltfFunnelCopyPatched = '1';
-  el.textContent = '';
-  el.append(FUNNEL_LINE1, document.createElement('br'), FUNNEL_LINE2);
+  el.classList.add('ltf-funnel-threshold-split');
 }
 
 function bind() {

@@ -775,11 +775,72 @@
   }
 
   .ltf-funnel-cta-threshold {
-    white-space: normal !important;
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     text-align: center !important;
-    line-height: 1.25 !important;
+    line-height: 1.35 !important;
+    letter-spacing: 0.1em !important;
+    font-size: 0 !important;
+    color: transparent !important;
     overflow: visible !important;
     text-overflow: unset !important;
+    white-space: normal !important;
+  }
+  .ltf-funnel-cta-threshold::before,
+  .ltf-funnel-cta-threshold::after {
+    display: block !important;
+    font-size: clamp(10px, 2.6vw, 13px) !important;
+    color: #e5e5e5 !important;
+    letter-spacing: inherit !important;
+    line-height: 1.35 !important;
+    white-space: nowrap !important;
+  }
+  .ltf-funnel-cta-threshold::before {
+    content: 'DIAL YOUR SPECS' !important;
+  }
+  .ltf-funnel-cta-threshold::after {
+    content: 'ON OUR LIVE BUILDER' !important;
+  }
+
+  /* Non-desktop page CTAs — fixed 375px, centered label, one line */
+  .ltf-section-cta {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
+  .ltf-section-cta .ltf-btn-gradient-wrap,
+  .ltf-funnel-cta .ltf-btn-gradient-wrap {
+    width: min(375px, calc(100vw - 48px)) !important;
+    max-width: 375px !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+  .ltf-hero-bottom-bar .ltf-btn-primary,
+  .ltf-section-cta .ltf-btn-primary,
+  .ltf-funnel-cta .ltf-btn-primary {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  .ltf-funnel-cta {
+    padding-left: clamp(2rem, 4vw, 2.5rem) !important;
+    padding-right: clamp(2rem, 4vw, 2.5rem) !important;
   }
 }
 </style>
