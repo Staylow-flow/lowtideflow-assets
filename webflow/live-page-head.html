@@ -57,15 +57,6 @@
   border-radius: 10px !important;
   background: #00001C !important;
   color: #E5E5E5 !important;
-  text-align: center !important;
-  white-space: nowrap !important;
-}
-.ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
-.ltf-section-cta .ltf-btn-gradient-wrap,
-.ltf-funnel-cta .ltf-btn-gradient-wrap {
-  display: inline-flex !important;
-  justify-content: center !important;
-  align-items: center !important;
 }
 
 /* ── Crew + Specs glow ─────────────────────────────────────────────── */
@@ -309,25 +300,6 @@
 .ltf-funnel-cta {
   position: relative;
   isolation: isolate;
-  box-sizing: border-box;
-  min-height: 100vh;
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.ltf-funnel-cta > .ltf-site-cage.ltf-cage,
-.ltf-funnel-cta > .ltf-cage {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 1400px;
-  padding-left: clamp(2rem, 4vw, 2.5rem);
-  padding-right: clamp(2rem, 4vw, 2.5rem);
-}
-.ltf-funnel-cta-threshold {
-  white-space: normal;
-  text-align: center;
-  line-height: 1.25;
 }
 .ltf-funnel-cta::before,
 .ltf-funnel-cta-glow {
@@ -459,108 +431,7 @@
   }
 }
 
-/* Specs & Standards — tablet stack (768–991); mobile stack (≤767); slam fan ≥992 */
-@media (max-width: 991px) and (min-width: 768px) {
-  .ltf-specs-vault {
-    height: auto !important;
-    min-height: 0 !important;
-  }
-  .ltf-specs-vault-sticky {
-    position: relative !important;
-    height: auto !important;
-    min-height: 0 !important;
-    top: auto !important;
-    align-items: stretch !important;
-  }
-  .ltf-vault-cage,
-  .ltf-vault-cage.ltf-cage,
-  .ltf-vault-cage.ltf-split-2 {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    gap: 24px !important;
-    align-items: stretch !important;
-  }
-  .ltf-specs-vault-cards,
-  .ltf-specs-vault-cards.ltf-split-asset {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 32px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 0 !important;
-    height: auto !important;
-    padding: 0 !important;
-    overflow: visible !important;
-  }
-  .ltf-spec-card,
-  .ltf-spec-card.ltf-spec-card-01,
-  .ltf-spec-card.ltf-spec-card-02,
-  .ltf-spec-card.ltf-spec-card-03,
-  .ltf-spec-card.ltf-spec-card-04 {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    z-index: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    margin: 0 !important;
-    overflow: visible !important;
-    transform: none !important;
-  }
-}
-
-/*
-  Phone landscape (short viewport): drop dead air under Specs header + card copy.
-  Portrait and desktop resize do not hit this band.
-*/
-@media (max-width: 991px) and (orientation: landscape) and (max-height: 520px) {
-  .ltf-specs-vault-sticky {
-    padding-top: 32px !important;
-    padding-bottom: 20px !important;
-  }
-  .ltf-specs-vault-header,
-  .ltf-specs-vault-header.ltf-split-copy {
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-  }
-  .ltf-specs-vault-header .ltf-body-text-navy {
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  .ltf-vault-cage.ltf-split-2 {
-    gap: 16px !important;
-  }
-  .ltf-specs-vault-cards,
-  .ltf-specs-vault-cards.ltf-split-asset {
-    gap: 20px !important;
-  }
-  .ltf-spec-card,
-  .ltf-spec-card.ltf-spec-card-01,
-  .ltf-spec-card.ltf-spec-card-02,
-  .ltf-spec-card.ltf-spec-card-03,
-  .ltf-spec-card.ltf-spec-card-04 {
-    min-height: 0 !important;
-    height: auto !important;
-    padding-top: 16px !important;
-    padding-bottom: 16px !important;
-  }
-  .ltf-spec-card .ltf-body-text {
-    margin-bottom: 0 !important;
-  }
-}
-
-/* Specs & Standards — mobile stack (≤767) */
+/* Specs & Standards — mobile stack (≤767); tablet+ keeps desktop L/R grid + scroll slam */
 @media (max-width: 767px) {
   .ltf-specs-vault {
     height: auto !important;
@@ -636,7 +507,7 @@
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 240px !important;
     max-height: none !important;
     margin: 0 !important;
     padding: 24px 16px !important;
@@ -687,10 +558,6 @@
   .ltf-upsell-list-item:active::before {
     color: #7040C0 !important;
   }
-  /* Stacked upsell: one CTA under the list — hide copy-column duplicate */
-  .ltf-upsell .ltf-section-cta:not(.is-beyond-mobile) {
-    display: none !important;
-  }
   .ltf-section-cta.is-beyond-mobile {
     display: flex !important;
     width: 100% !important;
@@ -698,12 +565,6 @@
     margin-bottom: 20px !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
-  }
-}
-
-@media (min-width: 992px) {
-  .ltf-section-cta.is-beyond-mobile {
-    display: none !important;
   }
 }
 </style>
@@ -746,21 +607,13 @@
     left: auto !important;
     right: auto !important;
     transform: none !important;
-    margin-top: 50px !important;
   }
 
   .ltf-funnel-cta {
     box-sizing: border-box !important;
     height: auto !important;
-    min-height: 100svh !important;
+    min-height: 0 !important;
     overflow: visible !important;
-  }
-
-  .ltf-funnel-cta > .ltf-site-cage.ltf-cage,
-  .ltf-funnel-cta > .ltf-cage {
-    padding-left: clamp(2rem, 4vw, 2.5rem) !important;
-    padding-right: clamp(2rem, 4vw, 2.5rem) !important;
-    box-sizing: border-box !important;
   }
 
   .ltf-funnel-cta-inner {
@@ -772,75 +625,6 @@
   .ltf-funnel-cta-heading {
     padding-left: 0 !important;
     padding-right: 0 !important;
-  }
-
-  .ltf-funnel-cta-threshold {
-    position: relative !important;
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    text-align: center !important;
-    line-height: 1.35 !important;
-    letter-spacing: 0.1em !important;
-    font-size: 0 !important;
-    color: transparent !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    white-space: normal !important;
-  }
-  .ltf-funnel-cta-threshold::before,
-  .ltf-funnel-cta-threshold::after {
-    display: block !important;
-    font-size: clamp(10px, 2.6vw, 13px) !important;
-    color: #e5e5e5 !important;
-    letter-spacing: inherit !important;
-    line-height: 1.35 !important;
-    white-space: nowrap !important;
-  }
-  .ltf-funnel-cta-threshold::before {
-    content: 'DIAL YOUR SPECS' !important;
-  }
-  .ltf-funnel-cta-threshold::after {
-    content: 'ON OUR LIVE BUILDER' !important;
-  }
-
-  /* Non-desktop page CTAs — fixed 375px, centered label, one line */
-  .ltf-section-cta {
-    display: flex !important;
-    justify-content: center !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-  .ltf-hero-bottom-bar .ltf-btn-gradient-wrap,
-  .ltf-section-cta .ltf-btn-gradient-wrap,
-  .ltf-funnel-cta .ltf-btn-gradient-wrap {
-    width: min(375px, calc(100vw - 48px)) !important;
-    max-width: 375px !important;
-    min-width: 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box !important;
-    display: inline-flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-  }
-  .ltf-hero-bottom-bar .ltf-btn-primary,
-  .ltf-section-cta .ltf-btn-primary,
-  .ltf-funnel-cta .ltf-btn-primary {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-  }
-
-  .ltf-funnel-cta {
-    padding-left: clamp(2rem, 4vw, 2.5rem) !important;
-    padding-right: clamp(2rem, 4vw, 2.5rem) !important;
   }
 }
 </style>
