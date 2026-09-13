@@ -19,8 +19,9 @@ Universal 4-column footer matching the LowTideFlow tactical navy system. Follows
 | Schedule CTA via `ltf-btn-gradient-wrap` + `ltf-nav-btn` | — (inherits global nav button FX) |
 | 44px touch targets (mobile breakpoint) | — |
 | Responsive utility row stacking | — |
-| Mobile **2-col** (brand/NAV left, COMMS/Locations right + column gap @ ≤767) | `#ltf-site-footer-fx` → `.ltf-footer-grid` placement |
+| Mobile **2-col** (brand/NAV left, COMMS/Locations right @ ≤991) | `#ltf-site-footer-fx` → `.ltf-footer-grid` placement |
 | **HQ location pill** (`Torrance, CA \| SoCal HQ`) width | `#ltf-site-footer-fx` → `.ltf-footer-location-tag` `fit-content` |
+| **HQ pill placement** (under COMMS, not brand col) | Designer — see scaffold `ltf-site-footer.html` |
 
 **Rule:** If Designer can express it, keep it in Designer. Head CSS is only for effects Designer cannot do (animated gradients, pseudo-elements, keyframe animations).
 
@@ -74,9 +75,15 @@ Schedule button reuses global **`ltf-btn-gradient-wrap`** + **`ltf-nav-btn`** �
 - Email: `Nate@lowtideflow.co`
 - Schedule: [Calendly Discovery Chat](https://calendly.com/lowtideflow/15-min-quick-connect)
 
+## COMMS column content (2026-09)
+
+- **HQ pill** (`ltf-footer-location-tag` — “Torrance, CA \| SoCal HQ”) lives in **column 3 (COMMS)**, below the comms list (not column 1 brand).
+- Remove the old **Studio** comms row (“Production Studio” / “Torrance, California”) — HQ pill replaces it.
+- Reference markup: `webflow/ltf-site-footer.html`.
+
 ## Deploy / update
 
-1. **Edit copy, links, spacing, colors** — open component in Designer (one edit updates all 6 instances).
+1. **Edit copy, links, spacing, colors** — open component in Designer (one edit updates all instances).
 2. **FX changes** — edit `webflow/ltf-site-footer-fx.html`, rebuild combined head (`site-nav-fx.html` + footer FX + importmap), deploy via Site Settings → Custom Code → Head. Payload template: `webflow/_restore_head_now.json`.
 3. **New page** — insert **LTF Site Footer** component at bottom of `<body>`.
 

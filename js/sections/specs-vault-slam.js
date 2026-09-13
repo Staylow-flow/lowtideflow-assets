@@ -143,6 +143,24 @@ let bindAll = null;
     card.style.overflow = '';
     card.style.left = '';
     card.style.top = '';
+    card.style.padding = '';
+  }
+
+  /** Designer padding is asymmetric; when cards shrink below 480px keep equal gutters on all sides. */
+  function slamUniformPaddingPx(cardWidth) {
+    if (cardWidth >= SLAM_CARD_W) return null;
+    var scale = cardWidth / SLAM_CARD_W;
+    var pad = Math.round(SLAM_CARD_PAD_AT_FULL * scale);
+    return Math.max(SLAM_CARD_PAD_MIN, Math.min(SLAM_CARD_PAD_AT_FULL, pad));
+  }
+
+  function applySlamCardUniformPadding(card, cardWidth) {
+    var pad = slamUniformPaddingPx(cardWidth);
+    if (pad == null) {
+      card.style.padding = '';
+    } else {
+      card.style.padding = pad + 'px';
+    }
   }
 
   function prepHost(host, sticky, cards, fanLayout) {
@@ -186,6 +204,9 @@ let bindAll = null;
 
   var SLAM_CARD_W = 480;
   var SLAM_CARD_H = 340;
+  /** Uniform inset at full card width — scales down with card so L/R matches T/B near tablet band. */
+  var SLAM_CARD_PAD_AT_FULL = 28;
+  var SLAM_CARD_PAD_MIN = 20;
   /** When responsive sizing grows cards via scrollHeight, trim excess (was ~100px too tall). */
   var SLAM_RESPONSIVE_HEIGHT_TRIM = 100;
   /** Designer fan offsets at full card width (card 01 = 0). */
@@ -250,6 +271,7 @@ let bindAll = null;
     card.style.maxHeight = 'none';
     card.style.overflow = 'visible';
     card.style.boxSizing = 'border-box';
+    applySlamCardUniformPadding(card, size.w);
     if (typeof cardIndex === 'number') {
       applySlamFanOffset(card, cardIndex, size.w);
     }
