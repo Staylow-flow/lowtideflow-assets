@@ -253,11 +253,15 @@ let bindAll = null;
     if (typeof cardIndex === 'number') {
       applySlamFanOffset(card, cardIndex, size.w);
     }
-    var contentH = Math.max(minH, card.scrollHeight || 0);
-    if (contentH > minH) {
-      contentH = Math.max(minH, contentH - SLAM_RESPONSIVE_HEIGHT_TRIM);
-      card.style.minHeight = contentH + 'px';
+    var rawScroll = card.scrollHeight || 0;
+    var contentH = minH;
+    if (rawScroll > minH) {
+      contentH = Math.max(minH, rawScroll - SLAM_RESPONSIVE_HEIGHT_TRIM);
     }
+    card.style.height = contentH + 'px';
+    card.style.minHeight = contentH + 'px';
+    card.style.maxHeight = contentH + 'px';
+    card.style.overflow = 'hidden';
     size.h = contentH;
     return size;
   }
@@ -268,9 +272,11 @@ let bindAll = null;
     var maxH = 0;
     var i;
     for (i = 0; i < cards.length; i++) {
-      var h = cards[i].offsetHeight || 0;
       var mh = parseFloat(cards[i].style.minHeight);
-      if (isFinite(mh)) h = Math.max(h, mh);
+      var xh = parseFloat(cards[i].style.height);
+      var h = 0;
+      if (isFinite(mh)) h = mh;
+      if (isFinite(xh)) h = Math.max(h, xh);
       maxH = Math.max(maxH, h);
     }
     if (maxH < 1) return;

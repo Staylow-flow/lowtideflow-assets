@@ -22,9 +22,16 @@ Must exit **0**. Never paste partial head, `PLACEHOLDER`, or `@file:` paths.
    - `id="ltf-hero-mode-b"` (tablet / landscape Inside bar)
 5. **Publish** site (both domains).
 
-## Site footer bar FX (global — all pages)
+## Site footer bar FX (global — all pages) — **required for mobile footer layout**
 
-**Site settings → Custom Code → Head:** deploy assembled site head (`site-nav-fx.html` + `ltf-site-footer-fx.html`) — includes mobile 2×2 grid + HQ location pill width. See `DEPLOY.md` §1.
+**Site settings → Custom Code → Head:** deploy assembled site head (`site-nav-fx.html` + `ltf-site-footer-fx.html`).  
+Clean-Slate **page** head/footer tags do **not** include `#ltf-site-footer-fx` — if you only paste page code, footer grid/pill changes never go live.
+
+```bash
+python3 webflow/verify_head_payload.py site   # after assemble in DEPLOY.md §1
+```
+
+Then MCP site head or manual paste full assembled string from `webflow/_restore_head_now.json` → `content`. Live check: `#ltf-site-footer-fx` should contain `nth-child(3)` grid rules (~6k chars in that block).
 
 ## Site global footer code (nav boot)
 

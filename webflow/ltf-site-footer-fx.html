@@ -111,10 +111,10 @@ footer.ltf-site-footer .ltf-footer-location-tag {
 }
 
 /*
-  Mobile: two columns — brand + NAV left, COMMS + Locations Served right (tablet-style).
-  Designer @ small defaults to 1×4 stack; head places columns explicitly.
+  ≤991 (tablet + phone portrait + phone landscape): 2×2 — brand/NAV left, COMMS/Locations right.
+  ≥992: Designer 4-across (do not override here).
 */
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 991px) {
   footer.ltf-site-footer .ltf-footer-grid {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
