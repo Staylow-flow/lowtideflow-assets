@@ -7,7 +7,7 @@
 
 `hero-golden.json` — live footer pin (`rock_scene_pin`), required head markers, forbidden placeholder strings, mode policy.
 
-**Current live pin (user-approved):** `7c89f3f`
+**Current repo golden pin:** `5deba15`
 
 ## Manual paste (preferred for page head)
 

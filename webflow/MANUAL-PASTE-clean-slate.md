@@ -34,7 +34,7 @@ Must exit **0**. Never paste partial head, `PLACEHOLDER`, or `@file:` paths.
 
 Paste the three `<script>` lines from `webflow/clean-slate-footer.html` @ golden pin.
 
-**Golden pin:** see `webflow/watchdogs/hero-golden.json` → `rock_scene_pin` (currently `7c89f3f`).
+**Golden pin:** see `webflow/watchdogs/hero-golden.json` → `rock_scene_pin` (currently `5deba15`).
 
 ## After publish
 
