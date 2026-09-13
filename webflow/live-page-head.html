@@ -907,11 +907,6 @@ img.ltf-hero-figure.is-hero-figure-inside,
     display: none !important;
   }
 
-  .ltf-hero img.ltf-hero-figure:not(.is-hero-figure-inside),
-  .ltf-hero .ltf-hero-figure:not(.is-hero-figure-inside) {
-    display: none !important;
-  }
-
   .ltf-stack.ltf-split-copy.is-hero-copy-inside-breakpoints {
     display: grid !important;
   }
@@ -948,14 +943,78 @@ img.ltf-hero-figure.is-hero-figure-inside,
     align-self: center !important;
   }
 
+  .ltf-hero .hero-canvas-wrapper,
+  .ltf-hero #canvas3d {
+    overflow: visible !important;
+  }
+
+  .ltf-hero .hero-canvas-wrapper {
+    top: 50px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: calc(100svh - 50px) !important;
+    min-height: calc(100svh - 50px) !important;
+    max-height: none !important;
+    transform: none !important;
+    z-index: 0 !important;
+  }
+
+  .ltf-hero #canvas3d {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    max-width: 100% !important;
+  }
+
+  .ltf-hero-headline {
+    position: absolute !important;
+    top: 56px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 4 !important;
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    box-sizing: border-box !important;
+    transform: none !important;
+  }
+
+  .ltf-hero-bottom-bar {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    top: 148px !important;
+    bottom: auto !important;
+    justify-items: center !important;
+    box-sizing: border-box !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+
   .ltf-body-text.is-hero-body-inside {
     grid-column: 2 / 3 !important;
     grid-row: 1 !important;
     width: 100% !important;
     max-width: 570px !important;
+    margin-top: 50px !important;
     margin-left: auto !important;
     margin-right: auto !important;
     text-align: center !important;
+    font-size: clamp(17px, 2.2vw, 20px) !important;
+    line-height: 1.32 !important;
+  }
+
+  .is-hero-logo-mobile.is-hero-logo-inside {
+    margin-top: 50px !important;
+    height: 72px !important;
+    width: auto !important;
   }
 
   .ltf-btn-gradient-wrap.is-hero-cta-wrap-inside {
@@ -965,17 +1024,19 @@ img.ltf-hero-figure.is-hero-figure-inside,
     margin-top: 50px !important;
     position: relative !important;
     transform: none !important;
+    width: min(375px, calc(100vw - 48px)) !important;
+    max-width: 375px !important;
   }
 
-  img.ltf-hero-figure.is-hero-figure-inside,
-  .ltf-hero-figure.is-hero-figure-inside {
+  .ltf-hero img.ltf-hero-figure,
+  .ltf-hero .ltf-hero-figure {
     position: absolute !important;
     right: 0 !important;
-    bottom: 0 !important;
+    bottom: -72px !important;
     left: auto !important;
     top: auto !important;
-    width: min(22vw, 120px) !important;
-    max-height: 28vh !important;
+    width: clamp(72px, 14vw, 120px) !important;
+    max-height: none !important;
     height: auto !important;
     object-fit: contain !important;
     object-position: bottom right !important;
@@ -983,12 +1044,43 @@ img.ltf-hero-figure.is-hero-figure-inside,
   }
 }
 
+@media (min-width: 768px) and (max-width: 991px) and (orientation: landscape) {
+  .ltf-hero .ltf-hero-headline .ltf-section-header,
+  .ltf-hero .ltf-hero-headline h1.ltf-main-header {
+    font-size: clamp(3.5rem, calc(7vw + 12pt), calc(5rem + 12pt)) !important;
+  }
+}
+
 @media (max-width: 767px) and (orientation: landscape) {
-  img.ltf-hero-figure.is-hero-figure-inside,
-  .ltf-hero-figure.is-hero-figure-inside {
-    width: min(18vw, 88px) !important;
+  .ltf-hero img.ltf-hero-figure,
+  .ltf-hero .ltf-hero-figure {
+    width: clamp(64px, 12vw, 88px) !important;
     right: -8px !important;
-    max-height: 22vh !important;
+    bottom: -48px !important;
+  }
+
+  .ltf-btn-gradient-wrap.is-hero-cta-wrap-inside {
+    width: min(265px, calc(100vw - 48px)) !important;
+    max-width: 265px !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 991px) {
+  .ltf-hero {
+    min-height: 100svh !important;
+    height: auto !important;
+    padding-bottom: 50px !important;
+    overflow: visible !important;
+  }
+
+  .ltf-hero > .ltf-site-cage.ltf-cage {
+    overflow: visible !important;
+    min-height: calc(100svh - 50px) !important;
+  }
+
+  .ltf-body-text.is-hero-body-inside {
+    max-width: 570px !important;
+    font-size: 18px !important;
   }
 }
 </style>

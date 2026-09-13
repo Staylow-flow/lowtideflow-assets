@@ -25,8 +25,19 @@ def fail(msg: str) -> None:
     sys.exit(1)
 
 
+def _head_without_mode_b(text: str) -> str:
+    """MODE B middle breakpoints — allowed layout shell in #ltf-hero-mode-b only."""
+    return re.sub(
+        r'<style id="ltf-hero-mode-b">.*?</style>',
+        "",
+        text,
+        count=1,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+
+
 def main() -> None:
-    head = HEAD.read_text()
+    head = _head_without_mode_b(HEAD.read_text())
     footer = FOOTER.read_text()
     js = JS.read_text()
 

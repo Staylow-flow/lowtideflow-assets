@@ -688,12 +688,28 @@ function isPhonePortraitLayout(w = typeof window !== 'undefined' ? window.innerW
   return window.matchMedia('(orientation: portrait)').matches;
 }
 
-/** Mobile ≤991 + portrait — hero canvas (includes tablet portrait, not just phone). */
-function isMobilePortraitLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
-  if (!isMobileLayout(w)) return false;
-  if (typeof window === 'undefined' || !window.matchMedia) return w <= 767;
-  return window.matchMedia('(orientation: portrait)').matches;
+/**
+ * Hero MODE B — same band as #ltf-hero-mode-b CSS:
+ * tablet 768–991 (portrait + landscape) + phone landscape; NOT desktop, NOT phone portrait.
+ */
+function isHeroMiddleLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  if (w >= 992) return false;
+  if (w <= 767) {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(orientation: landscape)').matches;
+  }
+  return w <= MOBILE_LAYOUT_MAX_W;
 }
+
+/** @deprecated use isPhonePortraitLayout for phone-only portrait tweaks */
+function isMobilePortraitLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  return isPhonePortraitLayout(w);
+}
+
+/** Boulder visual width ≈ H1 container × this factor (middle modes only). */
+const MIDDLE_ROCK_H1_WIDTH_MULT = 1.1;
+const MIDDLE_ROCK_SCALE_MIN = 0.42;
+const MIDDLE_ROCK_SCALE_MAX = 1.08;
 
 function activeGasBounds(viewportW) {
   if (!isMobileLayout(viewportW)) return GAS_LOCKED_BOUNDS;
@@ -817,6 +833,13 @@ function rockLiftWorld(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx, camZ = CAME
 
 function rockLiftUV(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx) {
   return (px / viewportH) * 0.95;
+}
+
+function visibleWorldSize(viewportW, viewportH, camZ = CAMERA_Z) {
+  const fovRad = (CAMERA_FOV * Math.PI) / 180;
+  const visibleH = 2 * camZ * Math.tan(fovRad / 2);
+  const visibleW = visibleH * (viewportW / Math.max(viewportH, 1));
+  return { visibleW, visibleH };
 }
 
 /** Exponential smoothing factor for a time constant in ms. */
@@ -1004,6 +1027,8 @@ class RockScene {
     this.rockGroup  = null;
     this.nebulaUni  = null;
     this.fgNebulaUni = null;
+    this._h1AnchorActive = false;
+    this._h1ResizeObserver = null;
 
     this.running          = false;
     this.raf              = 0;
@@ -1088,10 +1113,61 @@ class RockScene {
   }
 
   _applyRockLift() {
+    if (this.rockGroup && this._h1AnchorActive) return;
     if (this.rockGroup) {
       const camZ = this.camera ? this.camera.position.z : CAMERA_Z;
       this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx, camZ);
     }
+  }
+
+  /**
+   * Middle hero modes: pin boulder behind H1 using live headline geometry (survives svh/vh canvas shifts).
+   */
+  _syncH1AnchoredRock(vw) {
+    this._h1AnchorActive = false;
+    if (!isHeroMiddleLayout(vw) || !this.rockGroup || !this.container) return false;
+
+    const headline =
+      document.querySelector('.ltf-hero-headline')
+      || document.querySelector('.ltf-hero .ltf-main-header')?.closest('.ltf-hero-headline');
+    if (!headline) return false;
+
+    const canvasRect = this.container.getBoundingClientRect();
+    const h1Rect = headline.getBoundingClientRect();
+    if (canvasRect.width < 2 || h1Rect.width < 2) return false;
+
+    const camZ = this.camera ? this.camera.position.z : mobileCameraZ(vw);
+    const { visibleW, visibleH } = visibleWorldSize(this.w, this.h, camZ);
+
+    const canvasCenterX = canvasRect.left + canvasRect.width * 0.5;
+    const h1CenterX = h1Rect.left + h1Rect.width * 0.5;
+    const pxOffsetX = h1CenterX - canvasCenterX;
+    this.rockGroup.position.x = (pxOffsetX / this.w) * visibleW;
+
+    const h1MidY = h1Rect.top + h1Rect.height * 0.5;
+    const canvasMidY = canvasRect.top + canvasRect.height * 0.5;
+    const pxLift = canvasMidY - h1MidY;
+    this.rockGroup.position.y = rockLiftWorld(this.h, pxLift, camZ);
+
+    const refW = Math.max(h1Rect.width, 120);
+    const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.min(canvasRect.width, 520);
+    const middleScale = clamp(
+      widthRatio * 0.92,
+      MIDDLE_ROCK_SCALE_MIN,
+      MIDDLE_ROCK_SCALE_MAX
+    );
+    this.rockGroup.scale.setScalar(middleScale);
+
+    const h1NormX = clamp((h1CenterX - canvasRect.left) / canvasRect.width, 0.28, 0.72);
+    if (this.nebulaUni && this.nebulaUni.gasCenterX) {
+      this.nebulaUni.gasCenterX.value = h1NormX;
+    }
+    if (this.fgNebulaUni && this.fgNebulaUni.gasCenterX) {
+      this.fgNebulaUni.gasCenterX.value = h1NormX;
+    }
+
+    this._h1AnchorActive = true;
+    return true;
   }
 
   _applyGasUniforms(uni, b) {
@@ -1135,10 +1211,20 @@ class RockScene {
       lift += MOBILE_PORTRAIT_PHONE_EXTRA_LIFT_PX;
     }
     this.rockLiftPx = lift;
-    this._applyRockLift();
-    if (this.rockGroup) {
-      const portraitScale = isMobilePortraitLayout(vw) ? MOBILE_PORTRAIT_ROCK_SCALE_MULT : 1;
-      this.rockGroup.scale.setScalar(portraitScale);
+    if (!this._syncH1AnchoredRock(vw)) {
+      if (this.rockGroup) {
+        this.rockGroup.position.x = 0;
+      }
+      this._applyRockLift();
+      if (this.rockGroup) {
+        const portraitScale = isPhonePortraitLayout(vw) ? MOBILE_PORTRAIT_ROCK_SCALE_MULT : 1;
+        this.rockGroup.scale.setScalar(portraitScale);
+      }
+      if (this.nebulaUni && this.fgNebulaUni) {
+        const b = activeGasBounds(vw);
+        this.nebulaUni.gasCenterX.value = b.gasCenterX;
+        this.fgNebulaUni.gasCenterX.value = b.gasCenterX;
+      }
     }
   }
 
@@ -1384,6 +1470,19 @@ class RockScene {
       );
     };
     window.addEventListener('wheel', this._onWheelFn, { passive: true });
+
+    this._bindH1AnchorObserver();
+  }
+
+  _bindH1AnchorObserver() {
+    if (typeof ResizeObserver !== 'function') return;
+    const headline = document.querySelector('.ltf-hero-headline');
+    if (!headline) return;
+    this._h1ResizeObserver = new ResizeObserver(() => {
+      const vw = typeof window !== 'undefined' ? window.innerWidth : this.w;
+      if (isHeroMiddleLayout(vw)) this._syncLayoutProfile();
+    });
+    this._h1ResizeObserver.observe(headline);
   }
 
   /* ── Resize ─────────────────────────────────────────────────────────────── */
@@ -1400,7 +1499,6 @@ class RockScene {
     this.renderer.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.updateProjectionMatrix();
-    this._applyRockLift();
     if (this.nebulaUni) {
       this.nebulaUni.aspect.value = this.w / this.h;
     }
