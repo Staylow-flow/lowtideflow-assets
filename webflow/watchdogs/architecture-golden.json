@@ -1,0 +1,54 @@
+{
+  "schema": "ltf-architecture-freeze-v1",
+  "docs": [
+    "webflow/LOCKED-BUILD.md",
+    "webflow/DEPLOY.md",
+    "webflow/MANUAL-PASTE-clean-slate.md",
+    ".cursor/rules/ltf-locked-build.mdc",
+    ".cursor/rules/ltf-no-placeholder-head-deploy.mdc"
+  ],
+  "clean_slate_footer": {
+    "file": "../clean-slate-footer.html",
+    "script_count": 3,
+    "script_paths_in_order": [
+      "js/hero/rock-scene.js",
+      "js/ltf.js",
+      "js/ui/hero-viewport.js"
+    ],
+    "forbidden_footer_scripts": [
+      "hero-mobile-portrait.js",
+      "flow-background.js"
+    ],
+    "forbidden_markers": [
+      "id=\"ltf-hero-portrait-logo-tune\""
+    ]
+  },
+  "page_head": {
+    "canonical": "../live-page-head.html",
+    "forbidden_markers": [
+      "id=\"ltf-site-nav-fx\"",
+      "id=\"ltf-hero-portrait-logo-tune\"",
+      "clean-slate-head.html",
+      "NEBULA-SLAM-GAS-DEPOT"
+    ],
+    "forbidden_page_script_src": "cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets"
+  },
+  "site_head_sources": [
+    "../site-nav-fx.html",
+    "../ltf-site-footer-fx.html"
+  ],
+  "site_global_footer_code": {
+    "file": "../site-custom-footer-code.html",
+    "forbidden_markers": [
+      "id=\"ltf-hero-portrait-logo-tune\"",
+      ".ltf-hero .is-hero-logo-mobile"
+    ]
+  },
+  "checksums_file": "_LOCKED/CHECKSUMS.sha256",
+  "pin_manifest": "../PIN-MANIFEST.md",
+  "hero_golden": "hero-golden.json",
+  "freeze": {
+    "max_consecutive_live_pin_mismatch": 3,
+    "state_file": ".architecture-freeze-state.json"
+  }
+}

@@ -8,8 +8,10 @@ You are the **LTF Live Drift Watchdog**. Read-only — never deploy, never edit 
 
 1. In the repo root, run:
    ```bash
+   python3 webflow/watchdogs/architecture-freeze-watchdog.py
    python3 webflow/watchdogs/live-drift-watchdog.py
    ```
+   (Or `./webflow/watchdogs/run-all.sh` once.)
 2. If exit code **0**, reply with one line: `DRIFT OK` plus the script’s last OK line.
 3. If exit code **1**, reply **`DRIFT ALERT`** with the full stderr. Mention likely fixes:
    - User must **Publish** Webflow after footer/head paste

@@ -185,7 +185,8 @@ let bindAll = null;
   }
 
   var SLAM_CARD_W = 480;
-  var SLAM_CARD_H = 340;
+  /** Base fan card height (−100px vs 340 — tighter copy band, consistent aspect). */
+  var SLAM_CARD_H = 240;
   /** Designer fan offsets at full card width (card 01 = 0). */
   var FAN_OFFSET_BASE = [0, 12, 24, 36];
   var FAN_GUTTER = 1 + FAN_OFFSET_BASE[3] / SLAM_CARD_W;
@@ -243,19 +244,15 @@ let bindAll = null;
     var minH = size.h;
     card.style.width = size.w + 'px';
     card.style.maxWidth = size.w + 'px';
-    card.style.height = 'auto';
+    card.style.height = minH + 'px';
     card.style.minHeight = minH + 'px';
-    card.style.maxHeight = 'none';
-    card.style.overflow = 'visible';
+    card.style.maxHeight = minH + 'px';
+    card.style.overflow = 'hidden';
     card.style.boxSizing = 'border-box';
     if (typeof cardIndex === 'number') {
       applySlamFanOffset(card, cardIndex, size.w);
     }
-    var contentH = Math.max(minH, card.scrollHeight || 0);
-    if (contentH > minH) {
-      card.style.minHeight = contentH + 'px';
-    }
-    size.h = contentH;
+    size.h = minH;
     return size;
   }
 

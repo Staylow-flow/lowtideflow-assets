@@ -19,6 +19,8 @@ Universal 4-column footer matching the LowTideFlow tactical navy system. Follows
 | Schedule CTA via `ltf-btn-gradient-wrap` + `ltf-nav-btn` | — (inherits global nav button FX) |
 | 44px touch targets (mobile breakpoint) | — |
 | Responsive utility row stacking | — |
+| Mobile **2×2** column grid (not 1×4 stack @ ≤767) | `#ltf-site-footer-fx` → `.ltf-footer-grid` |
+| **HQ location pill** (`Torrance, CA \| SoCal HQ`) width | `#ltf-site-footer-fx` → `.ltf-footer-location-tag` `fit-content` |
 
 **Rule:** If Designer can express it, keep it in Designer. Head CSS is only for effects Designer cannot do (animated gradients, pseudo-elements, keyframe animations).
 
@@ -56,6 +58,7 @@ Schedule button reuses global **`ltf-btn-gradient-wrap`** + **`ltf-nav-btn`** �
 | Tech Specs | `/tech-specs` |
 | The Crew | `/the-crew` |
 | Brand Matrix | `/brand-matrix` |
+| Origins | `/origins` |
 
 ## Responsive breakpoints (Webflow)
 
@@ -81,6 +84,6 @@ Scaffold reference (not for paste if component exists): `webflow/ltf-site-footer
 
 ## TODO (optional)
 
-- Create `/privacy-policy`, `/terms-of-service`, `/art-dept-guidelines` pages (footer links are stubbed).
+- Legal utility pages live: `/privacy-policy`, `/terms-of-service`, `/art-dept-guidelines` (bottom bar legal links only; Column 4 remains **Locations Served**).
 - Replace Instagram/Facebook text links with SVG icons if desired.
 - Publish site after verifying footer in Designer preview.

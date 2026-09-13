@@ -1,3 +1,4 @@
 .DS_Store
 .cursor/
 webflow/watchdogs/.live-drift-state.json
+webflow/watchdogs/.architecture-freeze-state.json

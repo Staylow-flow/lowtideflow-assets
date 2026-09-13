@@ -12,13 +12,13 @@ When bumping a pin: update repo file → push to GitHub → update Webflow regis
 
 | Asset | Script ID / location | Commit | SRI / notes |
 |-------|----------------------|--------|-------------|
-| Nav boot (injects `nav.js`) | `ltfnavboot9136b12` · site footer registered script | `9136b12` | Verify live via Webflow → Site Settings → Custom Code → Registered Scripts |
+| Nav boot (injects `nav.js`) | Site Custom Code → Footer (inline injector) | `334377c` | SRI sha384 on `nav.js` in `webflow/site-custom-footer-code.html` |
 | Site head FX | Site Custom Code → Head | repo | Assembled from `site-nav-fx.html` + `ltf-site-footer-fx.html` via `_restore_head_now.json` |
-| `js/nav.js` | loaded by nav boot | `9136b12` | sha256 `98ed9afb1f202d3cc92060abd6222c0bc0905800df897b09d6e1aa40bc150c78` (local @ HEAD) |
-| `js/ui/nav-mobile.js` | import | `9136b12`+ | sha256 `8c465a7c2fb02d43c002ea653da9d46a8a26258b1def826855ef7ebf87bf17cf` |
-| `js/ui/nav-comms.js` | import | `9136b12`+ | sha256 `10acc2e54962f9f34009c99507f5361782b791d3315b3ecf26d7d44d67f298f0` |
+| `js/nav.js` | loaded by nav boot | `334377c` | sha256 `98ed9afb1f202d3cc92060abd6222c0bc0905800df897b09d6e1aa40bc150c78` |
+| `js/ui/nav-mobile.js` | import | `334377c` | sha256 `8c465a7c2fb02d43c002ea653da9d46a8a26258b1def826855ef7ebf87bf17cf` |
+| `js/ui/nav-comms.js` | import via `nav.js` | `334377c` | dedupes with inline Open Comms boot via `ltfCommsBound` |
 
-> **Note:** Nav boot may still be @ `9136b12` while IQ is @ `329bdae`. That is OK if `nav.js` has not changed since nav rollout. If you edit `js/nav.js`, bump nav boot to match new commit.
+> **Note:** Nav boot lives in **site footer freeform** (`site-custom-footer-code.html`), not a registered script. Bump pin + SRI there when `js/nav.js` changes. IQ may be @ a different commit than nav.
 
 ---
 

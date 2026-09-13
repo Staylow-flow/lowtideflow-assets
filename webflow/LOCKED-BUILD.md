@@ -17,7 +17,8 @@ This is the **single source of truth** for the current live build. Before any We
 | **Footer FX** (gradient border, link hovers, status dot, legal padding bleed) | Site head `#ltf-site-footer-fx` | `webflow/ltf-site-footer-fx.html` |
 | **Clean-Slate page FX** (hero, cards, upsell, magnifier — **no nav**) | Page head `#ltf-clean-slate-fx` | `webflow/live-page-head.html` |
 | **Site nav JS** (non–Clean-Slate pages) | Site registered script footer | `js/nav.js` @ pin in PIN-MANIFEST |
-| **Clean-Slate UI JS** | Page footer (3 tags) | `webflow/clean-slate-footer.html` |
+| **Site global footer code** | Site Settings → Custom Code → Footer | `webflow/site-custom-footer-code.html` (nav boot + Open Comms only — no hero CSS) |
+| **Clean-Slate page footer** | Clean-Slate page → Before `</body>` — 3 jsDelivr tags only | `webflow/clean-slate-footer.html` |
 | **Instant Quote** | Registered scripts + modal HTML | `INSTANT-QUOTE-STATUS.md` |
 
 **Golden rule:** If Designer can express it, keep it in Designer. Head CSS is for pseudo-elements, keyframes, and overrides global bleed cannot fix (e.g. legal link padding).
@@ -33,7 +34,7 @@ This is the **single source of truth** for the current live build. Before any We
 | **LTF Site Nav** | `23f19174-c22b-4e4f-bb47-275e13d3b665` | `LTF-SITE-NAV.md` |
 | **LTF Site Footer** | `8d603833-f37b-f846-7b78-eeff3059e3c6` | `LTF-SITE-FOOTER.md` |
 
-Both components are on: `/clean-slate`, `/instant-quote`, `/production`, `/tech-specs`, `/the-crew`, `/brand-matrix`.
+Both components are on fleet pages (`/clean-slate`, `/instant-quote`, `/production`, `/tech-specs`, `/the-crew`, `/brand-matrix`, `/origins`) and all **legacy vault** pages in `PAGE-MANIFEST.md`.
 
 ---
 
@@ -158,6 +159,31 @@ File checksums: `webflow/_LOCKED/CHECKSUMS.sha256`
 | `webflow/INSTANT-QUOTE-BUILD-STATUS.html` | Superseded by `INSTANT-QUOTE-STATUS.md` |
 | `webflow/_deploy*.json`, `webflow/_invoke*.json` | MCP replay payloads — not source of truth |
 | `js/flow-background.js` | Never deployed |
+
+---
+
+## Where these edits live (no duplicates)
+
+| Change | Canonical file | Webflow target |
+|--------|----------------|----------------|
+| Phone portrait **primary-bar logo** size (Designer locked) | `live-page-head.html` → `#ltf-mobile-fixes` @ `(max-width: 767px) and (orientation: portrait)` | Clean-Slate **page head** |
+| **Footer bar** — Torrance/SoCal grey pill `fit-content`, mobile **2×2** grid | `ltf-site-footer-fx.html` → `#ltf-site-footer-fx` | **Site head** (assembled with nav FX) |
+| **Specs vault slam** — fan card height, slam timing, inline dimensions | `js/sections/specs-vault-slam.js` (via `ltf.js` pin) | Clean-Slate **page footer** jsDelivr pin when JS changes |
+| Specs desktop **copy clip** inside JS card height | `live-page-head.html` `@media (min-width: 992px)` `.ltf-spec-card` overflow rules | Clean-Slate **page head** (supports slam JS; not layout numbers) |
+
+---
+
+## Pre-change / pre-deploy watchdogs
+
+Run from repo root before any Webflow paste or MCP deploy:
+
+```bash
+python3 webflow/watchdogs/architecture-freeze-watchdog.py
+```
+
+This gate enforces: Clean-Slate **3-tag footer** (one pin, rock-scene → ltf → hero-viewport), page vs site head split, no jsDelivr in page head, checksums in `_LOCKED/CHECKSUMS.sha256`, hero compliance, optional site-head assemble verify, and **live pin freeze** (fails after 3 consecutive published pin mismatches). Full stack: `./webflow/watchdogs/run-all.sh`. See `webflow/watchdogs/README.md` and `AUTOMATION-architecture-freeze.md`.
+
+After intentional canonical edits, update `PIN-MANIFEST.md` and `_LOCKED/CHECKSUMS.sha256`.
 
 ---
 

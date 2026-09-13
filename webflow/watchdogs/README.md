@@ -1,6 +1,7 @@
-# Hero watchdogs (Clean-Slate)
+# LTF watchdogs (Clean-Slate + architecture)
 
-Two gates protect **locked** mobile portrait + desktop hero layouts while tablet **Inside bar** work proceeds.
+**Primary gate:** `architecture-freeze-watchdog.py` — LOCKED-BUILD constraints, checksums, hero compliance, live pin freeze.  
+**Hero + drift:** compliance and live HTML checks (also invoked by the architecture gate).
 
 ## Golden source
 
@@ -12,7 +13,28 @@ Two gates protect **locked** mobile portrait + desktop hero layouts while tablet
 
 MCP head deploy often times out (~30k chars). Use **`webflow/MANUAL-PASTE-clean-slate.md`** — paste full `live-page-head.html` in Page settings → Head, footer scripts from `clean-slate-footer.html`, then Publish. Run drift watchdog after.
 
-## 1 — Compliance (run before every head/footer deploy)
+## 0 — Architecture & freeze (run before every deploy)
+
+```bash
+python3 webflow/watchdogs/architecture-freeze-watchdog.py
+```
+
+Config: `architecture-golden.json`. Enforces:
+
+- `webflow/_LOCKED/CHECKSUMS.sha256` vs canonical files
+- Clean-Slate page footer: **3 scripts**, single pin; no hero CSS in footer slots
+- Site footer **bar** FX: `ltf-site-footer-fx.html` (site head); hero logo size: `#ltf-mobile-fixes` in page head
+- Page head must not include site nav FX or jsDelivr script tags
+- Middle-mode CSS stays in `#ltf-hero-mode-b` (not `#ltf-mobile-fixes` only)
+- Site head sources (`site-nav-fx.html`, `ltf-site-footer-fx.html`) — no placeholders
+- Delegates to `hero-compliance-watchdog.py` + optional `verify_head_payload.py site`
+- Live `/clean-slate` pin vs `hero-golden.json` — **FAIL after 3 consecutive mismatches** (`.architecture-freeze-state.json`)
+
+Automation prompt: `AUTOMATION-architecture-freeze.md`.
+
+**Exit 0 = safe to deploy.** Exit 1 = do not call Webflow MCP `set_*_freeform_code`.
+
+## 1 — Compliance (quick check; included in architecture gate)
 
 ```bash
 python3 webflow/watchdogs/hero-compliance-watchdog.py
@@ -47,7 +69,7 @@ State file: `.live-drift-state.json` (gitignored) — detects stuck wrong pin ac
 ./webflow/watchdogs/run-all.sh
 ```
 
-Runs compliance then live drift.
+Runs architecture-freeze (includes compliance) then live drift.
 
 ## Cursor Automation (5m drift)
 

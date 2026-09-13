@@ -62,6 +62,18 @@ See `.cursor/rules/ltf-no-placeholder-head-deploy.mdc`.
 
 ---
 
+## 1b. Site global footer code (all pages)
+
+**When:** Nav boot / Open Comms inline scripts change.
+
+**Source:** `webflow/site-custom-footer-code.html`
+
+**Target:** **Site settings → Custom Code → Before `</body>`** (not the LTF Site Footer component, not Clean-Slate page footer).
+
+**Deploy:** Manual paste full file. Bump `nav.js` pin + SRI in this file when `js/nav.js` changes (`PIN-MANIFEST.md`).
+
+---
+
 ## 2. Clean-Slate page head
 
 **When:** Hero, cards, upsell, magnifier FX only.
@@ -72,7 +84,7 @@ See `.cursor/rules/ltf-no-placeholder-head-deploy.mdc`.
 
 **Deploy:** Prefer **manual paste** — see `webflow/MANUAL-PASTE-clean-slate.md`. Full file ~30k chars; MCP head deploy often times out. Never paste `@file:` or stubs.
 
-**Preflight:** `python3 webflow/watchdogs/hero-compliance-watchdog.py`
+**Preflight:** `python3 webflow/watchdogs/architecture-freeze-watchdog.py` (includes hero compliance + LOCKED-BUILD checks). Quick-only: `hero-compliance-watchdog.py`.
 
 **Never** include nav rules here — they live in site head.
 

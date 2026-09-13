@@ -22,9 +22,17 @@ Must exit **0**. Never paste partial head, `PLACEHOLDER`, or `@file:` paths.
    - `id="ltf-hero-mode-b"` (tablet / landscape Inside bar)
 5. **Publish** site (both domains).
 
-## Page footer (Before `</body>`)
+## Site footer bar FX (global — all pages)
 
-Paste **only** the three `<script>` lines from `webflow/clean-slate-footer.html` (no HTML comments required).
+**Site settings → Custom Code → Head:** deploy assembled site head (`site-nav-fx.html` + `ltf-site-footer-fx.html`) — includes mobile 2×2 grid + HQ location pill width. See `DEPLOY.md` §1.
+
+## Site global footer code (nav boot)
+
+**Site settings → Custom Code → Footer:** paste `webflow/site-custom-footer-code.html` (scripts only — no hero CSS).
+
+## Clean-Slate page footer (this page only)
+
+Paste the three `<script>` lines from `webflow/clean-slate-footer.html` @ golden pin.
 
 **Golden pin:** see `webflow/watchdogs/hero-golden.json` → `rock_scene_pin` (currently `7c89f3f`).
 
