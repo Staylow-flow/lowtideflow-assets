@@ -688,6 +688,13 @@ function isPhonePortraitLayout(w = typeof window !== 'undefined' ? window.innerW
   return window.matchMedia('(orientation: portrait)').matches;
 }
 
+/** Mobile ≤991 + portrait — hero canvas (includes tablet portrait, not just phone). */
+function isMobilePortraitLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  if (!isMobileLayout(w)) return false;
+  if (typeof window === 'undefined' || !window.matchMedia) return w <= 767;
+  return window.matchMedia('(orientation: portrait)').matches;
+}
+
 function activeGasBounds(viewportW) {
   if (!isMobileLayout(viewportW)) return GAS_LOCKED_BOUNDS;
   return { ...GAS_LOCKED_BOUNDS, ...GAS_MOBILE_OVERRIDES };
@@ -1130,8 +1137,7 @@ class RockScene {
     this.rockLiftPx = lift;
     this._applyRockLift();
     if (this.rockGroup) {
-      const portraitScale =
-        mobile && isPhonePortraitLayout(vw) ? MOBILE_PORTRAIT_ROCK_SCALE_MULT : 1;
+      const portraitScale = isMobilePortraitLayout(vw) ? MOBILE_PORTRAIT_ROCK_SCALE_MULT : 1;
       this.rockGroup.scale.setScalar(portraitScale);
     }
   }
@@ -1320,6 +1326,8 @@ class RockScene {
     this._rockMesh = model;
     this.rockGroup.add(model);
     this.rockGroup.visible = layerVisibility().rock;
+
+    this._syncLayoutProfile();
 
     const lv = layerVisibility();
     console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
