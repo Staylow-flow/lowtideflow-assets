@@ -26,9 +26,9 @@ When bumping a pin: update repo file → push to GitHub → update Webflow regis
 
 | Asset | Location | Commit | Repo file |
 |-------|----------|--------|-----------|
-| `js/hero/rock-scene.js` | Page footer tag 1 | `2e98bf6` | MODE B spacing tune + width-locked middle boulder scale |
-| `js/ltf.js` | Page footer tag 2 | `2e98bf6` | `clean-slate-footer.html` |
-| `js/ui/hero-viewport.js` | Page footer tag 3 | `2e98bf6` | `clean-slate-footer.html` |
+| `js/hero/rock-scene.js` | Page footer tag 1 | `a3117bf` | MODE B hero height fix + larger middle boulder |
+| `js/ltf.js` | Page footer tag 2 | `a3117bf` | `clean-slate-footer.html` |
+| `js/ui/hero-viewport.js` | Page footer tag 3 | `a3117bf` | MODE B shirt-to-copy bottom sync |
 | Page head FX | Page Custom Code → Head | repo (30296 chars) | `live-page-head.html` — MCP deploy 2026-09-11 · sha256 `6ffda85f…` (shirt +40px Y, logo −10px, copy +20px) |
 
 Importmap for Three.js lives in **site head** (not page footer).
