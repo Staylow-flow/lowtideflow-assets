@@ -673,9 +673,17 @@ const MOBILE_GAS_ALPHA_MULT = 0.72;
  * was 259, then 209 (−50 down), now 224 (+15 up).
  */
 const MOBILE_ROCK_LIFT_PX = 224;
+/** Phone portrait (≤767) — extra screen-px lift on top of MOBILE_ROCK_LIFT_PX */
+const MOBILE_PORTRAIT_PHONE_EXTRA_LIFT_PX = -30; /* was +10; boulder down 40px on phone portrait */
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
+}
+
+function isPhonePortraitLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  if (w > 767) return false;
+  if (typeof window === 'undefined' || !window.matchMedia) return true;
+  return window.matchMedia('(orientation: portrait)').matches;
 }
 
 function activeGasBounds(viewportW) {
@@ -685,6 +693,33 @@ function activeGasBounds(viewportW) {
 
 function mobileCameraZ(viewportW) {
   return isMobileLayout(viewportW) ? MOBILE_CAMERA_Z : CAMERA_Z;
+}
+
+/** WebGL backing-store scale — phone portrait allows Retina DPR (was capped at 1). */
+function resolveRenderPixelRatio(viewportW, resolutionScaleAttr) {
+  const mobile = isMobileLayout(viewportW);
+  const phonePortrait = isPhonePortraitLayout(viewportW);
+  const maxDpr = phonePortrait ? 2 : (mobile ? 1 : 2);
+  const hasExplicitScale =
+    resolutionScaleAttr != null && resolutionScaleAttr !== '';
+  if (hasExplicitScale) {
+    const scale = Number(resolutionScaleAttr);
+    if (Number.isFinite(scale)) {
+      /* Designer sets data-render-resolution-scale="1" for perf — still allow Retina on phone portrait. */
+      if (phonePortrait && scale <= 1 && typeof window !== 'undefined') {
+        return Math.max(0.5, Math.min(window.devicePixelRatio || 1, maxDpr));
+      }
+      return Math.max(0.5, Math.min(scale, maxDpr));
+    }
+  }
+  if (phonePortrait && typeof window !== 'undefined') {
+    return Math.max(0.5, Math.min(window.devicePixelRatio || 1, maxDpr));
+  }
+  if (mobile) return 1;
+  if (typeof window !== 'undefined') {
+    return Math.max(0.5, Math.min(window.devicePixelRatio || 1, maxDpr));
+  }
+  return 1;
 }
 
 /** Single source of truth — gas volume, layout, and rock lift */
@@ -996,10 +1031,10 @@ class RockScene {
 
   /* ── Renderer ──────────────────────────────────────────────────────────── */
   _initRenderer() {
-    const mobile = isMobileLayout();
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const mobile = isMobileLayout(vw);
     const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
-    const scale = scaleAttr != null && scaleAttr !== '' ? Number(scaleAttr) : 1;
-    const dpr = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, mobile ? 1 : 2)) : 1;
+    const dpr = resolveRenderPixelRatio(vw, scaleAttr);
     const existingCanvas =
       this.container.querySelector('#canvas3d')
       || (this.container.id === 'canvas3d' ? this.container : null)
@@ -1086,7 +1121,11 @@ class RockScene {
     if (this.camera) {
       this.camera.position.z = mobileCameraZ(vw);
     }
-    this.rockLiftPx = mobile ? MOBILE_ROCK_LIFT_PX : GAS_LOCKED_BOUNDS.rockLiftPx;
+    let lift = mobile ? MOBILE_ROCK_LIFT_PX : GAS_LOCKED_BOUNDS.rockLiftPx;
+    if (mobile && isPhonePortraitLayout(vw)) {
+      lift += MOBILE_PORTRAIT_PHONE_EXTRA_LIFT_PX;
+    }
+    this.rockLiftPx = lift;
     this._applyRockLift();
   }
 
@@ -1340,6 +1379,9 @@ class RockScene {
     }
     this.w = Math.max(rect.width,  100);
     this.h = Math.max(rect.height, 100);
+    const vw = typeof window !== 'undefined' ? window.innerWidth : this.w;
+    const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
+    this.renderer.setPixelRatio(resolveRenderPixelRatio(vw, scaleAttr));
     this.renderer.setSize(this.w, this.h);
     this.camera.aspect = this.w / this.h;
     this.camera.updateProjectionMatrix();
