@@ -110,10 +110,37 @@ footer.ltf-site-footer .ltf-footer-location-tag {
   box-sizing: border-box !important;
 }
 
-/* Mobile: 2×2 footer columns (match tablet), not 1×4 stack */
+/*
+  Mobile: two columns — brand + NAV left, COMMS + Locations Served right (tablet-style).
+  Designer @ small defaults to 1×4 stack; head places columns explicitly.
+*/
 @media screen and (max-width: 767px) {
   footer.ltf-site-footer .ltf-footer-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    column-gap: clamp(20px, 5.5vw, 44px) !important;
+    row-gap: 28px !important;
+    align-items: start !important;
+  }
+
+  footer.ltf-site-footer .ltf-footer-grid > .ltf-footer-col:nth-child(1) {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  footer.ltf-site-footer .ltf-footer-grid > .ltf-footer-col:nth-child(2) {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  footer.ltf-site-footer .ltf-footer-grid > .ltf-footer-col:nth-child(3) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  footer.ltf-site-footer .ltf-footer-grid > .ltf-footer-col:nth-child(4) {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
   }
 }
 

@@ -19,7 +19,7 @@ Universal 4-column footer matching the LowTideFlow tactical navy system. Follows
 | Schedule CTA via `ltf-btn-gradient-wrap` + `ltf-nav-btn` | — (inherits global nav button FX) |
 | 44px touch targets (mobile breakpoint) | — |
 | Responsive utility row stacking | — |
-| Mobile **2×2** column grid (not 1×4 stack @ ≤767) | `#ltf-site-footer-fx` → `.ltf-footer-grid` |
+| Mobile **2-col** (brand/NAV left, COMMS/Locations right + column gap @ ≤767) | `#ltf-site-footer-fx` → `.ltf-footer-grid` placement |
 | **HQ location pill** (`Torrance, CA \| SoCal HQ`) width | `#ltf-site-footer-fx` → `.ltf-footer-location-tag` `fit-content` |
 
 **Rule:** If Designer can express it, keep it in Designer. Head CSS is only for effects Designer cannot do (animated gradients, pseudo-elements, keyframe animations).

@@ -3,8 +3,8 @@
 # Verify after edits: shasum -a 256 -c webflow/_LOCKED/CHECKSUMS.sha256
 
 5e9c1946e75389faab8403f12dc6d899854302a2de931d2fdbdc61db700f4d81  webflow/site-nav-fx.html
-92be8e66cde09a757cb601f405f7fb36ff19ceb79396023d84f8b2d57dd41528  webflow/ltf-site-footer-fx.html
-3b5c522f0608eb5dcf2620be6ac74d9952ed8712dabb8defc05477563ea4f6be  webflow/live-page-head.html
+e733d39351bf114988fe2a25d5f31100c54e83b6a14388318198a5efb56b99d7  webflow/ltf-site-footer-fx.html
+cc67161269e793a77b6bd99d0862fa5ed6d8bc46fd3cb4d7522de5a7646830f1  webflow/live-page-head.html
 1261ceb8cdccb39ad1370c98ed3f10d86b7c0ca4c5c63c8074900a232e038c5c  webflow/clean-slate-footer.html
 c89ac413b1bf30609e7218bc50ed7be1d2406b9fd972ef5ca5f4953a19a247f9  webflow/site-custom-footer-code.html
 93c7af5c739d8eaad09a83c4c7204293d5dfe179c70fab25313528a532ee3fee  webflow/instant-quote-embed.css
@@ -12,5 +12,5 @@ c89ac413b1bf30609e7218bc50ed7be1d2406b9fd972ef5ca5f4953a19a247f9  webflow/site-c
 633c0ccfea0407833ed0156f6f87cb0301682d35705ee02ea264a83885003c2c  js/ltf.js
 8c465a7c2fb02d43c002ea653da9d46a8a26258b1def826855ef7ebf87bf17cf  js/ui/nav-mobile.js
 10acc2e54962f9f34009c99507f5361782b791d3315b3ecf26d7d44d67f298f0  js/ui/nav-comms.js
-7e9506a620af5fde30ed7f75ab542faf5b94a5ea75ddf4b4b31d5714e3e92634  js/sections/specs-vault-slam.js
+bfcb36dc9dd73e77d37610cd4990ad96fd5e9f4c272762c756291137d7685d49  js/sections/specs-vault-slam.js
 5ec052de2b861335283e52236f0adde3f677abf28b3ff58088e2b56c8a6b3860  webflow/_LOCKED/specs-vault-slam.js.pre-option-a-6f08be9

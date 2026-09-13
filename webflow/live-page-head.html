@@ -397,25 +397,6 @@ body {
 
 /* Desktop slam stack (≥1281) — layout via specs-vault-slam.js inline styles, not head */
 
-/* Desktop Specs fan cards (≥992) — copy clip only; card H/W from js/sections/specs-vault-slam.js (SLAM_CARD_*) */
-@media (min-width: 992px) {
-  .ltf-specs-vault-cards .ltf-spec-card {
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-  }
-  .ltf-specs-vault-cards .ltf-spec-card .ltf-card-title {
-    flex-shrink: 0 !important;
-  }
-  .ltf-specs-vault-cards .ltf-spec-card .ltf-body-text {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    overflow: hidden !important;
-    line-height: 1.28 !important;
-  }
-}
-
 /* Narrow desktop (992–1280) — Trenches grows with content; Specs layout = Designer only */
 @media (min-width: 992px) and (max-width: 1280px) {
   .ltf-section.is-trenches {

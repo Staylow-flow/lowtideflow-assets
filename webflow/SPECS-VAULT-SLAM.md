@@ -46,7 +46,7 @@ blocks module execution.
 |----------|----------|
 | **≤991px** | Static stack — Designer + head CSS; slam JS **off** |
 | **992–1280px** | Fan scales + **content-height grows** with copy; slam FX on |
-| **≥1280px / wide column** | Full **480×240** fan cards (`SLAM_CARD_H`), 0/12/24/36px fan offsets |
+| **≥1280px / wide column** | Full 480×340 cards, 0/12/24/36px fan — responsive scrollHeight trim −100px when column shrinks |
 
 **Revert:** copy `webflow/_LOCKED/specs-vault-slam.js.pre-option-a-6f08be9` → `js/sections/specs-vault-slam.js`, or `git checkout 6f08be9 -- js/sections/specs-vault-slam.js`.
 
