@@ -146,21 +146,23 @@ let bindAll = null;
     card.style.padding = '';
   }
 
-  /** Designer padding is asymmetric; when cards shrink below 480px keep equal gutters on all sides. */
-  function slamUniformPaddingPx(cardWidth) {
-    if (cardWidth >= SLAM_CARD_W) return null;
-    var scale = cardWidth / SLAM_CARD_W;
-    var pad = Math.round(SLAM_CARD_PAD_AT_FULL * scale);
-    return Math.max(SLAM_CARD_PAD_MIN, Math.min(SLAM_CARD_PAD_AT_FULL, pad));
-  }
-
-  function applySlamCardUniformPadding(card, cardWidth) {
-    var pad = slamUniformPaddingPx(cardWidth);
-    if (pad == null) {
-      card.style.padding = '';
-    } else {
-      card.style.padding = pad + 'px';
-    }
+  /**
+   * Fan band: keep Designer left/right padding (no inline override).
+   * When the card shrinks below 480px, set top/bottom to the same inset as left/right
+   * so vertical breathing matches horizontal (card grows taller, copy does not hug edges).
+   */
+  function applySlamCardVerticalPaddingFromHorizontal(card, cardWidth) {
+    card.style.padding = '';
+    card.style.paddingTop = '';
+    card.style.paddingBottom = '';
+    if (cardWidth >= SLAM_CARD_W) return;
+    var cs = getComputedStyle(card);
+    var padL = parseFloat(cs.paddingLeft) || 0;
+    var padR = parseFloat(cs.paddingRight) || 0;
+    var side = Math.max(padL, padR);
+    if (side < 1) return;
+    card.style.paddingTop = side + 'px';
+    card.style.paddingBottom = side + 'px';
   }
 
   function prepHost(host, sticky, cards, fanLayout) {
@@ -204,9 +206,6 @@ let bindAll = null;
 
   var SLAM_CARD_W = 480;
   var SLAM_CARD_H = 340;
-  /** Uniform inset at full card width — scales down with card so L/R matches T/B near tablet band. */
-  var SLAM_CARD_PAD_AT_FULL = 28;
-  var SLAM_CARD_PAD_MIN = 20;
   /** When responsive sizing grows cards via scrollHeight, trim excess (was ~100px too tall). */
   var SLAM_RESPONSIVE_HEIGHT_TRIM = 100;
   /** Designer fan offsets at full card width (card 01 = 0). */
@@ -271,7 +270,7 @@ let bindAll = null;
     card.style.maxHeight = 'none';
     card.style.overflow = 'visible';
     card.style.boxSizing = 'border-box';
-    applySlamCardUniformPadding(card, size.w);
+    applySlamCardVerticalPaddingFromHorizontal(card, size.w);
     if (typeof cardIndex === 'number') {
       applySlamFanOffset(card, cardIndex, size.w);
     }

@@ -140,3 +140,40 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 window.addEventListener('load',initComms);
 })();
 </script>
+
+<!-- Footer component: HQ pill under COMMS, drop Studio row (Designer scaffold sync) -->
+<script defer>
+(function () {
+  'use strict';
+  function normalizeFooterComms() {
+    document.querySelectorAll('footer.ltf-site-footer').forEach(function (footer) {
+      var grid = footer.querySelector('.ltf-footer-grid');
+      if (!grid || grid.getAttribute('data-ltf-footer-comms-hq') === '1') return;
+      var cols = grid.querySelectorAll(':scope > .ltf-footer-col');
+      if (cols.length < 3) return;
+      var brandCol = cols[0];
+      var commsCol = cols[2];
+      var list = commsCol.querySelector('.ltf-footer-comms-list');
+      if (!list) return;
+      list.querySelectorAll('.ltf-footer-comms-item').forEach(function (item) {
+        var label = item.querySelector('.ltf-footer-comms-label');
+        if (!label) return;
+        if (/^studio$/i.test((label.textContent || '').replace(/\s+/g, ' ').trim())) {
+          item.remove();
+        }
+      });
+      var pill = brandCol.querySelector('.ltf-footer-location-tag');
+      if (pill && !commsCol.querySelector('.ltf-footer-location-tag')) {
+        commsCol.appendChild(pill);
+      }
+      grid.setAttribute('data-ltf-footer-comms-hq', '1');
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', normalizeFooterComms);
+  } else {
+    normalizeFooterComms();
+  }
+  window.addEventListener('load', normalizeFooterComms);
+})();
+</script>

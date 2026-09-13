@@ -80,6 +80,7 @@ Schedule button reuses global **`ltf-btn-gradient-wrap`** + **`ltf-nav-btn`** �
 - **HQ pill** (`ltf-footer-location-tag` — “Torrance, CA \| SoCal HQ”) lives in **column 3 (COMMS)**, below the comms list (not column 1 brand).
 - Remove the old **Studio** comms row (“Production Studio” / “Torrance, California”) — HQ pill replaces it.
 - Reference markup: `webflow/ltf-site-footer.html`.
+- Until Designer is updated on all instances, **site global footer** (`site-custom-footer-code.html`) runs a one-time DOM normalize (move pill, remove Studio row).
 
 ## Deploy / update
 
