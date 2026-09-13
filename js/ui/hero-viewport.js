@@ -2,7 +2,7 @@
  * Clean-Slate footer tag #3 — funnel copy patch + MODE B chrome sync only.
  *
  * Desktop & phone portrait: Designer-only layout (no injected position CSS).
- * Middle breakpoints: 20px H1→copy gutter; logo centered on H1 X + scales with H1;
+ * Middle breakpoints: 20px H1→copy gutter; logo 20px left of H1 (Y centered on H1);
  * shirt top at vertical midpoint of H1 + logo block.
  */
 
@@ -10,6 +10,7 @@ const FUNNEL_LINE1 = 'DIAL YOUR SPECS';
 const FUNNEL_LINE2 = 'ON OUR LIVE BUILDER';
 
 const MIDDLE_H1_COPY_GAP_PX = 20;
+const MIDDLE_H1_LOGO_GAP_PX = 20;
 /** Logo height at reference H1 computed font-size (px). */
 const MIDDLE_LOGO_HEIGHT_AT_REF = 81;
 const MIDDLE_LOGO_REF_H1_FONT_PX = 56;
@@ -78,15 +79,20 @@ function syncMiddleHeroLayout() {
   const logoH = (h1Fs / MIDDLE_LOGO_REF_H1_FONT_PX) * MIDDLE_LOGO_HEIGHT_AT_REF;
   bar.style.setProperty('--ltf-middle-logo-height', `${logoH.toFixed(2)}px`);
 
-  const h1CenterX = h1Rect.left + h1Rect.width / 2;
-  const h1MidY = h1Rect.top + h1Rect.height / 2;
+  const h1El = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
+  const h1TextRect = h1El.getBoundingClientRect();
+  const h1MidY = h1TextRect.top + h1TextRect.height / 2;
 
   bar.offsetHeight;
   const barRectFresh = bar.getBoundingClientRect();
   logo.offsetHeight;
   const logoW = logo.getBoundingClientRect().width || logo.offsetWidth;
   bar.style.setProperty('--ltf-middle-logo-top', `${Math.round(h1MidY - logoH / 2 - barRectFresh.top)}px`);
-  bar.style.setProperty('--ltf-middle-logo-left', `${Math.round(h1CenterX - logoW / 2 - barRectFresh.left)}px`);
+
+  const logoLeftScreen = h1TextRect.left - MIDDLE_H1_LOGO_GAP_PX - logoW;
+  const minLeftScreen = cageRect.left + 24;
+  const logoLeftBar = Math.max(logoLeftScreen, minLeftScreen) - barRectFresh.left;
+  bar.style.setProperty('--ltf-middle-logo-left', `${Math.round(logoLeftBar)}px`);
 
   const logoRect2 = logo.getBoundingClientRect();
   const groupTop = Math.min(h1Rect.top, logoRect2.top);
