@@ -898,6 +898,19 @@ img.ltf-hero-figure.is-hero-figure-inside,
 
 @media (min-width: 768px) and (max-width: 991px),
        (max-width: 767px) and (orientation: landscape) {
+  /* Middle modes: drop section vh lock — canvas height follows width (aspect-ratio), not svh */
+  .ltf-hero {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  .ltf-hero > .ltf-site-cage.ltf-cage {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
   .ltf-hero-bottom-bar .ltf-stack.ltf-split-copy.is-hero-copy:not(.is-hero-copy-inside-breakpoints) {
     display: none !important;
   }
@@ -952,11 +965,14 @@ img.ltf-hero-figure.is-hero-figure-inside,
     top: 50px !important;
     left: 0 !important;
     right: 0 !important;
-    width: 100% !important;
+    width: 100vw !important;
     max-width: 100% !important;
-    height: calc(100svh - 50px) !important;
-    min-height: calc(100svh - 50px) !important;
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+    height: auto !important;
+    min-height: 0 !important;
     max-height: none !important;
+    aspect-ratio: 100 / 72 !important;
     transform: none !important;
     z-index: 0 !important;
   }
@@ -966,11 +982,12 @@ img.ltf-hero-figure.is-hero-figure-inside,
     height: 100% !important;
     display: block !important;
     max-width: 100% !important;
+    min-height: 280px !important;
   }
 
   .ltf-hero-headline {
     position: absolute !important;
-    top: 56px !important;
+    top: 121px !important;
     left: 0 !important;
     right: 0 !important;
     z-index: 4 !important;
@@ -990,7 +1007,7 @@ img.ltf-hero-figure.is-hero-figure-inside,
     max-width: 100% !important;
     padding-left: 24px !important;
     padding-right: 24px !important;
-    top: 148px !important;
+    top: 213px !important;
     bottom: auto !important;
     justify-items: center !important;
     box-sizing: border-box !important;
@@ -1002,7 +1019,7 @@ img.ltf-hero-figure.is-hero-figure-inside,
     grid-column: 2 / 3 !important;
     grid-row: 1 !important;
     width: 100% !important;
-    max-width: 570px !important;
+    max-width: 770px !important;
     margin-top: 50px !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -1013,7 +1030,8 @@ img.ltf-hero-figure.is-hero-figure-inside,
 
   .is-hero-logo-mobile.is-hero-logo-inside {
     margin-top: 50px !important;
-    height: 72px !important;
+    height: 108px !important;
+    max-height: 108px !important;
     width: auto !important;
   }
 
@@ -1032,10 +1050,10 @@ img.ltf-hero-figure.is-hero-figure-inside,
   .ltf-hero .ltf-hero-figure {
     position: absolute !important;
     right: 0 !important;
-    bottom: -72px !important;
+    bottom: -122px !important;
     left: auto !important;
     top: auto !important;
-    width: clamp(72px, 14vw, 120px) !important;
+    width: clamp(108px, 21vw, 180px) !important;
     max-height: none !important;
     height: auto !important;
     object-fit: contain !important;
@@ -1054,9 +1072,9 @@ img.ltf-hero-figure.is-hero-figure-inside,
 @media (max-width: 767px) and (orientation: landscape) {
   .ltf-hero img.ltf-hero-figure,
   .ltf-hero .ltf-hero-figure {
-    width: clamp(64px, 12vw, 88px) !important;
+    width: clamp(96px, 18vw, 132px) !important;
     right: -8px !important;
-    bottom: -48px !important;
+    bottom: -98px !important;
   }
 
   .ltf-btn-gradient-wrap.is-hero-cta-wrap-inside {
@@ -1066,20 +1084,15 @@ img.ltf-hero-figure.is-hero-figure-inside,
 }
 
 @media (orientation: landscape) and (max-height: 520px) and (max-width: 991px) {
-  .ltf-hero {
-    min-height: 100svh !important;
-    height: auto !important;
-    padding-bottom: 50px !important;
-    overflow: visible !important;
-  }
-
+  .ltf-hero,
   .ltf-hero > .ltf-site-cage.ltf-cage {
     overflow: visible !important;
-    min-height: calc(100svh - 50px) !important;
+    min-height: 0 !important;
+    padding-bottom: 50px !important;
   }
 
   .ltf-body-text.is-hero-body-inside {
-    max-width: 570px !important;
+    max-width: 770px !important;
     font-size: 18px !important;
   }
 }

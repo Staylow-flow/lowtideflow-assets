@@ -710,6 +710,13 @@ function isMobilePortraitLayout(w = typeof window !== 'undefined' ? window.inner
 const MIDDLE_ROCK_H1_WIDTH_MULT = 1.1;
 const MIDDLE_ROCK_SCALE_MIN = 0.42;
 const MIDDLE_ROCK_SCALE_MAX = 1.08;
+/** Match #ltf-hero-mode-b canvas aspect-ratio 100/72 — rock math uses width, not svh height. */
+const MIDDLE_CANVAS_ASPECT = 72 / 100;
+
+function middleLayoutRefHeight(viewportW) {
+  const w = Math.max(viewportW, 100);
+  return Math.max(w * MIDDLE_CANVAS_ASPECT, 280);
+}
 
 function activeGasBounds(viewportW) {
   if (!isMobileLayout(viewportW)) return GAS_LOCKED_BOUNDS;
@@ -1137,7 +1144,8 @@ class RockScene {
     if (canvasRect.width < 2 || h1Rect.width < 2) return false;
 
     const camZ = this.camera ? this.camera.position.z : mobileCameraZ(vw);
-    const { visibleW, visibleH } = visibleWorldSize(this.w, this.h, camZ);
+    const layoutH = middleLayoutRefHeight(this.w);
+    const { visibleW } = visibleWorldSize(this.w, layoutH, camZ);
 
     const canvasCenterX = canvasRect.left + canvasRect.width * 0.5;
     const h1CenterX = h1Rect.left + h1Rect.width * 0.5;
@@ -1147,10 +1155,10 @@ class RockScene {
     const h1MidY = h1Rect.top + h1Rect.height * 0.5;
     const canvasMidY = canvasRect.top + canvasRect.height * 0.5;
     const pxLift = canvasMidY - h1MidY;
-    this.rockGroup.position.y = rockLiftWorld(this.h, pxLift, camZ);
+    this.rockGroup.position.y = rockLiftWorld(layoutH, pxLift, camZ);
 
     const refW = Math.max(h1Rect.width, 120);
-    const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.min(canvasRect.width, 520);
+    const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.max(canvasRect.width, 320);
     const middleScale = clamp(
       widthRatio * 0.92,
       MIDDLE_ROCK_SCALE_MIN,
@@ -1497,13 +1505,16 @@ class RockScene {
     const scaleAttr = this.container.getAttribute('data-render-resolution-scale');
     this.renderer.setPixelRatio(resolveRenderPixelRatio(vw, scaleAttr));
     this.renderer.setSize(this.w, this.h);
-    this.camera.aspect = this.w / this.h;
+    const aspectH = isHeroMiddleLayout(vw)
+      ? middleLayoutRefHeight(this.w)
+      : this.h;
+    this.camera.aspect = this.w / aspectH;
     this.camera.updateProjectionMatrix();
     if (this.nebulaUni) {
-      this.nebulaUni.aspect.value = this.w / this.h;
+      this.nebulaUni.aspect.value = this.w / aspectH;
     }
     if (this.fgNebulaUni) {
-      this.fgNebulaUni.aspect.value = this.w / this.h;
+      this.fgNebulaUni.aspect.value = this.w / aspectH;
     }
     this._syncLayoutProfile();
   }
