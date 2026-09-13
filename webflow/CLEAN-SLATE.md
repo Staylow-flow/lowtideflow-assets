@@ -32,7 +32,8 @@ body
 │   └── .ltf-site-cage                          ← 1400px relative cage
 │       ├── img.ltf-hero-figure
 │       ├── .ltf-hero-headline → h1.ltf-main-header
-│       └── .ltf-hero-bottom-bar → logo / body / CTA
+│       └── .ltf-hero-bottom-bar → **primary** (desktop ≥992 + phone portrait ≤767)
+│           └── duplicate **Inside** stack (`*-inside-breakpoints*`) for **tablet 768–991 portrait & landscape**
 ├── section.ltf-scroll-track → .ltf-track-label
 ├── section.ltf-specs-vault
 │   └── [data-ltf-nebula-scroll][data-ltf-slam-threshold="0.88"]
@@ -117,6 +118,24 @@ returns `main`/`medium`/`small`/`tiny` unless you explicitly pass `include_break
 A stray `large` override once knocked `.ltf-nav-link` down to 16px above 1280px while `main` stayed 20px,
 which is what made the links look "bigger" whenever the nav wrapped to 2 rows at narrower widths. Always check
 `large`/`xl`/`xxl` too when a style seems inconsistent across desktop widths.
+
+## Hero watchdogs (locked mobile + desktop)
+
+Before any Clean-Slate **head/footer** deploy:
+
+```bash
+python3 webflow/watchdogs/hero-compliance-watchdog.py
+```
+
+Live pin drift (run every 5m via Cursor Automation — see `webflow/watchdogs/AUTOMATION-live-drift.md`):
+
+```bash
+python3 webflow/watchdogs/live-drift-watchdog.py
+```
+
+Golden pin + markers: `webflow/watchdogs/hero-golden.json`. Never deploy placeholder/stub head (`verify_head_payload.py`).
+
+Tablet middle modes: toggles only in `#ltf-hero-mode-b` (when added) — do not restyle primary bar in `#ltf-mobile-fixes`.
 
 **Footer** — `webflow/clean-slate-footer.html`
 

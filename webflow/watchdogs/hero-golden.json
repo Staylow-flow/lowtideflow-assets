@@ -1,0 +1,25 @@
+{
+  "locked_at": "2026-09-12",
+  "notes": "Mobile portrait + desktop hero layouts approved. Tablet 768-991 uses Inside bar (future MODE B). Live footer pin user-confirmed.",
+  "clean_slate_url": "https://www.lowtideflow.co/clean-slate",
+  "rock_scene_pin": "3ad011d",
+  "footer_repo_file": "../clean-slate-footer.html",
+  "page_head_repo_file": "../live-page-head.html",
+  "required_page_head_markers": [
+    "id=\"ltf-clean-slate-fx\"",
+    "id=\"ltf-mobile-fixes\""
+  ],
+  "forbidden_anywhere_in_page_head": [
+    "PLACEHOLDER",
+    "@file:",
+    "TODO deploy",
+    "FIXME deploy",
+    "id=\"ltf-hero-shirt-lock\""
+  ],
+  "min_page_head_chars": 5000,
+  "hero_frozen_modes": {
+    "desktop": "min-width: 992px — primary bottom bar only",
+    "phone_portrait": "max-width: 767px + portrait — primary only",
+    "tablet_middle": "768-991 portrait and landscape — inside bar only (Designer + #ltf-hero-mode-b when added)"
+  }
+}
