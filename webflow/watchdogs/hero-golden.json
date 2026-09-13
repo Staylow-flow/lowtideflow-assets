@@ -2,7 +2,7 @@
   "locked_at": "2026-09-12",
   "notes": "Mobile portrait + desktop hero layouts approved. Tablet 768-991 uses Inside bar (future MODE B). Live footer pin user-confirmed.",
   "clean_slate_url": "https://www.lowtideflow.co/clean-slate",
-  "rock_scene_pin": "3ad011d",
+  "rock_scene_pin": "46af839",
   "footer_repo_file": "../clean-slate-footer.html",
   "page_head_repo_file": "../live-page-head.html",
   "required_page_head_markers": [
