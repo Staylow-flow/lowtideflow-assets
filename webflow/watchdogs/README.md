@@ -6,7 +6,7 @@ Two gates protect **locked** mobile portrait + desktop hero layouts while tablet
 
 `hero-golden.json` — live footer pin (`rock_scene_pin`), required head markers, forbidden placeholder strings, mode policy.
 
-**Current live pin (user-approved):** `a3117bf`
+**Current live pin (user-approved):** `e181f2c`
 
 ## Manual paste (preferred for page head)
 
