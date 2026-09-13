@@ -707,9 +707,10 @@ function isMobilePortraitLayout(w = typeof window !== 'undefined' ? window.inner
 }
 
 /** Boulder visual width ≈ H1 container × this factor (middle modes only). */
-const MIDDLE_ROCK_H1_WIDTH_MULT = 1.1;
+const MIDDLE_ROCK_H1_WIDTH_MULT = 1.375;
 const MIDDLE_ROCK_SCALE_MIN = 0.42;
-const MIDDLE_ROCK_SCALE_MAX = 1.08;
+const MIDDLE_ROCK_SCALE_MAX = 1.35;
+const MIDDLE_ROCK_SCALE_BOOST = 1.25;
 /** Match #ltf-hero-mode-b canvas aspect-ratio 100/72 — rock math uses width, not svh height. */
 const MIDDLE_CANVAS_ASPECT = 72 / 100;
 
@@ -1160,7 +1161,7 @@ class RockScene {
     const refW = Math.max(h1Rect.width, 120);
     const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.max(canvasRect.width, 320);
     const middleScale = clamp(
-      widthRatio * 0.92,
+      widthRatio * 0.92 * MIDDLE_ROCK_SCALE_BOOST,
       MIDDLE_ROCK_SCALE_MIN,
       MIDDLE_ROCK_SCALE_MAX
     );
