@@ -45,11 +45,20 @@ print(len(combined), 'chars')
 PY
 ```
 
-**Deploy:** Webflow MCP `data_scripts_tool` → `set_site_freeform_code` using `_restore_head_now.json`.
+**Preflight (required — blocks placeholder deploys):**
+```bash
+python3 webflow/verify_head_payload.py site
+```
+Must exit 0. Never deploy if content contains `PLACEHOLDER`, `@file:`, or stub HTML.
 
-**Verify:**
-- `get_site_freeform_code` head contains `#ltf-site-nav-fx` and `#ltf-site-footer-fx`
+**Deploy:** Webflow MCP `data_scripts_tool` → `set_site_freeform_code` using **`content` read from `_restore_head_now.json`** (full string only — MCP does not expand `@file:` paths).
+
+**Verify after deploy:**
+- `get_site_freeform_code` head starts with `<script type="importmap">` (not `@file:` or `PLACEHOLDER`)
+- Contains `#ltf-site-nav-fx` and `#ltf-site-footer-fx`
 - No duplicate nav block inside Clean-Slate page head
+
+See `.cursor/rules/ltf-no-placeholder-head-deploy.mdc`.
 
 ---
 
@@ -57,9 +66,13 @@ PY
 
 **When:** Hero, cards, upsell, magnifier FX only.
 
-**Source:** `webflow/live-page-head.html` → `#ltf-clean-slate-fx`
+**Source:** `webflow/live-page-head.html` → `#ltf-clean-slate-fx` (+ `#ltf-mobile-fixes`, `#ltf-hero-mode-b`)
 
 **Target:** Page Settings → Custom Code → Head on `/clean-slate` only.
+
+**Deploy:** Prefer **manual paste** — see `webflow/MANUAL-PASTE-clean-slate.md`. Full file ~30k chars; MCP head deploy often times out. Never paste `@file:` or stubs.
+
+**Preflight:** `python3 webflow/watchdogs/hero-compliance-watchdog.py`
 
 **Never** include nav rules here — they live in site head.
 

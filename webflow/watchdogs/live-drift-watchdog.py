@@ -70,11 +70,26 @@ def main() -> None:
 
     for bad in golden["forbidden_anywhere_in_page_head"]:
         if bad in html:
-            fail(f"live HTML contains forbidden {bad!r} — placeholder/stub head on production")
+            fail(
+                f"live HTML contains forbidden {bad!r} — re-paste full "
+                f"webflow/live-page-head.html via MANUAL-PASTE-clean-slate.md then Publish"
+            )
+    if "@file:" in html:
+        fail(
+            "live HTML contains @file: — MCP does not expand paths; "
+            "paste full live-page-head.html manually and Publish"
+        )
 
     for marker in golden["required_page_head_markers"]:
         if marker not in html:
             fail(f"live HTML missing page head marker {marker!r}")
+
+    for marker in golden.get("required_page_head_markers_after_mode_b_deploy") or []:
+        if marker not in html:
+            warn(
+                f"live HTML missing {marker!r} — paste updated live-page-head.html "
+                f"when ready for tablet Inside bar (see MANUAL-PASTE-clean-slate.md)"
+            )
 
     pins = extract_rock_pin(html)
     if not pins:

@@ -9,6 +9,9 @@
     "id=\"ltf-clean-slate-fx\"",
     "id=\"ltf-mobile-fixes\""
   ],
+  "required_page_head_markers_after_mode_b_deploy": [
+    "id=\"ltf-hero-mode-b\""
+  ],
   "forbidden_anywhere_in_page_head": [
     "PLACEHOLDER",
     "@file:",

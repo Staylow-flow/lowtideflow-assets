@@ -8,6 +8,10 @@ Two gates protect **locked** mobile portrait + desktop hero layouts while tablet
 
 **Current live pin (user-approved):** `3ad011d`
 
+## Manual paste (preferred for page head)
+
+MCP head deploy often times out (~30k chars). Use **`webflow/MANUAL-PASTE-clean-slate.md`** — paste full `live-page-head.html` in Page settings → Head, footer scripts from `clean-slate-footer.html`, then Publish. Run drift watchdog after.
+
 ## 1 — Compliance (run before every head/footer deploy)
 
 ```bash
