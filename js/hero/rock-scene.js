@@ -675,6 +675,8 @@ const MOBILE_GAS_ALPHA_MULT = 0.72;
 const MOBILE_ROCK_LIFT_PX = 224;
 /** Phone portrait (≤767) — extra screen-px lift on top of MOBILE_ROCK_LIFT_PX */
 const MOBILE_PORTRAIT_PHONE_EXTRA_LIFT_PX = -30; /* was +10; boulder down 40px on phone portrait */
+/** Phone portrait — uniform scale on rockGroup (1 = unchanged) */
+const MOBILE_PORTRAIT_ROCK_SCALE_MULT = 1.15;
 
 function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
   return w <= MOBILE_LAYOUT_MAX_W;
@@ -1127,6 +1129,11 @@ class RockScene {
     }
     this.rockLiftPx = lift;
     this._applyRockLift();
+    if (this.rockGroup) {
+      const portraitScale =
+        mobile && isPhonePortraitLayout(vw) ? MOBILE_PORTRAIT_ROCK_SCALE_MULT : 1;
+      this.rockGroup.scale.setScalar(portraitScale);
+    }
   }
 
   /* ── Nebula background quad ─────────────────────────────────────────────── */
