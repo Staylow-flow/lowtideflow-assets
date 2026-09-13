@@ -1,13 +1,15 @@
 /**
  * Clean-Slate footer tag #3 — funnel copy patch + MODE B chrome sync only.
  *
- * Shirt + hero CTA layout: Webflow Designer for desktop & phone portrait.
- * Middle breakpoints (tablet + phone landscape): sync orange shirt bottom to
- * inside copy bottom — CSS cannot anchor across absolute layers reliably.
+ * Desktop & phone portrait: Designer-only layout (no injected position CSS).
+ * Middle breakpoints: 20px H1→copy gutter, shirt 25px below inside CTA (CSS vars).
  */
 
 const FUNNEL_LINE1 = 'DIAL YOUR SPECS';
 const FUNNEL_LINE2 = 'ON OUR LIVE BUILDER';
+
+const MIDDLE_H1_COPY_GAP_PX = 20;
+const MIDDLE_SHIRT_BELOW_CTA_PX = 25;
 
 function isHeroMiddleLayout(w = window.innerWidth) {
   if (w >= 992) return false;
@@ -17,34 +19,54 @@ function isHeroMiddleLayout(w = window.innerWidth) {
   return w <= 991;
 }
 
-function clearMiddleShirtInline(shirt) {
-  if (!shirt || shirt.dataset.ltfMiddleShirtSync !== '1') return;
-  shirt.style.removeProperty('top');
-  shirt.style.removeProperty('bottom');
-  delete shirt.dataset.ltfMiddleShirtSync;
+function middleSyncRoot() {
+  return document.querySelector('.ltf-hero > .ltf-site-cage.ltf-cage');
 }
 
-function syncMiddleHeroShirt() {
+function clearMiddleHeroInline() {
+  const cage = middleSyncRoot();
+  if (!cage || cage.dataset.ltfMiddleSync !== '1') return;
+  cage.style.removeProperty('--ltf-middle-bar-top');
+  cage.style.removeProperty('--ltf-middle-shirt-top');
+  delete cage.dataset.ltfMiddleSync;
+
   const shirt = document.querySelector('.ltf-hero .ltf-hero-figure');
-  if (!shirt) return;
+  if (shirt && shirt.dataset.ltfMiddleShirtSync === '1') {
+    delete shirt.dataset.ltfMiddleShirtSync;
+  }
+}
+
+function syncMiddleHeroLayout() {
+  const cage = middleSyncRoot();
+  if (!cage) return;
 
   if (!isHeroMiddleLayout()) {
-    clearMiddleShirtInline(shirt);
+    clearMiddleHeroInline();
     return;
   }
 
-  const copy = document.querySelector('.ltf-body-text.is-hero-body-inside');
-  const cage = document.querySelector('.ltf-hero > .ltf-site-cage.ltf-cage');
-  if (!copy || !cage) return;
+  const headline = document.querySelector('.ltf-hero-headline');
+  const bar = document.querySelector('.ltf-hero-bottom-bar');
+  const cta = document.querySelector('.ltf-btn-gradient-wrap.is-hero-cta-wrap-inside');
+  const shirt = document.querySelector('.ltf-hero .ltf-hero-figure');
+  if (!headline || !bar || !cta || !shirt) return;
 
-  const copyRect = copy.getBoundingClientRect();
   const cageRect = cage.getBoundingClientRect();
-  const shirtRect = shirt.getBoundingClientRect();
-  if (copyRect.height < 8 || shirtRect.height < 4) return;
+  const h1Rect = headline.getBoundingClientRect();
+  const ctaRect = cta.getBoundingClientRect();
 
-  const topPx = copyRect.bottom - cageRect.top - shirtRect.height;
-  shirt.style.top = `${Math.max(topPx, 0)}px`;
-  shirt.style.bottom = 'auto';
+  if (cageRect.width < 2 || h1Rect.height < 4) return;
+
+  const barTop = h1Rect.bottom - cageRect.top + MIDDLE_H1_COPY_GAP_PX;
+  cage.style.setProperty('--ltf-middle-bar-top', `${Math.round(barTop)}px`);
+
+  const shirtH = shirt.offsetHeight || shirt.getBoundingClientRect().height;
+  if (shirtH < 4 || ctaRect.height < 4) return;
+
+  const shirtTop = ctaRect.bottom - cageRect.top + MIDDLE_SHIRT_BELOW_CTA_PX - shirtH;
+  cage.style.setProperty('--ltf-middle-shirt-top', `${Math.round(shirtTop)}px`);
+
+  cage.dataset.ltfMiddleSync = '1';
   shirt.dataset.ltfMiddleShirtSync = '1';
 }
 
@@ -53,7 +75,7 @@ function scheduleMiddleHeroSync() {
   if (middleSyncRaf) return;
   middleSyncRaf = requestAnimationFrame(() => {
     middleSyncRaf = 0;
-    syncMiddleHeroShirt();
+    syncMiddleHeroLayout();
   });
 }
 
@@ -75,10 +97,16 @@ function bindMiddleHeroSync() {
   window.addEventListener('resize', scheduleMiddleHeroSync, { passive: true });
   window.addEventListener('orientationchange', scheduleMiddleHeroSync, { passive: true });
 
-  const copy = document.querySelector('.ltf-body-text.is-hero-body-inside');
-  if (copy && typeof ResizeObserver === 'function') {
-    const ro = new ResizeObserver(scheduleMiddleHeroSync);
-    ro.observe(copy);
+  if (typeof ResizeObserver !== 'function') return;
+  const ro = new ResizeObserver(scheduleMiddleHeroSync);
+  for (const sel of [
+    '.ltf-hero-headline',
+    '.ltf-body-text.is-hero-body-inside',
+    '.ltf-btn-gradient-wrap.is-hero-cta-wrap-inside',
+    '.ltf-hero .ltf-hero-figure',
+  ]) {
+    const el = document.querySelector(sel);
+    if (el) ro.observe(el);
   }
 }
 
@@ -98,4 +126,8 @@ window.addEventListener('load', () => {
   scheduleMiddleHeroSync();
 }, { once: true });
 
-window.LTFHeroViewport = { patchFunnelCopy, syncMiddleHeroShirt, scheduleMiddleHeroSync };
+window.LTFHeroViewport = {
+  patchFunnelCopy,
+  syncMiddleHeroLayout,
+  scheduleMiddleHeroSync,
+};

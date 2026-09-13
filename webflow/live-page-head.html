@@ -945,8 +945,8 @@ img.ltf-hero-figure.is-hero-figure-inside,
   }
 
   .ltf-stack.ltf-split-copy.is-hero-copy-inside-breakpoints {
-    width: 80vw !important;
-    max-width: 80vw !important;
+    width: 90vw !important;
+    max-width: 90vw !important;
     min-width: 0 !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -960,8 +960,8 @@ img.ltf-hero-figure.is-hero-figure-inside,
 
   .is-hero-logo-mobile.is-hero-logo-inside {
     position: absolute !important;
-    /* Bar sits at 213px; H1 at 121px → pull logo up beside headline */
-    top: -92px !important;
+    /* Offset from inside bar — tracks JS bar top beside H1 */
+    top: -67px !important;
     left: 0 !important;
     grid-column: 1 / 2 !important;
     grid-row: 1 !important;
@@ -1026,7 +1026,7 @@ img.ltf-hero-figure.is-hero-figure-inside,
     max-width: 100% !important;
     padding-left: 24px !important;
     padding-right: 24px !important;
-    top: 213px !important;
+    top: var(--ltf-middle-bar-top, 213px) !important;
     bottom: auto !important;
     justify-items: center !important;
     box-sizing: border-box !important;
@@ -1039,11 +1039,11 @@ img.ltf-hero-figure.is-hero-figure-inside,
     grid-row: 1 !important;
     width: 100% !important;
     max-width: none !important;
-    margin-top: 50px !important;
+    margin-top: 0 !important;
     margin-left: auto !important;
     margin-right: auto !important;
     text-align: center !important;
-    font-size: clamp(17px, 2.2vw, 20px) !important;
+    font-size: clamp(20.4px, 2.64vw, 24px) !important;
     line-height: 1.32 !important;
   }
 
@@ -1064,7 +1064,7 @@ img.ltf-hero-figure.is-hero-figure-inside,
     right: 0 !important;
     bottom: auto !important;
     left: auto !important;
-    top: auto !important;
+    top: var(--ltf-middle-shirt-top, auto) !important;
     width: clamp(108px, 21vw, 180px) !important;
     max-height: none !important;
     height: auto !important;
@@ -1105,7 +1105,7 @@ img.ltf-hero-figure.is-hero-figure-inside,
 
   .ltf-body-text.is-hero-body-inside {
     max-width: none !important;
-    font-size: 18px !important;
+    font-size: 21.6px !important;
   }
 }
 </style>
