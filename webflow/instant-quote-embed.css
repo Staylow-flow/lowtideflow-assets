@@ -70,16 +70,22 @@
   color: rgba(255, 255, 255, 0.78);
 }
 
-.iq-order-lead {
+.iq-order-lead,
+.iq-order-lead-line2 {
   margin: 0;
+  max-width: 640px;
+  font-size: clamp(14px, 1.6vw, 17px);
+  font-weight: 500;
+  line-height: 1.22;
+  color: #ffffff;
+}
+
+.iq-order-lead-line2 {
+  margin-top: 4px;
 }
 
 @media screen and (min-width: 992px) {
   .iq-intro-lead {
-    padding-bottom: 50px;
-  }
-
-  .iq-order-lead {
     padding-bottom: 50px;
   }
 }
@@ -925,7 +931,7 @@
   min-height: var(--iq-panel-min-height);
   max-width: var(--iq-panel-max-width);
   margin: 0 auto;
-  padding: clamp(20px, 3vw, 32px);
+  padding: clamp(12px, 2vw, 18px);
   box-sizing: border-box;
   border-radius: 16px;
   border: 2px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
@@ -1222,9 +1228,7 @@
 #iq-form-artwork-drop.is-loading .iq-form-upload-active,
 #iq-form-artwork-drop.is-queue .iq-form-upload-active {
   display: flex;
-  /* Matches the idle state's ~500px desktop target; mobile overrides back
-     down further in the small-breakpoint block below. */
-  min-height: 500px;
+  min-height: var(--iq-panel-min-height);
 }
 
 .iq-form-upload-progress {
@@ -1640,16 +1644,29 @@
 #iq-order-section > .iq-artwork-info-link,
 #iq-order-section > #iq-artwork-info-trigger.iq-artwork-info-link {
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
-  gap: 8px;
-  margin: 14px 0 32px;
+  justify-content: flex-start;
+  gap: 6px;
+  width: auto;
+  max-width: 100%;
+  margin: 8px 0 24px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: inherit;
-  font: inherit;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: clamp(13px, 1.35vw, 15px);
+  font-weight: 500;
+  line-height: 1.35;
   text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
+}
+
+#iq-order-section > .iq-order-lead-line2 + .iq-artwork-info-link,
+#iq-order-section > .iq-order-lead-line2 + #iq-artwork-info-trigger {
+  margin-top: 8px;
 }
 
 /* ── JS-driven form states only ────────────────────────────────────── */
@@ -2120,8 +2137,18 @@
     box-sizing: border-box;
   }
 
-  .iq-order-lead {
-    padding-bottom: 50px;
+  .iq-order-lead,
+  .iq-order-lead-line2 {
+    line-height: 1.22 !important;
+    color: #ffffff !important;
+  }
+
+  #iq-order-section > .iq-artwork-info-link,
+  #iq-order-section > #iq-artwork-info-trigger.iq-artwork-info-link {
+    margin-top: 8px !important;
+    margin-bottom: 20px !important;
+    font-size: 14px !important;
+    color: rgba(255, 255, 255, 0.68) !important;
   }
 
   .iq-toggle-track,
@@ -2693,10 +2720,14 @@
   }
 
   .iq-breakdown {
-    display: flex;
     flex-direction: column;
-    gap: 24px;
-    margin-top: 75px !important;
+    gap: 32px;
+    margin-top: 64px !important;
+  }
+
+  .iq-breakdown-col {
+    flex: 1 1 100%;
+    min-width: 100%;
   }
 
   .iq-receipt,
@@ -2708,10 +2739,25 @@
   }
 }
 
-/* Pricing explainer columns — prefer +150px top padding in Designer on
-   .iq-breakdown-col; embed fallback until Designer pass lands. */
+/* Pricing explainer — space BETWEEN columns/rows (margin/gap), not padding
+   inside each bordered block (Designer owns inner padding). */
+.iq-breakdown {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: clamp(28px, 4vw, 56px);
+  margin-top: clamp(72px, 9vw, 120px);
+  margin-bottom: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .iq-breakdown-col {
-  padding-top: 150px;
+  flex: 1 1 calc(33.333% - clamp(28px, 4vw, 56px));
+  min-width: min(100%, 280px);
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
