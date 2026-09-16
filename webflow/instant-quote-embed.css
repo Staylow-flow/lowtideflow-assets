@@ -2201,9 +2201,8 @@
     overflow-x: clip;
     max-width: 100%;
     box-sizing: border-box;
-    /* 90vh + flex center jumps when mobile browser chrome shows/hides on scroll */
-    min-height: 0 !important;
-    display: block !important;
+    /* Stop vh flex-center jump on scroll — layout otherwise matches desktop */
+    min-height: auto !important;
     justify-content: flex-start !important;
   }
 
@@ -2728,66 +2727,17 @@
     width: 100%;
   }
 
-  .iq-total-wrapper {
-    display: grid !important;
-    /* No 1fr rows — they reflow when viewport height ticks during scroll */
-    grid-template-rows: auto auto auto !important;
-    align-content: start !important;
-    gap: 0 !important;
-    /* Same panel footprint; ≥10px label-to-border; extra side inset for copy */
-    padding: 10px 22px 8px !important;
-  }
-
-  /* Total + artwork panels: +25px tall vs desktop (520×345), layout stays centered */
-  .iq-total-wrapper,
-  #iq-form-artwork-drop.iq-form-upload,
-  .iq-form-upload#iq-form-artwork-drop {
-    aspect-ratio: 520 / 345 !important;
-    min-height: 345px !important;
-    padding-left: 22px !important;
-    padding-right: 22px !important;
+  /* Total + upload: same 520×320 panel + grid rhythm as desktop (global .iq-total-* rules) */
+  #iq-total-price,
+  .iq-total-price {
+    font-size: clamp(40px, 13vw, 64px) !important;
+    word-break: break-word;
   }
 
   #iq-run-quote,
   .iq-run-quote {
     min-width: 0;
     width: 100%;
-  }
-
-  .iq-total-label {
-    grid-row: 1 !important;
-    order: 1 !important;
-    line-height: 1 !important;
-    align-self: end !important;
-    transform: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  #iq-total-price,
-  .iq-total-price {
-    grid-row: 2 !important;
-    order: 2 !important;
-    font-size: clamp(40px, 13vw, 64px) !important;
-    line-height: 1.02 !important;
-    margin: 10px 0 0 !important;
-    transform: none !important;
-    height: auto !important;
-    min-height: 0 !important;
-    align-items: center !important;
-    padding: 0 8px !important;
-    word-break: break-word;
-  }
-
-  .iq-total-wrapper > .iq-run-quote-wrap,
-  .iq-total-wrapper > .iq-orbit-wrap:has(#iq-run-quote),
-  .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote) {
-    grid-row: 3 !important;
-    order: 3 !important;
-    align-self: stretch !important;
-    margin-top: auto !important;
-    transform: none !important;
-    padding-bottom: 0 !important;
   }
 
   #iq-order-form {
