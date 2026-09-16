@@ -980,7 +980,23 @@
       });
   }
 
+  /** Live Designer may still nest the link under the upload — park it under order subcopy. */
+  function relocateArtworkInfoTrigger() {
+    var trigger = document.getElementById('iq-artwork-info-trigger');
+    var section = document.getElementById('iq-order-section');
+    var lead = section && section.querySelector('.iq-order-lead');
+    if (!trigger || !lead) return;
+    if (trigger.dataset.iqArtworkInfoPlaced === '1') return;
+    if (trigger.parentElement === section && trigger.previousElementSibling === lead) {
+      trigger.dataset.iqArtworkInfoPlaced = '1';
+      return;
+    }
+    lead.insertAdjacentElement('afterend', trigger);
+    trigger.dataset.iqArtworkInfoPlaced = '1';
+  }
+
   function initArtworkModal() {
+    relocateArtworkInfoTrigger();
     var modal = document.getElementById('iq-artwork-modal');
     var trigger = document.getElementById('iq-artwork-info-trigger');
     var closeBtn = document.getElementById('iq-artwork-modal-close');

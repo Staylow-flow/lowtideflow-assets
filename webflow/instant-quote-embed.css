@@ -1633,8 +1633,23 @@
   }
 }
 
-.iq-artwork-info-link {
+.iq-artwork-panel > .iq-artwork-info-link {
   margin-top: clamp(20px, 3vh, 36px);
+}
+
+#iq-order-section > .iq-artwork-info-link,
+#iq-order-section > #iq-artwork-info-trigger.iq-artwork-info-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 /* ── JS-driven form states only ────────────────────────────────────── */
