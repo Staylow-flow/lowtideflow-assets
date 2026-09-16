@@ -961,7 +961,7 @@
   flex-direction: column;
   justify-content: stretch;
   align-items: stretch;
-  padding: 18px 28px 10px !important;
+  padding: 16px 12px 10px !important;
   border-radius: 16px;
   border: 2px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
   background:
@@ -1098,6 +1098,14 @@
   width: 100%;
 }
 
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-idle {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 #iq-form-artwork-drop .iq-form-upload-input {
   z-index: 20;
   touch-action: manipulation;
@@ -1126,35 +1134,48 @@
   gap: 0 !important;
   align-items: center !important;
   justify-items: center !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
   position: relative;
+  box-sizing: border-box;
+  padding: 0 6px;
 }
 
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
   grid-row: 2 !important;
   position: static !important;
   transform: none !important;
-  width: min(92%, 480px);
+  width: 100%;
+  max-width: none;
   margin: 0 !important;
-  line-height: 1.2;
+  line-height: 1.15;
   text-align: center;
+  white-space: nowrap;
+  font-size: clamp(15px, 2.4vw, 21px);
 }
 
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
   grid-row: 3 !important;
   position: static !important;
   transform: none !important;
-  width: min(92%, 480px);
+  width: 100%;
+  max-width: none !important;
   margin: 10px 0 0 !important;
-  line-height: 1.25;
+  line-height: 1.2;
   text-align: center;
+  white-space: nowrap;
+  font-size: clamp(11px, 2.2vw, 13px);
+  letter-spacing: -0.01em;
 }
 
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn {
   grid-row: 5 !important;
   position: static !important;
-  transform: translateY(-6px);
-  margin: 0 !important;
-  align-self: stretch;
+  transform: none;
+  margin: 0 0 25px !important;
+  align-self: center;
   width: min(100%, 420px);
 }
 
@@ -2451,8 +2472,18 @@
 
   #iq-form-artwork-drop.iq-form-upload,
   .iq-form-upload#iq-form-artwork-drop {
-    padding: 16px 16px 8px !important;
+    padding: 14px 10px 8px !important;
     overflow: visible;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    white-space: normal;
+    font-size: clamp(13px, 3.2vw, 16px);
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    font-size: clamp(10px, 2.8vw, 12px);
   }
 
   /* iOS Safari: full-zone invisible tap target opens the native file picker
