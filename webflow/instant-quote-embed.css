@@ -2085,6 +2085,14 @@
     justify-self: center;
   }
 
+  /* Submit Project Brief — +100px internal padding top/bottom (desktop only) */
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit,
+  #iq-order-form > #iq-form-submit.iq-form-submit {
+    padding-top: calc(100px + 18px);
+    padding-bottom: calc(100px + 18px);
+    box-sizing: border-box;
+  }
+
   .iq-order-section .w-form-done:not(.iq-form-success-slot) {
     width: min(920px, 100%);
     max-width: 920px;
