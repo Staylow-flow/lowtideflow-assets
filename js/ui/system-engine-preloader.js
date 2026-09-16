@@ -1,5 +1,5 @@
 /**
- * System Engine preloader — min 3.0s visible from navigation start + window load, iris reveal.
+ * System Engine preloader — dismiss after DOM ready (no artificial delay), iris reveal.
  *
  * Spec Engine (/spec-engine): link css + this script early (page head or first footer tag).
  * Webflow: place markup as first body child (see ensurePreloader template).
@@ -12,7 +12,7 @@
   var ROOT_SELECTOR = '.system-preloader';
   var REVEAL_CLASS = 'reveal-active';
   var BOOT_HTML_CLASS = 'ltf-system-engine-boot';
-  var MIN_DISPLAY_MS = 3000;
+  var MIN_DISPLAY_MS = 0;
   var REVEAL_TRANSITION_MS = 850;
   var STATUS_TEXT = 'INITIALIZING SYSTEM ENGINE...';
 
@@ -83,10 +83,10 @@
       scheduleReveal(preloader, navStart);
     }
 
-    if (document.readyState === 'complete') {
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
       onReadyToDismiss();
     } else {
-      window.addEventListener('load', onReadyToDismiss, { once: true });
+      document.addEventListener('DOMContentLoaded', onReadyToDismiss, { once: true });
     }
   }
 
