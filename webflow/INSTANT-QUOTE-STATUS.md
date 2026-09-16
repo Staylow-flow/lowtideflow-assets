@@ -340,3 +340,25 @@ border.
 - SRI: `webflow/.iq-pin-329bdae-sri.txt`
 - Published: `www.lowtideflow.co` + `lowtideflow.co` @ 2026-09-02
 
+---
+
+## Round 13 — Spec Run aesthetic dial + preloader 3s (commit `a2e770e`, 2026-09-16)
+
+### Panels & Total Cost
+- Unified `--iq-panel-min-height` / max-width for `.iq-total-wrapper` + artwork drop
+- Price Y-center; mobile aspect ratio; Calculate border hidden during `.is-calculating` (JS flash 2000ms)
+- Upload idle: copy upper ~35%, Browse lower ~35%; tighter line-height
+
+### Submit / form
+- Removed submit hover gradient flash (orbit ring only); split success typography
+- Company + phone required; typo map + `yahloo.com`; deduped submit orbit click handler
+
+### System Engine
+- Preloader min display **3.0s** (`system-engine-preloader.js`)
+
+### Deploy
+- CSS: `iqcssboota2e770e` @ `a2e770e`
+- Form JS: `iqforma2e770e` · UI: `iquia2e770e` (pricing stack unchanged @ `aefd7a7`)
+- Preloader script footer tag @ `a2e770e`
+- SRI: `webflow/.iq-pin-a2e770e-sri.txt`
+
