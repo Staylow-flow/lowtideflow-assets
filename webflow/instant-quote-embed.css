@@ -617,6 +617,60 @@
   }
 }
 
+/* IQ CTAs: orbit ring on the button only — never stack site .ltf-btn-gradient-wrap::before
+   (double rings + tall wrap = hover halo shifted/clipped above the button). */
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap::before,
+.iq-page .iq-form-cta-wrap.ltf-btn-gradient-wrap::before {
+  content: none !important;
+  display: none !important;
+}
+
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap,
+.iq-page .iq-orbit-wrap.iq-form-cta-wrap {
+  display: inline-flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  box-sizing: border-box;
+}
+
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap > .iq-orbit-btn,
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap > #iq-form-submit,
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap > #iq-run-quote,
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap > .iq-form-submit,
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap > .iq-run-quote {
+  flex: 0 0 auto !important;
+  width: 100%;
+  transform: none !important;
+}
+
+.iq-page #iq-form-submit.iq-orbit-btn::before,
+.iq-page #iq-run-quote.iq-orbit-btn::before,
+.iq-page .iq-orbit-wrap .iq-orbit-btn::before {
+  inset: -3px !important;
+}
+
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap:hover,
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap:focus-within,
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap.ltf-btn-gradient-active,
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap.is-submitting {
+  box-shadow:
+    0 0 14px rgba(77, 37, 157, 0.32),
+    0 0 24px rgba(31, 119, 129, 0.22) !important;
+}
+
+.iq-page #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit),
+.iq-page .iq-order-section,
+.iq-page .iq-form-actions {
+  overflow: visible !important;
+}
+
 /* ── Slider embeds (HtmlEmbed) ───────────────────────────────────────── */
 
 .iq-slider-control {
@@ -2761,34 +2815,9 @@
     margin-bottom: 12px;
   }
 
-  /* Height/margin/font-size for mobile now live on the Designer "small"
-     breakpoint style for .iq-form-submit — kept normal-sized, not 50vh. */
   #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
-    display: flex !important;
-    align-items: stretch;
-    justify-content: center;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0 !important;
     margin-top: 48px;
     margin-bottom: 0;
-  }
-
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit,
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) > .w-form-done.iq-form-success-slot {
-    flex: 1 1 auto;
-    width: 100%;
-    min-height: 70px;
-    align-self: stretch;
-  }
-
-  /* Mobile submit: symmetric gradient ring, Y-centered label (no top-heavy halo) */
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit.iq-orbit-btn::before,
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit):hover > #iq-form-submit.iq-orbit-btn::before,
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit):focus-within > #iq-form-submit.iq-orbit-btn::before,
-  #iq-order-form > .iq-orbit-wrap.is-submitting > #iq-form-submit.iq-orbit-btn::before {
-    inset: -2px;
-    padding: 2px;
   }
 
   .iq-breakdown {
