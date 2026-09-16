@@ -671,6 +671,21 @@
   overflow: visible !important;
 }
 
+/* Designer mobile submit margin-top (~50px) lives on the input — kills orbit hover alignment */
+.iq-page .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit,
+.iq-page .iq-orbit-wrap:has(#iq-form-submit) > .iq-form-submit,
+.iq-page .iq-orbit-wrap.iq-form-cta-wrap > .iq-form-submit,
+.iq-page .iq-orbit-wrap.iq-form-cta-wrap > #iq-form-submit {
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+.iq-page .iq-orbit-wrap:has(#iq-form-submit),
+.iq-page .iq-orbit-wrap.iq-form-cta-wrap {
+  flex-direction: column !important;
+  line-height: 0 !important;
+}
+
 /* ── Slider embeds (HtmlEmbed) ───────────────────────────────────────── */
 
 .iq-slider-control {
