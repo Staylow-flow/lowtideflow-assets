@@ -2250,8 +2250,8 @@
     max-width: 100%;
     display: flex;
     flex-direction: column;
-    /* Space between Ink / Print / Qty slider groups (not just inside each row) */
-    gap: 38px !important;
+    /* Between groups only — each .iq-slider-row stays one united block (pill + track) */
+    gap: 52px !important;
     align-items: stretch;
   }
 
@@ -2263,6 +2263,7 @@
        exactly on the pill's horizontal center line. */
     grid-template-columns: 1fr 150px 150px 1fr !important;
     grid-template-rows: auto auto;
+    /* Tight pill + slider — do not add gap between rows of the same group */
     row-gap: 14px !important;
     column-gap: 0 !important;
     align-items: stretch !important;
@@ -2270,11 +2271,6 @@
     max-width: 100%;
     margin: 0 !important;
     padding: 0 !important;
-  }
-
-  /* +15px air between label/value pill and slider track — all three groups */
-  .iq-sliders-block > .iq-slider-row {
-    row-gap: 29px !important;
   }
 
   /* Label + value fuse into ONE bordered box (shared slate-grey text color,
