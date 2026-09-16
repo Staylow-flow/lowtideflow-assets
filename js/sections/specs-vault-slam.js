@@ -475,7 +475,8 @@ let bindAll = null;
         cards[i].style.transform = 'translate3d(0,0,0)';
       } else {
         var travel = travels[i];
-        var y = pinned ? lerp(travel, beat.restY, e) : travel;
+        /* Before sticky pin, keep the stack visible — full travel only while pinned. */
+        var y = pinned ? lerp(travel, beat.restY, e) : (beat.restY != null ? beat.restY : 0);
         cards[i].style.transform = 'translate3d(0,' + y.toFixed(2) + 'px,0)';
       }
     }
