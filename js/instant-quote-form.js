@@ -855,23 +855,10 @@
     }
   }
 
-  function ensureRequiredFieldsNote(form) {
-    if (!form || form.querySelector('#iq-form-required-note')) return;
-    var anchor =
-      form.querySelector('.iq-form-legend') ||
-      form.querySelector('.iq-form-fieldset') ||
-      form.querySelector('#iq-form-full-name');
-    if (!anchor) return;
-    var note = document.createElement('p');
-    note.id = 'iq-form-required-note';
-    note.className = 'iq-form-required-note';
-    note.textContent =
-      'Fields marked * are required — company name and phone help us reach you if email bounces.';
-    if (anchor.parentNode) {
-      anchor.parentNode.insertBefore(note, anchor.nextSibling);
-    } else {
-      form.insertBefore(note, form.firstChild);
-    }
+  function removeRequiredFieldsNote(form) {
+    if (!form) return;
+    var note = form.querySelector('#iq-form-required-note');
+    if (note) note.remove();
   }
 
   function findFieldLabel(input) {
@@ -930,7 +917,7 @@
       }
     });
 
-    ensureRequiredFieldsNote(form);
+    removeRequiredFieldsNote(form);
     form.querySelectorAll('.iq-form-label').forEach(function (span) {
       if (/Full\s*Name/i.test(span.textContent || '')) {
         span.innerHTML = String(span.innerHTML || '').replace(/Full\s*Name/i, 'Client Name');

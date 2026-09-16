@@ -2916,12 +2916,10 @@
   }
 }
 
+/* Legacy JS injected note — removed; Designer rule/divider only */
+#iq-form-required-note,
 .iq-form-required-note {
-  margin: 0 0 16px;
-  font-size: clamp(13px, 1.4vw, 15px);
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.72);
-  max-width: 640px;
+  display: none !important;
 }
 
 @media screen and (max-width: 991px) and (prefers-reduced-motion: reduce) {
