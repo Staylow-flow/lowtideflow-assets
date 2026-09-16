@@ -1135,7 +1135,8 @@
   function applySuccessMessageMarkup(done) {
     if (!done) return;
     done.innerHTML =
-      '<span class="iq-success-lead"><strong>Thank you!</strong></span>' +
+      '<span class="iq-success-lead">Thank you!</span>' +
+      '<br class="iq-success-br" aria-hidden="true">' +
       '<span class="iq-success-sub">Your submission has been received!</span>';
   }
 
