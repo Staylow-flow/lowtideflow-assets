@@ -2726,7 +2726,8 @@
 
   .iq-total-wrapper {
     display: grid !important;
-    grid-template-rows: 1fr auto 1fr !important;
+    /* Label + price stack tight (auto rows); CTA band keeps bottom anchor */
+    grid-template-rows: auto auto 1fr !important;
     gap: 0 !important;
     /* Same panel footprint; ≥10px label-to-border; extra side inset for copy */
     padding: 10px 22px 8px !important;
@@ -2751,8 +2752,8 @@
   .iq-total-label {
     grid-row: 1 !important;
     order: 1 !important;
-    line-height: 1.15 !important;
-    align-self: center !important;
+    line-height: 1 !important;
+    align-self: end !important;
     transform: none !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -2764,8 +2765,10 @@
     order: 2 !important;
     font-size: clamp(40px, 13vw, 64px) !important;
     line-height: 1.02 !important;
-    margin: 5px 0 0 !important;
+    margin: 10px 0 0 !important;
     transform: none !important;
+    height: auto !important;
+    min-height: 0 !important;
     align-items: center !important;
     padding: 0 8px !important;
     word-break: break-word;
@@ -2776,6 +2779,7 @@
   .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote) {
     grid-row: 3 !important;
     order: 3 !important;
+    align-self: end !important;
     transform: translateY(-8px);
     padding-bottom: 0 !important;
   }
