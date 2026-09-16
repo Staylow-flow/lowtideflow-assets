@@ -1,0 +1,3 @@
+webflow/instant-quote-embed.css sha384-vwonGCnbDHAJDjTL26HS9tQj+CFo/JdFc+xUEJyo43Qza+f77NqHZSlEpp+4S+dQ
+commit: 3d0310d
+branch: cursor/instant-quote-v2
