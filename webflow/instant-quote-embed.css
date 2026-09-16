@@ -2823,10 +2823,48 @@
   }
 }
 
-/* Breakdown layout/grid/padding → Designer. Embed: drop bad inner padding hack only. */
+/* ── Pricing breakdown — 3 info columns (even inner padding, centered copy) ─ */
+
 .iq-breakdown-col {
-  padding-top: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: stretch !important;
   box-sizing: border-box;
+  padding: 25px !important;
+}
+
+.iq-breakdown-col .iq-breakdown-heading,
+.iq-breakdown-col h3 {
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+}
+
+.iq-breakdown-col .iq-breakdown-copy,
+.iq-breakdown-col p:last-child {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+@media screen and (min-width: 992px) {
+  .iq-breakdown-col {
+    min-height: 260px;
+  }
+}
+
+@media screen and (max-width: 991px) and (orientation: landscape) {
+  /* Wide phone/tablet landscape — drop tall min-height dead space under copy */
+  .iq-breakdown-col {
+    min-height: auto !important;
+    height: auto !important;
+    padding: 25px !important;
+    justify-content: center !important;
+  }
+
+  .iq-breakdown {
+    gap: 16px !important;
+    margin-top: 48px !important;
+  }
 }
 
 .iq-form-required-note {
