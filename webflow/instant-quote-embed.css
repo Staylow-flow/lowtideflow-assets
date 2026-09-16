@@ -1077,7 +1077,12 @@
   height: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: stretch;
+  align-items: stretch;
+}
+
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-shell {
+  justify-content: stretch;
 }
 
 /* Once files are selected/uploading, pin content to the TOP of the drop
@@ -1114,37 +1119,43 @@
   padding: 0;
 }
 
-/* Idle upload: headline block ~upper 35%, Browse ~lower 35% (Y axis). */
+/* Idle upload — same rhythm as .iq-total-wrapper: copy in middle band, CTA at bottom */
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
-  justify-content: flex-start;
-  gap: 0;
-}
-
-#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title,
-#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-  position: absolute;
-  left: 50%;
-  width: min(92%, 480px);
-  transform: translate(-50%, -50%);
-  margin: 0;
+  display: grid !important;
+  grid-template-rows: 1fr auto auto 1fr auto !important;
+  gap: 0 !important;
+  align-items: center !important;
+  justify-items: center !important;
+  position: relative;
 }
 
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-  top: 32%;
+  grid-row: 2 !important;
+  position: static !important;
+  transform: none !important;
+  width: min(92%, 480px);
+  margin: 0 !important;
   line-height: 1.2;
+  text-align: center;
 }
 
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-  top: 40%;
+  grid-row: 3 !important;
+  position: static !important;
+  transform: none !important;
+  width: min(92%, 480px);
+  margin: 10px 0 0 !important;
   line-height: 1.25;
+  text-align: center;
 }
 
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn {
-  position: absolute;
-  top: 65%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin-top: 0;
+  grid-row: 5 !important;
+  position: static !important;
+  transform: translateY(-6px);
+  margin: 0 !important;
+  align-self: stretch;
+  width: min(100%, 420px);
 }
 
 .iq-form-upload-title {
