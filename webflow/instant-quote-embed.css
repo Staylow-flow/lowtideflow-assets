@@ -1717,7 +1717,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: rgba(255, 255, 255, 0.62) !important;
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -2113,9 +2113,15 @@
 
 /* ── Artwork upload (basic) ─────────────────────────────────────────── */
 
-#iq-artwork-info-trigger {
+#iq-artwork-info-trigger,
+.iq-artwork-info-link {
+  color: rgba(255, 255, 255, 0.62) !important;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.iq-artwork-info-icon {
+  color: rgba(255, 255, 255, 0.62) !important;
 }
 
 #iq-artwork-info-trigger:hover,
