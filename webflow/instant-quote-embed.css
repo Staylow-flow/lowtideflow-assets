@@ -347,9 +347,9 @@
   z-index: 1;
   flex: 1 1 auto;
   min-height: 0;
-  margin: 6px 0 0;
+  margin: 12px 0 0 !important;
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: center !important;
   text-align: center !important;
   line-height: 1.02;
@@ -368,8 +368,9 @@
   width: 100%;
   align-self: stretch;
   margin-top: auto !important;
-  margin-bottom: 0 !important;
+  margin-bottom: 2px !important;
   padding-bottom: 0 !important;
+  transform: translateY(-2px);
 }
 
 .iq-price-box,
@@ -1864,8 +1865,8 @@
 #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) {
   grid-column: 1 / -1;
   grid-row: 8;
-  /* External spacing only — 50px above submit row (not internal button padding). */
-  margin-top: 50px;
+  /* External spacing only — 48px above submit row (not internal button padding). */
+  margin-top: 48px;
   margin-bottom: 0;
   display: flex !important;
   width: 100%;
@@ -2651,7 +2652,8 @@
     order: 2 !important;
     font-size: clamp(40px, 13vw, 64px) !important;
     line-height: 1.02 !important;
-    margin-top: 2px !important;
+    margin-top: 12px !important;
+    align-items: flex-start !important;
     padding: 0 16px !important;
     word-break: break-word;
   }
@@ -2719,7 +2721,7 @@
     width: 100%;
     box-sizing: border-box;
     padding: 0 !important;
-    margin-top: 50px;
+    margin-top: 48px;
     margin-bottom: 0;
   }
 
