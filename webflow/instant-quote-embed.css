@@ -1019,6 +1019,12 @@
     max-width: var(--iq-panel-max-width);
     margin-inline: auto;
   }
+
+  /* Browse Files — +25px up (idle upload) */
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn {
+    transform: translateY(-25px);
+    margin-bottom: 0 !important;
+  }
 }
 
 /* ── Artwork upload — full viewport drop zone + animated feedback ─────── */
@@ -2782,6 +2788,44 @@
     aspect-ratio: auto !important;
     min-height: var(--iq-panel-min-height) !important;
     height: var(--iq-panel-min-height) !important;
+  }
+
+  /* Total Cost — center label + price + CTA as one block; keep element spacing */
+  .iq-total-wrapper {
+    grid-template-rows: 1fr auto auto auto 1fr !important;
+    align-content: center !important;
+  }
+
+  .iq-total-label {
+    grid-row: 2 !important;
+    align-self: center !important;
+    transform: none !important;
+  }
+
+  #iq-total-price,
+  .iq-total-price {
+    grid-row: 3 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 10px 0 0 !important;
+    transform: none !important;
+  }
+
+  .iq-total-wrapper > .iq-run-quote-wrap,
+  .iq-total-wrapper > .iq-orbit-wrap:has(#iq-run-quote),
+  .iq-total-wrapper > .iq-orbit-wrap:has(.iq-run-quote),
+  .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote),
+  .iq-total-wrapper > #iq-run-quote,
+  .iq-total-wrapper > .iq-run-quote {
+    grid-row: 4 !important;
+    align-self: center !important;
+    transform: none !important;
+  }
+
+  /* Browse Files — +25px up (idle upload) */
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn {
+    transform: translateY(-25px) !important;
+    margin-bottom: 0 !important;
   }
 
   #iq-order-form {
