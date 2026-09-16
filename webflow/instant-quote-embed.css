@@ -16,6 +16,10 @@
   --iq-nebula-purple: #4d259d;
   --iq-nebula-purple-mid: #7040c0;
   --iq-slate: #cbd5e1;
+  /* Shared quote panel footprint (Total Cost Est. + artwork drop) */
+  --iq-panel-max-width: 520px;
+  --iq-panel-min-height: 320px;
+  --iq-panel-aspect: 520 / 340;
 }
 
 /* ── V2: viewport strategy (no height:100vh + overflow:hidden lock) ── */
@@ -194,6 +198,14 @@
 .iq-total-wrapper {
   position: relative;
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: min(var(--iq-panel-max-width), 100%);
+  max-width: var(--iq-panel-max-width);
+  min-height: var(--iq-panel-min-height);
+  margin-inline: auto;
   background: var(--iq-bg);
   /* Idle/default border (both mobile + desktop): solid white, 2px — halved from
      the previous 4px outline per Round 8 spec. The gradient ring is a separate
@@ -216,6 +228,17 @@
     0 0 28px rgba(42, 170, 184, 0.32),
     0 0 52px rgba(112, 64, 192, 0.24),
     0 0 78px rgba(11, 128, 80, 0.16);
+}
+
+/* Hide solid white card edge while gradient ring runs — prevents white bleed
+   between mask and border (see flashTotalCardBorder @ 2000ms in UI JS). */
+.iq-total-wrapper.is-calculating {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.4s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -311,11 +334,12 @@
 .iq-total-price {
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
-  padding-top: 15px;
+  padding: 0 16px !important;
   box-sizing: border-box;
 }
 
@@ -347,9 +371,6 @@
 /* Calculate button now lives as a real DOM child of .iq-total-wrapper
    (moved via Designer) on both mobile and desktop — no more flex-order /
    negative-margin overlap illusion needed. */
-.iq-total-wrapper {
-  max-width: 520px;
-}
 
 #iq-run-quote,
 .iq-run-quote {
@@ -901,9 +922,10 @@
      dead space above/below) — hence "way too tall" persisting even after
      the inner fix. Bring the outer wrapper down to line up with the same
      ~500px target; mobile already overrides this separately below. */
-  min-height: 500px;
-  margin: 0;
-  padding: clamp(28px, 4vw, 48px);
+  min-height: var(--iq-panel-min-height);
+  max-width: var(--iq-panel-max-width);
+  margin: 0 auto;
+  padding: clamp(20px, 3vw, 32px);
   box-sizing: border-box;
   border-radius: 16px;
   border: 2px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
@@ -1049,10 +1071,41 @@
   text-align: center;
   box-sizing: border-box;
   position: relative;
-  /* Desktop target ~500px total (padding included); mobile overrides this
-     back down further in the small-breakpoint block below. */
-  min-height: 500px;
-  padding: 40px clamp(16px, 3vw, 32px);
+  min-height: calc(var(--iq-panel-min-height) - clamp(40px, 6vw, 64px));
+  padding: clamp(16px, 3vw, 28px) clamp(16px, 3vw, 32px);
+}
+
+/* Idle upload: headline block ~upper 35%, Browse ~lower 35% (Y axis). */
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
+  justify-content: flex-start;
+  gap: 0;
+}
+
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title,
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+  position: absolute;
+  left: 50%;
+  width: min(92%, 480px);
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+  top: 32%;
+  line-height: 1.2;
+}
+
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+  top: 40%;
+  line-height: 1.25;
+}
+
+#iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin-top: 0;
 }
 
 .iq-form-upload-title {
@@ -1854,24 +1907,10 @@
 .iq-form-submit:hover,
 .iq-form-submit:focus-visible {
   outline: none;
-  border-color: transparent;
-  box-shadow:
-    0 0 0 2px transparent,
-    0 0 18px rgba(77, 37, 157, 0.45),
-    0 0 28px rgba(42, 170, 184, 0.28);
-  background:
-    linear-gradient(#ffffff, #ffffff) padding-box,
-    linear-gradient(
-      45deg,
-      var(--iq-nebula-purple),
-      var(--iq-nebula-teal),
-      var(--iq-nebula-blue),
-      var(--iq-nebula-green),
-      var(--iq-nebula-purple-mid),
-      var(--iq-nebula-purple)
-    )
-      border-box !important;
-  border: 2px solid transparent;
+  border-color: #ffffff !important;
+  border-width: 1px;
+  box-shadow: none;
+  background: #ffffff !important;
   color: #00001c !important;
   filter: none;
 }
@@ -1897,6 +1936,10 @@
   min-height: 0 !important;
   flex: 1 1 auto;
   align-self: stretch;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 20px !important;
   font-weight: 700 !important;
   line-height: 1.35 !important;
@@ -1905,6 +1948,18 @@
   border: 1px solid #ffffff !important;
   border-radius: 6px;
   box-sizing: border-box;
+}
+
+.iq-orbit-wrap > .w-form-done.iq-form-success-slot .iq-success-lead {
+  display: block;
+  font-weight: 700;
+}
+
+.iq-orbit-wrap > .w-form-done.iq-form-success-slot .iq-success-sub {
+  display: block;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 /* Legacy fallback if success block renders outside orbit wrap */
@@ -2329,9 +2384,12 @@
 
   #iq-form-artwork-drop.iq-form-upload,
   .iq-form-upload#iq-form-artwork-drop {
-    min-height: 220px !important;
+    min-height: var(--iq-panel-min-height) !important;
+    max-width: var(--iq-panel-max-width);
+    width: min(var(--iq-panel-max-width), 100%);
+    margin-inline: auto;
     height: auto;
-    padding: 28px 20px;
+    padding: clamp(20px, 4vw, 28px) clamp(16px, 4vw, 20px);
     box-sizing: border-box;
     overflow: visible;
   }
@@ -2347,7 +2405,7 @@
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: 220px !important;
+    min-height: var(--iq-panel-min-height) !important;
     margin: 0 !important;
     opacity: 0.001 !important;
     clip: auto !important;
@@ -2519,9 +2577,12 @@
   }
 
   .iq-total-wrapper {
-    width: 100%;
-    max-width: 100%;
+    width: min(var(--iq-panel-max-width), 100%);
+    max-width: var(--iq-panel-max-width);
+    aspect-ratio: var(--iq-panel-aspect);
+    min-height: var(--iq-panel-min-height);
     box-sizing: border-box;
+    margin-inline: auto;
     /* Bottom padding stays 15px (matches desktop, set in Designer) — the
        Calculate button is a real child now, no overlap hack needed. */
     padding: 24px 16px 15px !important;
@@ -2536,7 +2597,7 @@
   #iq-total-price,
   .iq-total-price {
     font-size: clamp(40px, 13vw, 64px) !important;
-    padding: 37px 16px 22px !important;
+    padding: 0 16px !important;
     word-break: break-word;
   }
 
@@ -2630,6 +2691,21 @@
     max-width: 100%;
     overflow-x: clip;
   }
+}
+
+/* Pricing explainer columns — prefer +150px top padding in Designer on
+   .iq-breakdown-col; embed fallback until Designer pass lands. */
+.iq-breakdown-col {
+  padding-top: 150px;
+  box-sizing: border-box;
+}
+
+.iq-form-required-note {
+  margin: 0 0 16px;
+  font-size: clamp(13px, 1.4vw, 15px);
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 640px;
 }
 
 @media screen and (max-width: 991px) and (prefers-reduced-motion: reduce) {

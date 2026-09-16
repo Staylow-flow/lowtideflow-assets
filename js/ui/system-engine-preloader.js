@@ -1,7 +1,7 @@
 /**
- * System Engine preloader — min 2.0s from navigation + window load, iris reveal.
+ * System Engine preloader — min 3.0s visible from navigation start + window load, iris reveal.
  *
- * Spec Run (/instant-quote): link css + this script early (page head or first footer tag).
+ * Spec Engine (/spec-engine): link css + this script early (page head or first footer tag).
  * Webflow: place markup as first body child (see ensurePreloader template).
  *
  * No global resize/scroll listeners. Single window "load" (once) when needed.
@@ -12,7 +12,7 @@
   var ROOT_SELECTOR = '.system-preloader';
   var REVEAL_CLASS = 'reveal-active';
   var BOOT_HTML_CLASS = 'ltf-system-engine-boot';
-  var MIN_DISPLAY_MS = 2000;
+  var MIN_DISPLAY_MS = 3000;
   var REVEAL_TRANSITION_MS = 850;
   var STATUS_TEXT = 'INITIALIZING SYSTEM ENGINE...';
 

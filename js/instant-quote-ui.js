@@ -427,7 +427,7 @@
     return wrap;
   }
 
-  var TOTAL_CARD_FLASH_MS = 1000;
+  var TOTAL_CARD_FLASH_MS = 2000;
 
   /** Total Cost Est. card border: idle solid white → ~1s gradient wrap on
    *  click → ~1s fade back to solid white (see .is-calculating in CSS). */
@@ -477,19 +477,9 @@
   function initSubmitButton() {
     var btn = document.getElementById('iq-form-submit');
     if (!btn) return;
-
     btn.classList.add('iq-orbit-btn');
-    var wrap = ensureOrbitWrap(btn);
-
-    btn.addEventListener('click', function () {
-      playOrbitClick(btn);
-      if (wrap) {
-        wrap.classList.add('ltf-btn-gradient-active', 'iq-orbit-click');
-        window.setTimeout(function () {
-          wrap.classList.remove('ltf-btn-gradient-active', 'iq-orbit-click');
-        }, ORBIT_MS);
-      }
-    });
+    ensureOrbitWrap(btn);
+    /* Orbit click FX: single owner in instant-quote-form.js initFormCtaGradient */
   }
 
   /* ── Mobile layout only (≤991px): real notched sliders stay native ── */

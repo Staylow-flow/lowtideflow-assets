@@ -33,6 +33,7 @@
     'hotmial.com': 'hotmail.com',
     'hotmal.com': 'hotmail.com',
     'yaho.com': 'yahoo.com',
+    'yahloo.com': 'yahoo.com',
     'yahooo.com': 'yahoo.com',
     'outlok.com': 'outlook.com',
     'outllok.com': 'outlook.com'
@@ -830,6 +831,49 @@
     return wrap;
   }
 
+  function ensureRequiredAsterisk(labelNode, canonicalName) {
+    if (!labelNode) return;
+    var span = labelNode.querySelector('.iq-form-label');
+    if (span && span.querySelector('.iq-form-required')) return;
+    if (!span && /\*\s*$/.test(String(labelNode.textContent || ''))) return;
+    var target = span || labelNode;
+    var raw = String(target.textContent || '').replace(/\s*\*\s*$/, '').trim();
+    if (canonicalName && !new RegExp(canonicalName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(raw)) {
+      if (/Full\s*Name/i.test(raw)) raw = 'Client Name';
+    }
+    if (span) {
+      span.textContent = (canonicalName || raw) + ' ';
+      var star = span.querySelector('.iq-form-required');
+      if (!star) {
+        star = document.createElement('span');
+        star.className = 'iq-form-required';
+        star.textContent = '*';
+        span.appendChild(star);
+      }
+    } else {
+      target.textContent = (canonicalName || raw) + ' *';
+    }
+  }
+
+  function ensureRequiredFieldsNote(form) {
+    if (!form || form.querySelector('#iq-form-required-note')) return;
+    var anchor =
+      form.querySelector('.iq-form-legend') ||
+      form.querySelector('.iq-form-fieldset') ||
+      form.querySelector('#iq-form-full-name');
+    if (!anchor) return;
+    var note = document.createElement('p');
+    note.id = 'iq-form-required-note';
+    note.className = 'iq-form-required-note';
+    note.textContent =
+      'Fields marked * are required — company name and phone help us reach you if email bounces.';
+    if (anchor.parentNode) {
+      anchor.parentNode.insertBefore(note, anchor.nextSibling);
+    } else {
+      form.insertBefore(note, form.firstChild);
+    }
+  }
+
   function findFieldLabel(input) {
     if (!input) return null;
     var prev = input.previousElementSibling;
@@ -864,10 +908,10 @@
     }
 
     var fieldMap = [
-      { id: 'iq-form-full-name', labelClass: 'iq-field-label--name' },
-      { id: 'iq-form-company', labelClass: 'iq-field-label--company' },
-      { id: 'iq-form-email', labelClass: 'iq-field-label--email' },
-      { id: 'iq-form-phone', labelClass: 'iq-field-label--phone' }
+      { id: 'iq-form-full-name', labelClass: 'iq-field-label--name', requiredLabel: 'Client Name' },
+      { id: 'iq-form-company', labelClass: 'iq-field-label--company', requiredLabel: 'Company Name' },
+      { id: 'iq-form-email', labelClass: 'iq-field-label--email', requiredLabel: 'Email Address' },
+      { id: 'iq-form-phone', labelClass: 'iq-field-label--phone', requiredLabel: 'Phone Number' }
     ];
     fieldMap.forEach(function (entry) {
       var input = document.getElementById(entry.id);
@@ -882,21 +926,11 @@
         label.style.display = 'block';
         label.style.width = '100%';
         label.style.whiteSpace = 'normal';
+        ensureRequiredAsterisk(label, entry.requiredLabel);
       }
     });
 
-    var nameInput = document.getElementById('iq-form-full-name');
-    if (nameInput) {
-      var nameLabel = findFieldLabel(nameInput);
-      if (nameLabel) {
-        var raw = String(nameLabel.textContent || '');
-        if (/Full\s*Name/i.test(raw)) {
-          nameLabel.textContent = raw.replace(/Full\s*Name/i, 'Client Name');
-        } else if (!/Client Name/i.test(raw)) {
-          nameLabel.textContent = /Required|\*/.test(raw) ? 'Client Name *' : 'Client Name';
-        }
-      }
-    }
+    ensureRequiredFieldsNote(form);
     form.querySelectorAll('.iq-form-label').forEach(function (span) {
       if (/Full\s*Name/i.test(span.textContent || '')) {
         span.innerHTML = String(span.innerHTML || '').replace(/Full\s*Name/i, 'Client Name');
@@ -1078,7 +1112,7 @@
   }
 
   function setRequiredAttrs() {
-    ['iq-form-full-name', 'iq-form-email', 'iq-form-phone'].forEach(function (id) {
+    ['iq-form-full-name', 'iq-form-company', 'iq-form-email', 'iq-form-phone'].forEach(function (id) {
       var node = document.getElementById(id);
       if (!node) return;
       node.required = true;
@@ -1098,6 +1132,13 @@
     return form.closest('.w-form') || form.parentElement;
   }
 
+  function applySuccessMessageMarkup(done) {
+    if (!done) return;
+    done.innerHTML =
+      '<span class="iq-success-lead"><strong>Thank you!</strong></span>' +
+      '<span class="iq-success-sub">Your submission has been received!</span>';
+  }
+
   function showWebflowState(form, which) {
     var shell = getFormShell(form);
     if (!shell) return;
@@ -1113,9 +1154,11 @@
       if (submitBtn) submitBtn.style.display = 'none';
       if (done && orbitWrap) {
         done.classList.add('iq-form-success-slot', 'iq-form-submit');
+        applySuccessMessageMarkup(done);
         done.style.display = 'flex';
         orbitWrap.appendChild(done);
       } else if (done) {
+        applySuccessMessageMarkup(done);
         done.style.display = 'block';
       }
       return;
@@ -1130,10 +1173,12 @@
 
   function validateForm() {
     var name = val('iq-form-full-name');
+    var company = val('iq-form-company');
     var email = val('iq-form-email');
     var phone = digitsOnly(val('iq-form-phone'));
 
     if (!name) return 'Please enter your client name.';
+    if (!company) return 'Please enter your company name.';
     if (!email || email.indexOf('@') < 1) return 'Please enter a valid email address.';
     if (phone.length < 10) return 'Please enter a valid 10-digit phone number.';
     return '';
