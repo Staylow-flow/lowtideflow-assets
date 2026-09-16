@@ -195,8 +195,8 @@
 .iq-total-wrapper {
   position: relative;
   isolation: isolate;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   align-items: stretch;
   box-sizing: border-box;
   width: min(var(--iq-panel-max-width), 100%);
@@ -327,9 +327,9 @@
   z-index: 1;
 }
 
-/* DOM order is often orbit-wrap (Calculate) first — flex order restores label → price → button */
+/* Designer: label → price → .iq-run-quote-wrap (Calculate). Never column-reverse. */
 .iq-total-label {
-  order: 1;
+  order: 1 !important;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -340,7 +340,7 @@
 
 #iq-total-price,
 .iq-total-price {
-  order: 2;
+  order: 2 !important;
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
@@ -354,13 +354,16 @@
   box-sizing: border-box;
 }
 
+.iq-total-wrapper > .iq-run-quote-wrap,
 .iq-total-wrapper > .iq-orbit-wrap:has(#iq-run-quote),
 .iq-total-wrapper > .iq-orbit-wrap:has(.iq-run-quote),
+.iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote),
 .iq-total-wrapper > #iq-run-quote,
 .iq-total-wrapper > .iq-run-quote {
-  order: 3;
+  order: 3 !important;
   flex: 0 0 auto;
   width: 100%;
+  align-self: stretch;
 }
 
 .iq-price-box,
@@ -2628,17 +2631,29 @@
     width: 100%;
   }
 
+  .iq-total-wrapper {
+    flex-direction: column !important;
+  }
+
   .iq-total-label {
+    order: 1 !important;
     line-height: 1.08 !important;
   }
 
   #iq-total-price,
   .iq-total-price {
+    order: 2 !important;
     font-size: clamp(40px, 13vw, 64px) !important;
     line-height: 1.02 !important;
     margin-top: 2px !important;
     padding: 0 16px !important;
     word-break: break-word;
+  }
+
+  .iq-total-wrapper > .iq-run-quote-wrap,
+  .iq-total-wrapper > .iq-orbit-wrap:has(#iq-run-quote),
+  .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote) {
+    order: 3 !important;
   }
 
   #iq-order-form {
