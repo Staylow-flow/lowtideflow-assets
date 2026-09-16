@@ -763,14 +763,22 @@ body:has(.iq-page) > .system-preloader {
   z-index: 3 !important;
 }
 
-.iq-page input#iq-form-submit.w-button.iq-orbit-btn {
+.iq-page input#iq-form-submit.w-button.iq-orbit-btn,
+.iq-page input#iq-form-submit.iq-form-submit {
+  display: block !important;
   overflow: visible !important;
+  line-height: 1.2 !important;
+  min-height: 70px !important;
+  height: auto !important;
+  padding: 18px 22px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
 }
 
 .iq-page .iq-orbit-wrap:has(#iq-form-submit),
 .iq-page .iq-orbit-wrap.iq-form-cta-wrap {
   flex-direction: column !important;
-  line-height: 0 !important;
+  line-height: normal !important;
 }
 
 /* ── Slider embeds (HtmlEmbed) ───────────────────────────────────────── */
