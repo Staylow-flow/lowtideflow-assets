@@ -1,0 +1,30 @@
+# Instant Quote — Round 13 pin @a2e770e (2026-09-16)
+
+CSS boot (header registered script / inline embed):
+  display_name: IQCSSBoota2e770e
+  script_id: iqcssboota2e770e
+  source: webflow/instant-quote-embed.css
+  integrity: sha384-PeK1fg56KQzjaUAuTrgupIA68lf4wefo/81C5zSPDW61kiTmHp9+Jv6vVRjG+cLM
+
+Form JS (footer registered script):
+  display_name: IQForma2e770e
+  script_id: iqforma2e770e
+  url: https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@a2e770e/js/instant-quote-form.js
+  integrity: sha384-aSRMRR+qkTelc14+MfciwHtucd82KEwrecojnObc5rhjrHepQA9la+pAim6/8FE3
+
+UI JS (footer registered script):
+  display_name: IQUIa2e770e
+  script_id: iquia2e770e
+  url: https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@a2e770e/js/instant-quote-ui.js
+  integrity: sha384-kMhWQLJhkFHoBmYahqXz2KLJn16qW3r+bIV5kvF0s6uEmvIr8IPoO7xP8JztjGH7
+
+Keep unchanged from @aefd7a7:
+  iqpricingdataaefd7a7
+  iqpricingaefd7a7
+
+System Engine preloader (page footer freeform script tag):
+  url: https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@a2e770e/js/ui/system-engine-preloader.js
+  integrity: sha384-fb+j+WmT04Rb116Y7bQ67umphAy/X06uF4zn7CiT6wvYMFLBYs2DNoaMh5iyzfJz
+
+System Engine CSS (page head link — unchanged this round unless edited):
+  @71fd535 sha384-FwqJGhfQj906uyNeM4vdv87cB1+EoO2OpURwf/u7rVmWiuWrU0atGbN8JtSjpLME

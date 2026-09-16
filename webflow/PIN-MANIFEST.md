@@ -1,6 +1,6 @@
 # PIN MANIFEST — CDN & Registered Scripts
 
-**Locked:** 2026-09-02 · **Repo HEAD:** `329bdae`
+**Locked:** 2026-09-16 · **Repo HEAD (IQ Round 13):** `a2e770e`
 
 All jsDelivr URLs use: `https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@<commit>/…`
 
@@ -35,22 +35,22 @@ Importmap for Three.js lives in **site head** (not page footer).
 
 ---
 
-## Instant Quote (`/instant-quote`) — Round 12 locked
+## Spec Engine / Instant Quote (`/spec-engine`) — Round 13 locked
 
 | Asset | Script ID | Commit | SRI |
 |-------|-----------|--------|-----|
-| CSS embed | `iqcssboot329bdae` · page header | `329bdae` | `sha384-9vQA/6/ITaHNmNvZh5LqvuqbcjNj8sdfjCV/k9uFu01kvvlzw+BUx06mtIrGSjkT` |
-| Form JS | `iqform329bdae` · page footer | `329bdae` | `sha384-QLwkH4SoKEYQfNOxqHm0YknECO8TLvylbWJtZu7kvCLKGuFVfeTa4j71UYXMpjah` |
+| CSS embed | `iqcssboota2e770e` · page header | `a2e770e` | `sha384-PeK1fg56KQzjaUAuTrgupIA68lf4wefo/81C5zSPDW61kiTmHp9+Jv6vVRjG+cLM` |
+| Form JS | `iqforma2e770e` · page footer | `a2e770e` | `sha384-aSRMRR+qkTelc14+MfciwHtucd82KEwrecojnObc5rhjrHepQA9la+pAim6/8FE3` |
+| UI helpers | `iquia2e770e` · page footer | `a2e770e` | `sha384-kMhWQLJhkFHoBmYahqXz2KLJn16qW3r+bIV5kvF0s6uEmvIr8IPoO7xP8JztjGH7` |
 | Pricing data | `iqpricingdataaefd7a7` | `aefd7a7` | see `.iq-pin-aefd7a7-sri.txt` |
 | Pricing engine | `iqpricingaefd7a7` | `aefd7a7` | see `.iq-pin-aefd7a7-sri.txt` |
-| UI helpers | `iquiaefd7a7` | `aefd7a7` | see `.iq-pin-aefd7a7-sri.txt` |
 
-**Full pin file:** `webflow/.iq-pin-329bdae-sri.txt`  
+**Full pin file:** `webflow/.iq-pin-a2e770e-sri.txt`  
 **CSS source:** `webflow/instant-quote-embed.css`  
 **Footer HTML:** `webflow/instant-quote-footer-snippet.html` (System Engine preloader + artwork modal)
 
 | System Engine CSS | Page head freeform `<link>` | `71fd535` | `sha384-FwqJGhfQj906uyNeM4vdv87cB1+EoO2OpURwf/u7rVmWiuWrU0atGbN8JtSjpLME` |
-| System Engine JS | Page footer freeform `<script>` | `71fd535` | `sha384-Oy2XMejNazJgKIZaiMjWpw+TSGwHcCAcevHmwcvV0rh7qmGS1k+GL5dlOMWIYL6h` |
+| System Engine JS | Page footer freeform `<script>` | `a2e770e` | `sha384-fb+j+WmT04Rb116Y7bQ67umphAy/X06uF4zn7CiT6wvYMFLBYs2DNoaMh5iyzfJz` |
 
 **SRI file:** `webflow/.iq-pin-system-engine-71fd535-sri.txt`
 
