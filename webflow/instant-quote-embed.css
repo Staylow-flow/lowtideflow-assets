@@ -344,6 +344,7 @@
   text-align: center;
   line-height: 1 !important;
   align-self: end;
+  transform: translateY(-15px);
 }
 
 #iq-total-price,
@@ -354,7 +355,8 @@
   z-index: 1;
   min-height: 0;
   height: 100%;
-  margin: 0 !important;
+  margin: 10px 0 0 !important;
+  transform: translateY(-15px);
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2649,6 +2651,7 @@
     grid-row: 1 !important;
     order: 1 !important;
     line-height: 1 !important;
+    transform: translateY(-15px);
   }
 
   #iq-total-price,
@@ -2657,7 +2660,8 @@
     order: 2 !important;
     font-size: clamp(40px, 13vw, 64px) !important;
     line-height: 1.02 !important;
-    margin: 0 !important;
+    margin: 10px 0 0 !important;
+    transform: translateY(-15px);
     align-items: center !important;
     padding: 0 16px !important;
     word-break: break-word;
