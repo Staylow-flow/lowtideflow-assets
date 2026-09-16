@@ -2250,14 +2250,9 @@
     max-width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    /* Space between Ink / Print / Qty slider groups (not just inside each row) */
+    gap: 38px !important;
     align-items: stretch;
-  }
-
-  /* Ink Colors + Print Locations: +15px air between label/value pill and slider track */
-  .iq-sliders-block .iq-slider-row:nth-child(1),
-  .iq-sliders-block .iq-slider-row:nth-child(2) {
-    row-gap: 29px !important;
   }
 
   .iq-slider-row {
@@ -2273,6 +2268,13 @@
     align-items: stretch !important;
     width: 100%;
     max-width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* +15px air between label/value pill and slider track — all three groups */
+  .iq-sliders-block > .iq-slider-row {
+    row-gap: 29px !important;
   }
 
   /* Label + value fuse into ONE bordered box (shared slate-grey text color,
