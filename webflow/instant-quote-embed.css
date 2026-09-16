@@ -195,15 +195,21 @@
 .iq-total-wrapper {
   position: relative;
   isolation: isolate;
-  display: flex !important;
-  flex-direction: column !important;
+  /* Beat Designer flex + 10px gap — label / centered price / CTA rows */
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
+  row-gap: 0 !important;
+  column-gap: 0 !important;
   align-items: stretch;
-  justify-content: flex-start;
+  justify-items: stretch;
   box-sizing: border-box;
   width: min(var(--iq-panel-max-width), 100%);
   max-width: var(--iq-panel-max-width);
   min-height: var(--iq-panel-min-height);
   margin-inline: auto;
+  padding: 18px 28px 10px !important;
   background: var(--iq-bg);
   /* Idle/default border (both mobile + desktop): solid white, 2px — halved from
      the previous 4px outline per Round 8 spec. The gradient ring is a separate
@@ -328,28 +334,29 @@
   z-index: 1;
 }
 
-/* Total card interior — mock: label top, price centered in middle band, CTA bottom.
-   DOM order may be wrap-first; flex order + margin-top:auto on wrap restores layout. */
+/* Total card — label tight top, price Y-center in middle row, CTA bottom (nudged up). */
 .iq-total-label {
+  grid-row: 1 !important;
   order: 1 !important;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   width: 100%;
   text-align: center;
-  line-height: 1.08;
-  flex: 0 0 auto;
+  line-height: 1 !important;
+  align-self: start;
 }
 
 #iq-total-price,
 .iq-total-price {
+  grid-row: 2 !important;
   order: 2 !important;
   position: relative;
   z-index: 1;
-  flex: 1 1 auto;
   min-height: 0;
-  margin: 12px 0 0 !important;
+  height: 100%;
+  margin: 0 !important;
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
   line-height: 1.02;
@@ -363,13 +370,13 @@
 .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote),
 .iq-total-wrapper > #iq-run-quote,
 .iq-total-wrapper > .iq-run-quote {
+  grid-row: 3 !important;
   order: 3 !important;
-  flex: 0 0 auto;
   width: 100%;
-  align-self: stretch;
-  margin-top: auto !important;
-  margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
+  margin: 0 !important;
+  padding: 0 0 2px !important;
+  align-self: end;
+  transform: translateY(-8px);
 }
 
 .iq-price-box,
@@ -2626,9 +2633,10 @@
     min-height: var(--iq-panel-min-height);
     box-sizing: border-box;
     margin-inline: auto;
-    /* Bottom padding stays 15px (matches desktop, set in Designer) — the
-       Calculate button is a real child now, no overlap hack needed. */
-    padding: 24px 16px 15px !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    gap: 0 !important;
+    padding: 16px 16px 8px !important;
   }
 
   #iq-run-quote,
@@ -2637,22 +2645,20 @@
     width: 100%;
   }
 
-  .iq-total-wrapper {
-    flex-direction: column !important;
-  }
-
   .iq-total-label {
+    grid-row: 1 !important;
     order: 1 !important;
-    line-height: 1.08 !important;
+    line-height: 1 !important;
   }
 
   #iq-total-price,
   .iq-total-price {
+    grid-row: 2 !important;
     order: 2 !important;
     font-size: clamp(40px, 13vw, 64px) !important;
     line-height: 1.02 !important;
-    margin-top: 12px !important;
-    align-items: flex-start !important;
+    margin: 0 !important;
+    align-items: center !important;
     padding: 0 16px !important;
     word-break: break-word;
   }
@@ -2660,8 +2666,9 @@
   .iq-total-wrapper > .iq-run-quote-wrap,
   .iq-total-wrapper > .iq-orbit-wrap:has(#iq-run-quote),
   .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote) {
+    grid-row: 3 !important;
     order: 3 !important;
-    margin-top: auto !important;
+    transform: translateY(-8px);
     padding-bottom: 0 !important;
   }
 
