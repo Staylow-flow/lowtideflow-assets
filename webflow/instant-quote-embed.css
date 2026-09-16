@@ -368,9 +368,8 @@
   width: 100%;
   align-self: stretch;
   margin-top: auto !important;
-  margin-bottom: 2px !important;
+  margin-bottom: 0 !important;
   padding-bottom: 0 !important;
-  transform: translateY(-2px);
 }
 
 .iq-price-box,
