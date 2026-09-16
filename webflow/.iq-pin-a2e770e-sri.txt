@@ -1,4 +1,5 @@
-# Instant Quote — Round 13 pin @a2e770e (2026-09-16)
+# Instant Quote — Round 13 pin (2026-09-16)
+# Base @a2e770e — refresh CSS + form to @4908bb2 for artwork-pricing link placement.
 
 CSS boot (header registered script / inline embed):
   display_name: IQCSSBoota2e770e

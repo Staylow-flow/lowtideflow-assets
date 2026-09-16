@@ -1,0 +1,16 @@
+# Round 13 follow-up @4908bb2 — artwork pricing link under order subcopy
+
+CSS boot (header registered script — replace embed body + SRI):
+  script_id: iqcssboot4908bb2 (or keep display name, bump URL/SRI only)
+  integrity: sha384-BjftrgSfDypSyxVRVAAGL9kmULhdyICd2uIioEnaKJNbb6KHIpjvQ02UplssG5qs
+
+Form JS (footer registered script):
+  script_id: iqform4908bb2
+  url: https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@4908bb2/js/instant-quote-form.js
+  integrity: sha384-bt4E0kGYfQsuVJe2EZhSRTBrQLQf+KgDLp3LucOoO80zpcTO7HqbYtEAtunF3J5G
+
+Unchanged this delta:
+  iquia2e770e @ a2e770e
+  iqpricing* @ aefd7a7
+  preloader.js @ a2e770e
+  preloader.css @ 71fd535
