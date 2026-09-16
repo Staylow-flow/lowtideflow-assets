@@ -2201,6 +2201,10 @@
     overflow-x: clip;
     max-width: 100%;
     box-sizing: border-box;
+    /* 90vh + flex center jumps when mobile browser chrome shows/hides on scroll */
+    min-height: 0 !important;
+    display: block !important;
+    justify-content: flex-start !important;
   }
 
   .iq-container {
@@ -2726,8 +2730,9 @@
 
   .iq-total-wrapper {
     display: grid !important;
-    /* Label + price stack tight (auto rows); CTA band keeps bottom anchor */
-    grid-template-rows: auto auto 1fr !important;
+    /* No 1fr rows — they reflow when viewport height ticks during scroll */
+    grid-template-rows: auto auto auto !important;
+    align-content: start !important;
     gap: 0 !important;
     /* Same panel footprint; ≥10px label-to-border; extra side inset for copy */
     padding: 10px 22px 8px !important;
@@ -2779,8 +2784,9 @@
   .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote) {
     grid-row: 3 !important;
     order: 3 !important;
-    align-self: end !important;
-    transform: translateY(-8px);
+    align-self: stretch !important;
+    margin-top: auto !important;
+    transform: none !important;
     padding-bottom: 0 !important;
   }
 
