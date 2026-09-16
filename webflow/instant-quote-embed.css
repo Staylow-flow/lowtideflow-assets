@@ -198,6 +198,7 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch;
+  justify-content: flex-start;
   box-sizing: border-box;
   width: min(var(--iq-panel-max-width), 100%);
   max-width: var(--iq-panel-max-width);
@@ -327,7 +328,8 @@
   z-index: 1;
 }
 
-/* Designer: label → price → .iq-run-quote-wrap (Calculate). Never column-reverse. */
+/* Total card interior — mock: label top, price centered in middle band, CTA bottom.
+   DOM order may be wrap-first; flex order + margin-top:auto on wrap restores layout. */
 .iq-total-label {
   order: 1 !important;
   margin: 0;
@@ -344,7 +346,8 @@
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
-  margin: 2px 0 0;
+  min-height: 0;
+  margin: 6px 0 0;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -364,6 +367,9 @@
   flex: 0 0 auto;
   width: 100%;
   align-self: stretch;
+  margin-top: auto !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .iq-price-box,
@@ -2654,6 +2660,8 @@
   .iq-total-wrapper > .iq-orbit-wrap:has(#iq-run-quote),
   .iq-total-wrapper > .ltf-btn-gradient-wrap:has(#iq-run-quote) {
     order: 3 !important;
+    margin-top: auto !important;
+    padding-bottom: 0 !important;
   }
 
   #iq-order-form {
