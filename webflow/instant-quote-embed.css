@@ -2536,6 +2536,12 @@
     font-size: clamp(10px, 2.8vw, 12px);
   }
 
+  /* Browse Files — +25px up from panel bottom (idle upload) */
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn {
+    margin-bottom: 0 !important;
+    transform: translateY(-25px) !important;
+  }
+
   /* iOS Safari: full-zone invisible tap target opens the native file picker
      reliably; clip/1px sizing alone often fails on mobile. */
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-input {
