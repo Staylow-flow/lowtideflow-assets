@@ -617,10 +617,69 @@
   }
 }
 
-/* IQ CTAs: orbit ring on the button only — never stack site .ltf-btn-gradient-wrap::before
-   (double rings + tall wrap = hover halo shifted/clipped above the button). */
-.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap::before,
-.iq-page .iq-form-cta-wrap.ltf-btn-gradient-wrap::before {
+/* IQ CTAs: kill site nav .ltf-btn-gradient-wrap::before (flat gradient fill).
+   Calculate (<a>) keeps orbit ring on .iq-orbit-btn::before; Submit (<input>)
+   cannot host ::before — ring is on the wrap (see :has(#iq-form-submit) below). */
+.iq-page .iq-orbit-wrap.ltf-btn-gradient-wrap:not(:has(#iq-form-submit))::before,
+.iq-page .iq-form-cta-wrap.ltf-btn-gradient-wrap:not(:has(#iq-form-submit))::before {
+  content: none !important;
+  display: none !important;
+}
+
+.iq-page .iq-orbit-wrap:has(#iq-form-submit) {
+  position: relative !important;
+  isolation: isolate;
+  border-radius: 6px;
+}
+
+.iq-page .iq-orbit-wrap:has(#iq-form-submit)::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute;
+  inset: -3px;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    100deg,
+    var(--iq-nebula-purple),
+    var(--iq-nebula-teal),
+    var(--iq-nebula-blue),
+    var(--iq-nebula-green),
+    var(--iq-nebula-purple-mid),
+    var(--iq-nebula-purple)
+  );
+  background-size: 300% 300%;
+  background-position: 0% 50%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.iq-page .iq-orbit-wrap:has(#iq-form-submit):hover::before,
+.iq-page .iq-orbit-wrap:has(#iq-form-submit):focus-within::before,
+.iq-page .iq-orbit-wrap:has(#iq-form-submit).ltf-btn-gradient-active::before,
+.iq-page .iq-orbit-wrap:has(#iq-form-submit).is-submitting::before,
+.iq-page .iq-orbit-wrap:has(#iq-form-submit).iq-orbit-click::before {
+  opacity: 1;
+  animation: iq-orbit-drift 4.5s ease-in-out infinite;
+}
+
+.iq-page .iq-orbit-wrap:has(#iq-form-submit).is-submitting::before,
+.iq-page .iq-orbit-wrap:has(#iq-form-submit).iq-orbit-click::before {
+  animation: iq-orbit-drift 0.7s linear infinite;
+}
+
+.iq-page .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit.iq-orbit-btn::before,
+.iq-page .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit::before {
   content: none !important;
   display: none !important;
 }
@@ -677,6 +736,12 @@
 .iq-page .iq-orbit-wrap.iq-form-cta-wrap > .iq-form-submit,
 .iq-page .iq-orbit-wrap.iq-form-cta-wrap > #iq-form-submit {
   margin: 0 !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+.iq-page input#iq-form-submit.w-button.iq-orbit-btn {
   overflow: visible !important;
 }
 

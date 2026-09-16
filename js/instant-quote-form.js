@@ -941,6 +941,18 @@
     }
 
     form.classList.add('iq-form-layout-ready');
+    releaseWebflowFormLoading(form);
+  }
+
+  /** Webflow leaves .w-form-loading + disabled submit until its handler runs; IQ uses custom POST. */
+  function releaseWebflowFormLoading(form) {
+    var shell = getFormShell(form);
+    if (shell) shell.classList.remove('w-form-loading');
+    var submit = document.getElementById('iq-form-submit');
+    if (!submit) return;
+    submit.classList.remove('w-form-loading');
+    submit.disabled = false;
+    submit.removeAttribute('disabled');
   }
 
   function initFormCtaGradient() {
