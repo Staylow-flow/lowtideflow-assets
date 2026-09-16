@@ -19,7 +19,20 @@
   /* Shared quote panel footprint (Total Cost Est. + artwork drop) */
   --iq-panel-max-width: 520px;
   --iq-panel-min-height: 320px;
-  --iq-panel-aspect: 520 / 340;
+  --iq-panel-aspect: 520 / 320;
+}
+
+/* Shared panel footprint — Total Cost Est. + artwork drop (all breakpoints) */
+.iq-total-wrapper,
+#iq-form-artwork-drop.iq-form-upload,
+.iq-form-upload#iq-form-artwork-drop {
+  width: min(var(--iq-panel-max-width), 100%) !important;
+  max-width: var(--iq-panel-max-width) !important;
+  margin-inline: auto !important;
+  box-sizing: border-box !important;
+  aspect-ratio: var(--iq-panel-aspect) !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 
 /* ── V2: viewport strategy (no height:100vh + overflow:hidden lock) ── */
@@ -205,9 +218,6 @@
   align-items: stretch;
   justify-items: stretch;
   box-sizing: border-box;
-  width: min(var(--iq-panel-max-width), 100%);
-  max-width: var(--iq-panel-max-width);
-  min-height: var(--iq-panel-min-height);
   margin-inline: auto;
   padding: 18px 28px 10px !important;
   background: var(--iq-bg);
@@ -936,8 +946,9 @@
 @media screen and (min-width: 992px) {
   #iq-artwork-row .iq-artwork-panel,
   .iq-artwork-row .iq-artwork-panel {
-    width: min(520px, 100%);
-    max-width: 520px;
+    width: min(var(--iq-panel-max-width), 100%);
+    max-width: var(--iq-panel-max-width);
+    margin-inline: auto;
   }
 }
 
@@ -948,22 +959,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  width: 100%;
-  /* This is the OUTER drop-zone container — a separate, older "full
-     viewport drop zone" rule that predates (and was never reconciled with)
-     the round-4 shrink of the INNER .iq-form-upload-inner/.iq-form-upload-
-     active panels down to ~500px. At a typical 1080px-tall desktop
-     viewport, 82vh ≈ 886px, which is what actually gates the rendered
-     height (the inner ~500px content just gets centered inside it with
-     dead space above/below) — hence "way too tall" persisting even after
-     the inner fix. Bring the outer wrapper down to line up with the same
-     ~500px target; mobile already overrides this separately below. */
-  min-height: var(--iq-panel-min-height);
-  max-width: var(--iq-panel-max-width);
-  margin: 0 auto;
-  padding: clamp(20px, 3vw, 32px);
-  box-sizing: border-box;
+  justify-content: stretch;
+  align-items: stretch;
+  padding: 18px 28px 10px !important;
   border-radius: 16px;
   border: 2px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
   background:
@@ -1074,8 +1072,9 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  height: 100%;
-  min-height: inherit;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1108,8 +1107,11 @@
   text-align: center;
   box-sizing: border-box;
   position: relative;
-  min-height: calc(var(--iq-panel-min-height) - clamp(40px, 6vw, 64px));
-  padding: clamp(16px, 3vw, 28px) clamp(16px, 3vw, 32px);
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
 }
 
 /* Idle upload: headline block ~upper 35%, Browse ~lower 35% (Y axis). */
@@ -1259,7 +1261,9 @@
 #iq-form-artwork-drop.is-loading .iq-form-upload-active,
 #iq-form-artwork-drop.is-queue .iq-form-upload-active {
   display: flex;
-  min-height: var(--iq-panel-min-height);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 .iq-form-upload-progress {
@@ -2436,13 +2440,7 @@
 
   #iq-form-artwork-drop.iq-form-upload,
   .iq-form-upload#iq-form-artwork-drop {
-    min-height: var(--iq-panel-min-height) !important;
-    max-width: var(--iq-panel-max-width);
-    width: min(var(--iq-panel-max-width), 100%);
-    margin-inline: auto;
-    height: auto;
-    padding: clamp(20px, 4vw, 28px) clamp(16px, 4vw, 20px);
-    box-sizing: border-box;
+    padding: 16px 16px 8px !important;
     overflow: visible;
   }
 
@@ -2457,7 +2455,7 @@
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: var(--iq-panel-min-height) !important;
+    min-height: 0 !important;
     margin: 0 !important;
     opacity: 0.001 !important;
     clip: auto !important;
@@ -2629,16 +2627,17 @@
   }
 
   .iq-total-wrapper {
-    width: min(var(--iq-panel-max-width), 100%);
-    max-width: var(--iq-panel-max-width);
-    aspect-ratio: var(--iq-panel-aspect);
-    min-height: var(--iq-panel-min-height);
-    box-sizing: border-box;
-    margin-inline: auto;
     display: grid !important;
     grid-template-rows: 1fr auto 1fr !important;
     gap: 0 !important;
     padding: 16px 16px 8px !important;
+  }
+
+  .iq-total-wrapper,
+  #iq-form-artwork-drop.iq-form-upload,
+  .iq-form-upload#iq-form-artwork-drop {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
 
   #iq-run-quote,
