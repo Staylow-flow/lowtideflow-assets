@@ -944,15 +944,31 @@
     releaseWebflowFormLoading(form);
   }
 
-  /** Webflow leaves .w-form-loading + disabled submit until its handler runs; IQ uses custom POST. */
+  /** Webflow leaves .w-form-loading + disabled submit; IQ POST bypasses Webflow — keep form live. */
   function releaseWebflowFormLoading(form) {
     var shell = getFormShell(form);
-    if (shell) shell.classList.remove('w-form-loading');
-    var submit = document.getElementById('iq-form-submit');
-    if (!submit) return;
-    submit.classList.remove('w-form-loading');
-    submit.disabled = false;
-    submit.removeAttribute('disabled');
+    function unlock() {
+      if (shell) shell.classList.remove('w-form-loading');
+      var submit = document.getElementById('iq-form-submit');
+      if (!submit) return;
+      if (submit.classList.contains('is-submitting')) return;
+      submit.classList.remove('w-form-loading');
+      submit.disabled = false;
+      submit.removeAttribute('disabled');
+    }
+    unlock();
+    window.setTimeout(unlock, 0);
+    window.setTimeout(unlock, 250);
+    window.setTimeout(unlock, 1500);
+    if (shell && !shell.dataset.ltfIqLoadingWatch) {
+      shell.dataset.ltfIqLoadingWatch = '1';
+      var obs = new MutationObserver(unlock);
+      obs.observe(shell, { attributes: true, attributeFilter: ['class'] });
+      var submit = document.getElementById('iq-form-submit');
+      if (submit) {
+        obs.observe(submit, { attributes: true, attributeFilter: ['class', 'disabled'] });
+      }
+    }
   }
 
   function initFormCtaGradient() {
