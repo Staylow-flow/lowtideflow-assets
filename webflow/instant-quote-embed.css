@@ -2254,6 +2254,12 @@
     align-items: stretch;
   }
 
+  /* Ink Colors + Print Locations: +15px air between label/value pill and slider track */
+  .iq-sliders-block .iq-slider-row:nth-child(1),
+  .iq-sliders-block .iq-slider-row:nth-child(2) {
+    row-gap: 29px !important;
+  }
+
   .iq-slider-row {
     display: grid !important;
     /* Center cols hold the fused label+value pill; outer 1fr cols push it to
@@ -2713,14 +2719,15 @@
     display: grid !important;
     grid-template-rows: 1fr auto 1fr !important;
     gap: 0 !important;
-    padding: 16px 16px 8px !important;
+    /* Same panel footprint; ≥10px label-to-border; extra side inset for copy */
+    padding: 10px 22px 8px !important;
   }
 
   .iq-total-wrapper,
   #iq-form-artwork-drop.iq-form-upload,
   .iq-form-upload#iq-form-artwork-drop {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    padding-left: 22px !important;
+    padding-right: 22px !important;
   }
 
   #iq-run-quote,
@@ -2732,8 +2739,11 @@
   .iq-total-label {
     grid-row: 1 !important;
     order: 1 !important;
-    line-height: 1 !important;
-    transform: translateY(-15px);
+    line-height: 1.15 !important;
+    align-self: center !important;
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   #iq-total-price,
@@ -2743,9 +2753,9 @@
     font-size: clamp(40px, 13vw, 64px) !important;
     line-height: 1.02 !important;
     margin: 10px 0 0 !important;
-    transform: translateY(-15px);
+    transform: none !important;
     align-items: center !important;
-    padding: 0 16px !important;
+    padding: 0 8px !important;
     word-break: break-word;
   }
 
