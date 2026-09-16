@@ -3,6 +3,28 @@
  * Layout overrides here when Designer cannot be reached for structural edits.
  */
 
+/* If boot/preloader JS hangs, do not leave Spec Engine scroll-locked or blank. */
+html.ltf-system-engine-boot:has(.iq-page),
+html.ltf-system-engine-boot:has(.iq-page) body {
+  overflow: auto !important;
+}
+
+body:has(.iq-page) > .system-preloader {
+  animation: iq-preloader-failsafe-out 2.5s ease forwards;
+}
+
+@keyframes iq-preloader-failsafe-out {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
 :root {
   --iq-bg: #00001c;
   --iq-border: #ffffff;

@@ -88,6 +88,14 @@
     } else {
       document.addEventListener('DOMContentLoaded', onReadyToDismiss, { once: true });
     }
+
+    /* Never leave the page locked behind the boot overlay if anything throws above. */
+    window.setTimeout(function ltfPreloaderFailsafe() {
+      document.documentElement.classList.remove(BOOT_HTML_CLASS);
+      document.querySelectorAll(ROOT_SELECTOR).forEach(function (node) {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      });
+    }, 2000);
   }
 
   if (document.readyState === 'loading') {
