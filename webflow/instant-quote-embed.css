@@ -950,6 +950,11 @@
     max-width: var(--iq-panel-max-width);
     margin-inline: auto;
   }
+
+  /* Browse Files — +10px up from panel bottom (idle upload) */
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn {
+    margin-bottom: 15px !important;
+  }
 }
 
 /* ── Artwork upload — full viewport drop zone + animated feedback ─────── */
