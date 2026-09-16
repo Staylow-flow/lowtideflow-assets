@@ -2725,9 +2725,12 @@
     padding: 10px 22px 8px !important;
   }
 
+  /* Total + artwork panels: +25px tall vs desktop (520×345), layout stays centered */
   .iq-total-wrapper,
   #iq-form-artwork-drop.iq-form-upload,
   .iq-form-upload#iq-form-artwork-drop {
+    aspect-ratio: 520 / 345 !important;
+    min-height: 345px !important;
     padding-left: 22px !important;
     padding-right: 22px !important;
   }
@@ -2754,7 +2757,7 @@
     order: 2 !important;
     font-size: clamp(40px, 13vw, 64px) !important;
     line-height: 1.02 !important;
-    margin: 10px 0 0 !important;
+    margin: 5px 0 0 !important;
     transform: none !important;
     align-items: center !important;
     padding: 0 8px !important;
