@@ -2085,12 +2085,12 @@
     justify-self: center;
   }
 
-  /* Submit Project Brief — +100px internal padding top/bottom (desktop only) */
-  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit) > #iq-form-submit,
-  #iq-order-form > #iq-form-submit.iq-form-submit {
-    padding-top: calc(100px + 18px);
-    padding-bottom: calc(100px + 18px);
-    box-sizing: border-box;
+  /* Submit Project Brief — +100px space above/below the row (desktop only; button size unchanged) */
+  #iq-order-form > .iq-orbit-wrap:has(#iq-form-submit),
+  #iq-order-form > #iq-form-submit,
+  #iq-order-form > .iq-form-submit {
+    margin-top: calc(48px + 100px);
+    margin-bottom: 100px;
   }
 
   .iq-order-section .w-form-done:not(.iq-form-success-slot) {
