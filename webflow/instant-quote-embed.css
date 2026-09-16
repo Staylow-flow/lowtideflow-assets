@@ -73,15 +73,6 @@
 .iq-order-lead,
 .iq-order-lead-line2 {
   margin: 0;
-  max-width: 640px;
-  font-size: clamp(14px, 1.6vw, 17px);
-  font-weight: 500;
-  line-height: 1.22;
-  color: #ffffff;
-}
-
-.iq-order-lead-line2 {
-  margin-top: 4px;
 }
 
 @media screen and (min-width: 992px) {
@@ -931,7 +922,7 @@
   min-height: var(--iq-panel-min-height);
   max-width: var(--iq-panel-max-width);
   margin: 0 auto;
-  padding: clamp(12px, 2vw, 18px);
+  padding: clamp(20px, 3vw, 32px);
   box-sizing: border-box;
   border-radius: 16px;
   border: 2px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
@@ -1644,26 +1635,19 @@
 #iq-order-section > .iq-artwork-info-link,
 #iq-order-section > #iq-artwork-info-trigger.iq-artwork-info-link {
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-  width: auto;
-  max-width: 100%;
-  margin: 8px 0 24px;
+  gap: 8px;
+  margin: 14px 0 32px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.68);
-  font-size: clamp(13px, 1.35vw, 15px);
-  font-weight: 500;
-  line-height: 1.35;
+  color: inherit;
+  font: inherit;
   text-align: left;
-  text-decoration: underline;
-  text-underline-offset: 3px;
   cursor: pointer;
 }
 
+/* Spacing only — type/color stay in Designer */
 #iq-order-section > .iq-order-lead-line2 + .iq-artwork-info-link,
 #iq-order-section > .iq-order-lead-line2 + #iq-artwork-info-trigger {
   margin-top: 8px;
@@ -2135,20 +2119,6 @@
     max-width: 100%;
     padding-right: 35%;
     box-sizing: border-box;
-  }
-
-  .iq-order-lead,
-  .iq-order-lead-line2 {
-    line-height: 1.22 !important;
-    color: #ffffff !important;
-  }
-
-  #iq-order-section > .iq-artwork-info-link,
-  #iq-order-section > #iq-artwork-info-trigger.iq-artwork-info-link {
-    margin-top: 8px !important;
-    margin-bottom: 20px !important;
-    font-size: 14px !important;
-    color: rgba(255, 255, 255, 0.68) !important;
   }
 
   .iq-toggle-track,
@@ -2720,14 +2690,10 @@
   }
 
   .iq-breakdown {
+    display: flex;
     flex-direction: column;
-    gap: 32px;
-    margin-top: 64px !important;
-  }
-
-  .iq-breakdown-col {
-    flex: 1 1 100%;
-    min-width: 100%;
+    gap: 24px;
+    margin-top: 75px !important;
   }
 
   .iq-receipt,
@@ -2739,25 +2705,9 @@
   }
 }
 
-/* Pricing explainer — space BETWEEN columns/rows (margin/gap), not padding
-   inside each bordered block (Designer owns inner padding). */
-.iq-breakdown {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: clamp(28px, 4vw, 56px);
-  margin-top: clamp(72px, 9vw, 120px);
-  margin-bottom: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* Breakdown layout/grid/padding → Designer. Embed: drop bad inner padding hack only. */
 .iq-breakdown-col {
-  flex: 1 1 calc(33.333% - clamp(28px, 4vw, 56px));
-  min-width: min(100%, 280px);
-  margin: 0;
-  padding: 0;
+  padding-top: 0 !important;
   box-sizing: border-box;
 }
 
