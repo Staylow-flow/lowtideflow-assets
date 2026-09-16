@@ -195,10 +195,9 @@
 .iq-total-wrapper {
   position: relative;
   isolation: isolate;
-  display: grid;
-  grid-template-rows: 1fr auto auto 1fr auto;
-  align-items: center;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   box-sizing: border-box;
   width: min(var(--iq-panel-max-width), 100%);
   max-width: var(--iq-panel-max-width);
@@ -328,21 +327,23 @@
   z-index: 1;
 }
 
-/* Label + price: tight stack, centered as a unit above Calculate (rows 2–3) */
+/* DOM order is often orbit-wrap (Calculate) first — flex order restores label → price → button */
 .iq-total-label {
-  grid-row: 2;
+  order: 1;
   margin: 0;
   padding: 0;
   width: 100%;
   text-align: center;
   line-height: 1.08;
+  flex: 0 0 auto;
 }
 
 #iq-total-price,
 .iq-total-price {
-  grid-row: 3;
+  order: 2;
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
   margin: 2px 0 0;
   display: flex !important;
   align-items: center !important;
@@ -353,12 +354,13 @@
   box-sizing: border-box;
 }
 
+.iq-total-wrapper > .iq-orbit-wrap:has(#iq-run-quote),
+.iq-total-wrapper > .iq-orbit-wrap:has(.iq-run-quote),
 .iq-total-wrapper > #iq-run-quote,
 .iq-total-wrapper > .iq-run-quote {
-  grid-row: 5;
+  order: 3;
+  flex: 0 0 auto;
   width: 100%;
-  justify-self: stretch;
-  align-self: end;
 }
 
 .iq-price-box,
