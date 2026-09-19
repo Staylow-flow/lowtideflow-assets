@@ -1,0 +1,93 @@
+/**
+ * System Engine preloader — FX-only overlay (Spec Run / any page).
+ * Link in <head> before page paint. Markup: .system-preloader in Webflow (first in body).
+ */
+
+html.ltf-system-engine-boot,
+html.ltf-system-engine-boot body {
+  overflow: hidden !important;
+}
+
+.system-preloader {
+  --ltf-se-bg: var(--iq-bg, #00001c);
+  --ltf-se-muted: var(--iq-slate, #cbd5e1);
+  --ltf-se-purple: var(--iq-nebula-purple, #4d259d);
+  --ltf-se-teal: var(--iq-nebula-teal, #2aaab8);
+  --ltf-se-green: var(--iq-nebula-green, #0b8050);
+  --ltf-se-purple-mid: var(--iq-nebula-purple-mid, #7040c0);
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--ltf-se-bg);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  clip-path: circle(150% at 50% 50%);
+  transition:
+    clip-path 0.8s cubic-bezier(0.77, 0, 0.175, 1),
+    opacity 0.5s ease;
+}
+
+.system-preloader .preloader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.system-preloader .gradient-spinner-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    var(--ltf-se-teal) 35%,
+    var(--ltf-se-purple-mid) 65%,
+    var(--ltf-se-purple) 100%
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 3px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 3px));
+  animation: ltf-system-engine-spin 1s linear infinite;
+}
+
+.system-preloader .preloader-status-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--ltf-se-muted);
+  text-transform: uppercase;
+}
+
+@keyframes ltf-system-engine-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.system-preloader.reveal-active {
+  clip-path: circle(0% at 50% 50%);
+  pointer-events: none;
+}
+
+.system-preloader.reveal-active .preloader-content {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-preloader .gradient-spinner-ring {
+    animation: none;
+  }
+
+  .system-preloader,
+  .system-preloader .preloader-content {
+    transition-duration: 0.01ms;
+  }
+}
