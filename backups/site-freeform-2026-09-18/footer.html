@@ -1,0 +1,142 @@
+<!--
+  LTF site-wide footer (global — Site Settings → Custom Code → Before </body>):
+  Force Acumin font-display:swap after Typekit.load() reinjects auto.
+  Mobile nav (open/close + scroll hide/reveal): js/ui/nav-mobile.js via nav.js
+  (skip /clean-slate — ltf.js boots nav there). Open Comms: inline boot below
+  + site head #ltf-site-nav-fx CSS; binds .ltf-site-nav symbol OPEN COMMS
+  globally (ltfCommsBound guard dedupes with ltf.js on /clean-slate).
+-->
+<script defer>
+(function () {
+  'use strict';
+
+  /* ── Force swap on Typekit faces (JS injects font-display:auto later) ── */
+  function forceAcuminSwap() {
+    try {
+      var sheets = document.styleSheets;
+      for (var i = 0; i < sheets.length; i++) {
+        var sheet = sheets[i];
+        var rules;
+        try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
+        if (!rules) continue;
+        for (var j = 0; j < rules.length; j++) {
+          var rule = rules[j];
+          if (!rule || rule.type !== CSSRule.FONT_FACE_RULE) continue;
+          var ff = (rule.style.getPropertyValue('font-family') || '').replace(/["']/g, '');
+          if (ff.indexOf('acumin') === -1) continue;
+          if (rule.style.getPropertyValue('font-display') !== 'swap') {
+            rule.style.setProperty('font-display', 'swap', 'important');
+          }
+        }
+      }
+    } catch (e) {}
+
+    try {
+      var nodes = document.querySelectorAll('style');
+      for (var k = 0; k < nodes.length; k++) {
+        var el = nodes[k];
+        var txt = el.textContent || '';
+        if (txt.indexOf('acumin') !== -1 && /font-display\s*:\s*auto/.test(txt)) {
+          el.textContent = txt.replace(/font-display\s*:\s*auto/g, 'font-display:swap');
+        }
+      }
+    } catch (e2) {}
+  }
+
+  forceAcuminSwap();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(forceAcuminSwap).catch(function () {});
+  }
+  var mo = new MutationObserver(function () { forceAcuminSwap(); });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(forceAcuminSwap, 0);
+  setTimeout(forceAcuminSwap, 250);
+  setTimeout(forceAcuminSwap, 1000);
+  window.addEventListener('load', forceAcuminSwap);
+})();
+</script>
+
+<!-- Site nav: skip on /clean-slate (ltf.js boots nav there). Other pages only. -->
+<script defer>
+(function () {
+  'use strict';
+  if (/\/clean-slate\/?$/i.test(location.pathname)) return;
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@334377c/js/nav.js';
+  s.crossOrigin = 'anonymous';
+  s.integrity = 'sha384-3sJF34mZ8eKNJUU5G4ybpFbMbqrAhyUSVWzE5J3o7tbObxQASb+C5CK+MzY+RMQD';
+  document.body.appendChild(s);
+})();
+</script>
+
+<!-- Open Comms — global nav symbol boot (mirrors js/ui/nav-comms.js; CSS in site head) -->
+<script defer>
+(function(){
+'use strict';
+var MOBILE_MQ='(max-width: 991px)';
+function isMobile(){return window.matchMedia(MOBILE_MQ).matches;}
+function initComms(){
+ if(document.documentElement.dataset.ltfCommsBound==='1')return;
+ var links=document.querySelectorAll('.ltf-nav-mobile-panel .ltf-nav-btn, .ltf-nav-actions .ltf-nav-btn');
+ var trigger=null;
+ for(var i=0;i<links.length;i++){
+  var t=(links[i].textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+  if(t==='open comms'){trigger=links[i];break;}
+ }
+ if(!trigger)return;
+ var wrap=trigger.closest('.ltf-btn-gradient-wrap');
+ if(!wrap)return;
+ document.documentElement.dataset.ltfCommsBound='1';
+ wrap.classList.add('ltf-comms-wrap');
+ var panel=document.createElement('div');
+ panel.className='ltf-comms-popout';
+ panel.id='ltf-comms-popout';
+ panel.setAttribute('role','dialog');
+ panel.setAttribute('aria-modal','true');
+ panel.setAttribute('aria-hidden','true');
+ panel.setAttribute('aria-labelledby','ltf-comms-popout-foot');
+ panel.hidden=true;
+ panel.innerHTML='<ul class="ltf-comms-list"><li class="ltf-comms-row"><span class="ltf-comms-label">Call Now:</span><span class="ltf-comms-value"><a href="tel:+14242476007">(424) 247-6007</a></span></li><li class="ltf-comms-row"><span class="ltf-comms-label">Schedule a Call:</span><span class="ltf-comms-value"><a href="https://calendly.com/lowtideflow/30-min-onboard?month=2026-09" target="_blank" rel="noopener noreferrer">30-Min Onboard</a></span></li><li class="ltf-comms-row"><span class="ltf-comms-label">Email:</span><span class="ltf-comms-value"><a href="mailto:Info@Lowtideflow.co">Info@Lowtideflow.co</a></span></li></ul><p id="ltf-comms-popout-foot" class="ltf-comms-foot">We look forward to helping you dial in your vision!</p><button type="button" class="ltf-comms-dismiss" aria-label="Close contact options"><svg class="ltf-comms-dismiss-icon" viewBox="0 0 80 24" aria-hidden="true" focusable="false"><path d="M6 20 L40 4 L74 20" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+ function mountPanel(mobile){
+  if(mobile){
+   panel.classList.add('ltf-comms-popout--mobile');
+   if(panel.parentElement!==document.body)document.body.appendChild(panel);
+  }else{
+   panel.classList.remove('ltf-comms-popout--mobile');
+   panel.style.removeProperty('--ltf-comms-origin-y');
+   if(panel.parentElement!==wrap)wrap.appendChild(panel);
+  }
+ }
+ function updateOrigin(){
+  var rect=trigger.getBoundingClientRect();
+  panel.style.setProperty('--ltf-comms-origin-y',(rect.top+rect.height/2)+'px');
+ }
+ mountPanel(isMobile());
+ var open=false;
+ function setOpen(next){
+  if(next){updateOrigin();mountPanel(isMobile());}
+  open=next;
+  wrap.classList.toggle('is-comms-open',next&&!isMobile());
+  panel.classList.toggle('is-comms-open',next);
+  panel.hidden=!next;
+  panel.setAttribute('aria-hidden',next?'false':'true');
+  trigger.setAttribute('aria-expanded',next?'true':'false');
+  trigger.setAttribute('aria-haspopup','dialog');
+  trigger.setAttribute('aria-controls',panel.id);
+  document.body.classList.toggle('ltf-comms-open',next);
+ }
+ function close(){setOpen(false);}
+ function toggle(e){e.preventDefault();e.stopPropagation();setOpen(!open);}
+ var dismiss=panel.querySelector('.ltf-comms-dismiss');
+ if(dismiss){dismiss.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();close();});}
+ trigger.addEventListener('click',toggle);
+ trigger.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(e);}});
+ document.addEventListener('click',function(e){if(!open)return;if(wrap.contains(e.target)||panel.contains(e.target))return;close();});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&open)close();});
+ window.addEventListener('resize',function(){if(open){updateOrigin();mountPanel(isMobile());}else{mountPanel(isMobile());}},{passive:true});
+ window.matchMedia(MOBILE_MQ).addEventListener('change',function(){if(open)close();mountPanel(isMobile());});
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initComms);}else{initComms();}
+window.addEventListener('load',initComms);
+})();
+</script>

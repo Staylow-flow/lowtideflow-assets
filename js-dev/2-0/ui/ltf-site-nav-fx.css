@@ -1,0 +1,289 @@
+/* js-dev/2-0 — Spec/Dev pin of site nav FX.
+   Source of truth twin for Live site head #ltf-site-nav-fx.
+   Live still serves from Site Settings freeform — do NOT rewrite Live freeform
+   from this file without Nate approving a pin bump.
+   Dev deltas vs Live (2026-09-18):
+   - .ltf-nav-mobile-panel .ltf-nav-links gap: 25px (Live still 2px)
+   - Closed panel slides from fully off-screen (translateY -100%), not a 12px fade-pop
+*/
+
+@keyframes ltf-nebula-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.ltf-btn-gradient-wrap {
+  position: relative;
+  display: inline-block;
+  padding: 2px;
+  border-radius: 5px;
+  background: transparent;
+  transition: box-shadow 0.35s ease;
+}
+.ltf-btn-gradient-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.ltf-btn-gradient-wrap > * {
+  position: relative;
+  z-index: 1;
+}
+.ltf-btn-gradient-wrap:hover::before,
+.ltf-btn-gradient-wrap:focus-within::before,
+.ltf-btn-gradient-wrap.ltf-btn-gradient-active::before {
+  opacity: 1;
+}
+.ltf-btn-gradient-wrap:hover,
+.ltf-btn-gradient-wrap:focus-within,
+.ltf-btn-gradient-wrap.ltf-btn-gradient-active {
+  box-shadow:
+    0 0 16px rgba(77, 37, 157, 0.45),
+    0 0 28px rgba(31, 119, 129, 0.28);
+}
+
+.ltf-nav-actions .ltf-btn-gradient-wrap,
+.ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
+  margin-top: 0 !important;
+  padding: 2px !important;
+}
+
+.ltf-nav-links .ltf-nav-link {
+  background-image: none;
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.ltf-nav-links .ltf-nav-link:hover,
+.ltf-nav-links .ltf-nav-link:focus-visible {
+  background-image: linear-gradient(45deg, #4D259D, #2AAAB8, #1F7781, #0B8050, #7040C0, #4D259D);
+  background-size: 200% 200%;
+  animation: ltf-nebula-gradient-shift 3s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(0 0 5px rgba(77, 37, 157, 0.21))
+    drop-shadow(0 0 12px rgba(42, 170, 184, 0.14));
+}
+
+.ltf-nav-toggle-bar {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.ltf-site-nav.is-nav-open .ltf-nav-toggle .ltf-nav-toggle-bar:nth-of-type(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+body.ltf-nav-open {
+  overflow: hidden;
+}
+
+.ltf-site-nav {
+  transition: transform 0.35s ease;
+}
+.ltf-site-nav.is-nav-hidden {
+  transform: translate3d(0, -100%, 0);
+}
+
+@media (min-width: 992px) {
+  .ltf-nav-inner > .ltf-nav-toggle {
+    display: none !important;
+  }
+  .ltf-nav-inner:not(.is-nav-wrapped) .ltf-nav-link {
+    transform: translateY(2px);
+  }
+  .ltf-nav-inner.is-nav-wrapped {
+    padding-bottom: 8px !important;
+  }
+  .ltf-nav-inner.is-nav-wrapped .ltf-nav-mobile-panel {
+    justify-content: flex-start !important;
+  }
+  .ltf-nav-inner.is-nav-wrapped .ltf-nav-links {
+    flex-grow: 0 !important;
+    flex-basis: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ltf-nav-links .ltf-nav-link:hover {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .ltf-site-nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    z-index: 100 !important;
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.35s ease;
+  }
+  .ltf-site-nav.is-nav-hidden {
+    transform: translate3d(0, -100%, 0);
+  }
+  .ltf-site-nav.is-nav-open {
+    transform: translate3d(0, 0, 0) !important;
+  }
+  .ltf-nav-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-width: none !important;
+    padding-left: 15px !important;
+    padding-right: 10px !important;
+    gap: 12px !important;
+  }
+  .ltf-nav-logo-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    height: 52px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    z-index: 1;
+  }
+  .ltf-nav-logo-link .ltf-nav-logo,
+  .ltf-nav-logo-link img,
+  .ltf-nav-logo {
+    display: block !important;
+    height: 21px !important;
+    width: auto !important;
+    max-height: 21px !important;
+    object-fit: contain;
+    margin: 0 !important;
+  }
+  .ltf-nav-inner > .ltf-nav-toggle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    z-index: 102 !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    margin: 0 0 0 auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-toggle {
+    display: none !important;
+  }
+  .ltf-nav-mobile-panel {
+    display: flex !important;
+    position: fixed !important;
+    top: 52px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    z-index: 99 !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: min(80vh, 640px) !important;
+    padding: 14px clamp(20px, 5vw, 32px) 16px !important;
+    overflow: hidden !important;
+    background: rgba(6, 20, 46, 0.97) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    /* True slide (not fade-pop): fully off-screen above when closed */
+    transform: translate3d(0, -100%, 0) !important;
+    opacity: 1 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition:
+      transform 0.4s ease,
+      visibility 0.4s ease !important;
+  }
+  .ltf-site-nav.is-nav-open .ltf-nav-mobile-panel {
+    transform: translate3d(0, 0, 0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+  .ltf-site-nav.is-nav-hidden .ltf-nav-mobile-panel {
+    transform: translate3d(0, -100%, 0) !important;
+    opacity: 1 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-links {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 25px !important; /* Live freeform still has 2px — bump Live on Nate approve */
+    width: 100% !important;
+    margin: 0 0 14px !important;
+    padding: 0 !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    height: auto !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .ltf-nav-mobile-panel .ltf-btn-gradient-wrap {
+    display: block !important;
+    width: 100% !important;
+  }
+  .ltf-nav-mobile-panel .ltf-nav-btn,
+  .ltf-nav-mobile-panel .ltf-nav-btn-quote {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+    font-size: 19px !important;
+    letter-spacing: 0.14em !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+}
+
+@media (max-width: 991px) and (prefers-reduced-motion: reduce) {
+  .ltf-site-nav,
+  .ltf-nav-mobile-panel {
+    transition: none !important;
+  }
+}

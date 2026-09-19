@@ -1,0 +1,21 @@
+/* Spec SANDBOX override — nav gap + slide. Does not change Live site freeform. */
+@media (max-width: 991px) {
+  .ltf-nav-mobile-panel .ltf-nav-links {
+    gap: 25px !important;
+  }
+  .ltf-nav-mobile-panel {
+    transform: translate3d(0, -100%, 0) !important;
+    opacity: 1 !important;
+    transition: transform 0.4s ease, visibility 0.4s ease !important;
+  }
+  .ltf-site-nav.is-nav-open .ltf-nav-mobile-panel {
+    transform: translate3d(0, 0, 0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+  .ltf-site-nav.is-nav-hidden .ltf-nav-mobile-panel {
+    transform: translate3d(0, -100%, 0) !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}

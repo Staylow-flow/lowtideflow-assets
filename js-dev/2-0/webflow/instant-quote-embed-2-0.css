@@ -2463,7 +2463,10 @@ body:has(.iq-page) > .system-preloader {
     width: 100%;
     max-width: 100%;
     margin: 0 !important;
-    padding: 0 !important;
+    /* Restore Nate +25px section padding (container+slider). Was zeroed and
+       overwrote Designer / prior dialed-in air on Ink / Print / Qty rows. */
+    padding: 25px !important;
+    box-sizing: border-box !important;
   }
 
   /* Label + value fuse into ONE bordered box (shared slate-grey text color,
