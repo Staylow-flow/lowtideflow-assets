@@ -1,0 +1,66 @@
+<!--
+  CLEAN SLATE — Full page footer deploy (Before </body>)
+
+  Replace everything from the Acumin block through the jsDelivr tags.
+  Removes duplicate @683a890 tags and page-level nav.js (nav loads via ltf.js).
+
+  Pin: 2047dec · Publish after paste.
+-->
+<!--
+  LTF site-wide footer:
+  Force Acumin font-display:swap after Typekit.load() reinjects auto.
+  Mobile nav (open/close + scroll hide/reveal) is handled entirely by
+  js/ui/nav-mobile.js via the pinned LTFUIBoot module — do not duplicate
+  that logic here, it will fight the data-ltf-nav-bound guard.
+-->
+<script defer>
+(function () {
+  'use strict';
+
+  function forceAcuminSwap() {
+    try {
+      var sheets = document.styleSheets;
+      for (var i = 0; i < sheets.length; i++) {
+        var sheet = sheets[i];
+        var rules;
+        try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
+        if (!rules) continue;
+        for (var j = 0; j < rules.length; j++) {
+          var rule = rules[j];
+          if (!rule || rule.type !== CSSRule.FONT_FACE_RULE) continue;
+          var ff = (rule.style.getPropertyValue('font-family') || '').replace(/["']/g, '');
+          if (ff.indexOf('acumin') === -1) continue;
+          if (rule.style.getPropertyValue('font-display') !== 'swap') {
+            rule.style.setProperty('font-display', 'swap', 'important');
+          }
+        }
+      }
+    } catch (e) {}
+
+    try {
+      var nodes = document.querySelectorAll('style');
+      for (var k = 0; k < nodes.length; k++) {
+        var el = nodes[k];
+        var txt = el.textContent || '';
+        if (txt.indexOf('acumin') !== -1 && /font-display\s*:\s*auto/.test(txt)) {
+          el.textContent = txt.replace(/font-display\s*:\s*auto/g, 'font-display:swap');
+        }
+      }
+    } catch (e2) {}
+  }
+
+  forceAcuminSwap();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(forceAcuminSwap).catch(function () {});
+  }
+  var mo = new MutationObserver(function () { forceAcuminSwap(); });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(forceAcuminSwap, 0);
+  setTimeout(forceAcuminSwap, 250);
+  setTimeout(forceAcuminSwap, 1000);
+  window.addEventListener('load', forceAcuminSwap);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2047dec/js/hero/rock-scene.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2047dec/js/ltf.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Staylow-flow/lowtideflow-assets@2047dec/js/ui/hero-viewport.js"></script>
