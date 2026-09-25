@@ -53,7 +53,9 @@ const STICK_SHARE = 0.5;
    is higher; travel top = lensBounds().minY. */
 const SCROLL_LOCK_HOLE_NX = 0.5;
 const SCROLL_LOCK_TRAVEL_TY = 0;
-const REVEAL_PROGRESS_UNLOCK = 0.999;
+const VIEWPORT_EDGE_EPS = 0.5;
+const UNLOCK_GLIDE_MS = 400;
+const UNLOCK_GLIDE_SMOOTH = SMOOTH;
 
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
@@ -150,6 +152,9 @@ function bind(host) {
   let stickVel = 0;
   let started = false;
   let scrollLockWasActive = false;
+  let interactionReady = false;
+  let glidingUnlock = false;
+  let glideStartedAt = 0;
   let lastPtrX = null;
   let lastPtrY = null;
   const objectUrls = [];
@@ -294,30 +299,66 @@ function bind(host) {
     return r.bottom > 0 && r.top < vh;
   }
 
-  function isTrenchesRevealComplete() {
-    return scrollPanProgress() >= REVEAL_PROGRESS_UNLOCK;
+  function isHostFullyRevealedInViewport() {
+    const r = host.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+    const eps = VIEWPORT_EDGE_EPS;
+    if (r.height <= vh + eps) {
+      return r.top >= -eps && r.bottom <= vh + eps;
+    }
+    return r.top <= eps && r.bottom >= vh - eps;
   }
 
   function shouldScrollLockInteraction() {
     if (isMobile()) return false;
     if (!hostInViewport()) return true;
-    return !isTrenchesRevealComplete();
+    return !isHostFullyRevealedInViewport();
   }
 
   function applyScrollLock() {
     viewStickY = 0;
     stickVel = 0;
     returning = false;
+    glidingUnlock = false;
+    interactionReady = false;
     const at = scrollLockLensPosition();
     applyLens(at.x, at.y);
   }
 
-  function syncDesktopAfterScrollUnlock() {
+  function pointerLensPosition(clientX, clientY) {
+    const r = host.getBoundingClientRect();
+    const x = clientX - r.left;
+    const y = clientY - r.top;
+    return clampLens(x - holeCx, y - holeCy);
+  }
+
+  function beginUnlockTransition() {
+    viewStickY = 0;
+    stickVel = 0;
+    returning = false;
     if (hovering && lastPtrX != null && lastPtrY != null) {
-      moveToPointer(lastPtrX, lastPtrY);
-    } else if (!hovering && !returning) {
-      parkIce();
+      glidingUnlock = true;
+      glideStartedAt = performance.now();
+      interactionReady = false;
+      return;
     }
+    interactionReady = false;
+  }
+
+  function tickUnlockGlide(now) {
+    const target = pointerLensPosition(lastPtrX, lastPtrY);
+    const elapsed = now - glideStartedAt;
+    const blend = UNLOCK_GLIDE_SMOOTH * (elapsed < UNLOCK_GLIDE_MS ? 1.35 : 1);
+    const dx = (target.x - lastLx) * blend;
+    const dy = (target.y - lastLy) * blend;
+    const dist = Math.hypot(target.x - lastLx, target.y - lastLy);
+    if (dist < 0.6 || elapsed >= UNLOCK_GLIDE_MS) {
+      glidingUnlock = false;
+      interactionReady = true;
+      applyLens(target.x, target.y);
+      return;
+    }
+    applyLens(lastLx + dx, lastLy + dy);
   }
 
   function placeStart() {
@@ -358,10 +399,8 @@ function bind(host) {
   }
 
   function moveToPointer(clientX, clientY) {
-    const r = host.getBoundingClientRect();
-    const x = clientX - r.left;
-    const y = clientY - r.top;
-    applyLens(x - holeCx, y - holeCy);
+    const at = pointerLensPosition(clientX, clientY);
+    applyLens(at.x, at.y);
   }
 
   function parkIce() {
@@ -415,13 +454,18 @@ function bind(host) {
       lastPtrX = e.clientX;
       lastPtrY = e.clientY;
       if (shouldScrollLockInteraction()) applyScrollLock();
-      else moveToPointer(e.clientX, e.clientY);
+      else {
+        glidingUnlock = false;
+        interactionReady = true;
+        moveToPointer(e.clientX, e.clientY);
+      }
     });
 
     host.addEventListener('pointermove', (e) => {
       lastPtrX = e.clientX;
       lastPtrY = e.clientY;
-      if (!hovering || shouldScrollLockInteraction()) return;
+      if (!hovering || shouldScrollLockInteraction() || glidingUnlock) return;
+      if (!interactionReady) return;
       moveToPointer(e.clientX, e.clientY);
     });
 
@@ -444,8 +488,12 @@ function bind(host) {
     sizeLens();
     if (mobileMode) applyScrollPan();
     else if (shouldScrollLockInteraction()) applyScrollLock();
-    else if (!hovering && !returning) parkIce();
-    else syncDesktopAfterScrollUnlock();
+    else if (!hovering && !returning && interactionReady) parkIce();
+    else if (!shouldScrollLockInteraction() && !hovering && !returning) {
+      const at = scrollLockLensPosition();
+      applyLens(at.x, at.y);
+      interactionReady = false;
+    }
   }, { passive: true });
 
   /* Kick the fetch as soon as the module binds — do not wait for hover. */
@@ -462,7 +510,10 @@ function bind(host) {
         sizeLens();
         if (isMobile()) applyScrollPan();
         else if (shouldScrollLockInteraction()) applyScrollLock();
-        else parkIce();
+        else if (!interactionReady) {
+          const at = scrollLockLensPosition();
+          applyLens(at.x, at.y);
+        } else if (!hovering) parkIce();
       },
       onExit() {
         if (seen) dropDecoded();
@@ -480,13 +531,23 @@ function bind(host) {
     const scrollLocked = shouldScrollLockInteraction();
     if (scrollLocked) {
       applyScrollLock();
-    } else if (scrollLockWasActive) {
-      syncDesktopAfterScrollUnlock();
+      scrollLockWasActive = true;
+      return;
     }
-    scrollLockWasActive = scrollLocked;
-    if (scrollLocked) return;
+
+    if (scrollLockWasActive) {
+      beginUnlockTransition();
+    }
+    scrollLockWasActive = false;
+
+    if (glidingUnlock) {
+      tickUnlockGlide(now);
+      return;
+    }
 
     if (hovering) return;
+
+    if (!interactionReady) return;
 
     tickStick();
 
@@ -527,7 +588,10 @@ function bind(host) {
       print.style.willChange = 'transform';
       if (isMobile()) applyScrollPan();
       else if (shouldScrollLockInteraction()) applyScrollLock();
-      else parkIce();
+      else if (!interactionReady) {
+        const at = scrollLockLensPosition();
+        applyLens(at.x, at.y);
+      } else if (!hovering) parkIce();
       scrollLockWasActive = shouldScrollLockInteraction();
     },
     onExit() {
