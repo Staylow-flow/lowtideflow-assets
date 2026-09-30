@@ -626,9 +626,11 @@ function isHeroMiddleLayout(w = typeof window !== 'undefined' ? window.innerWidt
   return w <= MOBILE_LAYOUT_MAX_W;
 }
 
-/** V2 hero: rock follows H1 at tablet/desktop widths; phone portrait keeps legacy centering. */
+/** Middle band or desktop — not phone portrait (<768 width). */
 function isHeroH1RockAnchorLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
-  return w >= 768;
+  if (w >= 992) return true;
+  if (w < 768) return false;
+  return isHeroMiddleLayout(w);
 }
 
 const MIDDLE_ROCK_H1_WIDTH_MULT = 1.375;
@@ -640,6 +642,80 @@ const MIDDLE_CANVAS_ASPECT = 72 / 100;
 function middleLayoutRefHeight(viewportW) {
   const w = Math.max(viewportW, 100);
   return Math.max(w * MIDDLE_CANVAS_ASPECT, 280);
+}
+
+/** Union of rendered text line boxes — ignores full-width block wrapper width. */
+function measureH1InkBounds(h1El) {
+  if (!h1El || typeof document === 'undefined') return null;
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(h1El);
+    const rects = range.getClientRects();
+    if (!rects.length) return null;
+
+    let left = Infinity;
+    let right = -Infinity;
+    let top = Infinity;
+    let bottom = -Infinity;
+    let maxLineW = 0;
+    for (let i = 0; i < rects.length; i++) {
+      const r = rects[i];
+      if (r.width < 0.5 || r.height < 0.5) continue;
+      left = Math.min(left, r.left);
+      right = Math.max(right, r.right);
+      top = Math.min(top, r.top);
+      bottom = Math.max(bottom, r.bottom);
+      maxLineW = Math.max(maxLineW, r.width);
+    }
+    if (left === Infinity) return null;
+    return {
+      left,
+      top,
+      right,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+      maxLineWidth: maxLineW,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Live @4749e8b middle anchor uses `.ltf-hero-headline` bounds. When Designer
+ * gives the headline a full-width box (V2 sandbox), size/position from ink metrics.
+ */
+function middleRockAnchorMetrics(headline, h1El) {
+  const boxRect = headline.getBoundingClientRect();
+  const ink = measureH1InkBounds(h1El);
+  if (!ink || ink.maxLineWidth < 8) {
+    return {
+      anchorRect: boxRect,
+      refWidth: Math.max(boxRect.width, 120),
+    };
+  }
+
+  const boxMuchWider = boxRect.width > ink.maxLineWidth * 1.12;
+  if (!boxMuchWider) {
+    return {
+      anchorRect: boxRect,
+      refWidth: Math.max(boxRect.width, 120),
+    };
+  }
+
+  const anchorRect = {
+    left: ink.left,
+    top: boxRect.top,
+    right: ink.right,
+    bottom: boxRect.bottom,
+    width: ink.width,
+    height: boxRect.bottom - boxRect.top,
+  };
+  return {
+    anchorRect,
+    refWidth: Math.max(ink.maxLineWidth, 120),
+  };
 }
 
 function activeGasBounds(viewportW) {
@@ -1033,37 +1109,23 @@ class RockScene {
     }
   }
 
-  /**
-   * Pin boulder behind the live H1 using measured DOM geometry.
-   * Nebula gas center stays locked — only rock position/scale move.
-   */
-  _syncH1AnchoredRock(vw) {
-    this._h1AnchorActive = false;
-    if (!isHeroH1RockAnchorLayout(vw) || !this.rockGroup || !this.container) return false;
-
-    const headline = document.querySelector('.ltf-hero-headline');
-    if (!headline) return false;
-
-    const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
-    const h1Rect = h1.getBoundingClientRect();
+  _applyH1AnchoredRockTransform(vw, anchorRect, refW, layoutH) {
     const canvasRect = this.container.getBoundingClientRect();
-    if (canvasRect.width < 2 || h1Rect.width < 2 || h1Rect.height < 2) return false;
+    if (canvasRect.width < 2 || anchorRect.width < 2 || anchorRect.height < 2) return false;
 
     const camZ = this.camera ? this.camera.position.z : mobileCameraZ(vw);
-    const layoutH = isHeroMiddleLayout(vw) ? middleLayoutRefHeight(this.w) : this.h;
     const { visibleW } = visibleWorldSize(this.w, layoutH, camZ);
 
     const canvasCenterX = canvasRect.left + canvasRect.width * 0.5;
-    const h1CenterX = h1Rect.left + h1Rect.width * 0.5;
+    const h1CenterX = anchorRect.left + anchorRect.width * 0.5;
     const pxOffsetX = h1CenterX - canvasCenterX;
     this.rockGroup.position.x = (pxOffsetX / this.w) * visibleW;
 
-    const h1MidY = h1Rect.top + h1Rect.height * 0.5;
+    const h1MidY = anchorRect.top + anchorRect.height * 0.5;
     const canvasMidY = canvasRect.top + canvasRect.height * 0.5;
     const pxLift = canvasMidY - h1MidY;
     this.rockGroup.position.y = rockLiftWorld(layoutH, pxLift, camZ);
 
-    const refW = Math.max(h1Rect.width, 120);
     const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.max(canvasRect.width, 320);
     const rockScale = clamp(
       widthRatio * 0.92 * MIDDLE_ROCK_SCALE_BOOST,
@@ -1071,9 +1133,49 @@ class RockScene {
       MIDDLE_ROCK_SCALE_MAX,
     );
     this.rockGroup.scale.setScalar(rockScale);
-
-    this._h1AnchorActive = true;
     return true;
+  }
+
+  /** Live @4749e8b middle-layout rock anchor (tablet + phone landscape). */
+  _syncMiddleLayoutAnchoredRock(vw) {
+    const headline = document.querySelector('.ltf-hero-headline')
+      || document.querySelector('.ltf-hero .ltf-main-header')?.closest('.ltf-hero-headline');
+    if (!headline) return false;
+
+    const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
+    const { anchorRect, refWidth } = middleRockAnchorMetrics(headline, h1);
+    const layoutH = middleLayoutRefHeight(this.w);
+    return this._applyH1AnchoredRockTransform(vw, anchorRect, refWidth, layoutH);
+  }
+
+  /** V2 desktop — rock follows `.ltf-hero-headline h1` element box. */
+  _syncDesktopH1AnchoredRock(vw) {
+    const headline = document.querySelector('.ltf-hero-headline');
+    if (!headline) return false;
+
+    const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
+    const h1Rect = h1.getBoundingClientRect();
+    const refW = Math.max(h1Rect.width, 120);
+    return this._applyH1AnchoredRockTransform(vw, h1Rect, refW, this.h);
+  }
+
+  /**
+   * Pin boulder behind the live H1 using measured DOM geometry.
+   * Nebula gas center stays locked — only rock position/scale move.
+   */
+  _syncH1AnchoredRock(vw) {
+    this._h1AnchorActive = false;
+    if (!this.rockGroup || !this.container) return false;
+
+    let ok = false;
+    if (isHeroMiddleLayout(vw)) {
+      ok = this._syncMiddleLayoutAnchoredRock(vw);
+    } else if (vw >= 992) {
+      ok = this._syncDesktopH1AnchoredRock(vw);
+    }
+
+    if (ok) this._h1AnchorActive = true;
+    return ok;
   }
 
   _scheduleH1RockSync() {
