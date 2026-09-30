@@ -606,6 +606,8 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
 
 const MOBILE_LAYOUT_MAX_W = 991;
 const MOBILE_CAMERA_Z     = 27;
+/** Live @4749e8b middle-layout anchor uses this camera distance. */
+const MIDDLE_LAYOUT_CAMERA_Z = 36;
 /** Retina mobile DPR cap — sharper rock without full 2×+ fill cost */
 const MOBILE_RENDER_DPR   = 1.5;
 const MOBILE_TEX_ANISO    = 8;
@@ -688,20 +690,15 @@ function measureH1InkBounds(h1El) {
  */
 function middleRockAnchorMetrics(headline, h1El) {
   const boxRect = headline.getBoundingClientRect();
+  const refWidth = Math.max(boxRect.width, 120);
   const ink = measureH1InkBounds(h1El);
   if (!ink || ink.maxLineWidth < 8) {
-    return {
-      anchorRect: boxRect,
-      refWidth: Math.max(boxRect.width, 120),
-    };
+    return { anchorRect: boxRect, refWidth };
   }
 
   const boxMuchWider = boxRect.width > ink.maxLineWidth * 1.12;
   if (!boxMuchWider) {
-    return {
-      anchorRect: boxRect,
-      refWidth: Math.max(boxRect.width, 120),
-    };
+    return { anchorRect: boxRect, refWidth };
   }
 
   const anchorRect = {
@@ -712,10 +709,7 @@ function middleRockAnchorMetrics(headline, h1El) {
     width: ink.width,
     height: boxRect.bottom - boxRect.top,
   };
-  return {
-    anchorRect,
-    refWidth: Math.max(ink.maxLineWidth, 120),
-  };
+  return { anchorRect, refWidth };
 }
 
 function activeGasBounds(viewportW) {
@@ -724,6 +718,7 @@ function activeGasBounds(viewportW) {
 }
 
 function mobileCameraZ(viewportW) {
+  if (isHeroMiddleLayout(viewportW)) return MIDDLE_LAYOUT_CAMERA_Z;
   return isMobileLayout(viewportW) ? MOBILE_CAMERA_Z : CAMERA_Z;
 }
 
