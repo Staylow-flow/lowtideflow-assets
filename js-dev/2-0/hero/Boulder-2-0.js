@@ -640,6 +640,11 @@ const MIDDLE_ROCK_SCALE_MIN = 0.42;
 const MIDDLE_ROCK_SCALE_MAX = 1.35;
 const MIDDLE_ROCK_SCALE_BOOST = 1.25;
 const MIDDLE_CANVAS_ASPECT = 72 / 100;
+/**
+ * Live @4749e8b mobile GLB scale = ROCK_SCALE_BASE×(1.30×0.75)×0.82 vs this file's
+ * ROCK_SCALE_BASE. Middle group scale must include this so on-screen rock matches Live.
+ */
+const MIDDLE_ROCK_GROUP_PARITY = 1.30 * 0.75 * 0.82;
 
 function middleLayoutRefHeight(viewportW) {
   const w = Math.max(viewportW, 100);
@@ -1104,7 +1109,7 @@ class RockScene {
     }
   }
 
-  _applyH1AnchoredRockTransform(vw, anchorRect, refW, layoutH) {
+  _applyH1AnchoredRockTransform(vw, anchorRect, refW, layoutH, groupParity = 1) {
     const canvasRect = this.container.getBoundingClientRect();
     if (canvasRect.width < 2 || anchorRect.width < 2 || anchorRect.height < 2) return false;
 
@@ -1127,7 +1132,7 @@ class RockScene {
       MIDDLE_ROCK_SCALE_MIN,
       MIDDLE_ROCK_SCALE_MAX,
     );
-    this.rockGroup.scale.setScalar(rockScale);
+    this.rockGroup.scale.setScalar(rockScale * groupParity);
     return true;
   }
 
@@ -1140,7 +1145,9 @@ class RockScene {
     const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
     const { anchorRect, refWidth } = middleRockAnchorMetrics(headline, h1);
     const layoutH = middleLayoutRefHeight(this.w);
-    return this._applyH1AnchoredRockTransform(vw, anchorRect, refWidth, layoutH);
+    return this._applyH1AnchoredRockTransform(
+      vw, anchorRect, refWidth, layoutH, MIDDLE_ROCK_GROUP_PARITY,
+    );
   }
 
   /** V2 desktop — rock follows `.ltf-hero-headline h1` element box. */
