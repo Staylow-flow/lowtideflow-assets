@@ -645,6 +645,8 @@ const MIDDLE_CANVAS_ASPECT = 72 / 100;
  * ROCK_SCALE_BASE. Middle group scale must include this so on-screen rock matches Live.
  */
 const MIDDLE_ROCK_GROUP_PARITY = 1.30 * 0.75 * 0.82;
+/** Desktop ≥992: constant on-screen rock size (px), max radius @992×900 on @d561ffc × 1.25. */
+const DESKTOP_ROCK_TARGET_SCREEN_RADIUS_PX = 407.5 * 1.25;
 
 function middleLayoutRefHeight(viewportW) {
   const w = Math.max(viewportW, 100);
@@ -1109,7 +1111,28 @@ class RockScene {
     }
   }
 
-  _applyH1AnchoredRockTransform(vw, anchorRect, refW, layoutH, groupParity = 1) {
+  _rockScreenRadiusPx() {
+    if (!this.rockGroup || !this.camera || !this.renderer) return 0;
+    this.rockGroup.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(this.rockGroup);
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const canvas = this.renderer.domElement;
+    const rect = canvas.getBoundingClientRect();
+    const center = sphere.center.clone();
+    const edge = center.clone().add(new THREE.Vector3(sphere.radius, 0, 0));
+    const toScreen = (v) => {
+      const p = v.clone().project(this.camera);
+      return {
+        x: (p.x * 0.5 + 0.5) * rect.width + rect.left,
+        y: (-p.y * 0.5 + 0.5) * rect.height + rect.top,
+      };
+    };
+    const c = toScreen(center);
+    const e = toScreen(edge);
+    return Math.hypot(e.x - c.x, e.y - c.y);
+  }
+
+  _applyH1AnchorPosition(vw, anchorRect, layoutH) {
     const canvasRect = this.container.getBoundingClientRect();
     if (canvasRect.width < 2 || anchorRect.width < 2 || anchorRect.height < 2) return false;
 
@@ -1125,8 +1148,30 @@ class RockScene {
     const canvasMidY = canvasRect.top + canvasRect.height * 0.5;
     const pxLift = canvasMidY - h1MidY;
     this.rockGroup.position.y = rockLiftWorld(layoutH, pxLift, camZ);
+    return true;
+  }
 
-    const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.max(canvasRect.width, 320);
+  _desktopGroupScaleForScreenRadius(targetPx) {
+    let scale = Number.isFinite(this._lastDesktopRockScale) ? this._lastDesktopRockScale : 1;
+    for (let i = 0; i < 10; i++) {
+      this.rockGroup.scale.setScalar(scale);
+      const radius = this._rockScreenRadiusPx();
+      if (radius < 1) break;
+      const err = targetPx - radius;
+      if (Math.abs(err) < 1.25) break;
+      scale *= targetPx / radius;
+    }
+    this._lastDesktopRockScale = scale;
+    return scale;
+  }
+
+  _applyH1AnchoredRockTransform(vw, anchorRect, refW, layoutH, groupParity = 1) {
+    if (!this._applyH1AnchorPosition(vw, anchorRect, layoutH)) return false;
+
+    const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.max(
+      this.container.getBoundingClientRect().width,
+      320,
+    );
     const rockScale = clamp(
       widthRatio * 0.92 * MIDDLE_ROCK_SCALE_BOOST,
       MIDDLE_ROCK_SCALE_MIN,
@@ -1150,15 +1195,17 @@ class RockScene {
     );
   }
 
-  /** V2 desktop — rock follows `.ltf-hero-headline h1` element box. */
+  /** V2 desktop — H1 position anchor; fixed on-screen rock size (px). */
   _syncDesktopH1AnchoredRock(vw) {
     const headline = document.querySelector('.ltf-hero-headline');
     if (!headline) return false;
 
     const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
     const h1Rect = h1.getBoundingClientRect();
-    const refW = Math.max(h1Rect.width, 120);
-    return this._applyH1AnchoredRockTransform(vw, h1Rect, refW, this.h);
+    if (!this._applyH1AnchorPosition(vw, h1Rect, this.h)) return false;
+    const scale = this._desktopGroupScaleForScreenRadius(DESKTOP_ROCK_TARGET_SCREEN_RADIUS_PX);
+    this.rockGroup.scale.setScalar(scale);
+    return true;
   }
 
   /**
