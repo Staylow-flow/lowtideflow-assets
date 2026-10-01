@@ -1115,13 +1115,16 @@ class RockScene {
     if (!this.rockGroup || !this.camera || !this.renderer) return 0;
     this.rockGroup.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(this.rockGroup);
+    if (box.isEmpty()) return 0;
     const sphere = box.getBoundingSphere(new THREE.Sphere());
+    if (!Number.isFinite(sphere.radius) || sphere.radius <= 0) return 0;
     const canvas = this.renderer.domElement;
     const rect = canvas.getBoundingClientRect();
     const center = sphere.center.clone();
     const edge = center.clone().add(new THREE.Vector3(sphere.radius, 0, 0));
     const toScreen = (v) => {
       const p = v.clone().project(this.camera);
+      if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return null;
       return {
         x: (p.x * 0.5 + 0.5) * rect.width + rect.left,
         y: (-p.y * 0.5 + 0.5) * rect.height + rect.top,
@@ -1129,7 +1132,9 @@ class RockScene {
     };
     const c = toScreen(center);
     const e = toScreen(edge);
-    return Math.hypot(e.x - c.x, e.y - c.y);
+    if (!c || !e) return 0;
+    const r = Math.hypot(e.x - c.x, e.y - c.y);
+    return Number.isFinite(r) ? r : 0;
   }
 
   _applyH1AnchorPosition(vw, anchorRect, layoutH) {
@@ -1152,14 +1157,25 @@ class RockScene {
   }
 
   _desktopGroupScaleForScreenRadius(targetPx) {
-    let scale = Number.isFinite(this._lastDesktopRockScale) ? this._lastDesktopRockScale : 1;
-    for (let i = 0; i < 10; i++) {
+    const DESKTOP_SCALE_MIN = 0.22;
+    const DESKTOP_SCALE_MAX = 2.75;
+    const saved = this.rockGroup.scale.x;
+
+    this.rockGroup.scale.setScalar(1);
+    const rUnit = this._rockScreenRadiusPx();
+    if (rUnit < 4) {
+      this.rockGroup.scale.setScalar(
+        Number.isFinite(this._lastDesktopRockScale) ? this._lastDesktopRockScale : saved,
+      );
+      return this.rockGroup.scale.x;
+    }
+
+    let scale = clamp(targetPx / rUnit, DESKTOP_SCALE_MIN, DESKTOP_SCALE_MAX);
+    this.rockGroup.scale.setScalar(scale);
+    const rFit = this._rockScreenRadiusPx();
+    if (rFit >= 4) {
+      scale = clamp(scale * (targetPx / rFit), DESKTOP_SCALE_MIN, DESKTOP_SCALE_MAX);
       this.rockGroup.scale.setScalar(scale);
-      const radius = this._rockScreenRadiusPx();
-      if (radius < 1) break;
-      const err = targetPx - radius;
-      if (Math.abs(err) < 1.25) break;
-      scale *= targetPx / radius;
     }
     this._lastDesktopRockScale = scale;
     return scale;
