@@ -1460,6 +1460,8 @@ class RockScene {
         model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
         this.rockGroup.visible = layerVisibility().rock;
+        this._syncLayoutProfile();
+        this._scheduleH1RockSync();
 
         const lv = layerVisibility();
         console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
