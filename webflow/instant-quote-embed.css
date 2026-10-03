@@ -779,6 +779,33 @@
   display: none !important;
 }
 
+/* Inline email typo flag — sits on the same line as the "Email Address *" label. */
+.iq-email-typo-flag {
+  margin-left: 8px;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 0.9em;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.iq-email-typo-flag:hover,
+.iq-email-typo-flag:focus {
+  text-decoration: underline;
+  outline: none;
+}
+
+.iq-email-typo-flag[hidden] {
+  display: none !important;
+}
+
+/* Red border cue on the email input when a likely typo is detected. */
+#iq-form-email.iq-input-typo {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.35);
+}
+
 #iq-order-form > .iq-form-notes-label,
 #iq-order-form.iq-form-layout-ready > .iq-form-notes-label,
 #iq-order-form > label:has(+ #iq-form-notes),
