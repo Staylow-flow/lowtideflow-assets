@@ -58,6 +58,8 @@ const UNLOCK_GLIDE_SMOOTH = SMOOTH;
 const NAV_H = 52;
 const SCROLL_UNLOCK_VISIBLE = 0.6;
 const SCROLL_RELOCK_VISIBLE = 0.4;
+/** Non-hover: ease lens toward visible slice of garment (viewport minus nav). */
+const VISIBLE_FOLLOW_SMOOTH = SMOOTH;
 
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
@@ -381,8 +383,33 @@ function bind(host) {
     hangNy = (at.y + holeCy) / (host.clientHeight || 1);
   }
 
+  function visibleSliceCenterHostY(r, vh = window.innerHeight || 1) {
+    if (!r || r.height <= 0) return (host.clientHeight || 0) * REST_Y;
+    const viewTop = NAV_H;
+    const viewBottom = vh;
+    const visTop = Math.max(r.top, viewTop);
+    const visBot = Math.min(r.bottom, viewBottom);
+    if (visBot <= visTop) return (host.clientHeight || 0) * REST_Y;
+    return (visTop + visBot) * 0.5 - r.top;
+  }
+
+  function restTarget(r = frameHostRect) {
+    const rect = r || host.getBoundingClientRect();
+    const cy = visibleSliceCenterHostY(rect);
+    return clampLens(rect.width * 0.5 - holeCx, cy - holeCy);
+  }
+
   function rest() {
-    return clampLens(host.clientWidth * 0.5 - holeCx, lastLy);
+    return restTarget();
+  }
+
+  function glideTowardVisibleRest(r = frameHostRect, blend = VISIBLE_FOLLOW_SMOOTH) {
+    viewStickY = 0;
+    stickVel = 0;
+    const target = restTarget(r);
+    const dx = (target.x - lastLx) * blend;
+    const dy = (target.y - lastLy) * blend;
+    applyLens(lastLx + dx, lastLy + dy);
   }
 
   function paint() {
@@ -541,8 +568,6 @@ function bind(host) {
       return;
     }
 
-    tickStick();
-
     if (returning) {
       const at = rest();
       const dx = at.x - lastLx;
@@ -564,12 +589,13 @@ function bind(host) {
         mx *= RETURN_MAX / step;
         my *= RETURN_MAX / step;
       }
+      viewStickY = 0;
+      stickVel = 0;
       applyLens(lastLx + mx, lastLy + my);
       return;
     }
 
-    if (Math.abs(stickVel) < IDLE && Math.abs(scroll.deltaY) < IDLE) return;
-    paint();
+    glideTowardVisibleRest(frameHostRect);
   }, {
     element: host,
     onEnter() {
