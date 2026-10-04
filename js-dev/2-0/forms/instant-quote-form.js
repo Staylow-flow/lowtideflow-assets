@@ -33,14 +33,44 @@
     'gmial.com': 'gmail.com',
     'gmal.com': 'gmail.com',
     'gamil.com': 'gmail.com',
+    'gnail.com': 'gmail.com',
+    'gmail.co': 'gmail.com',
+    'gmail.con': 'gmail.com',
+    'gmail.cm': 'gmail.com',
+    'gmaill.com': 'gmail.com',
     'hotmial.com': 'hotmail.com',
     'hotmal.com': 'hotmail.com',
+    'hotmail.co': 'hotmail.com',
+    'hotmail.con': 'hotmail.com',
     'yaho.com': 'yahoo.com',
     'yahloo.com': 'yahoo.com',
     'yahooo.com': 'yahoo.com',
+    'yahoo.co': 'yahoo.com',
+    'yahoo.con': 'yahoo.com',
     'outlok.com': 'outlook.com',
-    'outllok.com': 'outlook.com'
+    'outllok.com': 'outlook.com',
+    'outlook.co': 'outlook.com',
+    'outlook.con': 'outlook.com',
+    'iclould.com': 'icloud.com',
+    'icloud.co': 'icloud.com'
   };
+
+  var POPULAR_DOMAINS = [
+    'gmail.com',
+    'yahoo.com',
+    'hotmail.com',
+    'outlook.com',
+    'icloud.com',
+    'aol.com',
+    'live.com',
+    'msn.com',
+    'comcast.net',
+    'me.com',
+    'ymail.com',
+    'proton.me',
+    'protonmail.com',
+    'gmx.com'
+  ];
 
   var pageLoadedAt = Date.now();
 
