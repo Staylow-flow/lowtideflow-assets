@@ -572,6 +572,9 @@ const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
 const INTRO_ROLL_MS        = 2000;
 const INTRO_ROLL_PEAK      = 0.62;
+/** Snail-paced forward roll on X (one full turn per period). Tune between 60_000–90_000 ms. */
+const AUTO_FORWARD_ROLL_PERIOD_MS = 75000;
+const AUTO_FORWARD_ROLL_RAD_PER_MS = (Math.PI * 2) / AUTO_FORWARD_ROLL_PERIOD_MS;
 /** Cross-axis idle wobble ≈ 7.5% of primary (X) pitch cap — smooth sin drift, no jitter. */
 const CROSS_AXIS_IDLE_RATIO = 0.075;
 
@@ -1030,6 +1033,7 @@ class RockScene {
     this.running          = false;
     this.raf              = 0;
     this.scrollPitchOffset = 0;
+    this.autoForwardRoll     = 0;
     this._introPending     = false;
     this._introStartPerf   = null;
     this._introDone        = true;
@@ -1630,6 +1634,7 @@ class RockScene {
       this.scrollPitchVelocity *= Math.pow(ROCK_SPIN_DECAY, dt);
       this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity);
       this.scrollPitchOffset += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
+      this.autoForwardRoll += AUTO_FORWARD_ROLL_RAD_PER_MS * dt;
 
       const idlePitch = Math.sin(t * 0.00011) * IDLE_PITCH_AMP
                       + Math.sin(t * 0.00019 + 0.9) * IDLE_PITCH_AMP2;
@@ -1655,6 +1660,7 @@ class RockScene {
       }
 
       const targetX = clamp(idlePitch, -MAX_PITCH, MAX_PITCH)
+                    + this.autoForwardRoll
                     + this.scrollPitchOffset
                     + introExtraX;
       const targetY = clamp(
