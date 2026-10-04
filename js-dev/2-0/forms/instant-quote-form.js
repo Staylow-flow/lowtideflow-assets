@@ -1093,14 +1093,74 @@
     });
   }
 
+  function editDistance(a, b) {
+    var m = a.length;
+    var n = b.length;
+    if (Math.abs(m - n) > 2) return 99;
+    var prev = [];
+    var i;
+    var j;
+    for (j = 0; j <= n; j++) prev[j] = j;
+    for (i = 1; i <= m; i++) {
+      var cur = [i];
+      for (j = 1; j <= n; j++) {
+        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+
+  /** Classify email domain: exact | typo | custom | invalid */
+  function classifyEmail(email) {
+    var value = String(email || '').trim();
+    var at = value.lastIndexOf('@');
+    if (at < 1) return { kind: 'invalid' };
+    var local = value.slice(0, at);
+    var domain = value.slice(at + 1).toLowerCase();
+    if (!local || !domain || /[@\s]/.test(domain)) return { kind: 'invalid' };
+    if (domain.indexOf('.') < 1 || /^\./.test(domain) || /\.$/.test(domain)) {
+      return { kind: 'invalid' };
+    }
+    var labels = domain.split('.');
+    if (labels.some(function (p) { return !p; })) return { kind: 'invalid' };
+    if (labels[labels.length - 1].length < 2) return { kind: 'invalid' };
+
+    if (EMAIL_TYPOS[domain]) {
+      return { kind: 'typo', domain: domain, suggestion: local + '@' + EMAIL_TYPOS[domain] };
+    }
+    if (POPULAR_DOMAINS.indexOf(domain) >= 0) {
+      return { kind: 'exact', domain: domain };
+    }
+
+    var best = null;
+    var bestDist = Infinity;
+    for (var i = 0; i < POPULAR_DOMAINS.length; i++) {
+      var d = editDistance(domain, POPULAR_DOMAINS[i]);
+      if (d < bestDist) {
+        bestDist = d;
+        best = POPULAR_DOMAINS[i];
+      }
+    }
+    if (best && bestDist > 0 && bestDist <= 2) {
+      var samePrefix = domain.slice(0, 2) === best.slice(0, 2);
+      var closeLength = Math.abs(domain.length - best.length) <= 2;
+      if (samePrefix && closeLength) {
+        return { kind: 'typo', domain: domain, suggestion: local + '@' + best };
+      }
+    }
+    return { kind: 'custom', domain: domain };
+  }
+
   function suggestEmailFix(email) {
-    var parts = String(email || '').split('@');
-    if (parts.length !== 2) return null;
-    var local = parts[0];
-    var domain = parts[1].toLowerCase();
-    var fixed = EMAIL_TYPOS[domain];
-    if (!fixed) return null;
-    return local + '@' + fixed;
+    var res = classifyEmail(email);
+    return res.kind === 'typo' ? res.suggestion : null;
+  }
+
+  function isAcceptableEmail(email) {
+    var res = classifyEmail(email);
+    return res.kind === 'exact' || res.kind === 'custom';
   }
 
   function initEmailTypoCatcher() {
@@ -1400,7 +1460,7 @@
       showFieldError('iq-company-error', 'Please enter your company name.');
       invalid = true;
     }
-    if (!email || email.indexOf('@') < 1 || suggestEmailFix(email)) {
+    if (!isAcceptableEmail(email)) {
       showFieldError('iq-email-error', 'Please enter a valid email address.');
       invalid = true;
     }
