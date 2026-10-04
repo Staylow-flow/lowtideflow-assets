@@ -563,32 +563,52 @@ const GAS_FOLLOW_DELAY_MS  = 300;              // gas lags rock by 0.3 s
 const GAS_COAST_TAU_MS     = 3000;             // 2–4 s ease-out coast (midpoint)
 const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
-const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
-const SCROLL_VEL_SCALE     = 0.0055;
+const SCROLL_IMPULSE_GAIN  = 0.27;               // Live @4749e8b
+const SCROLL_VEL_SCALE     = 0.011;              // Live @4749e8b
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15;  /* +25% base, +15% hero tune */
+const ROCK_FACE_YAW        = 0;
+const ROCK_OPEN_PITCH      = Math.PI / 2;
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
+const INTRO_ROLL_MS        = 2000;
+const INTRO_ROLL_PEAK      = 0.62;
+/** Cross-axis idle wobble ≈ 7.5% of primary (X) pitch cap — smooth sin drift, no jitter. */
+const CROSS_AXIS_IDLE_RATIO = 0.075;
 
 /**
- * Rock motion baseline — locked fallback (Jul 14 2026, pre-hover restore).
- * Restore these values if a motion tweak overshoots; idle amps below are +10%.
+ * Rock motion — Live @4749e8b idle float (hard caps) + one-way scroll pitch roll.
  */
 const ROCK_MOTION_BASELINE = Object.freeze({
-  idleYawAmp1:     0.07,
-  idleYawAmp2:     0.03,
-  idleNodAmp:      0.025,
-  idleYawLerp:     0.036,
-  idleNodLerp:     0.030,
+  idleYawAmp1:     0.38,
+  idleYawAmp2:     0.22,
+  idleYawAmp3:     0.14,
+  idleNodAmp:      0.22,
+  idleNodAmp2:     0.112,
+  idlePitchAmp:    0.48,
+  idlePitchAmp2:   0.28,
+  idleYawLerp:     0.022,
+  idleNodLerp:     0.020,
   mouseLerp:       0.028,
-  maxMouseYawDeg:  15,
-  maxMouseRollDeg: 8,
+  maxYawDeg:       10,
+  maxPitchDeg:     15,
+  maxRollDeg:      8,
 });
 
-const MAX_MOUSE_YAW  = (ROCK_MOTION_BASELINE.maxMouseYawDeg * 0.7 * Math.PI) / 180;
-const MAX_MOUSE_ROLL = (ROCK_MOTION_BASELINE.maxMouseRollDeg * 2.0 * Math.PI) / 180;
-const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1;
-const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1;
-const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1;
+const MAX_PITCH = (ROCK_MOTION_BASELINE.maxPitchDeg * Math.PI) / 180;
+const MAX_CROSS = MAX_PITCH * CROSS_AXIS_IDLE_RATIO;
+const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1;
+const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2;
+const IDLE_YAW_AMP3  = ROCK_MOTION_BASELINE.idleYawAmp3;
+const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp;
+const IDLE_NOD_AMP2  = ROCK_MOTION_BASELINE.idleNodAmp2;
+const IDLE_PITCH_AMP = ROCK_MOTION_BASELINE.idlePitchAmp;
+const IDLE_PITCH_AMP2 = ROCK_MOTION_BASELINE.idlePitchAmp2;
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 /** Tighter mobile layout — nebula/rock bleed ≤ ~15% past viewport edges */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
@@ -1009,8 +1029,10 @@ class RockScene {
 
     this.running          = false;
     this.raf              = 0;
-    this.rockPitchAccum   = 0;
     this.scrollPitchOffset = 0;
+    this._introPending     = false;
+    this._introStartPerf   = null;
+    this._introDone        = true;
     this.scrollPitchVelocity = 0;
     this._lastScrollProgress  = 0;
     this.hScrollYawTarget  = 0;
@@ -1441,12 +1463,16 @@ class RockScene {
 
         const box    = new THREE.Box3().setFromObject(model);
         const size   = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
 
         const longestDim = Math.max(size.x, size.y, size.z, 0.001);
         const scale = ROCK_SCALE_BASE / longestDim;
         model.scale.setScalar(scale);
-        model.position.copy(center.negate().multiplyScalar(scale));
+        model.rotation.set(0.05 + ROCK_OPEN_PITCH, -0.2 + ROCK_FACE_YAW, 0.03);
+        model.position.set(0, 0, 0);
+        model.updateMatrixWorld(true);
+
+        const spunCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
+        model.position.copy(spunCenter).negate();
 
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
@@ -1457,9 +1483,12 @@ class RockScene {
           typeof window !== 'undefined' ? window.innerWidth : this.w,
         );
 
-        model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
         this.rockGroup.visible = layerVisibility().rock;
+        if (!prefersReducedMotion()) {
+          this._introPending = true;
+          this._introDone = false;
+        }
         this._syncLayoutProfile();
         this._scheduleH1RockSync();
 
@@ -1586,38 +1615,57 @@ class RockScene {
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
     this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
 
-    /* ── Rock rotation ────────────────────────────────────────────────────
-       X: auto-spin + scroll coast only (no mouse hover roll).
-       Y: idle wobble + horizontal scroll tilt (no mouse yaw).
-       Z: subtle idle nod only.                                           */
+    /* ── Rock rotation (Live @4749e8b motion — layout anchor unchanged) ───── */
     if (this.rockGroup) {
-      /* Slow continuous tumble — ~1 full rotation per 140 s */
-      this.rockPitchAccum += 0.0000225 * dt;
-
-      /* Scroll → impulse only (no spring). Heavy rock coasts, never rubber-bands. */
       const scrollDelta = this.scrollProgress - this._lastScrollProgress;
       this._lastScrollProgress = this.scrollProgress;
 
-      if (Math.abs(scrollDelta) > 0.000001) {
-        const dirGain = scrollDelta >= 0 ? 1.0 : 0.25;
-        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN * dirGain
+      if (scrollDelta > 0.000001) {
+        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN
                                   * SCROLL_IMPULSE_GAIN * ROCK_SCROLL_COAST;
+      } else if (scrollDelta < -0.000001) {
+        this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity);
       }
 
       this.scrollPitchVelocity *= Math.pow(ROCK_SPIN_DECAY, dt);
-      this.scrollPitchOffset  += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
+      this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity);
+      this.scrollPitchOffset += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
 
-      const basePitch = this.rockPitchAccum + this.scrollPitchOffset;
+      const idlePitch = Math.sin(t * 0.00011) * IDLE_PITCH_AMP
+                      + Math.sin(t * 0.00019 + 0.9) * IDLE_PITCH_AMP2;
+      const idleYaw = Math.sin(t * 0.00014) * IDLE_YAW_AMP1
+                    + Math.sin(t * 0.00027 + 1.1) * IDLE_YAW_AMP2
+                    + Math.sin(t * 0.00041 + 2.3) * IDLE_YAW_AMP3;
+      const idleNod = Math.sin(t * 0.00013 + 1.4) * IDLE_NOD_AMP
+                    + Math.sin(t * 0.00023 + 0.4) * IDLE_NOD_AMP2;
+
+      let introExtraX = 0;
+      if (this._introPending) {
+        this._introStartPerf = performance.now();
+        this._introPending = false;
+      }
+      if (!this._introDone && this._introStartPerf != null && !prefersReducedMotion()) {
+        const elapsed = performance.now() - this._introStartPerf;
+        const u = clamp(elapsed / INTRO_ROLL_MS, 0, 1);
+        const easeOut = 1 - (1 - u) ** 3;
+        introExtraX = INTRO_ROLL_PEAK * (1 - easeOut);
+        if (u >= 1) this._introDone = true;
+      } else if (prefersReducedMotion()) {
+        this._introDone = true;
+      }
+
+      const targetX = clamp(idlePitch, -MAX_PITCH, MAX_PITCH)
+                    + this.scrollPitchOffset
+                    + introExtraX;
+      const targetY = clamp(
+        idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS,
+        -MAX_CROSS,
+        MAX_CROSS,
+      );
+      const targetZ = clamp(idleNod, -MAX_CROSS, MAX_CROSS);
+
       this.mouseRollOffset = 0;
-      this.rockGroup.rotation.x = basePitch;
-
-      /* Idle wobble (+10% natural drift) + scroll Y tilt — no mouse nudge */
-      const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
-                    + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
-      const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
-      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
-      const targetZ = idleNod;
-
+      this.rockGroup.rotation.x += (targetX - this.rockGroup.rotation.x) * ROCK_MOTION_BASELINE.idleNodLerp;
       this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * ROCK_MOTION_BASELINE.idleYawLerp;
       this.rockGroup.rotation.z += (targetZ - this.rockGroup.rotation.z) * ROCK_MOTION_BASELINE.idleNodLerp;
     }
