@@ -128,13 +128,69 @@ let bindAll = null;
     };
   }
 
-  function prepHost(host, sticky) {
+  function isSlamFanLayout(cardsHost) {
+    if (!window.matchMedia('(min-width: 992px)').matches) return false;
+    if (!cardsHost) return false;
+    return getComputedStyle(cardsHost).flexDirection !== 'column';
+  }
+
+  function clearSlamCardInline(card) {
+    card.style.width = '';
+    card.style.maxWidth = '';
+    card.style.height = '';
+    card.style.minHeight = '';
+    card.style.maxHeight = '';
+    card.style.overflow = '';
+    card.style.left = '';
+    card.style.top = '';
+    card.style.padding = '';
+  }
+
+  /**
+   * Fan band: keep Designer left/right padding (no inline override).
+   * When the card shrinks below 480px, set top/bottom to the same inset as left/right
+   * so vertical breathing matches horizontal (card grows taller, copy does not hug edges).
+   */
+  function applySlamCardVerticalPaddingFromHorizontal(card, cardWidth) {
+    card.style.padding = '';
+    card.style.paddingTop = '';
+    card.style.paddingBottom = '';
+    if (cardWidth >= SLAM_CARD_W) return;
+    var cs = getComputedStyle(card);
+    var padL = parseFloat(cs.paddingLeft) || 0;
+    var padR = parseFloat(cs.paddingRight) || 0;
+    var side = Math.max(padL, padR);
+    if (side < 1) return;
+    card.style.paddingTop = side + 'px';
+    card.style.paddingBottom = side + 'px';
+  }
+
+  function prepHost(host, sticky, cards, fanLayout) {
+    if (!fanLayout) {
+      host.style.minHeight = '';
+      host.style.height = '';
+      host.style.overflow = 'visible';
+      return;
+    }
     var runway = sticky.clientHeight || window.innerHeight || 800;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     host.style.isolation = 'isolate';
     host.style.overflow = 'hidden';
-    host.style.minHeight = runway + 'px';
-    host.style.height = runway + 'px';
+    syncCardsHostRunway(host, sticky, cards, runway);
+  }
+
+  function syncCardsHostRunway(host, sticky, cards, runway) {
+    var base = runway || sticky.clientHeight || window.innerHeight || 800;
+    var maxBottom = 0;
+    var i;
+    for (i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      if (getComputedStyle(c).position !== 'absolute') continue;
+      maxBottom = Math.max(maxBottom, (c.offsetTop || 0) + (c.offsetHeight || 0));
+    }
+    var hostH = Math.max(base, maxBottom + 32);
+    host.style.minHeight = hostH + 'px';
+    host.style.height = hostH + 'px';
   }
 
   /* Only ever run before building a fresh set of layers. This used to live in
@@ -148,10 +204,113 @@ let bindAll = null;
     });
   }
 
-  function prepCards(cards, fx) {
+  var SLAM_CARD_W = 480;
+  var SLAM_CARD_H = 340;
+  /** When responsive sizing grows cards via scrollHeight, trim excess (was ~100px too tall). */
+  var SLAM_RESPONSIVE_HEIGHT_TRIM = 100;
+  /** Designer fan offsets at full card width (card 01 = 0). */
+  var FAN_OFFSET_BASE = [0, 12, 24, 36];
+  var FAN_GUTTER = 1 + FAN_OFFSET_BASE[3] / SLAM_CARD_W;
+
+  function fanOffsetForWidth(cardWidth, cardIndex) {
+    var base = FAN_OFFSET_BASE[cardIndex] || 0;
+    if (!base) return 0;
+    var scale = cardWidth / SLAM_CARD_W;
+    return Math.round(base * scale);
+  }
+
+  function slamCardSize() {
+    var vw = window.innerWidth || 1280;
+    if (vw <= 991) return { w: 0, h: 0 };
+    /* Shrink card + fan together so card 04 fits inside the column (overflow:hidden host). */
+    var col =
+      document.querySelector('.ltf-specs-vault-cards') ||
+      document.querySelector('.ltf-specs-vault-cards.ltf-split-asset');
+    var colW = col ? col.clientWidth : 0;
+    if (colW <= 0) {
+      return { w: SLAM_CARD_W, h: SLAM_CARD_H };
+    }
+    var w = Math.min(SLAM_CARD_W, colW / FAN_GUTTER);
+    w = Math.max(280, Math.min(SLAM_CARD_W, w));
+    /* If min width still overflows, shrink below 280 rather than clip (tablet only). */
+    if (fanOffsetForWidth(w, 3) + w > colW) {
+      w = Math.max(240, colW / FAN_GUTTER);
+    }
+    w = Math.round(w);
+    while (w > 240 && fanOffsetForWidth(w, 3) + w > colW) {
+      w--;
+    }
+    var h = Math.round(w * (SLAM_CARD_H / SLAM_CARD_W));
+    return { w: w, h: h };
+  }
+
+  function applySlamFanOffset(card, cardIndex, cardWidth) {
+    if (cardIndex < 1) {
+      card.style.left = '0px';
+      card.style.top = '0px';
+      return;
+    }
+    var off = fanOffsetForWidth(cardWidth, cardIndex);
+    card.style.left = off + 'px';
+    card.style.top = off + 'px';
+  }
+
+  function applySlamCardDimensions(card, cardIndex, cardsHost) {
+    var size = slamCardSize();
+    if (!size.w) return size;
+    if (!isSlamFanLayout(cardsHost)) {
+      clearSlamCardInline(card);
+      return size;
+    }
+    var minH = size.h;
+    card.style.width = size.w + 'px';
+    card.style.maxWidth = size.w + 'px';
+    card.style.height = 'auto';
+    card.style.minHeight = minH + 'px';
+    card.style.maxHeight = 'none';
+    card.style.overflow = 'visible';
+    card.style.boxSizing = 'border-box';
+    applySlamCardVerticalPaddingFromHorizontal(card, size.w);
+    if (typeof cardIndex === 'number') {
+      applySlamFanOffset(card, cardIndex, size.w);
+    }
+    var rawScroll = card.scrollHeight || 0;
+    var contentH = minH;
+    if (rawScroll > minH) {
+      contentH = Math.max(minH, rawScroll - SLAM_RESPONSIVE_HEIGHT_TRIM);
+    }
+    card.style.height = contentH + 'px';
+    card.style.minHeight = contentH + 'px';
+    card.style.maxHeight = contentH + 'px';
+    card.style.overflow = 'hidden';
+    size.h = contentH;
+    return size;
+  }
+
+  /** Fan stack: one shared height = tallest card (width already synced in slamCardSize). */
+  function applyUniformFanHeights(cards, cardsHost) {
+    if (!isSlamFanLayout(cardsHost)) return;
+    var maxH = 0;
+    var i;
+    for (i = 0; i < cards.length; i++) {
+      var mh = parseFloat(cards[i].style.minHeight);
+      var xh = parseFloat(cards[i].style.height);
+      var h = 0;
+      if (isFinite(mh)) h = mh;
+      if (isFinite(xh)) h = Math.max(h, xh);
+      maxH = Math.max(maxH, h);
+    }
+    if (maxH < 1) return;
+    for (i = 0; i < cards.length; i++) {
+      cards[i].style.minHeight = maxH + 'px';
+    }
+  }
+
+  function prepCards(cards, fx, cardsHost) {
     var i;
     for (i = 0; i < cards.length; i++) {
       var cardZ = (i + 1) * 3;
+      applySlamCardDimensions(cards[i], i, cardsHost);
       cards[i].style.willChange = 'transform';
       cards[i].style.transition = 'none';
       cards[i].style.position = 'absolute';
@@ -162,6 +321,7 @@ let bindAll = null;
         fx[i].ring.wrap.style.zIndex = String(cardZ + 2);
       }
     }
+    applyUniformFanHeights(cards, cardsHost);
   }
 
   function syncLayerToCard(host, layer, card, pad) {
@@ -340,7 +500,7 @@ let bindAll = null;
     }
     if (cards.length < 2) return;
 
-    prepHost(cardsHost, sticky);
+    prepHost(cardsHost, sticky, cards, isSlamFanLayout(cardsHost));
     clearFxLayers(cardsHost);
 
     var fx = [];
@@ -360,7 +520,8 @@ let bindAll = null;
         ring: createFxLayer(cardsHost, cardZ + 2, 'ring'),
       };
     }
-    prepCards(cards, fx);
+    prepCards(cards, fx, cardsHost);
+    syncCardsHostRunway(cardsHost, sticky, cards);
 
     var state = {
       target: 0,
@@ -375,10 +536,14 @@ let bindAll = null;
     };
 
     function remeasure() {
-      prepHost(cardsHost, sticky);
+      var fanLayout = isSlamFanLayout(cardsHost);
+      prepHost(cardsHost, sticky, cards, fanLayout);
       for (i = 0; i < cards.length; i++) {
+        applySlamCardDimensions(cards[i], i, cardsHost);
         if (BEATS[i] && beatSlams(BEATS[i])) travels[i] = measureSlamTravel(cardsHost, cards[i]);
       }
+      applyUniformFanHeights(cards, cardsHost);
+      if (fanLayout) syncCardsHostRunway(cardsHost, sticky, cards);
     }
 
     function sampleTarget() {
@@ -522,6 +687,18 @@ let bindAll = null;
       { passive: true }
     );
 
+    function scheduleRemeasure() {
+      remeasure();
+      requestAnimationFrame(function () {
+        remeasure();
+      });
+    }
+    window.addEventListener('load', scheduleRemeasure, { once: true });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(scheduleRemeasure);
+    }
+    scheduleRemeasure();
+
     sampleTarget();
 
     state.inView = true;
@@ -543,6 +720,9 @@ let bindAll = null;
   }
 
   function init() {
+    /* Fan + scroll slam: desktop/tablet L/R grid only (≥992). ≤991 = Designer stack + head CSS. */
+    if (window.matchMedia('(max-width: 991px)').matches) return;
+
     var nodes = document.querySelectorAll('[data-ltf-specs-slam], .ltf-specs-vault');
     Array.prototype.forEach.call(nodes, function (el) {
       var cs = getComputedStyle(el);
@@ -556,10 +736,36 @@ let bindAll = null;
   }
 
   bindAll = init;
+
+  var specsSlamMq = window.matchMedia('(min-width: 992px)');
+
+  function rebindDesktopSlam() {
+    if (!specsSlamMq.matches) return;
+    var nodes = document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]');
+    Array.prototype.forEach.call(nodes, function (el) {
+      delete el.dataset.ltfSlamBound;
+    });
+    init();
+  }
+
+  if (typeof specsSlamMq.addEventListener === 'function') {
+    specsSlamMq.addEventListener('change', rebindDesktopSlam);
+  } else if (typeof specsSlamMq.addListener === 'function') {
+    specsSlamMq.addListener(rebindDesktopSlam);
+  }
 })();
 
-/** Idempotent — safe to call again after Webflow swaps DOM in. */
+/** Idempotent — safe to call again after Webflow swaps DOM or viewport crosses 767px. */
 export function init() {
+  if (bindAll) bindAll();
+}
+
+/** Force slam rebind after layout mode change (scale-up fix). */
+export function reinit() {
+  if (window.matchMedia('(max-width: 991px)').matches) return;
+  document.querySelectorAll('.ltf-specs-vault, [data-ltf-specs-slam]').forEach(function (el) {
+    delete el.dataset.ltfSlamBound;
+  });
   if (bindAll) bindAll();
 }
 
