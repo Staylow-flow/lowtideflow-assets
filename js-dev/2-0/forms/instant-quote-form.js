@@ -1,10 +1,9 @@
 /**
  * Instant Quote — order form → Google Apps Script / Sheets (dev sandbox copy)
- * Live path: js/instant-quote-form.js — do not edit for sandbox experiments.
+ * Live path: js/instant-quote-form.js (@a06e9d5) — do not edit for sandbox experiments.
  *
  * Depends on (load before this module):
  *   js/instant-quote-pricing-data.js → js/instant-quote-pricing.js → js/instant-quote-ui.js
- * Uses window.IQ.getState / recalculate from instant-quote-pricing.js.
  */
 (function (global) {
   'use strict';
@@ -34,44 +33,14 @@
     'gmial.com': 'gmail.com',
     'gmal.com': 'gmail.com',
     'gamil.com': 'gmail.com',
-    'gnail.com': 'gmail.com',
-    'gmail.co': 'gmail.com',
-    'gmail.con': 'gmail.com',
-    'gmail.cm': 'gmail.com',
-    'gmaill.com': 'gmail.com',
     'hotmial.com': 'hotmail.com',
     'hotmal.com': 'hotmail.com',
-    'hotmail.co': 'hotmail.com',
-    'hotmail.con': 'hotmail.com',
     'yaho.com': 'yahoo.com',
     'yahloo.com': 'yahoo.com',
     'yahooo.com': 'yahoo.com',
-    'yahoo.co': 'yahoo.com',
-    'yahoo.con': 'yahoo.com',
     'outlok.com': 'outlook.com',
-    'outllok.com': 'outlook.com',
-    'outlook.co': 'outlook.com',
-    'outlook.con': 'outlook.com',
-    'iclould.com': 'icloud.com',
-    'icloud.co': 'icloud.com'
+    'outllok.com': 'outlook.com'
   };
-
-  var POPULAR_DOMAINS = [
-    'gmail.com',
-    'yahoo.com',
-    'hotmail.com',
-    'outlook.com',
-    'icloud.com',
-    'aol.com',
-    'live.com',
-    'msn.com',
-    'comcast.net',
-    'me.com',
-    'ymail.com',
-    'proton.me',
-    'protonmail.com',
-    'gmx.com'
-  ];
 
   var pageLoadedAt = Date.now();
 
@@ -1094,75 +1063,14 @@
     });
   }
 
-  function editDistance(a, b) {
-    var m = a.length;
-    var n = b.length;
-    if (Math.abs(m - n) > 2) return 99;
-    var prev = [];
-    var i;
-    var j;
-    for (j = 0; j <= n; j++) prev[j] = j;
-    for (i = 1; i <= m; i++) {
-      var cur = [i];
-      for (j = 1; j <= n; j++) {
-        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
-        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
-      }
-      prev = cur;
-    }
-    return prev[n];
-  }
-
-  /** Classify email domain: incomplete | exact | typo | custom | invalid */
-  function classifyEmail(email) {
-    var value = String(email || '').trim();
-    var at = value.lastIndexOf('@');
-    if (at < 1) return { kind: 'invalid' };
-    var local = value.slice(0, at);
-    var domain = value.slice(at + 1).toLowerCase();
-    if (!local || !domain || /[@\s]/.test(domain)) return { kind: 'invalid' };
-    // Bare TLD / empty labels: ".com", "foo@.com", "foo.com."
-    if (domain.indexOf('.') < 1 || /^\./.test(domain) || /\.$/.test(domain)) {
-      return { kind: 'invalid' };
-    }
-    var labels = domain.split('.');
-    if (labels.some(function (p) { return !p; })) return { kind: 'invalid' };
-    if (labels[labels.length - 1].length < 2) return { kind: 'invalid' };
-
-    if (EMAIL_TYPOS[domain]) {
-      return { kind: 'typo', domain: domain, suggestion: local + '@' + EMAIL_TYPOS[domain] };
-    }
-    if (POPULAR_DOMAINS.indexOf(domain) >= 0) {
-      return { kind: 'exact', domain: domain };
-    }
-
-    var best = null;
-    var bestDist = Infinity;
-    for (var i = 0; i < POPULAR_DOMAINS.length; i++) {
-      var d = editDistance(domain, POPULAR_DOMAINS[i]);
-      if (d < bestDist) {
-        bestDist = d;
-        best = POPULAR_DOMAINS[i];
-      }
-    }
-    if (best && bestDist > 0 && bestDist <= 2) {
-      var samePrefix = domain.slice(0, 2) === best.slice(0, 2);
-      var closeLength = Math.abs(domain.length - best.length) <= 2;
-      if (samePrefix && closeLength) {
-        return { kind: 'typo', domain: domain, suggestion: local + '@' + best };
-      }
-    }
-    return { kind: 'custom', domain: domain };
-  }
-
   function suggestEmailFix(email) {
-    var res = classifyEmail(email);
-    return res.kind === 'typo' ? res.suggestion : null;
-  }
-
-  function isAcceptableEmail(email) {
-    var res = classifyEmail(email);
-    return res.kind === 'exact' || res.kind === 'custom';
+    var parts = String(email || '').split('@');
+    if (parts.length !== 2) return null;
+    var local = parts[0];
+    var domain = parts[1].toLowerCase();
+    var fixed = EMAIL_TYPOS[domain];
+    if (!fixed) return null;
+    return local + '@' + fixed;
   }
 
   function initEmailTypoCatcher() {
@@ -1233,32 +1141,24 @@
       inputId: 'iq-form-full-name',
       errorId: 'iq-full-name-error',
       stackClass: 'iq-field-stack--name',
-      gridColumn: 1,
-      gridRow: 2,
       message: 'Please enter your client name.'
     },
     {
       inputId: 'iq-form-company',
       errorId: 'iq-company-error',
       stackClass: 'iq-field-stack--company',
-      gridColumn: 2,
-      gridRow: 2,
       message: 'Please enter your company name.'
     },
     {
       inputId: 'iq-form-email',
       errorId: 'iq-email-error',
       stackClass: 'iq-field-stack--email',
-      gridColumn: 1,
-      gridRow: 4,
       message: 'Please enter a valid email address.'
     },
     {
       inputId: 'iq-form-phone',
       errorId: 'iq-phone-error',
       stackClass: 'iq-field-stack--phone',
-      gridColumn: 2,
-      gridRow: 4,
       message: 'Please enter a valid 10-digit phone number.'
     }
   ];
@@ -1297,25 +1197,32 @@
       'font-size:15px;line-height:1.2;margin:0!important;}' +
       '.iq-form-success-panel .iq-form-success-lead{margin:0;font-size:15px;line-height:1.2;}' +
       '.iq-form-success-panel .iq-form-success-lead strong{font-weight:700;}' +
-      '.iq-form-success-panel .iq-form-success-sub{margin:2px 0 0;font-size:13px;font-weight:400;line-height:1.2;}';
+      '.iq-form-success-panel .iq-form-success-sub{margin:2px 0 0;font-size:13px;font-weight:400;line-height:1.2;}' +
+      '#iq-order-form>.iq-field-stack{position:relative;width:100%;box-sizing:border-box;' +
+      'justify-self:stretch;align-self:start;}' +
+      '#iq-order-form>.iq-field-stack .iq-field-error{position:absolute;left:0;right:0;top:100%;' +
+      'margin:0;padding:0;border:0;background:transparent;z-index:2;pointer-events:none;' +
+      'height:auto;max-height:none;line-height:1.3;}' +
+      '#iq-order-form>.iq-field-stack .iq-field-error[hidden]{display:none!important;' +
+      'visibility:hidden!important;height:0!important;overflow:hidden!important;}' +
+      '#iq-order-form>.iq-field-stack .iq-field-error:not([hidden]){' +
+      'display:block!important;visibility:visible!important;margin-top:2px!important;}';
+    if (needsFieldStyle) {
+      css +=
+        '#iq-order-form>.iq-field-stack .iq-field-error:not([hidden]){' +
+        'font-size:12px;color:#fca5a5;}';
+    }
     css +=
-      '#iq-order-form>.iq-field-stack{position:relative;width:100%;justify-self:stretch;' +
-      'align-self:start;box-sizing:border-box;}' +
+      '@media screen and (min-width:992px){' +
       '#iq-order-form>.iq-field-stack--name{grid-column:1;grid-row:2;margin-bottom:12px;}' +
       '#iq-order-form>.iq-field-stack--company{grid-column:2;grid-row:2;margin-bottom:12px;}' +
       '#iq-order-form>.iq-field-stack--email{grid-column:1;grid-row:4;margin-bottom:12px;}' +
-      '#iq-order-form>.iq-field-stack--phone{grid-column:2!important;grid-row:4!important;' +
-      'margin-bottom:12px;display:block!important;}' +
+      '#iq-order-form>.iq-field-stack--phone{grid-column:2;grid-row:4;margin-bottom:12px;}' +
       '#iq-order-form>.iq-field-stack .w-input,#iq-order-form>.iq-field-stack input{' +
-      'width:100%!important;max-width:none!important;display:block!important;box-sizing:border-box;}' +
-      '#iq-order-form>.iq-field-stack .iq-field-error{position:absolute;left:0;right:0;' +
-      'top:calc(100% + 2px);margin:0;z-index:2;}' +
-      '#iq-order-form>.iq-field-stack .iq-field-error[hidden]{display:none!important;}' +
-      '#iq-order-form>.iq-field-stack .iq-field-error:not([hidden]){display:block!important;}';
-    if (needsFieldStyle) {
-      css +=
-        '#iq-order-form>.iq-field-stack .iq-field-error{font-size:12px;line-height:1.3;color:#fca5a5;}';
-    }
+      'width:100%!important;max-width:none!important;display:block!important;box-sizing:border-box;}}' +
+      '@media screen and (max-width:991px){' +
+      '#iq-order-form>.iq-field-stack{grid-column:1/-1!important;grid-row:auto!important;' +
+      'margin-bottom:0!important;}}';
     var style = document.createElement('style');
     style.id = 'iq-dev-form-support-styles';
     style.textContent = css;
@@ -1333,13 +1240,6 @@
     } else {
       stack.classList.add('iq-field-stack', spec.stackClass);
     }
-    stack.style.gridColumn = String(spec.gridColumn);
-    stack.style.gridRow = String(spec.gridRow);
-    stack.style.marginBottom = '12px';
-    stack.style.width = '100%';
-    stack.style.position = 'relative';
-    stack.style.boxSizing = 'border-box';
-    if (spec.gridColumn === 2) stack.style.display = 'block';
     return stack;
   }
 
@@ -1470,19 +1370,9 @@
       showFieldError('iq-company-error', 'Please enter your company name.');
       invalid = true;
     }
-    if (!email) {
+    if (!email || email.indexOf('@') < 1 || suggestEmailFix(email)) {
       showFieldError('iq-email-error', 'Please enter a valid email address.');
       invalid = true;
-    } else {
-      var emailClass = classifyEmail(email);
-      if (
-        emailClass.kind === 'invalid' ||
-        emailClass.kind === 'typo' ||
-        !isAcceptableEmail(email)
-      ) {
-        showFieldError('iq-email-error', 'Please enter a valid email address.');
-        invalid = true;
-      }
     }
     if (phone.length < 10) {
       showFieldError('iq-phone-error', 'Please enter a valid 10-digit phone number.');
