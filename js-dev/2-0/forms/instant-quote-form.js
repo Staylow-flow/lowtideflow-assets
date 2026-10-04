@@ -1232,21 +1232,33 @@
     {
       inputId: 'iq-form-full-name',
       errorId: 'iq-full-name-error',
+      stackClass: 'iq-field-stack--name',
+      gridColumn: 1,
+      gridRow: 2,
       message: 'Please enter your client name.'
     },
     {
       inputId: 'iq-form-company',
       errorId: 'iq-company-error',
+      stackClass: 'iq-field-stack--company',
+      gridColumn: 2,
+      gridRow: 2,
       message: 'Please enter your company name.'
     },
     {
       inputId: 'iq-form-email',
       errorId: 'iq-email-error',
+      stackClass: 'iq-field-stack--email',
+      gridColumn: 1,
+      gridRow: 4,
       message: 'Please enter a valid email address.'
     },
     {
       inputId: 'iq-form-phone',
       errorId: 'iq-phone-error',
+      stackClass: 'iq-field-stack--phone',
+      gridColumn: 2,
+      gridRow: 4,
       message: 'Please enter a valid 10-digit phone number.'
     }
   ];
@@ -1270,7 +1282,12 @@
       /* Cross-origin sheets — inject fallback styles. */
     }
     var css =
-      '#iq-form-submit.is-post-submit-hidden{display:none!important;visibility:hidden!important;}' +
+      '.iq-page input#iq-form-submit.w-button.iq-orbit-btn.is-post-submit-hidden,' +
+      '.iq-page input#iq-form-submit.iq-form-submit.is-post-submit-hidden,' +
+      '.iq-page .iq-orbit-wrap:has(#iq-form-submit)>#iq-form-submit.is-post-submit-hidden{' +
+      'display:none!important;visibility:hidden!important;pointer-events:none!important;' +
+      'height:0!important;min-height:0!important;max-height:0!important;margin:0!important;' +
+      'padding:0!important;overflow:hidden!important;border-width:0!important;opacity:0!important;}' +
       '.iq-orbit-wrap>.iq-form-success-panel[hidden]{display:none!important;}' +
       '.iq-orbit-wrap>.iq-form-success-panel:not([hidden]){' +
       'display:flex!important;flex-direction:column;align-items:center;justify-content:center;' +
@@ -1281,9 +1298,23 @@
       '.iq-form-success-panel .iq-form-success-lead{margin:0;font-size:15px;line-height:1.2;}' +
       '.iq-form-success-panel .iq-form-success-lead strong{font-weight:700;}' +
       '.iq-form-success-panel .iq-form-success-sub{margin:2px 0 0;font-size:13px;font-weight:400;line-height:1.2;}';
+    css +=
+      '#iq-order-form>.iq-field-stack{position:relative;width:100%;justify-self:stretch;' +
+      'align-self:start;box-sizing:border-box;}' +
+      '#iq-order-form>.iq-field-stack--name{grid-column:1;grid-row:2;margin-bottom:12px;}' +
+      '#iq-order-form>.iq-field-stack--company{grid-column:2;grid-row:2;margin-bottom:12px;}' +
+      '#iq-order-form>.iq-field-stack--email{grid-column:1;grid-row:4;margin-bottom:12px;}' +
+      '#iq-order-form>.iq-field-stack--phone{grid-column:2!important;grid-row:4!important;' +
+      'margin-bottom:12px;display:block!important;}' +
+      '#iq-order-form>.iq-field-stack .w-input,#iq-order-form>.iq-field-stack input{' +
+      'width:100%!important;max-width:none!important;display:block!important;box-sizing:border-box;}' +
+      '#iq-order-form>.iq-field-stack .iq-field-error{position:absolute;left:0;right:0;' +
+      'top:calc(100% + 2px);margin:0;z-index:2;}' +
+      '#iq-order-form>.iq-field-stack .iq-field-error[hidden]{display:none!important;}' +
+      '#iq-order-form>.iq-field-stack .iq-field-error:not([hidden]){display:block!important;}';
     if (needsFieldStyle) {
       css +=
-        '.iq-field-error{margin:4px 0 0;font-size:12px;line-height:1.3;color:#fca5a5;}';
+        '#iq-order-form>.iq-field-stack .iq-field-error{font-size:12px;line-height:1.3;color:#fca5a5;}';
     }
     var style = document.createElement('style');
     style.id = 'iq-dev-form-support-styles';
@@ -1291,17 +1322,40 @@
     document.head.appendChild(style);
   }
 
-  function ensureFieldErrorNode(inputId, errorId) {
-    var input = document.getElementById(inputId);
+  function ensureFieldStack(input, spec) {
+    if (!input || !spec) return null;
+    var stack = input.closest('.iq-field-stack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.className = 'iq-field-stack ' + spec.stackClass;
+      input.parentNode.insertBefore(stack, input);
+      stack.appendChild(input);
+    } else {
+      stack.classList.add('iq-field-stack', spec.stackClass);
+    }
+    stack.style.gridColumn = String(spec.gridColumn);
+    stack.style.gridRow = String(spec.gridRow);
+    stack.style.marginBottom = '12px';
+    stack.style.width = '100%';
+    stack.style.position = 'relative';
+    stack.style.boxSizing = 'border-box';
+    if (spec.gridColumn === 2) stack.style.display = 'block';
+    return stack;
+  }
+
+  function ensureFieldErrorNode(spec) {
+    var input = document.getElementById(spec.inputId);
     if (!input) return null;
-    var node = document.getElementById(errorId);
+    var stack = ensureFieldStack(input, spec);
+    var node = document.getElementById(spec.errorId);
+    if (node && node.parentNode !== stack) stack.appendChild(node);
     if (!node) {
       node = document.createElement('p');
-      node.id = errorId;
+      node.id = spec.errorId;
       node.className = 'iq-field-error';
       node.setAttribute('role', 'alert');
       node.hidden = true;
-      input.insertAdjacentElement('afterend', node);
+      stack.appendChild(node);
     }
     return node;
   }
@@ -1309,7 +1363,7 @@
   function initFieldInlineErrors() {
     injectFormSupportStyles();
     FIELD_ERROR_SPECS.forEach(function (spec) {
-      var err = ensureFieldErrorNode(spec.inputId, spec.errorId);
+      var err = ensureFieldErrorNode(spec);
       var input = document.getElementById(spec.inputId);
       if (!err || !input || input.dataset.iqFieldErrorBound === '1') return;
       input.dataset.iqFieldErrorBound = '1';
