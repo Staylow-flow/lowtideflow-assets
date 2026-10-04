@@ -577,6 +577,8 @@ const AUTO_FORWARD_ROLL_PERIOD_MS = 75000;
 const AUTO_FORWARD_ROLL_RAD_PER_MS = (Math.PI * 2) / AUTO_FORWARD_ROLL_PERIOD_MS;
 /** Cross-axis idle wobble ≈ 7.5% of primary (X) pitch cap — smooth sin drift, no jitter. */
 const CROSS_AXIS_IDLE_RATIO = 0.075;
+/** Scale cross-axis wobble inputs so drift stays inside the ~±1.1° window (cap = safety only). */
+const CROSS_WOBBLE_INPUT_SCALE = CROSS_AXIS_IDLE_RATIO;
 
 /**
  * Rock motion — Live @4749e8b idle float (hard caps) + one-way scroll pitch roll.
