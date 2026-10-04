@@ -496,11 +496,7 @@ function bind(host) {
     if (mobileMode) applyScrollPan();
     else if (hovering && lastPtrX != null && lastPtrY != null) {
       moveToPointer(lastPtrX, lastPtrY, frameHostRect);
-    } else {
-      updateScrollLockState(frameHostRect);
-      if (scrollLockActive) applyScrollLock();
-      else if (!returning && interactionReady) parkIce();
-    }
+    } else if (!hovering && !returning) parkIce();
   }, { passive: true });
 
   /* Kick the fetch as soon as the module binds — do not wait for hover. */
@@ -517,16 +513,7 @@ function bind(host) {
         sizeLens();
         frameHostRect = host.getBoundingClientRect();
         if (isMobile()) applyScrollPan();
-        else if (hovering && lastPtrX != null && lastPtrY != null) {
-          moveToPointer(lastPtrX, lastPtrY, frameHostRect);
-        } else {
-          updateScrollLockState(frameHostRect);
-          if (scrollLockActive) applyScrollLock();
-          else if (!interactionReady) {
-            const at = scrollLockLensPosition();
-            applyLens(at.x, at.y);
-          } else if (!hovering) parkIce();
-        }
+        else parkIce();
       },
       onExit() {
         if (seen) dropDecoded();
@@ -553,26 +540,6 @@ function bind(host) {
       interactionReady = true;
       return;
     }
-
-    updateScrollLockState(frameHostRect);
-
-    if (scrollLockActive) {
-      applyScrollLock();
-      scrollLockWasActive = true;
-      return;
-    }
-
-    if (scrollLockWasActive) {
-      beginUnlockTransition();
-    }
-    scrollLockWasActive = false;
-
-    if (glidingUnlock) {
-      tickUnlockGlide(now);
-      return;
-    }
-
-    if (!interactionReady) return;
 
     tickStick();
 
@@ -612,18 +579,7 @@ function bind(host) {
       lens.style.willChange = 'transform';
       print.style.willChange = 'transform';
       if (isMobile()) applyScrollPan();
-      frameHostRect = host.getBoundingClientRect();
-      if (hovering && lastPtrX != null && lastPtrY != null) {
-        moveToPointer(lastPtrX, lastPtrY, frameHostRect);
-      } else {
-        updateScrollLockState(frameHostRect);
-        if (scrollLockActive) applyScrollLock();
-        else if (!interactionReady) {
-          const at = scrollLockLensPosition();
-          applyLens(at.x, at.y);
-        } else if (!hovering) parkIce();
-      }
-      scrollLockWasActive = scrollLockActive;
+      else parkIce();
     },
     onExit() {
       if (seen) dropDecoded();
