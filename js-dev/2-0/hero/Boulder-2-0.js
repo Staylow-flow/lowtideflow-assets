@@ -1670,11 +1670,9 @@ class RockScene {
                     + this.autoForwardRoll
                     + this.scrollPitchOffset
                     + introExtraX;
-      const targetY = clamp(
-        idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS,
-        -MAX_CROSS,
-        MAX_CROSS,
-      );
+      const targetY = HSCROLL_Y_BIAS
+                    + this.hScrollYaw
+                    + clamp(idleYaw, -MAX_CROSS, MAX_CROSS);
       const targetZ = clamp(idleNod, -MAX_CROSS, MAX_CROSS);
 
       this.mouseRollOffset = 0;
