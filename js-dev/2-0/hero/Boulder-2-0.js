@@ -1640,11 +1640,16 @@ class RockScene {
 
       const idlePitch = Math.sin(t * 0.00011) * IDLE_PITCH_AMP
                       + Math.sin(t * 0.00019 + 0.9) * IDLE_PITCH_AMP2;
-      const idleYaw = Math.sin(t * 0.00014) * IDLE_YAW_AMP1
-                    + Math.sin(t * 0.00027 + 1.1) * IDLE_YAW_AMP2
-                    + Math.sin(t * 0.00041 + 2.3) * IDLE_YAW_AMP3;
-      const idleNod = Math.sin(t * 0.00013 + 1.4) * IDLE_NOD_AMP
-                    + Math.sin(t * 0.00023 + 0.4) * IDLE_NOD_AMP2;
+      const idleYaw = CROSS_WOBBLE_INPUT_SCALE * (
+        0.36 * Math.sin(t * 0.000037 + 0.15) * IDLE_YAW_AMP1
+        + 0.31 * Math.sin(t * 0.000061 + 1.73) * IDLE_YAW_AMP2
+        + 0.22 * Math.sin(t * 0.000089 + 2.97) * IDLE_YAW_AMP3
+        + 0.11 * Math.sin(t * 0.000023 + 0.62) * IDLE_NOD_AMP
+      );
+      const idleNod = CROSS_WOBBLE_INPUT_SCALE * (
+        0.58 * Math.sin(t * 0.000031 + 1.40) * IDLE_NOD_AMP
+        + 0.42 * Math.sin(t * 0.000073 + 0.40) * IDLE_NOD_AMP2
+      );
 
       let introExtraX = 0;
       if (this._introPending) {
