@@ -406,11 +406,25 @@ function bind(host) {
     return restTarget();
   }
 
+  /** Clamp a host-space lens Y so the whole lens stays in the viewport (below nav, above fold). */
+  function visibleClampY(ly, rect) {
+    const vh = window.innerHeight || 1;
+    const pad = 8;
+    const visTop = NAV_H - rect.top;
+    const visBot = vh - rect.top;
+    const lo = visTop + pad;
+    const hi = visBot - lensH - pad;
+    if (hi < lo) return ly;
+    return Math.min(Math.max(ly, lo), hi);
+  }
+
   function glideTowardVisibleRest(r = frameHostRect, blend = VISIBLE_FOLLOW_SMOOTH) {
     viewStickY = 0;
     stickVel = 0;
     const rect = r || host.getBoundingClientRect();
-    const clamped = clampLens(rect.width * 0.5 - holeCx, lastLy);
+    const clamped = (postHoverIdle && anchorLy != null)
+      ? clampLens(rect.width * 0.5 - holeCx, visibleClampY(anchorLy, rect))
+      : restTarget(rect);
     const dx = (clamped.x - lastLx) * blend;
     const dy = (clamped.y - lastLy) * blend;
     applyLens(lastLx + dx, lastLy + dy);
@@ -508,6 +522,8 @@ function bind(host) {
 
     host.addEventListener('pointerleave', () => {
       hovering = false;
+      anchorLy = lastLy;
+      postHoverIdle = true;
       returning = true;
       host.classList.remove('is-hover');
     });
@@ -527,7 +543,12 @@ function bind(host) {
     if (mobileMode) applyScrollPan();
     else if (hovering && lastPtrX != null && lastPtrY != null) {
       moveToPointer(lastPtrX, lastPtrY, frameHostRect);
-    } else if (!hovering && !returning) parkIce();
+    } else if (!hovering && !returning) {
+      if (postHoverIdle) {
+        const at = visibleAnchoredLensTarget(frameHostRect);
+        applyLens(at.x, at.y);
+      } else parkIce();
+    }
   }, { passive: true });
 
   /* Kick the fetch as soon as the module binds — do not wait for hover. */
@@ -574,7 +595,8 @@ function bind(host) {
 
     if (returning) {
       const rect = frameHostRect || host.getBoundingClientRect();
-      const at = clampLens(rect.width * 0.5 - holeCx, lastLy);
+      const releaseY = anchorLy ?? lastLy;
+      const at = clampLens(rect.width * 0.5 - holeCx, releaseY);
       const dx = at.x - lastLx;
       if (Math.abs(dx) < 0.4) {
         returning = false;
@@ -582,14 +604,14 @@ function bind(host) {
         iceY = 0;
         targetX = 0;
         targetY = 0;
-        applyLens(at.x, lastLy);
+        applyLens(at.x, at.y);
         return;
       }
       let mx = dx * RETURN_EASE;
       if (Math.abs(mx) > RETURN_MAX) mx = RETURN_MAX * Math.sign(mx);
       viewStickY = 0;
       stickVel = 0;
-      applyLens(lastLx + mx, lastLy);
+      applyLens(lastLx + mx, releaseY);
       return;
     }
 
