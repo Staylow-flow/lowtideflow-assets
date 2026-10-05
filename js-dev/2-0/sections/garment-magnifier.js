@@ -406,9 +406,10 @@ function bind(host) {
   function glideTowardVisibleRest(r = frameHostRect, blend = VISIBLE_FOLLOW_SMOOTH) {
     viewStickY = 0;
     stickVel = 0;
-    const target = restTarget(r);
-    const dx = (target.x - lastLx) * blend;
-    const dy = (target.y - lastLy) * blend;
+    const rect = r || host.getBoundingClientRect();
+    const clamped = clampLens(rect.width * 0.5 - holeCx, lastLy);
+    const dx = (clamped.x - lastLx) * blend;
+    const dy = (clamped.y - lastLy) * blend;
     applyLens(lastLx + dx, lastLy + dy);
   }
 
