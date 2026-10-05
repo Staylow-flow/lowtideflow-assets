@@ -418,6 +418,12 @@ function bind(host) {
     return Math.min(Math.max(ly, lo), hi);
   }
 
+  /** X centred, Y = release anchor clamped to the viewport band (below nav, above fold). */
+  function visibleAnchoredLensTarget(r = frameHostRect) {
+    const rect = r || host.getBoundingClientRect();
+    return clampLens(rect.width * 0.5 - holeCx, visibleClampY(anchorLy ?? lastLy, rect));
+  }
+
   function glideTowardVisibleRest(r = frameHostRect, blend = VISIBLE_FOLLOW_SMOOTH) {
     viewStickY = 0;
     stickVel = 0;
@@ -595,8 +601,7 @@ function bind(host) {
 
     if (returning) {
       const rect = frameHostRect || host.getBoundingClientRect();
-      const releaseY = anchorLy ?? lastLy;
-      const at = clampLens(rect.width * 0.5 - holeCx, releaseY);
+      const at = visibleAnchoredLensTarget(rect);
       const dx = at.x - lastLx;
       if (Math.abs(dx) < 0.4) {
         returning = false;
@@ -611,7 +616,7 @@ function bind(host) {
       if (Math.abs(mx) > RETURN_MAX) mx = RETURN_MAX * Math.sign(mx);
       viewStickY = 0;
       stickVel = 0;
-      applyLens(lastLx + mx, releaseY);
+      applyLens(lastLx + mx, lastLy + (at.y - lastLy) * VISIBLE_FOLLOW_SMOOTH);
       return;
     }
 
