@@ -328,10 +328,18 @@ let bindAll = null;
     var hr = host.getBoundingClientRect();
     var r = card.getBoundingClientRect();
     var p = pad || 0;
-    layer.wrap.style.left = r.left - hr.left - p + 'px';
-    layer.wrap.style.top = r.top - hr.top - p + 'px';
-    layer.wrap.style.width = r.width + p * 2 + 'px';
-    layer.wrap.style.height = r.height + p * 2 + 'px';
+    var st = layer.wrap.style;
+    if (!layer._posInit) {
+      st.left = '0px';
+      st.top = '0px';
+      st.willChange = 'transform';
+      layer._posInit = true;
+    }
+    var w = r.width + p * 2;
+    var h = r.height + p * 2;
+    if (layer._syncW !== w) { st.width = w + 'px'; layer._syncW = w; }
+    if (layer._syncH !== h) { st.height = h + 'px'; layer._syncH = h; }
+    st.transform = 'translate3d(' + (r.left - hr.left - p) + 'px,' + (r.top - hr.top - p) + 'px,0)';
   }
 
   function resizeLayer(layer) {
