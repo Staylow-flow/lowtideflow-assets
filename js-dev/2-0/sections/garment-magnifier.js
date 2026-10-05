@@ -147,6 +147,9 @@ function bind(host) {
   let targetY = 0;
   let lastLx = 0;
   let lastLy = 0;
+  /** Host-space Y locked after unhover; X still centers on the garment. */
+  let anchorLy = null;
+  let postHoverIdle = false;
   let returning = false;
   let hangNx = REST_X;
   let hangNy = REST_Y;
@@ -570,29 +573,23 @@ function bind(host) {
     }
 
     if (returning) {
-      const at = rest();
+      const rect = frameHostRect || host.getBoundingClientRect();
+      const at = clampLens(rect.width * 0.5 - holeCx, lastLy);
       const dx = at.x - lastLx;
-      const dy = at.y - lastLy;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 0.4) {
+      if (Math.abs(dx) < 0.4) {
         returning = false;
         iceX = 0;
         iceY = 0;
         targetX = 0;
         targetY = 0;
-        parkIce();
+        applyLens(at.x, lastLy);
         return;
       }
       let mx = dx * RETURN_EASE;
-      let my = dy * RETURN_EASE;
-      const step = Math.hypot(mx, my);
-      if (step > RETURN_MAX) {
-        mx *= RETURN_MAX / step;
-        my *= RETURN_MAX / step;
-      }
+      if (Math.abs(mx) > RETURN_MAX) mx = RETURN_MAX * Math.sign(mx);
       viewStickY = 0;
       stickVel = 0;
-      applyLens(lastLx + mx, lastLy + my);
+      applyLens(lastLx + mx, lastLy);
       return;
     }
 
