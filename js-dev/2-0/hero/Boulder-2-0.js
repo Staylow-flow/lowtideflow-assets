@@ -672,6 +672,20 @@ const MIDDLE_CANVAS_ASPECT = 72 / 100;
 const MIDDLE_ROCK_GROUP_PARITY = 1.30 * 0.75 * 0.82;
 /** Desktop ≥992: constant on-screen rock size (px), max radius @992×900 on @d561ffc × 1.25. */
 const DESKTOP_ROCK_TARGET_SCREEN_RADIUS_PX = 407.5 * 1.25;
+/** Phone portrait <=479 (Webflow "tiny") only: rockGroup scale vs the B22 dev size (B23: 25% smaller). */
+const PHONE_PORTRAIT_ROCK_SCALE = 0.75;
+/**
+ * Nebula gas alpha multiplier on phone portrait (B23: 50% for copy legibility).
+ * Same mechanism as Live rock-scene.js @4749e8b MOBILE_GAS_ALPHA_MULT (0.72, all <=991).
+ */
+const PHONE_PORTRAIT_GAS_ALPHA_MULT = 0.5;
+/** Tablet 768-991 + phone landscape: 1 = unchanged (Live @4749e8b uses 0.72 here). */
+const MIDDLE_GAS_ALPHA_MULT = 1.0;
+
+/** Phone portrait <=479 px (Webflow "tiny"); 480-767 portrait + all landscape/tablet/desktop unchanged. */
+function isPhonePortraitRockLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  return w <= 479 && !isHeroMiddleLayout(w);
+}
 
 function middleLayoutRefHeight(viewportW) {
   const w = Math.max(viewportW, 100);
@@ -1316,7 +1330,7 @@ class RockScene {
     if (!this._syncH1AnchoredRock(vw)) {
       if (this.rockGroup) {
         this.rockGroup.position.x = 0;
-        this.rockGroup.scale.setScalar(1);
+        this.rockGroup.scale.setScalar(isPhonePortraitRockLayout(vw) ? PHONE_PORTRAIT_ROCK_SCALE : 1);
       }
       this._applyRockLift();
     }
@@ -1710,9 +1724,12 @@ class RockScene {
     const behindOp = behindOpacity();
     const frontOp  = frontOpacity();
     const frontOn  = layers.front || layers.frontInspect;
+    const gasVw    = typeof window !== 'undefined' ? window.innerWidth : this.w;
+    const gasAlphaMult = isPhonePortraitRockLayout(gasVw) ? PHONE_PORTRAIT_GAS_ALPHA_MULT
+      : (isHeroMiddleLayout(gasVw) ? MIDDLE_GAS_ALPHA_MULT : 1.0);
 
     if (this.nebulaUni && layers.behind) {
-      this.nebulaUni.alphaScale.value       = behindOp;
+      this.nebulaUni.alphaScale.value       = behindOp * gasAlphaMult;
       this.nebulaUni.time.value             = nebulaTime;
       this.nebulaUni.rockYaw.value          = nebulaYaw;
       this.nebulaUni.rockPitch.value        = nebulaPitch;
@@ -1720,7 +1737,7 @@ class RockScene {
       this.nebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
     }
     if (this.fgNebulaUni && frontOn) {
-      this.fgNebulaUni.alphaScale.value     = frontOp;
+      this.fgNebulaUni.alphaScale.value     = frontOp * gasAlphaMult;
       this.fgNebulaUni.time.value           = nebulaTime;
       this.fgNebulaUni.rockYaw.value        = nebulaYaw;
       this.fgNebulaUni.rockPitch.value      = nebulaPitch;
