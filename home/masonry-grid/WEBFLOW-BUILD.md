@@ -1,17 +1,31 @@
 # Masonry product grid — Home Sandbox (dev only)
 
-Replace the **square product tile grid** directly under the hero on **Home Sandbox** (`/clean-slate` or owner’s sandbox home slug). Keep the **existing section wrapper**, headline, and subline copy unchanged. Do **not** add a new heading.
+**Page:** Home Sandbox → **`/clean-slate-sandbox`** (Designer slug `clean-slate-sandbox`).
 
-**Combo classes:** use only `is-a` / `is-b` on this page. Sandbox dev variant is **`is-a`** on every masonry class below. Do not create new combo letters or edit live/production combo styles.
+Replace the **square product tile grid** directly under the hero on that page only. Keep the **existing section wrapper**, headline, and subline copy unchanged. Do **not** add a new heading.
+
+---
+
+## Class rules (owner — mandatory)
+
+| Rule | Detail |
+|------|--------|
+| **Dev combo** | On this page, **Dev = `is-a`**. Apply **`is-a` only** to **new** masonry elements you add (see class list below). |
+| **Live combo** | **Live = `is-b`**. **Never** add, remove, or restyle **`is-b`** while building this grid. Do not duplicate live nodes that carry `is-b`. |
+| **Base classes** | **Do not edit** existing base classes (typography, section shells, gallery/tile classes already on the page). **Do not** change combo definitions for `is-a` / `is-b` in the Style panel. |
+| **No new combos** | Do not create **`is-c`**, **`is-d`**, or any other combo letter. Only **`is-a`** on new masonry bases. |
+| **New bases only** | Every new node gets a **new** base name scoped to this feature: **`ltf-masonry-*`**. Style those bases (or their **`is-a`** combo) in Designer; do not piggyback on `ltf-gallery-*`, product tile classes, etc. |
+| **Embed / JS helpers** | `is-cap` and `is-ltf-revealed` are applied by the embed script — **not** Designer combos. |
 
 **Imagery policy:** real Low Tide Flow apparel and crew photography only — **no AI-generated models or synthetic people**.
 
 ---
 
-## Designer class list (create as plain classes, then combo `is-a`)
+## Designer class list (new bases — then combo **`is-a`** only)
 
 | Class | Role |
 |-------|------|
+| `ltf-masonry-wrap` | Optional outer wrapper (holds `data-ltf-masonry` + embed sibling) |
 | `ltf-masonry-grid` | Column masonry wrapper |
 | `ltf-masonry-tile` | One product tile (Div Block) |
 | `ltf-masonry-tile__media` | Media frame (handles aspect cap) |
@@ -28,10 +42,10 @@ Internal cap helper (added by embed JS, not a Designer combo): `is-cap` on `ltf-
 Keep your current section (e.g. product / gallery block under hero). Structure:
 
 ```
-section [existing classes — DO NOT rename live classes]
-  └── Div [existing inner / ltf-site-cage — keep]
-        ├── [EXISTING headline + subline — untouched]
-        └── Div  data-ltf-masonry          ← custom attribute on wrapper around grid only
+section [existing classes — DO NOT rename or restyle; no is-b edits]
+  └── Div [existing inner / ltf-site-cage — keep as-is]
+        ├── [EXISTING headline + subline — untouched, no new classes]
+        └── Div  data-ltf-masonry          ← new wrapper; optional new base e.g. ltf-masonry-wrap + is-a
               └── Div.ltf-masonry-grid.is-a
                     ├── Div.ltf-masonry-tile.is-a
                     │     ├── Div.ltf-masonry-tile__media.is-a
@@ -49,15 +63,15 @@ To **enable captions** on the section wrapper: Custom attributes → `data-ltf-m
 
 ## Swapping the old square grid (sandbox)
 
-1. Open **Home Sandbox** in Designer (dev / unpublished).
+1. Open **`/clean-slate-sandbox`** in Designer (Home Sandbox — dev).
 2. Locate the section **immediately below the hero** with the square product tiles.
-3. **Do not** delete the section shell or heading stack.
-4. Select the **inner grid** (square tiles only) → hide or delete **only** that grid subtree.
-5. Insert the tree above in the same inner wrapper, below the existing copy.
-6. Set **`data-ltf-masonry`** on the div that wraps **only** the masonry grid (not the whole page).
+3. **Do not** delete the section shell or heading stack; **do not** change **`is-b`** or live-only elements.
+4. Select the **inner dev square grid** (square tiles only) → hide or delete **only** that grid subtree.
+5. Insert the tree above in the same inner wrapper, below the existing copy — all **new** nodes use **`ltf-masonry-*`** bases + combo **`is-a`** only.
+6. Set **`data-ltf-masonry`** on the div that wraps **only** the masonry grid (not the whole page). Optional class: `ltf-masonry-wrap` + **`is-a`**.
 7. Paste **`masonry-embed.html`** into an Embed at the bottom of that wrapper.
-8. Add combo **`is-a`** to each masonry class on every element.
-9. Publish **sandbox/staging** only; live pinned commits stay untouched.
+8. Confirm **every** new masonry element has **`is-a`** and **none** of your edits touched **`is-b`** or pre-existing base styles.
+9. Publish **sandbox/staging** only; live pinned commits and live **`is-b`** pages stay untouched.
 
 ---
 
