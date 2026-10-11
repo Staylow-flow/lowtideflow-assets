@@ -51,14 +51,16 @@
   backface-visibility: hidden;
 }
 
-[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a.is-ltf-scroll-up {
+[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a[data-ltf-loop-ready="1"].is-ltf-scroll-up {
   animation: ltf-masonry-loop-up var(--ltf-loop-dur, 55s) linear infinite;
   animation-delay: var(--ltf-loop-delay, 0s);
+  animation-fill-mode: both;
 }
 
-[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a.is-ltf-scroll-down {
+[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a[data-ltf-loop-ready="1"].is-ltf-scroll-down {
   animation: ltf-masonry-loop-down var(--ltf-loop-dur, 55s) linear infinite;
   animation-delay: var(--ltf-loop-delay, 0s);
+  animation-fill-mode: both;
 }
 
 @keyframes ltf-masonry-loop-up {
@@ -67,8 +69,8 @@
 }
 
 @keyframes ltf-masonry-loop-down {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, 50%, 0); }
+  from { transform: translate3d(0, -50%, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
 
 [data-ltf-masonry-v2][data-ltf-masonry-paused="1"] .ltf-masonry-column__track.is-a {
@@ -131,10 +133,12 @@
   display: block;
 }
 
-[data-ltf-masonry-v2] .ltf-masonry-loop-pad.is-a {
+[data-ltf-masonry-v2] .ltf-masonry-spacer.is-a {
   width: 100%;
-  pointer-events: none;
-  visibility: hidden;
+  flex-shrink: 0;
+  border-radius: var(--ltf-masonry-radius);
+  background: linear-gradient(145deg, rgba(38, 51, 80, 0.55) 0%, rgba(10, 26, 50, 0.35) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 [data-ltf-masonry-v2] .ltf-masonry-source.is-a {

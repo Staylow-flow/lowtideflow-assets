@@ -1,4 +1,4 @@
-<!-- v2.1 -->
+<!-- v2.1 — generated from masonry-embed-v2.css + masonry-embed-v2.js -->
 <style>
 [data-ltf-masonry-v2] {
   --ltf-masonry-gap: clamp(10px, 1vw, 16px);
@@ -53,14 +53,16 @@
   backface-visibility: hidden;
 }
 
-[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a.is-ltf-scroll-up {
+[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a[data-ltf-loop-ready="1"].is-ltf-scroll-up {
   animation: ltf-masonry-loop-up var(--ltf-loop-dur, 55s) linear infinite;
   animation-delay: var(--ltf-loop-delay, 0s);
+  animation-fill-mode: both;
 }
 
-[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a.is-ltf-scroll-down {
+[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a[data-ltf-loop-ready="1"].is-ltf-scroll-down {
   animation: ltf-masonry-loop-down var(--ltf-loop-dur, 55s) linear infinite;
   animation-delay: var(--ltf-loop-delay, 0s);
+  animation-fill-mode: both;
 }
 
 @keyframes ltf-masonry-loop-up {
@@ -69,8 +71,8 @@
 }
 
 @keyframes ltf-masonry-loop-down {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, 50%, 0); }
+  from { transform: translate3d(0, -50%, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
 
 [data-ltf-masonry-v2][data-ltf-masonry-paused="1"] .ltf-masonry-column__track.is-a {
@@ -133,10 +135,12 @@
   display: block;
 }
 
-[data-ltf-masonry-v2] .ltf-masonry-loop-pad.is-a {
+[data-ltf-masonry-v2] .ltf-masonry-spacer.is-a {
   width: 100%;
-  pointer-events: none;
-  visibility: hidden;
+  flex-shrink: 0;
+  border-radius: var(--ltf-masonry-radius);
+  background: linear-gradient(145deg, rgba(38, 51, 80, 0.55) 0%, rgba(10, 26, 50, 0.35) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 [data-ltf-masonry-v2] .ltf-masonry-source.is-a {
@@ -225,6 +229,31 @@
     return { video: video, images: images };
   }
 
+  function partitionImages(images, cols) {
+    var buckets = [];
+    var i;
+    for (i = 0; i < cols; i++) buckets[i] = [];
+    images.forEach(function (tpl, idx) {
+      buckets[idx % cols].push(tpl);
+    });
+    return buckets;
+  }
+
+  function shuffleArray(arr, salt) {
+    var copy = arr.slice();
+    var n = copy.length;
+    var seed = ((salt + 1) * 1103515245) >>> 0;
+    var i;
+    for (i = n - 1; i > 0; i--) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      var j = seed % (i + 1);
+      var t = copy[i];
+      copy[i] = copy[j];
+      copy[j] = t;
+    }
+    return copy;
+  }
+
   function capMedia(media) {
     if (!media) return;
     var img = media.querySelector("img.ltf-masonry-tile__img.is-a");
@@ -239,11 +268,45 @@
     else img.addEventListener("load", apply, { once: true });
   }
 
+  function prepareMediaInNode(node) {
+    var img = node.querySelector("img.ltf-masonry-tile__img.is-a");
+    if (img) {
+      img.loading = "eager";
+      img.decoding = "async";
+    }
+    var v = node.querySelector("video.ltf-masonry-tile__video.is-a");
+    if (v) v.preload = "none";
+  }
+
   function cloneTile(node) {
     var clone = node.cloneNode(true);
     clone.classList.add("is-ltf-clone");
     clone.setAttribute("data-ltf-tile-key", tileKey(node));
+    prepareMediaInNode(clone);
     return clone;
+  }
+
+  function appendSpacer(track, heightPx) {
+    var s = document.createElement("div");
+    s.className = "ltf-masonry-spacer is-a";
+    s.setAttribute("data-ltf-masonry-spacer", "1");
+    s.setAttribute("aria-hidden", "true");
+    s.style.height = Math.max(24, Math.round(heightPx)) + "px";
+    track.appendChild(s);
+    return s;
+  }
+
+  function trackSingleCopyHeight(track, gap) {
+    var sum = 0;
+    var max = 0;
+    Array.prototype.forEach.call(track.children, function (child) {
+      if (child.getAttribute("data-ltf-loop-clone") === "1") return;
+      var h = child.getBoundingClientRect().height || child.offsetHeight;
+      if (h < 2) return;
+      sum += h + gap;
+      max = Math.max(max, h);
+    });
+    return { total: sum > 0 ? sum - gap : 0, maxTile: max };
   }
 
   function collectSourceTiles() {
@@ -253,132 +316,100 @@
     );
   }
 
-  function shuffleIndices(n, salt) {
-    var arr = [];
-    var i;
-    for (i = 0; i < n; i++) arr.push(i);
-    var seed = ((salt + 1) * 1103515245) >>> 0;
-    for (i = n - 1; i > 0; i--) {
-      seed = (seed * 1664525 + 1013904223) >>> 0;
-      var j = seed % (i + 1);
-      var t = arr[i];
-      arr[i] = arr[j];
-      arr[j] = t;
-    }
-    return arr;
+  function applyScrollDirection(track, colIdx) {
+    track.classList.remove("is-ltf-scroll-up", "is-ltf-scroll-down");
+    if (reduced) return;
+    track.classList.add(colIdx % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
   }
 
-  function tileHeightEstimate(node, colW) {
-    var img = node.querySelector("img.ltf-masonry-tile__img.is-a");
-    if (img) {
-      var iw = parseInt(img.getAttribute("width"), 10) || img.naturalWidth || 960;
-      var ih = parseInt(img.getAttribute("height"), 10) || img.naturalHeight || 540;
-      var hw = (ih / iw) * HEIGHT_SHRINK;
-      if (hw > MAX_HW) hw = MAX_HW;
-      return colW * hw;
-    }
-    var v = node.querySelector("video.ltf-masonry-tile__video.is-a");
-    if (v) {
-      var vw = parseInt(v.getAttribute("width"), 10) || 960;
-      var vh = parseInt(v.getAttribute("height"), 10) || 540;
-      return colW * (vh / vw) * HEIGHT_SHRINK;
-    }
-    return colW * 0.72;
-  }
-
-  function loopContentHeight(track, gap, colW) {
-    var sum = 0;
-    var max = 0;
-    Array.prototype.forEach.call(track.children, function (child) {
-      var h = child.offsetHeight;
-      if (h < 4) h = tileHeightEstimate(child, colW);
-      sum += h + gap;
-      max = Math.max(max, h);
-    });
-    return { total: sum > 0 ? sum - gap : 0, maxTile: max };
-  }
-
-  function measureTrack(track, gap, colW) {
-    var m = loopContentHeight(track, gap, colW);
-    return Math.max(track.offsetHeight, m.total);
-  }
-
-  function buildColumnTrack(colIdx, cols, images, videoTemplate, videoColIdx, gap, colW) {
+  function buildColumnTrack(colIdx, cols, columnImages, videoTemplate, videoColIdx, gap) {
     var track = document.createElement("div");
     track.className = "ltf-masonry-column__track is-a";
-    if (!reduced) {
-      track.classList.add(colIdx % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
+
+    var baseList = shuffleArray(columnImages, colIdx * 19 + 3);
+    var passes = columnImages.length <= 2 ? 4 : columnImages.length <= 3 ? 3 : 2;
+    if (colIdx === videoColIdx) passes = Math.max(passes, 4);
+    if (colIdx % 2 === 1) passes = Math.max(passes, 4);
+    var list = [];
+    var p;
+    for (p = 0; p < passes; p++) {
+      list = list.concat(shuffleArray(baseList, colIdx * 31 + p * 17));
     }
-
-    var vh = viewport.clientHeight || 600;
     var videoPlaced = false;
-
-    if (!root._ltfColSlotKeys) root._ltfColSlotKeys = [];
-    root._ltfColSlotKeys[colIdx] = [];
-
-    var order = shuffleIndices(images.length, colIdx * 17 + 1);
     var k;
-    for (k = 0; k < order.length; k++) {
-      var tpl = images[order[k]];
-      var node = cloneTile(tpl);
+
+    for (k = 0; k < list.length; k++) {
+      var node = cloneTile(list[k]);
       track.appendChild(node);
       capMedia(node.querySelector(".ltf-masonry-tile__media.is-a"));
-      root._ltfColSlotKeys[colIdx].push(tileKey(tpl));
-
-      if (colIdx === videoColIdx && videoTemplate && !videoPlaced && k === 2) {
-        var vNode = cloneTile(videoTemplate);
-        track.appendChild(vNode);
-        capMedia(vNode.querySelector(".ltf-masonry-tile__media.is-a"));
-        root._ltfColSlotKeys[colIdx].push(tileKey(videoTemplate));
-        videoPlaced = true;
-      }
-    }
-
-    var metrics = loopContentHeight(track, gap, colW);
-    var minLoop = vh + metrics.maxTile + gap * 2;
-    while (measureTrack(track, gap, colW) < minLoop) {
-      var pad = document.createElement("div");
-      pad.className = "ltf-masonry-loop-pad is-a";
-      pad.setAttribute("aria-hidden", "true");
-      pad.style.height = Math.max(48, minLoop - measureTrack(track, gap, colW)) + "px";
-      pad.style.flexShrink = "0";
-      track.appendChild(pad);
-      break;
     }
 
     if (colIdx === videoColIdx && videoTemplate && !videoPlaced) {
-      var vOnly = cloneTile(videoTemplate);
-      track.appendChild(vOnly);
-      capMedia(vOnly.querySelector(".ltf-masonry-tile__media.is-a"));
+      var vNode = cloneTile(videoTemplate);
+      var insertAt = Math.min(4, track.children.length);
+      if (insertAt > 0 && insertAt < track.children.length) {
+        track.insertBefore(vNode, track.children[insertAt]);
+      } else {
+        track.appendChild(vNode);
+      }
       videoPlaced = true;
     }
 
-    var singleCopyH = Math.max(
-      track.offsetHeight,
-      loopContentHeight(track, gap, colW).total
-    );
-    if (singleCopyH < vh) {
-      track.setAttribute("data-ltf-loop-warning", "short");
-    }
-
-    if (!reduced && track.children.length) {
-      singleCopyH = Math.max(
-        track.offsetHeight,
-        loopContentHeight(track, gap, colW).total
-      );
-      if (singleCopyH >= vh) {
-        var originals = Array.prototype.slice.call(track.children);
-        originals.forEach(function (child) {
-          track.appendChild(cloneTile(child));
-        });
-      } else {
-        track.setAttribute("data-ltf-loop-warning", "short-no-dup");
-      }
-    }
-
-    track.setAttribute("data-ltf-loop-single-h", String(Math.round(singleCopyH)));
-
+    track.setAttribute("data-ltf-loop-ready", "0");
     return track;
+  }
+
+  function finalizeTrackLoop(track, gap) {
+    if (track.getAttribute("data-ltf-loop-ready") === "1") return;
+
+    var vh = viewport.clientHeight || 600;
+    var metrics = trackSingleCopyHeight(track, gap);
+    var minSingle = vh + metrics.maxTile + gap * 2;
+
+    while (metrics.total < minSingle) {
+      appendSpacer(track, Math.min(160, minSingle - metrics.total));
+      metrics = trackSingleCopyHeight(track, gap);
+      if (track.querySelectorAll("[data-ltf-masonry-spacer]").length > 8) break;
+    }
+
+    metrics = trackSingleCopyHeight(track, gap);
+    if (metrics.total < vh) {
+      track.setAttribute("data-ltf-loop-warning", "short");
+      return;
+    }
+
+    if (reduced) {
+      track.setAttribute("data-ltf-loop-single-h", String(Math.round(metrics.total)));
+      track.setAttribute("data-ltf-loop-ready", "1");
+      return;
+    }
+
+    if (track.getAttribute("data-ltf-loop-cloned") === "1") return;
+
+    var singles = Array.prototype.filter.call(track.children, function (child) {
+      return child.getAttribute("data-ltf-loop-clone") !== "1";
+    });
+
+    singles.forEach(function (child) {
+      var dup = child.cloneNode(true);
+      dup.classList.add("is-ltf-clone");
+      dup.setAttribute("data-ltf-loop-clone", "1");
+      prepareMediaInNode(dup);
+      track.appendChild(dup);
+    });
+
+    track.setAttribute("data-ltf-loop-cloned", "1");
+    track.setAttribute("data-ltf-loop-single-h", String(Math.round(metrics.total)));
+
+    var colEl = track.closest(".ltf-masonry-column.is-a");
+    var colIdx = colEl
+      ? parseInt(colEl.getAttribute("data-ltf-masonry-col-idx") || "0", 10)
+      : 0;
+    applyScrollDirection(track, colIdx);
+    track.style.animation = "none";
+    void track.offsetHeight;
+    track.style.animation = "";
+    track.setAttribute("data-ltf-loop-ready", "1");
   }
 
   function buildColumnsFromTiles(tiles, cols) {
@@ -386,13 +417,16 @@
     root._ltfColSlotKeys = [];
 
     var parts = splitSourceTiles(tiles);
-    var images = parts.images;
+    var buckets = partitionImages(parts.images, cols);
     var videoTemplate = parts.video;
-    var videoColIdx = Math.min(1, Math.max(0, cols - 1));
+    var videoColIdx = 0;
     var gap = readGapPx();
     var w = viewport.clientWidth;
     var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
     var i;
+
+    root.style.setProperty("--ltf-col-w", colW + "px");
+    root.setAttribute("data-ltf-masonry-cols", String(cols));
 
     for (i = 0; i < cols; i++) {
       var col = document.createElement("div");
@@ -404,46 +438,24 @@
         (staggerPattern[i % staggerPattern.length] * vh).toFixed(1) + "px"
       );
 
-      var track = buildColumnTrack(i, cols, images, videoTemplate, videoColIdx, gap, colW);
+      var track = buildColumnTrack(i, cols, buckets[i], videoTemplate, videoColIdx, gap);
       col.appendChild(track);
       columnsEl.appendChild(col);
     }
   }
 
-  function usePrebuiltColumns() {
-    var cols = columnsEl.querySelectorAll(":scope > .ltf-masonry-column.is-a");
-    if (!cols.length) return false;
-    if (source && source.querySelector(".ltf-masonry-tile.is-a")) return false;
-    cols.forEach(function (col, i) {
-      var track = col.querySelector(".ltf-masonry-column__track.is-a");
-      if (!track) return;
-      col.setAttribute("data-ltf-masonry-col-idx", String(i));
-      var vh = viewport.clientHeight || 600;
-      col.style.setProperty(
-        "--ltf-col-stagger",
-        (staggerPattern[i % staggerPattern.length] * vh).toFixed(1) + "px"
-      );
-      if (!reduced) {
-        track.classList.remove("is-ltf-scroll-up", "is-ltf-scroll-down");
-        track.classList.add(i % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
-      }
-      track.querySelectorAll(".ltf-masonry-tile__media.is-a").forEach(capMedia);
-    });
-    return true;
-  }
-
   function applyLoopTiming() {
-    var gap = readGapPx();
-    var colW = parseFloat(getComputedStyle(root).getPropertyValue("--ltf-col-w")) || 240;
     var tracks = columnsEl.querySelectorAll(".ltf-masonry-column__track.is-a");
     tracks.forEach(function (track, i) {
-      var halfH = measureTrack(track, gap, colW) / 2;
-      if (track.offsetHeight > 0) halfH = track.offsetHeight / 2;
+      var singleH = parseFloat(track.getAttribute("data-ltf-loop-single-h") || "0");
+      var halfH = singleH > 0 ? singleH : track.offsetHeight / 2;
+      if (track.offsetHeight > 0 && track.getAttribute("data-ltf-loop-cloned") === "1") {
+        halfH = track.offsetHeight / 2;
+      }
       var pxPerSec = halfH / (48 + (i * 5) % 18);
       var dur = Math.min(70, Math.max(40, halfH / pxPerSec));
       track.style.setProperty("--ltf-loop-dur", dur.toFixed(2) + "s");
-      track.style.setProperty("--ltf-loop-delay", (i * 1.7) + "s");
-      track.setAttribute("data-ltf-loop-half-h", String(halfH));
+      track.style.setProperty("--ltf-loop-delay", (i * 0.35) + "s");
     });
   }
 
@@ -452,35 +464,66 @@
     root.setAttribute("data-ltf-masonry-paused", paused ? "1" : "0");
   }
 
+  function whenColumnImagesReady(cb) {
+    var imgs = root.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a");
+    if (!imgs.length) {
+      cb();
+      return;
+    }
+    var pending = 0;
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      cb();
+    }
+    Array.prototype.forEach.call(imgs, function (img) {
+      if (img.complete && img.naturalWidth > 0) return;
+      pending += 1;
+      function onLoad() {
+        pending -= 1;
+        if (pending <= 0) finish();
+      }
+      img.addEventListener("load", onLoad, { once: true });
+      img.addEventListener("error", onLoad, { once: true });
+    });
+    if (pending === 0) finish();
+    else window.setTimeout(finish, 8000);
+  }
+
+  function finalizeAllTracks() {
+    var gap = readGapPx();
+    root.querySelectorAll(".ltf-masonry-column__track.is-a").forEach(function (track) {
+      finalizeTrackLoop(track, gap);
+    });
+    applyLoopTiming();
+    wireVideos();
+  }
+
   function rebuildLayout() {
     var w = viewport.clientWidth;
     var cols = columnCount(w);
-    var gap = readGapPx();
-    var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
-    root.style.setProperty("--ltf-col-w", colW + "px");
-    root.setAttribute("data-ltf-masonry-cols", String(cols));
 
     if (source && source.querySelector(".ltf-masonry-tile.is-a")) {
       buildColumnsFromTiles(collectSourceTiles(), cols);
-    } else if (!usePrebuiltColumns()) {
+    } else {
       return;
     }
 
-    applyLoopTiming();
-    wireVideos();
-
-    root.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a").forEach(function (img) {
-      if (!img.complete) img.addEventListener("load", scheduleRebuild, { once: true });
+    whenColumnImagesReady(function () {
+      root.querySelectorAll(".ltf-masonry-tile__media.is-a").forEach(capMedia);
+      finalizeAllTracks();
     });
   }
 
   function scheduleRebuild() {
-    if (rebuildTimer) window.clearTimeout(rebuildTimer);
-    rebuildTimer = window.setTimeout(function () {
-      rebuildTimer = null;
+    if (packTimer) window.clearTimeout(packTimer);
+    packTimer = window.setTimeout(function () {
+      packTimer = null;
       rebuildLayout();
     }, 80);
   }
+  var packTimer = null;
 
   function loadVideo(v) {
     if (v.getAttribute("data-ltf-video-loaded") === "1") return;
@@ -546,16 +589,10 @@
     window.addEventListener("resize", scheduleRebuild);
   }
 
-  root.querySelectorAll(".ltf-masonry-source .ltf-masonry-tile__media.is-a").forEach(capMedia);
-
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(scheduleRebuild).catch(scheduleRebuild);
-  } else {
-    scheduleRebuild();
-  }
-
   updatePauseState();
+  rebuildLayout();
   root.rebuildLtfMasonryV2 = rebuildLayout;
+  root.finalizeLtfMasonryV2 = finalizeAllTracks;
 })();
 
 </script>
