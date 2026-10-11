@@ -1,0 +1,152 @@
+[data-ltf-masonry-v2] {
+  --ltf-masonry-gap: clamp(10px, 1vw, 16px);
+  --ltf-masonry-radius: 8px;
+  --ltf-masonry-max-hw: 1.25;
+  --ltf-masonry-height-scale: 0.9;
+  --ltf-masonry-viewport-h: clamp(520px, 76vh, 820px);
+  --ltf-col-w: 240px;
+  width: 100%;
+  overflow-x: clip;
+  overflow-x: hidden;
+  color: #e5e5e5;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-viewport.is-a {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: var(--ltf-masonry-viewport-h);
+  overflow: hidden;
+  border-radius: var(--ltf-masonry-radius);
+  background: linear-gradient(180deg, #06142e 0%, #00001c 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 6%, #000 94%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 6%, #000 94%, transparent 100%);
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-columns.is-a {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--ltf-masonry-gap);
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-column.is-a {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  padding-top: var(--ltf-col-stagger, 0);
+  box-sizing: border-box;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ltf-masonry-gap);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a.is-ltf-scroll-up {
+  animation: ltf-masonry-loop-up var(--ltf-loop-dur, 55s) linear infinite;
+  animation-delay: var(--ltf-loop-delay, 0s);
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-column__track.is-a.is-ltf-scroll-down {
+  animation: ltf-masonry-loop-down var(--ltf-loop-dur, 55s) linear infinite;
+  animation-delay: var(--ltf-loop-delay, 0s);
+}
+
+@keyframes ltf-masonry-loop-up {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -50%, 0); }
+}
+
+@keyframes ltf-masonry-loop-down {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 50%, 0); }
+}
+
+[data-ltf-masonry-v2][data-ltf-masonry-paused="1"] .ltf-masonry-column__track.is-a {
+  animation-play-state: paused !important;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-tile.is-a {
+  display: block;
+  flex-shrink: 0;
+  border-radius: var(--ltf-masonry-radius);
+  overflow: hidden;
+  background: linear-gradient(145deg, #263350 0%, #0a1a32 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22);
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-tile__media.is-a {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+  background: #00001c;
+  max-height: calc(var(--ltf-col-w) * var(--ltf-masonry-max-hw) * var(--ltf-masonry-height-scale));
+  overflow: hidden;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-tile__img.is-a,
+[data-ltf-masonry-v2] .ltf-masonry-tile__video.is-a {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  border: 0;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-tile__media.is-a.is-cap {
+  aspect-ratio: 1 / calc(var(--ltf-masonry-max-hw) * var(--ltf-masonry-height-scale));
+  max-height: calc(var(--ltf-col-w) * var(--ltf-masonry-max-hw) * var(--ltf-masonry-height-scale));
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-tile__media.is-a.is-cap .ltf-masonry-tile__img.is-a,
+[data-ltf-masonry-v2] .ltf-masonry-tile__media.is-a.is-cap .ltf-masonry-tile__video.is-a {
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-tile__caption.is-a {
+  display: none;
+  padding: 8px 10px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #e5e5e5;
+  background: linear-gradient(to top, rgba(0, 0, 28, 0.92), rgba(0, 0, 28, 0.55));
+  margin-top: -2em;
+  position: relative;
+  z-index: 1;
+}
+
+[data-ltf-masonry-v2][data-ltf-masonry-captions] .ltf-masonry-tile__caption.is-a {
+  display: block;
+}
+
+[data-ltf-masonry-v2] .ltf-masonry-source.is-a {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-ltf-masonry-v2] .ltf-masonry-column__track.is-a {
+    animation: none !important;
+    transform: none !important;
+  }
+  [data-ltf-masonry-v2] .ltf-masonry-viewport.is-a {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}

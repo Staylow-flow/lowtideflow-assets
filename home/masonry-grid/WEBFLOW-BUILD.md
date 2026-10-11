@@ -135,3 +135,69 @@ Open `home/masonry-grid/demo.html` at **1440px**, **768px**, and **390px**. Run 
 [Open Low Tide Flow Designer with MCP Bridge](https://lowtideflow-co-v2-build.design.webflow.com?app=dc8209c65e3ec02254d15275ca056539c89f6d15741893a0adf29ad6f381eb99)
 
 This repo folder does **not** modify Webflow via MCP automatically — build the tree above in Sandbox, then paste the embed.
+
+---
+
+# Masonry v2 — staggered looping columns (owner direction)
+
+**Recover v1 anytime:** `masonry-embed.html` + `demo.html` (packed static masonry, unchanged).
+
+**v2 files:** `masonry-embed-v2.html` (paste embed), `masonry-embed-v2.css` + `masonry-embed-v2.js` (repo source), `demo-v2.html`, `verify-demo-v2.mjs`.
+
+**Page:** same **`/clean-slate-sandbox`**, same **class rules** (`is-a` only on new `ltf-masonry-*` bases; never touch `is-b` or existing bases).
+
+---
+
+## v2 Designer class list (+ combo `is-a`)
+
+| Class | Role |
+|-------|------|
+| `ltf-masonry-viewport` | Fixed-height clipping window (`overflow: hidden`) |
+| `ltf-masonry-columns` | Horizontal flex row of columns |
+| `ltf-masonry-column` | One vertical lane (staggered `padding-top` via JS) |
+| `ltf-masonry-column__track` | Column stack that animates (`translate3d`) |
+| `ltf-masonry-source` | **Hidden** tile templates (Designer); JS clones into columns |
+| `ltf-masonry-tile` / `__media` / `__img` / `__video` / `__caption` | Same as v1 |
+
+**Section attribute:** `data-ltf-masonry-v2` on the wrapper (alongside optional `data-ltf-masonry-captions`).
+
+**Viewport height:** tune one variable in the embed — `--ltf-masonry-viewport-h` (default `clamp(520px, 76vh, 820px)`).
+
+---
+
+## v2 element tree
+
+```
+section [existing — unchanged copy/headline]
+  └── Div  data-ltf-masonry-v2
+        ├── Div.ltf-masonry-viewport.is-a
+        │     └── Div.ltf-masonry-columns.is-a   ← JS builds columns OR you pre-build columns+tracks
+        ├── Div.ltf-masonry-source.is-a          ← 8–12 .ltf-masonry-tile.is-a templates (hidden)
+        └── Embed → paste masonry-embed-v2.html
+```
+
+**Swap-in:** same as v1 — replace only the square tile grid under the hero; keep section shell + copy.
+
+**Pre-built alternative:** skip `ltf-masonry-source` and place tiles directly in each `ltf-masonry-column__track`; JS still duplicates tracks for seamless loops.
+
+---
+
+## v2 behavior (embed)
+
+- **Viewport:** locked height, top/bottom **edge cut-off** intentional (soft mask fade optional in CSS).
+- **Stagger:** each column gets a different `padding-top` (~6–20% of viewport height, patterned).
+- **Columns:** **5 / 4 / 3 / 2** by container width (≥1100 / ≥820 / ≥520 / else) — **2 columns at 390px**, not 1.
+- **Motion:** each column loops independently; **odd columns up**, **even down**; ~**40–70s** per loop (varies per column); CSS `transform` only; pauses when **offscreen** (IO) or **tab hidden**; **`prefers-reduced-motion`** → static stagger, no animation.
+- **Tiles:** ~**10% shorter** than v1 (`--ltf-masonry-height-scale: 0.9`); max aspect **1.25** (`is-cap` + cover when exceeded).
+- **Video:** one lazy video tile in source; plays only when visible inside the viewport; muted/loop/playsinline.
+- **Captions:** default off (`data-ltf-masonry-captions` to enable).
+
+---
+
+## v2 local acceptance
+
+```bash
+node home/masonry-grid/verify-demo-v2.mjs
+```
+
+Open `demo-v2.html` at **1440 / 768 / 390** — no horizontal scroll; stagger + clipping visible; motion + reduced-motion checks in script.
