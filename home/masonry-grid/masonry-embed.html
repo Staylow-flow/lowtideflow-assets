@@ -1,0 +1,217 @@
+<!-- LTF Home Sandbox — Masonry product grid (paste once inside existing below-hero product section) -->
+<style>
+  [data-ltf-masonry] {
+    --ltf-masonry-gap: clamp(12px, 1.15vw, 18px);
+    --ltf-masonry-radius: 8px;
+    --ltf-masonry-max-hw: 1.35;
+    --ltf-masonry-navy: #06142e;
+    --ltf-masonry-slate: #e5e5e5;
+    --ltf-masonry-orange: rgba(255, 106, 28, 0.35);
+    width: 100%;
+    overflow-x: clip;
+    overflow-x: hidden;
+    color: var(--ltf-masonry-slate);
+  }
+
+  [data-ltf-masonry] .ltf-masonry-grid.is-a {
+    column-gap: var(--ltf-masonry-gap);
+    column-fill: balance;
+    columns: 5;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  @media (max-width: 1279px) {
+    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 4; }
+  }
+  @media (max-width: 991px) {
+    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 3; }
+  }
+  @media (max-width: 767px) {
+    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 2; }
+  }
+  @media (max-width: 359px) {
+    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 1; }
+  }
+
+  [data-ltf-masonry] .ltf-masonry-tile.is-a {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    display: inline-block;
+    width: 100%;
+    margin: 0 0 var(--ltf-masonry-gap);
+    border-radius: var(--ltf-masonry-radius);
+    overflow: hidden;
+    background: linear-gradient(145deg, #263350 0%, #0a1a32 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+    vertical-align: top;
+    transform: translateZ(0);
+  }
+
+  [data-ltf-masonry] .ltf-masonry-tile.is-a:focus-within {
+    outline: 2px solid var(--ltf-masonry-orange);
+    outline-offset: 2px;
+  }
+
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a {
+    position: relative;
+    width: 100%;
+    line-height: 0;
+    background: #00001c;
+  }
+
+  [data-ltf-masonry] .ltf-masonry-tile__img.is-a,
+  [data-ltf-masonry] .ltf-masonry-tile__video.is-a {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    border: 0;
+    vertical-align: bottom;
+  }
+
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a.is-cap {
+    aspect-ratio: 1 / var(--ltf-masonry-max-hw);
+    max-height: none;
+    overflow: hidden;
+  }
+
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a.is-cap .ltf-masonry-tile__img.is-a,
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a.is-cap .ltf-masonry-tile__video.is-a {
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  [data-ltf-masonry] .ltf-masonry-tile__caption.is-a {
+    display: none;
+    padding: 10px 12px 12px;
+    font-family: acumin-pro, "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    color: var(--ltf-masonry-slate);
+    background: linear-gradient(to top, rgba(0, 0, 28, 0.92), rgba(0, 0, 28, 0.55));
+    margin-top: -2.4em;
+    position: relative;
+    z-index: 1;
+  }
+
+  [data-ltf-masonry][data-ltf-masonry-captions] .ltf-masonry-tile__caption.is-a {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-ltf-masonry] .ltf-masonry-tile.is-a {
+      opacity: 0;
+      transform: translate3d(0, 14px, 0);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    [data-ltf-masonry] .ltf-masonry-tile.is-a.is-ltf-revealed {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-ltf-masonry] .ltf-masonry-tile.is-a {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
+<script>
+(function () {
+  var rootSel = "[data-ltf-masonry]";
+  var root = document.querySelector(rootSel);
+  if (!root || root.getAttribute("data-ltf-masonry-init") === "1") return;
+  root.setAttribute("data-ltf-masonry-init", "1");
+
+  var MAX_HW = 1.35;
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function capMedia(media) {
+    if (!media || media.tagName === "VIDEO") return;
+    var img = media.querySelector("img.ltf-masonry-tile__img.is-a");
+    if (!img) return;
+    function apply() {
+      if (!img.naturalWidth) return;
+      var hw = img.naturalHeight / img.naturalWidth;
+      if (hw > MAX_HW + 0.01) media.classList.add("is-cap");
+      else media.classList.remove("is-cap");
+    }
+    if (img.complete) apply();
+    else img.addEventListener("load", apply, { once: true });
+  }
+
+  root.querySelectorAll(".ltf-masonry-tile__media.is-a").forEach(capMedia);
+
+  var tiles = root.querySelectorAll(".ltf-masonry-tile.is-a");
+  if (reduced) {
+    tiles.forEach(function (t) { t.classList.add("is-ltf-revealed"); });
+  } else if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          e.target.classList.add("is-ltf-revealed");
+          io.unobserve(e.target);
+        });
+      },
+      { root: null, rootMargin: "0px 0px -6% 0px", threshold: 0.08 }
+    );
+    tiles.forEach(function (t) { io.observe(t); });
+  } else {
+    tiles.forEach(function (t) { t.classList.add("is-ltf-revealed"); });
+  }
+
+  var videos = root.querySelectorAll("video.ltf-masonry-tile__video.is-a[data-ltf-video-lazy]");
+  if (!videos.length) return;
+
+  function loadVideo(v) {
+    if (v.getAttribute("data-ltf-video-loaded") === "1") return;
+    var src = v.getAttribute("data-src");
+    if (!src) return;
+    v.setAttribute("data-ltf-video-loaded", "1");
+    v.src = src;
+    v.load();
+  }
+
+  if ("IntersectionObserver" in window) {
+    var vio = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          var v = e.target;
+          if (e.isIntersecting) {
+            loadVideo(v);
+            v.play().catch(function () {});
+          } else {
+            v.pause();
+          }
+        });
+      },
+      { root: null, rootMargin: "120px 0px", threshold: 0.12 }
+    );
+    videos.forEach(function (v) {
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      v.autoplay = false;
+      v.setAttribute("muted", "");
+      v.setAttribute("loop", "");
+      v.setAttribute("playsinline", "");
+      vio.observe(v);
+    });
+  } else {
+    videos.forEach(function (v) {
+      loadVideo(v);
+      v.muted = true;
+      v.play().catch(function () {});
+    });
+  }
+})();
+</script>
