@@ -131,6 +131,12 @@
   display: block;
 }
 
+[data-ltf-masonry-v2] .ltf-masonry-loop-pad.is-a {
+  width: 100%;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 [data-ltf-masonry-v2] .ltf-masonry-source.is-a {
   position: absolute;
   width: 1px;

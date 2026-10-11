@@ -76,6 +76,108 @@ async function run() {
   );
   if (!lazyOk) errors.push("Source images missing loading=lazy");
 
+  const duplicateReports = [];
+
+  async function assertNoDuplicateTiles(page, label, w, h, screenshotName) {
+    await page.setViewportSize({ width: w, height: h });
+    await waitReady(page);
+    await page.waitForFunction(() => {
+      const imgs = document.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a");
+      return imgs.length > 0 && Array.from(imgs).every((i) => i.complete && i.naturalWidth > 0);
+    }, { timeout: 120000 });
+    await page.evaluate(() => {
+      const root = document.querySelector("[data-ltf-masonry-v2]");
+      if (root.rebuildLtfMasonryV2) root.rebuildLtfMasonryV2();
+    });
+    await page.waitForTimeout(400);
+
+    const dup = await page.evaluate(async () => {
+      const root = document.querySelector("[data-ltf-masonry-v2]");
+      root.setAttribute("data-ltf-masonry-paused", "1");
+      const viewportEl = root.querySelector(".ltf-masonry-viewport.is-a");
+      const vRect = viewportEl.getBoundingClientRect();
+
+      function tileKey(tile) {
+        const img = tile.querySelector("img.ltf-masonry-tile__img.is-a");
+        if (img) return img.currentSrc || img.getAttribute("src") || "img";
+        const v = tile.querySelector("video.ltf-masonry-tile__video.is-a");
+        if (v) return "video:" + (v.getAttribute("data-src") || v.getAttribute("poster") || "v");
+        return tile.getAttribute("data-ltf-tile-key") || "unknown";
+      }
+
+      function visibleInViewport(tile) {
+        const r = tile.getBoundingClientRect();
+        if (r.height < 6 || r.width < 6) return false;
+        const overlap = Math.min(r.bottom, vRect.bottom) - Math.max(r.top, vRect.top);
+        return overlap >= Math.min(r.height * 0.4, 24);
+      }
+
+      const tracks = Array.from(document.querySelectorAll(".ltf-masonry-column__track.is-a"));
+      const issues = [];
+
+      for (let step = 0; step < 6; step++) {
+        const progress = step / 6;
+        tracks.forEach((track) => {
+          track.getAnimations().forEach((anim) => {
+            try {
+              anim.pause();
+              const dur = anim.effect.getTiming().duration;
+              anim.currentTime = progress * dur;
+            } catch (e) {}
+          });
+        });
+
+        const cols = Array.from(document.querySelectorAll(".ltf-masonry-column.is-a"));
+        const colVisible = cols.map((col) => {
+          const items = [];
+          col.querySelectorAll(".ltf-masonry-tile.is-a").forEach((tile) => {
+            if (!visibleInViewport(tile)) return;
+            const r = tile.getBoundingClientRect();
+            items.push({ key: tileKey(tile), top: r.top, bottom: r.bottom });
+          });
+          return items;
+        });
+
+        let videoVisible = 0;
+        colVisible.forEach((items, ci) => {
+          const counts = {};
+          items.forEach((it) => {
+            counts[it.key] = (counts[it.key] || 0) + 1;
+            if (it.key.indexOf("video:") === 0) videoVisible += 1;
+          });
+          Object.keys(counts).forEach((k) => {
+            if (counts[k] > 1) issues.push({ step, col: ci, key: k, count: counts[k] });
+          });
+        });
+        if (videoVisible > 1) issues.push({ step, videoVisible });
+
+        for (let c = 0; c < colVisible.length - 1; c++) {
+          colVisible[c].forEach((a) => {
+            colVisible[c + 1].forEach((b) => {
+              if (a.key !== b.key) return;
+              const overlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+              if (overlap > 24) issues.push({ step, neighbors: [c, c + 1], key: a.key, overlap });
+            });
+          });
+        }
+      }
+
+      return {
+        cols: root.getAttribute("data-ltf-masonry-cols"),
+        issues,
+      };
+    });
+
+    duplicateReports.push({ label, w, ...dup });
+    if (dup.issues.length) {
+      errors.push(`${label}: duplicate visibility ${JSON.stringify(dup.issues)}`);
+    }
+
+    if (screenshotName) {
+      await page.screenshot({ path: `${artifactDir}/masonry-v2-${screenshotName}.png` });
+    }
+  }
+
   for (const { name, w, h } of [
     { name: "desktop", w: 1440, h: 900 },
     { name: "tablet", w: 768, h: 1024 },
@@ -115,14 +217,20 @@ async function run() {
     if (metrics.overflowX) errors.push(`${name}: horizontal overflow`);
     if (w === 390 && metrics.cols !== 2) errors.push(`${name}: expected 2 columns, got ${metrics.cols}`);
     if (w === 768 && metrics.cols !== 3) errors.push(`${name}: expected 3 columns, got ${metrics.cols}`);
-    if (w === 1440 && metrics.cols < 4) errors.push(`${name}: expected 4–5 columns, got ${metrics.cols}`);
+    if (w === 1440 && metrics.cols !== 4) errors.push(`${name}: expected 4 columns at 1440, got ${metrics.cols}`);
     if (!metrics.clipped) errors.push(`${name}: expected top/bottom edge clipping in viewport`);
     if (metrics.staggerSpread < 20) errors.push(`${name}: column top stagger too subtle (${metrics.staggerSpread}px)`);
     if (metrics.stripViolations.length) errors.push(`${name}: skinny tiles ${JSON.stringify(metrics.stripViolations)}`);
 
-    await page.screenshot({ path: `${artifactDir}/masonry-v2-${name}.png` });
   }
 
+  await assertNoDuplicateTiles(page, "w1440", 1440, 900, "desktop");
+  await assertNoDuplicateTiles(page, "w1024", 1024, 900, null);
+  await assertNoDuplicateTiles(page, "w768", 768, 1024, "tablet");
+  await assertNoDuplicateTiles(page, "w390", 390, 844, "mobile390");
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await waitReady(page);
   await page.evaluate(() => {
     document.querySelector("[data-ltf-masonry-v2]").setAttribute("data-ltf-masonry-paused", "0");
   });
@@ -229,6 +337,12 @@ async function run() {
 
   await browser.close();
 
+  console.log("Duplicate-check results:");
+  duplicateReports.forEach((r) => {
+    console.log(
+      `  ${r.w}px (${r.label}): cols=${r.cols} issues=${r.issues.length}${r.issues.length ? " " + JSON.stringify(r.issues) : " OK"}`
+    );
+  });
   console.log("Perf sample (long tasks >50ms):", perf);
   console.log("Motion delta sample:", { t0, t1 });
 

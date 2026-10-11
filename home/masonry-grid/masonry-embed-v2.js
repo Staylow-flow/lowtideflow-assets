@@ -17,7 +17,7 @@
   var ioPaused = false;
 
   function columnCount(w) {
-    if (w >= 1100) return 5;
+    if (w >= 1600) return 5;
     if (w >= 820) return 4;
     if (w >= 520) return 3;
     return 2;
@@ -37,6 +37,31 @@
     return px || 14;
   }
 
+  function tileKey(template) {
+    var img = template.querySelector("img.ltf-masonry-tile__img.is-a");
+    if (img) {
+      return img.getAttribute("src") || img.currentSrc || "img-unknown";
+    }
+    var v = template.querySelector("video.ltf-masonry-tile__video.is-a");
+    if (v) {
+      return "video:" + (v.getAttribute("data-src") || v.getAttribute("poster") || "video");
+    }
+    return "tile-" + (template.getAttribute("data-ltf-tile-key") || "x");
+  }
+
+  function splitSourceTiles(tiles) {
+    var video = null;
+    var images = [];
+    tiles.forEach(function (t) {
+      if (t.hasAttribute("data-ltf-masonry-video-tile") || t.querySelector("video")) {
+        if (!video) video = t;
+      } else {
+        images.push(t);
+      }
+    });
+    return { video: video, images: images };
+  }
+
   function capMedia(media) {
     if (!media) return;
     var img = media.querySelector("img.ltf-masonry-tile__img.is-a");
@@ -54,6 +79,7 @@
   function cloneTile(node) {
     var clone = node.cloneNode(true);
     clone.classList.add("is-ltf-clone");
+    clone.setAttribute("data-ltf-tile-key", tileKey(node));
     return clone;
   }
 
@@ -64,47 +90,158 @@
     );
   }
 
-  function clearColumns() {
-    columnsEl.innerHTML = "";
+  function shuffleIndices(n, salt) {
+    var arr = [];
+    var i;
+    for (i = 0; i < n; i++) arr.push(i);
+    var seed = ((salt + 1) * 1103515245) >>> 0;
+    for (i = n - 1; i > 0; i--) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      var j = seed % (i + 1);
+      var t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    return arr;
+  }
+
+  function tileHeightEstimate(node, colW) {
+    var img = node.querySelector("img.ltf-masonry-tile__img.is-a");
+    if (img) {
+      var iw = parseInt(img.getAttribute("width"), 10) || img.naturalWidth || 960;
+      var ih = parseInt(img.getAttribute("height"), 10) || img.naturalHeight || 540;
+      var hw = (ih / iw) * HEIGHT_SHRINK;
+      if (hw > MAX_HW) hw = MAX_HW;
+      return colW * hw;
+    }
+    var v = node.querySelector("video.ltf-masonry-tile__video.is-a");
+    if (v) {
+      var vw = parseInt(v.getAttribute("width"), 10) || 960;
+      var vh = parseInt(v.getAttribute("height"), 10) || 540;
+      return colW * (vh / vw) * HEIGHT_SHRINK;
+    }
+    return colW * 0.72;
+  }
+
+  function loopContentHeight(track, gap, colW) {
+    var sum = 0;
+    var max = 0;
+    Array.prototype.forEach.call(track.children, function (child) {
+      var h = child.offsetHeight;
+      if (h < 4) h = tileHeightEstimate(child, colW);
+      sum += h + gap;
+      max = Math.max(max, h);
+    });
+    return { total: sum > 0 ? sum - gap : 0, maxTile: max };
+  }
+
+  function measureTrack(track, gap, colW) {
+    var m = loopContentHeight(track, gap, colW);
+    return Math.max(track.offsetHeight, m.total);
+  }
+
+  function buildColumnTrack(colIdx, cols, images, videoTemplate, videoColIdx, gap, colW) {
+    var track = document.createElement("div");
+    track.className = "ltf-masonry-column__track is-a";
+    if (!reduced) {
+      track.classList.add(colIdx % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
+    }
+
+    var vh = viewport.clientHeight || 600;
+    var videoPlaced = false;
+
+    if (!root._ltfColSlotKeys) root._ltfColSlotKeys = [];
+    root._ltfColSlotKeys[colIdx] = [];
+
+    var order = shuffleIndices(images.length, colIdx * 17 + 1);
+    var k;
+    for (k = 0; k < order.length; k++) {
+      var tpl = images[order[k]];
+      var node = cloneTile(tpl);
+      track.appendChild(node);
+      capMedia(node.querySelector(".ltf-masonry-tile__media.is-a"));
+      root._ltfColSlotKeys[colIdx].push(tileKey(tpl));
+
+      if (colIdx === videoColIdx && videoTemplate && !videoPlaced && k === 2) {
+        var vNode = cloneTile(videoTemplate);
+        track.appendChild(vNode);
+        capMedia(vNode.querySelector(".ltf-masonry-tile__media.is-a"));
+        root._ltfColSlotKeys[colIdx].push(tileKey(videoTemplate));
+        videoPlaced = true;
+      }
+    }
+
+    var metrics = loopContentHeight(track, gap, colW);
+    var minLoop = vh + metrics.maxTile + gap * 2;
+    while (measureTrack(track, gap, colW) < minLoop) {
+      var pad = document.createElement("div");
+      pad.className = "ltf-masonry-loop-pad is-a";
+      pad.setAttribute("aria-hidden", "true");
+      pad.style.height = Math.max(48, minLoop - measureTrack(track, gap, colW)) + "px";
+      pad.style.flexShrink = "0";
+      track.appendChild(pad);
+      break;
+    }
+
+    if (colIdx === videoColIdx && videoTemplate && !videoPlaced) {
+      var vOnly = cloneTile(videoTemplate);
+      track.appendChild(vOnly);
+      capMedia(vOnly.querySelector(".ltf-masonry-tile__media.is-a"));
+      videoPlaced = true;
+    }
+
+    var singleCopyH = Math.max(
+      track.offsetHeight,
+      loopContentHeight(track, gap, colW).total
+    );
+    if (singleCopyH < vh) {
+      track.setAttribute("data-ltf-loop-warning", "short");
+    }
+
+    if (!reduced && track.children.length) {
+      singleCopyH = Math.max(
+        track.offsetHeight,
+        loopContentHeight(track, gap, colW).total
+      );
+      if (singleCopyH >= vh) {
+        var originals = Array.prototype.slice.call(track.children);
+        originals.forEach(function (child) {
+          track.appendChild(cloneTile(child));
+        });
+      } else {
+        track.setAttribute("data-ltf-loop-warning", "short-no-dup");
+      }
+    }
+
+    track.setAttribute("data-ltf-loop-single-h", String(Math.round(singleCopyH)));
+
+    return track;
   }
 
   function buildColumnsFromTiles(tiles, cols) {
-    clearColumns();
-    var buckets = [];
-    var i;
-    for (i = 0; i < cols; i++) buckets[i] = [];
+    columnsEl.innerHTML = "";
+    root._ltfColSlotKeys = [];
 
-    tiles.forEach(function (tile, idx) {
-      buckets[idx % cols].push(tile);
-    });
+    var parts = splitSourceTiles(tiles);
+    var images = parts.images;
+    var videoTemplate = parts.video;
+    var videoColIdx = Math.min(1, Math.max(0, cols - 1));
+    var gap = readGapPx();
+    var w = viewport.clientWidth;
+    var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
+    var i;
 
     for (i = 0; i < cols; i++) {
       var col = document.createElement("div");
       col.className = "ltf-masonry-column is-a";
       col.setAttribute("data-ltf-masonry-col-idx", String(i));
       var vh = viewport.clientHeight || 600;
-      var stagger = staggerPattern[i % staggerPattern.length] * vh;
-      col.style.setProperty("--ltf-col-stagger", stagger.toFixed(1) + "px");
+      col.style.setProperty(
+        "--ltf-col-stagger",
+        (staggerPattern[i % staggerPattern.length] * vh).toFixed(1) + "px"
+      );
 
-      var track = document.createElement("div");
-      track.className = "ltf-masonry-column__track is-a";
-      if (!reduced) {
-        track.classList.add(i % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
-      }
-
-      buckets[i].forEach(function (tile) {
-        var t = cloneTile(tile);
-        track.appendChild(t);
-        capMedia(t.querySelector(".ltf-masonry-tile__media.is-a"));
-      });
-
-      if (!reduced && track.children.length) {
-        var clones = Array.prototype.slice.call(track.children);
-        clones.forEach(function (child) {
-          track.appendChild(cloneTile(child));
-        });
-      }
-
+      var track = buildColumnTrack(i, cols, images, videoTemplate, videoColIdx, gap, colW);
       col.appendChild(track);
       columnsEl.appendChild(col);
     }
@@ -113,6 +250,7 @@
   function usePrebuiltColumns() {
     var cols = columnsEl.querySelectorAll(":scope > .ltf-masonry-column.is-a");
     if (!cols.length) return false;
+    if (source && source.querySelector(".ltf-masonry-tile.is-a")) return false;
     cols.forEach(function (col, i) {
       var track = col.querySelector(".ltf-masonry-column__track.is-a");
       if (!track) return;
@@ -127,24 +265,22 @@
         track.classList.add(i % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
       }
       track.querySelectorAll(".ltf-masonry-tile__media.is-a").forEach(capMedia);
-      if (!reduced && !track.querySelector(".is-ltf-clone")) {
-        var items = Array.prototype.slice.call(
-          track.querySelectorAll(":scope > .ltf-masonry-tile.is-a:not(.is-ltf-clone)")
-        );
-        items.forEach(function (child) {
-          track.appendChild(cloneTile(child));
-        });
-      }
     });
     return true;
   }
 
   function applyLoopTiming() {
+    var gap = readGapPx();
+    var colW = parseFloat(getComputedStyle(root).getPropertyValue("--ltf-col-w")) || 240;
     var tracks = columnsEl.querySelectorAll(".ltf-masonry-column__track.is-a");
     tracks.forEach(function (track, i) {
-      var dur = 40 + (i * 11) % 31 + (i % 3) * 2;
-      track.style.setProperty("--ltf-loop-dur", dur + "s");
+      var halfH = measureTrack(track, gap, colW) / 2;
+      if (track.offsetHeight > 0) halfH = track.offsetHeight / 2;
+      var pxPerSec = halfH / (48 + (i * 5) % 18);
+      var dur = Math.min(70, Math.max(40, halfH / pxPerSec));
+      track.style.setProperty("--ltf-loop-dur", dur.toFixed(2) + "s");
       track.style.setProperty("--ltf-loop-delay", (i * 1.7) + "s");
+      track.setAttribute("data-ltf-loop-half-h", String(halfH));
     });
   }
 
@@ -169,6 +305,10 @@
 
     applyLoopTiming();
     wireVideos();
+
+    root.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a").forEach(function (img) {
+      if (!img.complete) img.addEventListener("load", scheduleRebuild, { once: true });
+    });
   }
 
   function scheduleRebuild() {
@@ -197,13 +337,9 @@
       v.setAttribute("muted", "");
       v.setAttribute("loop", "");
       v.setAttribute("playsinline", "");
-    });
-
-    if (!("IntersectionObserver" in window)) return;
-
-    videos.forEach(function (v) {
       if (v.getAttribute("data-ltf-video-io") === "1") return;
       v.setAttribute("data-ltf-video-io", "1");
+      if (!("IntersectionObserver" in window)) return;
       var vio = new IntersectionObserver(
         function (entries) {
           entries.forEach(function (e) {
@@ -216,7 +352,7 @@
             }
           });
         },
-        { root: viewport, threshold: 0.15 }
+        { root: viewport, threshold: 0.12 }
       );
       vio.observe(v);
     });
@@ -233,8 +369,6 @@
       { threshold: 0.05 }
     );
     sectionIo.observe(root);
-  } else {
-    ioPaused = false;
   }
 
   document.addEventListener("visibilitychange", function () {
