@@ -112,7 +112,7 @@ Placeholder in repo demo: `assets/apparel-placeholder.webm` + `assets/apparel-po
 - Accent: subtle orange focus ring on tiles
 - Radius: **8px** (aligned with card controls elsewhere)
 - Gap: `clamp(12px, 1.15vw, 18px)`
-- Columns: **5 → 4 → 3 → 2 → 1** by breakpoint (see embed CSS)
+- Columns: **5 (≥1500px) → 4 → 3 (≥600px) → 2 → 1**; embed JS **shortest-column-first** + light rebalance (DOM order preserved; column bottoms within ~25% avg tile height + gap)
 
 ---
 

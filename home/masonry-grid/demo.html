@@ -56,7 +56,7 @@
     <section data-ltf-masonry aria-label="Product lookbook grid">
       <div class="ltf-masonry-grid is-a" role="list">
         <!-- Video tile -->
-        <article class="ltf-masonry-tile is-a" role="listitem">
+        <article class="ltf-masonry-tile is-a" role="listitem" data-ltf-masonry-video-tile>
           <div class="ltf-masonry-tile__media is-a">
             <video
               class="ltf-masonry-tile__video is-a"
@@ -144,6 +144,13 @@
           </div>
           <p class="ltf-masonry-tile__caption is-a">Heavyweight hoodie, sleeve hit</p>
         </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-11/880/560" alt="Hi-vis orange accent placeholder" width="880" height="560" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Hi-vis orange shell, chest logo</p>
+        </article>
       </div>
     </section>
   </div>
@@ -163,40 +170,31 @@
     color: var(--ltf-masonry-slate);
   }
   [data-ltf-masonry] .ltf-masonry-grid.is-a {
-    column-gap: var(--ltf-masonry-gap);
-    column-fill: balance;
-    columns: 5;
+    position: relative;
     margin: 0;
     padding: 0;
     width: 100%;
     max-width: 100%;
+    min-height: 1px;
   }
-  @media (max-width: 1279px) {
-    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 4; }
+  [data-ltf-masonry] .ltf-masonry-grid.is-a:not(.is-ltf-packed) .ltf-masonry-tile.is-a {
+    visibility: hidden;
+    position: absolute;
+    pointer-events: none;
   }
-  @media (max-width: 991px) {
-    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 3; }
-  }
-  @media (max-width: 767px) {
-    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 2; }
-  }
-  @media (max-width: 359px) {
-    [data-ltf-masonry] .ltf-masonry-grid.is-a { columns: 1; }
+  [data-ltf-masonry] .ltf-masonry-grid.is-a.is-ltf-packed .ltf-masonry-tile.is-a {
+    visibility: visible;
+    pointer-events: auto;
   }
   [data-ltf-masonry] .ltf-masonry-tile.is-a {
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-    page-break-inside: avoid;
-    display: inline-block;
-    width: 100%;
-    margin: 0 0 var(--ltf-masonry-gap);
+    display: block;
+    box-sizing: border-box;
     border-radius: var(--ltf-masonry-radius);
     overflow: hidden;
     background: linear-gradient(145deg, #263350 0%, #0a1a32 100%);
     border: 1px solid rgba(255, 255, 255, 0.07);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
-    vertical-align: top;
-    transform: translateZ(0);
+    will-change: transform, opacity;
   }
   [data-ltf-masonry] .ltf-masonry-tile.is-a:focus-within {
     outline: 2px solid var(--ltf-masonry-orange);
