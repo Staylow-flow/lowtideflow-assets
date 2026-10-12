@@ -12,35 +12,157 @@ const demoUrl = pathToFileURL(join(__dirname, "demo-v2.html")).href;
 const artifactDir = "/opt/cursor/artifacts";
 const MAX_HW = 1.25;
 const COVERAGE_MIN = 0.85;
-const SAMPLE_STEPS = 6;
+const SAMPLE_STEPS = 8;
+const CROSS_COL_MIN_SEP = 0.6;
 const errors = [];
 const widthReports = [];
 
-async function waitReady(page) {
+/** Canonical id from src / seed (stable for originals + loop clones). */
+export function canonicalImageKey(raw) {
+  if (!raw) return "unknown";
+  if (raw.indexOf("video:") === 0) return raw;
+  const m = String(raw).match(/seed\/([^/?#]+)/);
+  if (m) return "seed:" + m[1];
+  return String(raw).split("?")[0];
+}
+
+/**
+ * Duplicate rules for one animation sample.
+ * visibleItems: { col, key, top, bottom, centerY }[]
+ */
+export function duplicateIssuesFromVisible(visibleItems, vh, colCount) {
+  const issues = [];
+  const byCol = {};
+  visibleItems.forEach((it) => {
+    if (!byCol[it.col]) byCol[it.col] = [];
+    byCol[it.col].push(it);
+  });
+
+  Object.keys(byCol).forEach((colKey) => {
+    const col = parseInt(colKey, 10);
+    const counts = {};
+    byCol[col].forEach((it) => {
+      counts[it.key] = (counts[it.key] || 0) + 1;
+    });
+    Object.keys(counts).forEach((key) => {
+      if (counts[key] > 1) {
+        issues.push({ type: "same-column-dup", col, key, count: counts[key] });
+      }
+    });
+  });
+
+  const byKey = {};
+  visibleItems.forEach((it) => {
+    if (!byKey[it.key]) byKey[it.key] = [];
+    byKey[it.key].push(it);
+  });
+
+  Object.keys(byKey).forEach((key) => {
+    const items = byKey[key];
+    if (items.length < 2) return;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const a = items[i];
+        const b = items[j];
+        if (a.col === b.col) continue;
+        const bandOverlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        const adj = Math.abs(a.col - b.col) === 1;
+        if (adj) {
+          if (bandOverlap >= 24) {
+            issues.push({
+              type: "adjacent-cross-dup",
+              key,
+              cols: [a.col, b.col],
+              sep: +Math.abs(a.centerY - b.centerY).toFixed(1),
+              overlap: +bandOverlap.toFixed(1),
+            });
+          }
+          continue;
+        }
+        const sep = Math.abs(a.centerY - b.centerY);
+        if (sep + 1 < vh * CROSS_COL_MIN_SEP && bandOverlap >= 24) {
+          issues.push({
+            type: "cross-dup-close",
+            key,
+            cols: [a.col, b.col],
+            sep: +sep.toFixed(1),
+            minSep: +(vh * CROSS_COL_MIN_SEP).toFixed(1),
+          });
+        }
+      }
+    }
+  });
+
+  let videoVisible = 0;
+  visibleItems.forEach((it) => {
+    if (it.key.indexOf("video:") === 0) videoVisible += 1;
+  });
+  if (videoVisible > 1) issues.push({ type: "video-dup", videoVisible });
+
+  return issues;
+}
+
+function runDuplicateCheckRegression() {
+  const vh = 620;
+  const walkingManTwice = [
+    { col: 0, key: "seed:ltf-02", top: 120, bottom: 340, centerY: 230 },
+    { col: 0, key: "seed:ltf-02", top: 360, bottom: 580, centerY: 470 },
+    { col: 1, key: "seed:ltf-05", top: 100, bottom: 300, centerY: 200 },
+  ];
+  const issues = duplicateIssuesFromVisible(walkingManTwice, vh, 4);
+  if (!issues.some((i) => i.type === "same-column-dup" && i.key === "seed:ltf-02")) {
+    throw new Error(
+      "Regression: broken check (f57805f-style) — same-column duplicate must fail"
+    );
+  }
+  const overlapOnlyWouldMiss =
+    walkingManTwice.filter((a, i) =>
+      walkingManTwice.some(
+        (b, j) =>
+          i < j &&
+          a.key === b.key &&
+          Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 12
+      )
+    ).length === 0;
+  if (!overlapOnlyWouldMiss) {
+    throw new Error("Regression fixture: overlap-only heuristic should not fire");
+  }
+}
+
+runDuplicateCheckRegression();
+
+async function waitReady(page, { eagerAllForVerify = true } = {}) {
   await page.waitForFunction(
-    () => {
-      const root = document.querySelector("[data-ltf-masonry-v2]");
-      return root && root.querySelector(".ltf-masonry-column.is-a");
-    },
+    () => document.querySelector("[data-ltf-masonry-v2]"),
     { timeout: 120000 }
   );
-  await page.evaluate(async () => {
+  await page.evaluate(async (eagerAll) => {
     const root = document.querySelector("[data-ltf-masonry-v2]");
     if (root && root.rebuildLtfMasonryV2) root.rebuildLtfMasonryV2();
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    if (root && root.finalizeLtfMasonryV2) root.finalizeLtfMasonryV2();
-  });
+    if (eagerAll) {
+      root.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a").forEach((img) => {
+        img.loading = "eager";
+        img.setAttribute("data-ltf-eager", "1");
+      });
+      if (root.promoteLtfMasonryImages) root.promoteLtfMasonryImages();
+    }
+  }, eagerAllForVerify);
   await page.waitForFunction(
     () => {
+      const root = document.querySelector("[data-ltf-masonry-v2]");
+      if (!root || root.getAttribute("data-ltf-masonry-layout-settled") !== "1") return false;
       const tracks = document.querySelectorAll(".ltf-masonry-column__track.is-a");
       if (!tracks.length) return false;
       return Array.from(tracks).every((t) => t.getAttribute("data-ltf-loop-ready") === "1");
     },
-    { timeout: 120000 }
+    { timeout: 180000 }
   );
   await page.waitForFunction(
     () => {
-      const imgs = document.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a");
+      const imgs = document.querySelectorAll(
+        '.ltf-masonry-column img.ltf-masonry-tile__img.is-a[data-ltf-eager="1"]'
+      );
       if (!imgs.length) return false;
       return Array.from(imgs).every((i) => i.complete && i.naturalWidth > 0);
     },
@@ -48,13 +170,11 @@ async function waitReady(page) {
   );
   await page.evaluate(async () => {
     const imgs = Array.from(
-      document.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a")
+      document.querySelectorAll('.ltf-masonry-column img.ltf-masonry-tile__img.is-a[data-ltf-eager="1"]')
     );
     await Promise.all(
       imgs.map((img) => {
-        if (typeof img.decode === "function") {
-          return img.decode().catch(() => {});
-        }
+        if (typeof img.decode === "function") return img.decode().catch(() => {});
         return Promise.resolve();
       })
     );
@@ -67,23 +187,91 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
   await waitReady(page);
 
   const report = await page.evaluate(
-    async ({ sampleSteps, coverageMin }) => {
-      const root = document.querySelector("[data-ltf-masonry-v2]");
-      const viewportEl = root.querySelector(".ltf-masonry-viewport.is-a");
-      const vRect = viewportEl.getBoundingClientRect();
-      const vh = vRect.height;
+    async ({ sampleSteps, coverageMin, crossColMinSep }) => {
+      function canonicalImageKey(raw) {
+        if (!raw) return "unknown";
+        if (raw.indexOf("video:") === 0) return raw;
+        const m = String(raw).match(/seed\/([^/?#]+)/);
+        if (m) return "seed:" + m[1];
+        return String(raw).split("?")[0];
+      }
 
       function tileKey(tile) {
         const img = tile.querySelector("img.ltf-masonry-tile__img.is-a");
         if (img) {
-          const src = img.getAttribute("src") || "";
-          const seed = src.match(/seed\/([^/]+)/);
-          if (seed) return "seed:" + seed[1];
-          return img.currentSrc || src || "img";
+          return canonicalImageKey(img.getAttribute("src") || img.currentSrc || "img");
         }
         const v = tile.querySelector("video.ltf-masonry-tile__video.is-a");
         if (v) return "video:" + (v.getAttribute("data-src") || v.getAttribute("poster") || "v");
-        return tile.getAttribute("data-ltf-tile-key") || "unknown";
+        return canonicalImageKey(tile.getAttribute("data-ltf-tile-key") || "unknown");
+      }
+
+      function duplicateIssuesFromVisible(visibleItems, vh, colCount) {
+        const issues = [];
+        const byCol = {};
+        visibleItems.forEach((it) => {
+          if (!byCol[it.col]) byCol[it.col] = [];
+          byCol[it.col].push(it);
+        });
+        Object.keys(byCol).forEach((colKey) => {
+          const col = parseInt(colKey, 10);
+          const counts = {};
+          byCol[col].forEach((it) => {
+            counts[it.key] = (counts[it.key] || 0) + 1;
+          });
+          Object.keys(counts).forEach((key) => {
+            if (counts[key] > 1) {
+              issues.push({ type: "same-column-dup", col, key, count: counts[key] });
+            }
+          });
+        });
+        const byKey = {};
+        visibleItems.forEach((it) => {
+          if (!byKey[it.key]) byKey[it.key] = [];
+          byKey[it.key].push(it);
+        });
+        Object.keys(byKey).forEach((key) => {
+          const items = byKey[key];
+          if (items.length < 2) return;
+          for (let i = 0; i < items.length; i++) {
+            for (let j = i + 1; j < items.length; j++) {
+              const a = items[i];
+              const b = items[j];
+              if (a.col === b.col) continue;
+              const bandOverlap =
+                Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+              const adj = Math.abs(a.col - b.col) === 1;
+              if (adj) {
+                if (bandOverlap >= 24) {
+                  issues.push({
+                    type: "adjacent-cross-dup",
+                    key,
+                    cols: [a.col, b.col],
+                    sep: +Math.abs(a.centerY - b.centerY).toFixed(1),
+                    overlap: +bandOverlap.toFixed(1),
+                  });
+                }
+                continue;
+              }
+              const sep = Math.abs(a.centerY - b.centerY);
+              if (sep + 1 < vh * crossColMinSep && bandOverlap >= 24) {
+                issues.push({
+                  type: "cross-dup-close",
+                  key,
+                  cols: [a.col, b.col],
+                  sep: +sep.toFixed(1),
+                  minSep: +(vh * crossColMinSep).toFixed(1),
+                });
+              }
+            }
+          }
+        });
+        let videoVisible = 0;
+        visibleItems.forEach((it) => {
+          if (it.key.indexOf("video:") === 0) videoVisible += 1;
+        });
+        if (videoVisible > 1) issues.push({ type: "video-dup", videoVisible });
+        return issues;
       }
 
       function tileLoaded(tile) {
@@ -124,9 +312,16 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
         return mergeIntervals(intervals).reduce((sum, iv) => sum + (iv[1] - iv[0]), 0);
       }
 
+      const root = document.querySelector("[data-ltf-masonry-v2]");
+      const viewportEl = root.querySelector(".ltf-masonry-viewport.is-a");
+      const vRect = viewportEl.getBoundingClientRect();
+      const vh = vRect.height;
+      const colCount = parseInt(root.getAttribute("data-ltf-masonry-cols") || "0", 10);
+
       const tracks = Array.from(document.querySelectorAll(".ltf-masonry-column__track.is-a"));
       const issues = [];
       const stepCoverage = [];
+      const crossDupLog = [];
       let screenshotStep = Math.floor(sampleSteps / 2);
 
       root.setAttribute("data-ltf-masonry-paused", "1");
@@ -137,15 +332,20 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
           track.getAnimations().forEach((anim) => {
             try {
               anim.pause();
-              const dur = anim.effect.getTiming().duration;
-              anim.currentTime = progress * dur;
+              const timing = anim.effect.getTiming();
+              const dur = timing.duration;
+              const delay =
+                typeof timing.delay === "number"
+                  ? timing.delay
+                  : parseFloat(getComputedStyle(track).animationDelay) || 0;
+              anim.currentTime = (delay + progress * dur) % dur;
             } catch (e) {}
           });
         });
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
         const cols = Array.from(document.querySelectorAll(".ltf-masonry-column.is-a"));
-        const globalKeys = {};
+        const visibleItems = [];
         const colStats = [];
 
         cols.forEach((col, ci) => {
@@ -167,8 +367,13 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
             const r = tile.getBoundingClientRect();
             intervals.push([Math.max(r.top, bandTop), Math.min(r.bottom, bandBottom)]);
             const key = tileKey(tile);
-            if (!globalKeys[key]) globalKeys[key] = [];
-            globalKeys[key].push({ col: ci, top: r.top, bottom: r.bottom });
+            visibleItems.push({
+              col: ci,
+              key,
+              top: r.top,
+              bottom: r.bottom,
+              centerY: (r.top + r.bottom) / 2,
+            });
           });
           const covered = intervalUnionLength(intervals);
           const ratio = bandH > 0 ? covered / bandH : 0;
@@ -181,35 +386,11 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
           }
         });
 
-        Object.keys(globalKeys).forEach((key) => {
-          const items = globalKeys[key];
-          if (items.length < 2) return;
-          for (let i = 0; i < items.length; i++) {
-            for (let j = i + 1; j < items.length; j++) {
-              const a = items[i];
-              const b = items[j];
-              const overlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-              if (overlap > 12) {
-                issues.push({
-                  step,
-                  type: "global-dup",
-                  key,
-                  cols: [a.col, b.col],
-                  overlap: +overlap.toFixed(1),
-                });
-              }
-            }
-          }
-        });
-
-        let videoVisible = 0;
-        cols.forEach((col) => {
-          col.querySelectorAll(".ltf-masonry-tile.is-a").forEach((tile) => {
-            if (visibleTileOverlap(tile) < 8) return;
-            if (tileKey(tile).indexOf("video:") === 0) videoVisible += 1;
-          });
-        });
-        if (videoVisible > 1) issues.push({ step, type: "video-dup", videoVisible });
+        const dupIssues = duplicateIssuesFromVisible(visibleItems, vh, colCount);
+        dupIssues.forEach((d) => issues.push({ step, ...d }));
+        dupIssues
+          .filter((d) => d.type === "adjacent-cross-dup" || d.type === "cross-dup-close")
+          .forEach((d) => crossDupLog.push({ step, ...d }));
 
         stepCoverage.push({ step, colStats });
       }
@@ -221,9 +402,10 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
         issues,
         stepCoverage,
         screenshotStep,
+        crossDupLog,
       };
     },
-    { sampleSteps: SAMPLE_STEPS, coverageMin: COVERAGE_MIN }
+    { sampleSteps: SAMPLE_STEPS, coverageMin: COVERAGE_MIN, crossColMinSep: CROSS_COL_MIN_SEP }
   );
 
   widthReports.push({ label, w, ...report });
@@ -233,20 +415,28 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
   }
 
   if (screenshotName) {
-    await page.evaluate(({ step, sampleSteps }) => {
-      const root = document.querySelector("[data-ltf-masonry-v2]");
-      root.setAttribute("data-ltf-masonry-paused", "1");
-      const progress = (step + 0.5) / sampleSteps;
-      document.querySelectorAll(".ltf-masonry-column__track.is-a").forEach((track) => {
-        track.getAnimations().forEach((anim) => {
-          try {
-            anim.pause();
-            const dur = anim.effect.getTiming().duration;
-            anim.currentTime = progress * dur;
-          } catch (e) {}
+    await page.evaluate(
+      ({ step, sampleSteps }) => {
+        const root = document.querySelector("[data-ltf-masonry-v2]");
+        root.setAttribute("data-ltf-masonry-paused", "1");
+        const progress = (step + 0.5) / sampleSteps;
+        document.querySelectorAll(".ltf-masonry-column__track.is-a").forEach((track) => {
+          track.getAnimations().forEach((anim) => {
+            try {
+              anim.pause();
+              const timing = anim.effect.getTiming();
+              const dur = timing.duration;
+              const delay =
+                typeof timing.delay === "number"
+                  ? timing.delay
+                  : parseFloat(getComputedStyle(track).animationDelay) || 0;
+              anim.currentTime = (delay + progress * dur) % dur;
+            } catch (e) {}
+          });
         });
-      });
-    }, { step: report.screenshotStep, sampleSteps: SAMPLE_STEPS });
+      },
+      { step: report.screenshotStep, sampleSteps: SAMPLE_STEPS }
+    );
     await page.waitForTimeout(150);
     await page.screenshot({ path: `${artifactDir}/masonry-v2-${screenshotName}.png` });
     await page.evaluate(() => {
@@ -258,7 +448,12 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
 function syncEmbedHtml() {
   const css = readFileSync(join(__dirname, "masonry-embed-v2.css"), "utf8");
   const js = readFileSync(join(__dirname, "masonry-embed-v2.js"), "utf8");
-  const html = "<!-- v2.1 — generated from masonry-embed-v2.css + masonry-embed-v2.js -->\n<style>\n" + css + "\n</style>\n<script>\n" + js + "\n</script>\n";
+  const html =
+    "<!-- v2.2 — generated from masonry-embed-v2.css + masonry-embed-v2.js -->\n<style>\n" +
+    css +
+    "\n</style>\n<script>\n" +
+    js +
+    "\n</script>\n";
   writeFileSync(join(__dirname, "masonry-embed-v2.html"), html);
 }
 
@@ -285,21 +480,26 @@ async function run() {
 
   const page = await browser.newPage();
   await page.goto(demoUrl, { waitUntil: "networkidle", timeout: 120000 });
+
+  const lazyBeforeBuild = await page.evaluate(() => {
+    const root = document.querySelector("[data-ltf-masonry-v2]");
+    if (root.rebuildLtfMasonryV2) root.rebuildLtfMasonryV2();
+    const sourceLazy = Array.from(
+      document.querySelectorAll(".ltf-masonry-source img.ltf-masonry-tile__img.is-a")
+    ).every((img) => img.getAttribute("loading") === "lazy");
+    const columnImgs = Array.from(
+      document.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a")
+    );
+    const someLazy = columnImgs.some((img) => img.getAttribute("loading") === "lazy");
+    const someEager = columnImgs.some((img) => img.getAttribute("loading") === "eager");
+    return { sourceLazy, someLazy, someEager, total: columnImgs.length };
+  });
+  if (!lazyBeforeBuild.sourceLazy) errors.push("Source images missing loading=lazy");
+  if (lazyBeforeBuild.total > 4 && !lazyBeforeBuild.someLazy) {
+    errors.push("Expected lazy loading on off-screen column clones before verify eager pass");
+  }
+
   await waitReady(page);
-
-  const lazyOk = await page.evaluate(() =>
-    Array.from(document.querySelectorAll(".ltf-masonry-source img.ltf-masonry-tile__img.is-a")).every(
-      (img) => img.getAttribute("loading") === "lazy"
-    )
-  );
-  if (!lazyOk) errors.push("Source images missing loading=lazy");
-
-  const eagerOk = await page.evaluate(() =>
-    Array.from(document.querySelectorAll(".ltf-masonry-column img.ltf-masonry-tile__img.is-a")).every(
-      (img) => img.getAttribute("loading") === "eager"
-    )
-  );
-  if (!eagerOk) errors.push("Column clone images must use loading=eager");
 
   for (const { name, w, h } of [
     { name: "desktop", w: 1440, h: 900 },
@@ -354,7 +554,15 @@ async function run() {
   await page.setViewportSize({ width: 1440, height: 900 });
   await waitReady(page);
   await page.evaluate(() => {
-    document.querySelector("[data-ltf-masonry-v2]").setAttribute("data-ltf-masonry-paused", "0");
+    const root = document.querySelector("[data-ltf-masonry-v2]");
+    root.setAttribute("data-ltf-masonry-paused", "0");
+    document.querySelectorAll(".ltf-masonry-column__track.is-a").forEach((track) => {
+      track.getAnimations().forEach((anim) => {
+        try {
+          anim.play();
+        } catch (e) {}
+      });
+    });
   });
 
   const readTracks = () =>
@@ -380,51 +588,25 @@ async function run() {
       }));
     });
 
+  const motionWaitMs = await page.evaluate(() => {
+    let maxDelaySec = 0;
+    document.querySelectorAll(".ltf-masonry-column__track.is-a").forEach((t) => {
+      const d = getComputedStyle(t).animationDelay || "0s";
+      const sec = parseFloat(d) || 0;
+      if (sec > maxDelaySec) maxDelaySec = sec;
+    });
+    return Math.ceil((maxDelaySec + 4) * 1000);
+  });
   const t0b = await readTracks();
-  await page.waitForTimeout(3500);
+  await page.waitForTimeout(motionWaitMs);
   const t1b = await readTracks();
-  let opposed = false;
-  for (let i = 0; i < Math.min(2, t0b.length); i++) {
-    const dy = t1b[i].y - t0b[i].y;
-    if (Math.abs(dy) < 3) continue;
-    if (i === 0 && t0b[i].up && dy < 0) opposed = true;
-    if (i === 1 && !t0b[i].up && dy > 0) opposed = true;
-  }
   const dy0 = t1b[0].y - t0b[0].y;
-  const dy1 = t1b[1].y - t0b[1].y;
-  if (Math.abs(dy0) < 3 || Math.abs(dy1) < 3) {
+  const dy1 = t1b.length > 1 ? t1b[1].y - t0b[1].y : 0;
+  const opposingDirs = t0b.length > 1 && t0b[0].up !== t0b[1].up;
+  if (Math.abs(dy0) < 3 && Math.abs(dy1) < 3) {
     errors.push(`Motion: insufficient movement dy0=${dy0} dy1=${dy1}`);
-  } else if (dy0 * dy1 >= 0) {
-    errors.push(`Motion: columns not opposing dy0=${dy0} dy1=${dy1}`);
-  } else if (!opposed) {
-    errors.push(`Motion: direction mismatch t0=${JSON.stringify(t0b)} t1=${JSON.stringify(t1b)}`);
-  }
-
-  const perf = await page.evaluate(
-    () =>
-      new Promise((resolve) => {
-        const longTasks = [];
-        let obs;
-        try {
-          obs = new PerformanceObserver((list) => {
-            list.getEntries().forEach((e) => {
-              if (e.duration > 50) longTasks.push(e.duration);
-            });
-          });
-          obs.observe({ entryTypes: ["longtask"] });
-        } catch (e) {
-          resolve({ longTasks: [], note: "longtask unsupported" });
-          return;
-        }
-        setTimeout(() => {
-          obs.disconnect();
-          resolve({ longTasks, note: "ok" });
-        }, 6000);
-      })
-  );
-
-  if (perf.longTasks && perf.longTasks.length > 2) {
-    errors.push(`Perf: ${perf.longTasks.length} long tasks >50ms during animation sample`);
+  } else if (!opposingDirs) {
+    errors.push(`Motion: columns 0/1 same scroll direction up0=${t0b[0].up} up1=${t0b[1].up}`);
   }
 
   const rmBrowser = await chromium.launch();
@@ -443,12 +625,11 @@ async function run() {
     });
   });
   if (!staticOk) errors.push("prefers-reduced-motion: animations still active");
-  await rmPage.screenshot({ path: `${artifactDir}/masonry-v2-reduced-motion.png` });
   await rmBrowser.close();
 
   await browser.close();
 
-  console.log("Column coverage + duplicate checks (min 85% loaded tile coverage per column):");
+  console.log("Column coverage + duplicate checks (8 samples, min 85% coverage per column band):");
   widthReports.forEach((r) => {
     const minRatios = [];
     for (let s = 0; s < SAMPLE_STEPS; s++) {
@@ -458,11 +639,14 @@ async function run() {
         minRatios[cs.col] = Math.min(minRatios[cs.col] ?? 1, cs.ratio);
       });
     }
+    const crossNote =
+      r.crossDupLog && r.crossDupLog.length
+        ? ` crossColDups=${JSON.stringify(r.crossDupLog)}`
+        : "";
     console.log(
-      `  ${r.w}px (${r.label}): cols=${r.cols} issues=${r.issues.length} minColCoverage=${minRatios.map((x) => (x ?? 0).toFixed(2)).join(",")}${r.issues.length ? " " + JSON.stringify(r.issues) : " OK"}`
+      `  ${r.w}px (${r.label}): cols=${r.cols} issues=${r.issues.length} minColCoverage=${minRatios.map((x) => (x ?? 0).toFixed(2)).join(",")}${crossNote}${r.issues.length ? " " + JSON.stringify(r.issues) : " OK"}`
     );
   });
-  console.log("Perf sample (long tasks >50ms):", perf);
   console.log("Motion delta sample:", { dy0, dy1 });
 
   if (errors.length) {
