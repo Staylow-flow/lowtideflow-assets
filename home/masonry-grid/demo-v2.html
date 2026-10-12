@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LTF Masonry Grid v2 — Staggered loop demo</title>
+  <style>
+    :root {
+      --ltf-bg-secondary: #06142e;
+      --ltf-text-secondary: #e5e5e5;
+      --site-max-width: 1400px;
+      --fluid-padding: clamp(20px, 3vw, 48px);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; overflow-x: hidden; }
+    body {
+      min-height: 100vh;
+      background: var(--ltf-bg-secondary);
+      color: var(--ltf-text-secondary);
+      font-family: acumin-pro, "Helvetica Neue", Arial, sans-serif;
+    }
+    .demo-shell {
+      max-width: var(--site-max-width);
+      margin: 0 auto;
+      padding: var(--fluid-padding);
+    }
+    .demo-note { font-size: 12px; opacity: 0.65; margin-bottom: 1rem; }
+    .ltf-masonry-demo-copy { max-width: 42rem; margin-bottom: 1.5rem; }
+    .ltf-masonry-demo-copy p { margin: 0; line-height: 1.45; }
+  </style>
+  <link rel="stylesheet" href="./masonry-embed-v2.css" />
+</head>
+<body>
+  <div class="demo-shell">
+    <p class="demo-note">v2 staggered loop — v1 remains in demo.html + masonry-embed.html</p>
+    <div class="ltf-masonry-demo-copy">
+      <p>We design heavy-duty apparel throughout SoCal &amp; across the country.</p>
+    </div>
+
+    <section data-ltf-masonry-v2 aria-label="Product lookbook marquee">
+      <div class="ltf-masonry-viewport is-a">
+        <div class="ltf-masonry-columns is-a"></div>
+      </div>
+      <div class="ltf-masonry-source is-a" aria-hidden="true">
+        <article class="ltf-masonry-tile is-a" data-ltf-masonry-video-tile>
+          <div class="ltf-masonry-tile__media is-a">
+            <video class="ltf-masonry-tile__video is-a" data-ltf-video-lazy data-src="./assets/apparel-placeholder.webm" poster="./assets/apparel-poster.jpg" width="960" height="540" preload="none" muted loop playsinline aria-label="Apparel placeholder"></video>
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Video tile</p>
+        </article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-01/960/520" alt="" width="960" height="520" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-02/720/720" alt="" width="720" height="720" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-03/960/600" alt="" width="960" height="600" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-04/640/860" alt="" width="640" height="860" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-05/960/540" alt="" width="960" height="540" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-06/800/800" alt="" width="800" height="800" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-07/960/500" alt="" width="960" height="500" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-08/600/900" alt="" width="600" height="900" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-09/920/680" alt="" width="920" height="680" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-10/960/620" alt="" width="960" height="620" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-11/880/560" alt="" width="880" height="560" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-12/960/580" alt="" width="960" height="580" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-13/740/740" alt="" width="740" height="740" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-14/900/640" alt="" width="900" height="640" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-15/960/510" alt="" width="960" height="510" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-16/680/820" alt="" width="680" height="820" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-17/920/600" alt="" width="920" height="600" loading="lazy" decoding="async" /></div></article>
+        <article class="ltf-masonry-tile is-a"><div class="ltf-masonry-tile__media is-a"><img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-18/960/540" alt="" width="960" height="540" loading="lazy" decoding="async" /></div></article>
+      </div>
+    </section>
+  </div>
+  <script src="./masonry-embed-v2.js"></script>
+</body>
+</html>
