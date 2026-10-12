@@ -12,7 +12,7 @@ const demoUrl = pathToFileURL(join(__dirname, "demo-v2.html")).href;
 const artifactDir = "/opt/cursor/artifacts";
 const MAX_HW = 1.25;
 const COVERAGE_MIN = 0.85;
-const SAMPLE_STEPS = 8;
+const SAMPLE_STEPS = 12;
 const CROSS_COL_MIN_SEP = 0.6;
 const errors = [];
 const widthReports = [];
@@ -466,8 +466,9 @@ async function run() {
     viewport: { width: 1440, height: 900 },
     recordVideo: { dir: artifactDir, size: { width: 1440, height: 900 } },
   });
+  videoContext.setDefaultTimeout(180000);
   const videoPage = await videoContext.newPage();
-  await videoPage.goto(demoUrl, { waitUntil: "networkidle", timeout: 120000 });
+  await videoPage.goto(demoUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
   await waitReady(videoPage);
   await videoPage.evaluate(() => {
     document.querySelector("[data-ltf-masonry-v2]").setAttribute("data-ltf-masonry-paused", "0");
@@ -479,7 +480,8 @@ async function run() {
   if (existsSync(rawVideo)) renameSync(rawVideo, outVideo);
 
   const page = await browser.newPage();
-  await page.goto(demoUrl, { waitUntil: "networkidle", timeout: 120000 });
+  page.setDefaultTimeout(180000);
+  await page.goto(demoUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
 
   const lazyBeforeBuild = await page.evaluate(() => {
     const root = document.querySelector("[data-ltf-masonry-v2]");
@@ -555,6 +557,7 @@ async function run() {
   await waitReady(page);
   await page.evaluate(() => {
     const root = document.querySelector("[data-ltf-masonry-v2]");
+    root.setAttribute("data-ltf-masonry-near", "1");
     root.setAttribute("data-ltf-masonry-paused", "0");
     document.querySelectorAll(".ltf-masonry-column__track.is-a").forEach((track) => {
       track.getAnimations().forEach((anim) => {
@@ -614,8 +617,9 @@ async function run() {
     viewport: { width: 1440, height: 900 },
     reducedMotion: "reduce",
   });
+  rmContext.setDefaultTimeout(180000);
   const rmPage = await rmContext.newPage();
-  await rmPage.goto(demoUrl, { waitUntil: "networkidle" });
+  await rmPage.goto(demoUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
   await waitReady(rmPage);
   const staticOk = await rmPage.evaluate(() => {
     const tracks = document.querySelectorAll(".ltf-masonry-column__track.is-a");
@@ -629,7 +633,9 @@ async function run() {
 
   await browser.close();
 
-  console.log("Column coverage + duplicate checks (8 samples, min 85% coverage per column band):");
+  console.log(
+    `Column coverage + duplicate checks (${SAMPLE_STEPS} samples, min 85% coverage per column band):`
+  );
   widthReports.forEach((r) => {
     const minRatios = [];
     for (let s = 0; s < SAMPLE_STEPS; s++) {

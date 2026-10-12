@@ -1,4 +1,4 @@
-<!-- v2.2 -->
+<!-- v2.2 — generated from masonry-embed-v2.css + masonry-embed-v2.js -->
 <style>
 [data-ltf-masonry-v2] {
   --ltf-masonry-gap: clamp(10px, 1vw, 16px);
@@ -185,8 +185,11 @@
   var layoutBuilt = false;
   var imagePromoteIo = null;
 
+  var LOOP_HALF_DUR = 55;
+  var LAYOUT_SAMPLES = 12;
+  var CROSS_COL_MIN_SEP = 0.6;
+
   function columnCount(w) {
-    if (w >= 1600) return 5;
     if (w >= 820) return 4;
     if (w >= 520) return 3;
     return 2;
@@ -356,140 +359,654 @@
   }
 
   var activeColumnOrders = null;
+  var activePhaseDelays = null;
 
-  function columnOrderKeys(order) {
-    return order.map(seedFromTemplate);
+  function templateHeightPx(tpl, colW) {
+    var img = tpl.querySelector("img.ltf-masonry-tile__img.is-a");
+    if (img) {
+      var iw = parseFloat(img.getAttribute("width") || "0");
+      var ih = parseFloat(img.getAttribute("height") || "0");
+      if (iw > 0 && ih > 0) {
+        var ratio = (ih / iw) * HEIGHT_SHRINK;
+        if (ratio > MAX_HW + 0.01) ratio = MAX_HW * HEIGHT_SHRINK;
+        return colW * ratio;
+      }
+    }
+    var v = tpl.querySelector("video.ltf-masonry-tile__video.is-a");
+    if (v) {
+      var vw = parseFloat(v.getAttribute("width") || "960");
+      var vh = parseFloat(v.getAttribute("height") || "540");
+      return colW * ((vh / vw) * HEIGHT_SHRINK);
+    }
+    return colW * 0.72;
   }
 
-  function scoreColumnOrders(orders, rots, cols, n, vhSlots) {
-    var conflicts = 0;
-    var step;
-    vhSlots = vhSlots || Math.max(4, Math.min(n, Math.ceil(n * 0.48)));
-    for (step = 0; step < 8; step++) {
-      var base = (step + 0.5) / 8;
-      var keysByCol = [];
-      var c;
-      for (c = 0; c < cols; c++) {
-        var rot = rots[c] || 0;
-        var keys = columnOrderKeys(orders[c]);
-        var phase = (base + (c / Math.max(1, cols)) * 0.42 + c * 0.02 + rot / n) % 1;
-        var start = Math.floor(phase * n) % n;
-        var visKeys = [];
-        var j;
-        for (j = 0; j < vhSlots; j++) visKeys.push(keys[(start + j) % n]);
-        keysByCol[c] = visKeys;
-        var counts = {};
-        visKeys.forEach(function (k) {
-          counts[k] = (counts[k] || 0) + 1;
+  function buildTrackTileList(order, rot, videoTemplate, colIdx, videoColIdx) {
+    var list = rotateArray(order.slice(), rot);
+    if (colIdx === videoColIdx && videoTemplate) {
+      var copy = list.slice();
+      var insertAt = Math.min(3, copy.length);
+      copy.splice(insertAt, 0, videoTemplate);
+      return copy;
+    }
+    return list;
+  }
+
+  function trackModelFromList(list, colW, gap) {
+    var tiles = [];
+    var y = 0;
+    var maxH = 0;
+    var i;
+    for (i = 0; i < list.length; i++) {
+      var h = templateHeightPx(list[i], colW);
+      tiles.push({
+        key: seedFromTemplate(list[i]),
+        top: y,
+        bottom: y + h,
+        h: h,
+      });
+      maxH = Math.max(maxH, h);
+      y += h + gap;
+    }
+    var total = y > 0 ? y - gap : 0;
+    return { tiles: tiles, total: total, maxH: maxH };
+  }
+
+  function columnPadTop(colIdx, cols, vh) {
+    var staggerMul = colIdx === 0 || colIdx === cols - 1 ? 1.08 : 1;
+    return staggerPattern[colIdx % staggerPattern.length] * vh * staggerMul;
+  }
+
+  function scrollOffsetPx(colIdx, pEff, singleH) {
+    var up = colIdx % 2 === 0;
+    return up ? pEff * singleH : (1 - pEff) * singleH;
+  }
+
+  function visibleSimulated(colIdx, cols, model, padTop, vh, pEff) {
+    var singleH = model.total;
+    if (singleH < 1) return [];
+    var scroll = scrollOffsetPx(colIdx, pEff, singleH);
+    var bandTop = padTop;
+    var bandBottom = vh;
+    var out = [];
+    var wrapK;
+    for (wrapK = -1; wrapK <= 1; wrapK++) {
+      var wrapShift = wrapK * singleH;
+      model.tiles.forEach(function (t) {
+        var top = padTop + t.top - scroll + wrapShift;
+        var bottom = padTop + t.bottom - scroll + wrapShift;
+        var overlap = Math.min(bottom, bandBottom) - Math.max(top, bandTop);
+        if (overlap < 8) return;
+        out.push({
+          col: colIdx,
+          key: t.key,
+          top: top,
+          bottom: bottom,
+          centerY: (top + bottom) / 2,
         });
-        Object.keys(counts).forEach(function (k) {
-          if (counts[k] > 1) conflicts += 100;
-        });
-      }
-      for (c = 0; c < cols - 1; c++) {
-        var setA = {};
-        var setB = {};
-        keysByCol[c].forEach(function (k) {
-          setA[k] = 1;
-        });
-        keysByCol[c + 1].forEach(function (k) {
-          setB[k] = 1;
-        });
-        Object.keys(setA).forEach(function (k) {
-          if (setB[k]) conflicts += 8;
-        });
-      }
-      for (c = 0; c < cols; c++) {
-        for (var c2 = c + 2; c2 < cols; c2++) {
-          var setX = {};
-          var setY = {};
-          keysByCol[c].forEach(function (k) {
-            setX[k] = 1;
-          });
-          keysByCol[c2].forEach(function (k) {
-            setY[k] = 1;
-          });
-          Object.keys(setX).forEach(function (k) {
-            if (setY[k]) conflicts += c2 === cols - 1 && c === 0 ? 12 : 4;
-          });
+      });
+    }
+    return out;
+  }
+
+  function conflictScore(visibleItems, vh) {
+    var score = 0;
+    var byCol = {};
+    visibleItems.forEach(function (it) {
+      if (!byCol[it.col]) byCol[it.col] = {};
+      byCol[it.col][it.key] = (byCol[it.col][it.key] || 0) + 1;
+    });
+    Object.keys(byCol).forEach(function (ck) {
+      Object.keys(byCol[ck]).forEach(function (k) {
+        if (byCol[ck][k] > 1) score += 10000;
+      });
+    });
+    var ii;
+    for (ii = 0; ii < visibleItems.length; ii++) {
+      var jj;
+      for (jj = ii + 1; jj < visibleItems.length; jj++) {
+        var a = visibleItems[ii];
+        var b = visibleItems[jj];
+        if (a.key !== b.key) continue;
+        if (a.col === b.col) continue;
+        var bandOverlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (Math.abs(a.col - b.col) === 1) {
+          if (bandOverlap >= 24) score += 8000;
+          continue;
+        }
+        if (Math.abs(a.centerY - b.centerY) + 1 < vh * CROSS_COL_MIN_SEP && bandOverlap >= 24) {
+          score += 800;
         }
       }
     }
-    return conflicts;
+    return score;
   }
 
-  function ordersFromBaseShift(base, cols, n, shiftMul) {
-    var orders = [];
-    var step = Math.max(1, Math.round(n / cols));
+  function coverageMinSimulated(models, pads, vh, cols, rots, delays, orders, videoTemplate, videoColIdx, colW, gap) {
+    var minRatio = 1;
+    var step;
+    for (step = 0; step < LAYOUT_SAMPLES; step++) {
+      var p = (step + 0.5) / LAYOUT_SAMPLES;
+      var c;
+      for (c = 0; c < cols; c++) {
+        var delayFrac = (delays[c] || 0) / LOOP_HALF_DUR;
+        var pEff = (p + delayFrac) % 1;
+        var model;
+        if (models && models.meta) {
+          model = modelForColumnPlan(
+            orders[c],
+            rots[c],
+            c,
+            models.meta,
+            videoTemplate,
+            videoColIdx,
+            colW,
+            gap
+          );
+        } else {
+          var list = buildTrackTileList(orders[c], rots[c], videoTemplate, c, videoColIdx);
+          model = trackModelFromList(list, colW, gap);
+        }
+        var vis = visibleSimulated(c, cols, model, pads[c], vh, pEff);
+        var bandTop = pads[c];
+        var bandH = Math.max(1, vh - bandTop);
+        var intervals = vis
+          .map(function (it) {
+            return [Math.max(it.top, bandTop), Math.min(it.bottom, vh)];
+          })
+          .filter(function (iv) {
+            return iv[1] > iv[0];
+          })
+          .sort(function (a, b) {
+            return a[0] - b[0];
+          });
+        var covered = 0;
+        var merged = [];
+        intervals.forEach(function (iv) {
+          if (!merged.length || iv[0] > merged[merged.length - 1][1]) merged.push(iv.slice());
+          else merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], iv[1]);
+        });
+        merged.forEach(function (iv) {
+          covered += iv[1] - iv[0];
+        });
+        var ratio = covered / bandH;
+        if (ratio < minRatio) minRatio = ratio;
+      }
+    }
+    return minRatio;
+  }
+
+  function buildHeightMapFromModels(models, cols, colW, gap) {
+    var map = {};
+    var sharedSingleH = 0;
     var c;
     for (c = 0; c < cols; c++) {
-      orders[c] = rotateArray(base.slice(), (c * step + shiftMul) % n);
+      if (!models[c]) continue;
+      sharedSingleH = Math.max(sharedSingleH, models[c].total);
+      models[c].tiles.forEach(function (t) {
+        if (t.key.indexOf("video:") !== 0) map[t.key] = t.h;
+      });
+    }
+    return { heights: map, sharedSingleH: sharedSingleH, colW: colW, gap: gap };
+  }
+
+  function modelForColumnPlan(order, rot, colIdx, meta, videoTemplate, videoColIdx, colW, gap) {
+    if (!meta) {
+      var list0 = buildTrackTileList(order, rot, videoTemplate, colIdx, videoColIdx);
+      return trackModelFromList(list0, colW, gap);
+    }
+    var list = buildTrackTileList(order, rot, videoTemplate, colIdx, videoColIdx);
+    var tiles = [];
+    var y = 0;
+    var i;
+    for (i = 0; i < list.length; i++) {
+      var key = seedFromTemplate(list[i]);
+      var h = meta.heights[key] || templateHeightPx(list[i], meta.colW || colW);
+      tiles.push({ key: key, top: y, bottom: y + h, h: h });
+      y += h + (meta.gap || gap);
+    }
+    return { tiles: tiles, total: meta.sharedSingleH || y, maxH: 0 };
+  }
+
+  function evaluatePlanWithModels(
+    cols,
+    vh,
+    orders,
+    rots,
+    delays,
+    colModels,
+    videoTemplate,
+    videoColIdx,
+    colW,
+    gap
+  ) {
+    var score = 0;
+    var pads = [];
+    var c;
+    for (c = 0; c < cols; c++) pads[c] = columnPadTop(c, cols, vh);
+    for (var step = 0; step < LAYOUT_SAMPLES; step++) {
+      var p = (step + 0.5) / LAYOUT_SAMPLES;
+      var visible = [];
+      for (c = 0; c < cols; c++) {
+        var delayFrac = (delays[c] || 0) / LOOP_HALF_DUR;
+        var pEff = (p + delayFrac) % 1;
+        var model;
+        if (colModels && colModels.meta) {
+          model = modelForColumnPlan(
+            orders[c],
+            rots[c],
+            c,
+            colModels.meta,
+            videoTemplate,
+            videoColIdx,
+            colW,
+            gap
+          );
+        } else if (colModels && colModels[c]) {
+          model = colModels[c];
+        } else {
+          var list = buildTrackTileList(orders[c], rots[c], videoTemplate, c, videoColIdx);
+          model = trackModelFromList(list, colW, gap);
+        }
+        visible = visible.concat(visibleSimulated(c, cols, model, pads[c], vh, pEff));
+      }
+      score += conflictScore(visible, vh);
+    }
+    var cov = coverageMinSimulated(
+      colModels,
+      pads,
+      vh,
+      cols,
+      rots,
+      delays,
+      orders,
+      videoTemplate,
+      videoColIdx,
+      colW,
+      gap
+    );
+    if (cov < 0.85) score += Math.round((0.85 - cov) * 12000);
+    if (colModels && colModels.meta) {
+      var cov0 = coverageMinAtStep(
+        0,
+        colModels,
+        pads,
+        vh,
+        cols,
+        rots,
+        delays,
+        orders,
+        videoTemplate,
+        videoColIdx,
+        colW,
+        gap
+      );
+      if (cov0 < 0.85) score += Math.round((0.85 - cov0) * 15000);
+    }
+    return score;
+  }
+
+  function coverageMinAtStep(step, colModels, pads, vh, cols, rots, delays, orders, videoTemplate, videoColIdx, colW, gap) {
+    var p = (step + 0.5) / LAYOUT_SAMPLES;
+    var minRatio = 1;
+    var c;
+    for (c = 0; c < cols; c++) {
+      var delayFrac = (delays[c] || 0) / LOOP_HALF_DUR;
+      var pEff = (p + delayFrac) % 1;
+      var model;
+      if (colModels && colModels.meta) {
+        model = modelForColumnPlan(
+          orders[c],
+          rots[c],
+          c,
+          colModels.meta,
+          videoTemplate,
+          videoColIdx,
+          colW,
+          gap
+        );
+      } else {
+        var list = buildTrackTileList(orders[c], rots[c], videoTemplate, c, videoColIdx);
+        model = trackModelFromList(list, colW, gap);
+      }
+      var vis = visibleSimulated(c, cols, model, pads[c], vh, pEff);
+      var bandTop = pads[c];
+      var bandH = Math.max(1, vh - bandTop);
+      var intervals = vis
+        .map(function (it) {
+          return [Math.max(it.top, bandTop), Math.min(it.bottom, vh)];
+        })
+        .filter(function (iv) {
+          return iv[1] > iv[0];
+        });
+      var covered = 0;
+      intervals.forEach(function (iv) {
+        covered += iv[1] - iv[0];
+      });
+      var ratio = covered / bandH;
+      if (ratio < minRatio) minRatio = ratio;
+    }
+    return minRatio;
+  }
+
+  function evaluatePlan(cols, vh, orders, rots, delays, videoTemplate, videoColIdx, colW, gap) {
+    return evaluatePlanWithModels(
+      cols,
+      vh,
+      orders,
+      rots,
+      delays,
+      null,
+      videoTemplate,
+      videoColIdx,
+      colW,
+      gap
+    );
+  }
+
+  function optimizeRotsAndDelays(
+    cols,
+    vh,
+    orders,
+    rots,
+    delays,
+    videoTemplate,
+    videoColIdx,
+    colW,
+    gap,
+    colModels
+  ) {
+    var c;
+    var r;
+    var dStep;
+    for (var pass = 0; pass < 3; pass++) {
+      for (c = 0; c < cols; c++) {
+        var bestR = rots[c];
+        var bestScore = evaluatePlanWithModels(
+          cols,
+          vh,
+          orders,
+          rots,
+          delays,
+          colModels,
+          videoTemplate,
+          videoColIdx,
+          colW,
+          gap
+        );
+        for (r = 0; r < orders[c].length; r++) {
+          rots[c] = r;
+          var sc = evaluatePlanWithModels(
+            cols,
+            vh,
+            orders,
+            rots,
+            delays,
+            colModels,
+            videoTemplate,
+            videoColIdx,
+            colW,
+            gap
+          );
+          if (sc < bestScore) {
+            bestScore = sc;
+            bestR = r;
+          }
+        }
+        rots[c] = bestR;
+      }
+      for (c = 0; c < cols; c++) {
+        var bestD = delays[c];
+        var bestScoreD = evaluatePlanWithModels(
+          cols,
+          vh,
+          orders,
+          rots,
+          delays,
+          colModels,
+          videoTemplate,
+          videoColIdx,
+          colW,
+          gap
+        );
+        var delaySteps = 24;
+        for (dStep = 0; dStep < delaySteps; dStep++) {
+          delays[c] = (dStep / delaySteps) * LOOP_HALF_DUR;
+          var scD = evaluatePlanWithModels(
+            cols,
+            vh,
+            orders,
+            rots,
+            delays,
+            colModels,
+            videoTemplate,
+            videoColIdx,
+            colW,
+            gap
+          );
+          if (scD < bestScoreD) {
+            bestScoreD = scD;
+            bestD = delays[c];
+          }
+        }
+        delays[c] = bestD;
+      }
+    }
+    return evaluatePlanWithModels(
+      cols,
+      vh,
+      orders,
+      rots,
+      delays,
+      colModels,
+      videoTemplate,
+      videoColIdx,
+      colW,
+      gap
+    );
+  }
+
+  function pickInitialOrders(allImages, cols) {
+    var n = allImages.length;
+    var step = Math.max(1, Math.ceil(n / cols));
+    var orders = [];
+    var c;
+    for (c = 0; c < cols; c++) {
+      orders[c] = rotateArray(allImages.slice(), (c * step) % n);
     }
     return orders;
   }
 
-  function pickLayoutPlan(allImages, cols, w, shuffleAttempt) {
-    shuffleAttempt = shuffleAttempt || 0;
-    var n = allImages.length;
-    var maxAttempts = shuffleAttempt === 0 ? 120 : 40;
-    var bestOrders = [];
-    var bestRots = [];
+  function applyLayoutPlan(plan, cols) {
     var c;
-    var base0 = shuffleArray(allImages, (w + cols * 17) >>> 0);
-    bestOrders = ordersFromBaseShift(base0, cols, n, 0);
-    for (c = 0; c < cols; c++) bestRots[c] = 0;
-    var bestScore = scoreColumnOrders(bestOrders, bestRots, cols, n);
-    var attempt;
-    for (attempt = 0; attempt < maxAttempts; attempt++) {
-      var useIndependent = attempt % 5 === 4;
-      var tryOrders = [];
-      var tryRots = [];
-      if (useIndependent) {
-        for (c = 0; c < cols; c++) {
-          tryOrders[c] = shuffleArray(allImages, (w + attempt * 31 + c * 97) >>> 0);
-        }
-      } else {
-        var base = shuffleArray(allImages, (w + attempt * 31) >>> 0);
-        tryOrders = ordersFromBaseShift(base, cols, n, attempt % n);
-      }
-      for (c = 0; c < cols; c++) {
-        var bestR = 0;
-        var bestLocal = 1e9;
-        var r;
-        for (r = 0; r < n; r++) {
-          tryRots[c] = r;
-          var sc = scoreColumnOrders(tryOrders, tryRots, cols, n);
-          if (sc < bestLocal) {
-            bestLocal = sc;
-            bestR = r;
-          }
-        }
-        tryRots[c] = bestR;
-      }
-      var score = scoreColumnOrders(tryOrders, tryRots, cols, n);
-      if (score < bestScore) {
-        bestScore = score;
-        for (c = 0; c < cols; c++) {
-          bestOrders[c] = tryOrders[c];
-          bestRots[c] = tryRots[c];
-        }
-      }
-      if (bestScore === 0) break;
-    }
     for (c = 0; c < cols; c++) {
-      root.setAttribute("data-ltf-col-rot-" + c, String(bestRots[c]));
+      root.setAttribute("data-ltf-col-rot-" + c, String(plan.rots[c]));
+      root.setAttribute("data-ltf-col-delay-" + c, plan.delays[c].toFixed(2));
     }
-    activeColumnOrders = bestOrders;
-    return bestOrders;
+    activeColumnOrders = plan.orders;
+    activePhaseDelays = plan.delays.slice();
   }
 
-  function gcd(a, b) {
-    while (b) {
-      var t = b;
-      b = a % b;
-      a = t;
+  function measureDomColumnModels(cols, videoTemplate, videoColIdx, colW, gap) {
+    var models = [];
+    var c;
+    for (c = 0; c < cols; c++) {
+      var col = columnsEl.querySelector('[data-ltf-masonry-col-idx="' + c + '"]');
+      var track = col && col.querySelector(".ltf-masonry-column__track.is-a");
+      if (!track) {
+        models[c] = null;
+        continue;
+      }
+      var singleH = parseFloat(track.getAttribute("data-ltf-loop-single-h") || "0");
+      var tiles = [];
+      var y = 0;
+      Array.prototype.forEach.call(track.children, function (child) {
+        if (child.getAttribute("data-ltf-loop-clone") === "1") return;
+        var h = estimateChildHeight(child, colW, gap);
+        if (h < 2) h = child.getBoundingClientRect().height || 0;
+        tiles.push({
+          key: seedFromTemplate(child),
+          top: y,
+          bottom: y + h,
+          h: h,
+        });
+        y += h + gap;
+      });
+      if (singleH < 1) singleH = y > 0 ? y - gap : y;
+      models[c] = { tiles: tiles, total: singleH, maxH: 0 };
     }
-    return a;
+    return models;
+  }
+
+  function layoutSeed(w, cols, vh) {
+    return (
+      (Math.round(w) * 73856093) ^
+      (cols * 19349663) ^
+      (Math.round(vh) * 83492791)
+    ) >>> 0;
+  }
+
+  function runOneLayoutAttempt(allImages, cols, w, n, attempt, videoTemplate, videoColIdx, ctx) {
+    var seedBase = layoutSeed(w, cols, ctx.vh);
+    var orders = [];
+    var rots = [];
+    var delays = [];
+    var c;
+    var independent = attempt % 3 === 2;
+    var splitDeck = attempt % 7 === 6;
+    if (splitDeck) {
+      var sorted = allImages.slice().sort(function (a, b) {
+        return seedFromTemplate(a).localeCompare(seedFromTemplate(b));
+      });
+      var half = Math.ceil(sorted.length / 2);
+      var firstHalf = sorted.slice(0, half);
+      var secondHalf = sorted.slice(half);
+      for (c = 0; c < cols; c++) {
+        orders[c] = shuffleArray(
+          c % 2 === 0 ? firstHalf : secondHalf,
+          (w + attempt * 59 + c * 127) >>> 0
+        );
+      }
+    } else if (independent) {
+      for (c = 0; c < cols; c++) {
+        orders[c] = shuffleArray(allImages, (w + attempt * 41 + c * 113) >>> 0);
+      }
+    } else {
+      var base = shuffleArray(allImages, (w + cols * 19 + attempt * 37) >>> 0);
+      var strideStart = Math.max(1, Math.floor(n / cols));
+      var stride;
+      for (stride = strideStart; stride <= strideStart + 1; stride++) {
+        for (c = 0; c < cols; c++) {
+          orders[c] = rotateArray(base.slice(), (c * stride + attempt) % n);
+        }
+        break;
+      }
+    }
+    for (c = 0; c < cols; c++) {
+      if (!orders[c]) orders[c] = allImages.slice();
+      rots[c] = (c * 2 + attempt) % n;
+      delays[c] = ((c / cols) * LOOP_HALF_DUR * 0.35 + attempt * 0.7) % LOOP_HALF_DUR;
+    }
+    var sc = optimizeRotsAndDelays(
+      cols,
+      ctx.vh,
+      orders,
+      rots,
+      delays,
+      videoTemplate,
+      videoColIdx,
+      ctx.colW,
+      ctx.gap,
+      ctx.colModels
+    );
+    if (sc < ctx.bestScore) {
+      ctx.bestScore = sc;
+      ctx.best = {
+        orders: orders.map(function (o) {
+          return o.slice();
+        }),
+        rots: rots.slice(),
+        delays: delays.slice(),
+        score: sc,
+      };
+    }
+    return ctx.bestScore === 0;
+  }
+
+  function finalizeLayoutPlan(best, cols, allImages) {
+    var c;
+    if (!best) {
+      best = { orders: [], rots: [], delays: [] };
+      for (c = 0; c < cols; c++) {
+        best.orders[c] = allImages.slice();
+        best.rots[c] = 0;
+        best.delays[c] = 0;
+      }
+    }
+    for (c = 0; c < cols; c++) {
+      root.setAttribute("data-ltf-col-rot-" + c, String(best.rots[c]));
+      root.setAttribute("data-ltf-col-delay-" + c, best.delays[c].toFixed(2));
+    }
+    activeColumnOrders = best.orders;
+    activePhaseDelays = best.delays;
+    best.score = best.score || 0;
+    return best;
+  }
+
+  function solveDeterministicLayout(allImages, cols, w, videoTemplate, videoColIdx, colModels) {
+    var n = allImages.length;
+    var gap = readGapPx();
+    var vh = viewport.clientHeight || 600;
+    var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
+    var ctx = {
+      vh: vh,
+      colW: colW,
+      gap: gap,
+      colModels: colModels,
+      best: null,
+      bestScore: 1e12,
+    };
+    var maxAttempts = colModels ? 200 : 8;
+    var attempt;
+    for (attempt = 0; attempt < maxAttempts; attempt++) {
+      if (runOneLayoutAttempt(allImages, cols, w, n, attempt, videoTemplate, videoColIdx, ctx)) break;
+    }
+    return finalizeLayoutPlan(ctx.best, cols, allImages);
+  }
+
+  function solveDeterministicLayoutAsync(allImages, cols, w, videoTemplate, videoColIdx, colModels, done) {
+    var n = allImages.length;
+    var gap = readGapPx();
+    var vh = viewport.clientHeight || 600;
+    var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
+    var ctx = {
+      vh: vh,
+      colW: colW,
+      gap: gap,
+      colModels: colModels,
+      best: null,
+      bestScore: 1e12,
+    };
+    var maxAttempts = colModels ? 200 : 8;
+    var attempt = 0;
+
+    function slice() {
+      var budget = 10;
+      var t0 = Date.now();
+      while (attempt < maxAttempts && Date.now() - t0 < budget) {
+        if (runOneLayoutAttempt(allImages, cols, w, n, attempt, videoTemplate, videoColIdx, ctx)) {
+          attempt = maxAttempts;
+          break;
+        }
+        attempt += 1;
+      }
+      if (attempt >= maxAttempts || ctx.bestScore === 0) {
+        done(finalizeLayoutPlan(ctx.best, cols, allImages));
+      } else {
+        window.setTimeout(slice, 0);
+      }
+    }
+    window.setTimeout(slice, 0);
   }
 
   function buildColumnTrack(
@@ -532,12 +1049,15 @@
     return track;
   }
 
-  function finalizeTrackLoop(track, gap, colW) {
+  function finalizeTrackLoop(track, gap, colW, targetSingle) {
     if (track.getAttribute("data-ltf-loop-ready") === "1") return;
 
     var vh = viewport.clientHeight || 600;
     var metrics = trackSingleCopyHeight(track, gap, colW);
-    var minSingle = vh * 1.15 + metrics.maxTile + gap * 5;
+    var minSingle =
+      targetSingle != null && targetSingle > 0
+        ? targetSingle
+        : vh * 1.48 + metrics.maxTile + gap * 10;
 
     while (metrics.total < minSingle) {
       appendSpacer(track, Math.min(240, minSingle - metrics.total));
@@ -593,8 +1113,7 @@
     return m ? "seed:" + m[1] : src;
   }
 
-  function buildColumnsFromTiles(tiles, cols, shuffleAttempt) {
-    shuffleAttempt = shuffleAttempt || 0;
+  function buildColumnsFromTiles(tiles, cols, forcedPlan) {
     columnsEl.innerHTML = "";
     if (imagePromoteIo) {
       imagePromoteIo.disconnect();
@@ -610,7 +1129,25 @@
     var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
     var i;
     var attempt;
-    var columnOrders = pickLayoutPlan(allImages, cols, w + shuffleAttempt * 31, shuffleAttempt);
+    var columnOrders;
+    if (forcedPlan && forcedPlan.orders) {
+      applyLayoutPlan(forcedPlan, cols);
+      columnOrders = forcedPlan.orders;
+    } else {
+      columnOrders = pickInitialOrders(allImages, cols);
+      var initDelays = [];
+      var ic;
+      for (ic = 0; ic < cols; ic++) {
+        root.setAttribute("data-ltf-col-rot-" + ic, "0");
+        initDelays[ic] =
+          ic % 2 === 1
+            ? LOOP_HALF_DUR * 0.38
+            : ((ic / cols) * LOOP_HALF_DUR * 0.35) % LOOP_HALF_DUR;
+        root.setAttribute("data-ltf-col-delay-" + ic, initDelays[ic].toFixed(2));
+      }
+      activeColumnOrders = columnOrders;
+      activePhaseDelays = initDelays;
+    }
 
     root.style.setProperty("--ltf-col-w", colW + "px");
     root.setAttribute("data-ltf-masonry-cols", String(cols));
@@ -648,24 +1185,13 @@
   function applyLoopTiming() {
     var tracks = columnsEl.querySelectorAll(".ltf-masonry-column__track.is-a");
     tracks.forEach(function (track, i) {
-      var singleH = parseFloat(track.getAttribute("data-ltf-loop-single-h") || "0");
-      var halfH = singleH > 0 ? singleH : track.offsetHeight / 2;
-      if (track.offsetHeight > 0 && track.getAttribute("data-ltf-loop-cloned") === "1") {
-        halfH = track.offsetHeight / 2;
+      var delay = 0;
+      if (activePhaseDelays && activePhaseDelays[i] != null) delay = activePhaseDelays[i];
+      else {
+        delay = parseFloat(root.getAttribute("data-ltf-col-delay-" + i) || "0") || 0;
       }
-      var pxPerSec = halfH / (48 + (i * 5) % 18);
-      var dur = Math.min(70, Math.max(40, halfH / pxPerSec));
-      var cols = parseInt(root.getAttribute("data-ltf-masonry-cols") || "4", 10);
-      var phaseDelay = 0;
-      if (cols === 2) {
-        phaseDelay = i === 1 ? dur * 0.5 : 0;
-      } else if (cols > 0) {
-        phaseDelay = (i / cols) * dur * 0.48 + i * 1.35;
-        if (cols === 4 && i === 3) phaseDelay += dur * 0.26;
-        if (cols === 4 && i === 0) phaseDelay += dur * 0.05;
-      }
-      track.style.setProperty("--ltf-loop-dur", dur.toFixed(2) + "s");
-      track.style.setProperty("--ltf-loop-delay", phaseDelay.toFixed(2) + "s");
+      track.style.setProperty("--ltf-loop-dur", LOOP_HALF_DUR.toFixed(2) + "s");
+      track.style.setProperty("--ltf-loop-delay", delay.toFixed(2) + "s");
     });
   }
 
@@ -739,49 +1265,105 @@
     var w = viewport.clientWidth;
     var cols = parseInt(root.getAttribute("data-ltf-masonry-cols") || "4", 10);
     var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
-    root.querySelectorAll(".ltf-masonry-column__track.is-a").forEach(function (track) {
-      finalizeTrackLoop(track, gap, colW);
+    var vh = viewport.clientHeight || 600;
+    var tracks = root.querySelectorAll(".ltf-masonry-column__track.is-a");
+    var targetSingle = 0;
+    Array.prototype.forEach.call(tracks, function (track) {
+      var metrics = trackSingleCopyHeight(track, gap, colW);
+      targetSingle = Math.max(
+        targetSingle,
+        Math.max(metrics.total, vh * 1.48 + metrics.maxTile + gap * 10)
+      );
+    });
+    Array.prototype.forEach.call(tracks, function (track) {
+      finalizeTrackLoop(track, gap, colW, targetSingle);
     });
     applyLoopTiming();
     wireVideos();
   }
 
-  function auditScore(a) {
-    return a.sameCol * 10000 + a.adjacent * 500 + a.nonAdjClose * 5;
+  function auditScoreFromAudit(a) {
+    return a.sameCol * 10000 + a.adjacent * 500 + a.nonAdjClose * 50;
   }
 
-  function restartTrackAnimation(track) {
-    track.style.animation = "none";
-    void track.offsetHeight;
-    track.style.animation = "";
-  }
-
-  function nudgePhaseDelays(maxPasses) {
+  function nudgePhaseDelaysAsync(done) {
     var tracks = columnsEl.querySelectorAll(".ltf-masonry-column__track.is-a");
     var n = tracks.length;
-    if (!n || reduced) return auditVisibleDuplicateIssues(8);
+    if (!n || reduced) {
+      done();
+      return;
+    }
     var delays = [];
     var c;
     for (c = 0; c < n; c++) {
       delays[c] =
         parseFloat(getComputedStyle(tracks[c]).getPropertyValue("--ltf-loop-delay")) || 0;
     }
-    var bestAudit = auditVisibleDuplicateIssues(8);
-    var bestScore = auditScore(bestAudit);
+    var bestScore = auditScoreFromAudit(auditVisibleDuplicateIssues(LAYOUT_SAMPLES));
+    var pass = 0;
+    var col = 0;
+    var step = 0;
+    var delaySteps = 8;
+
+    function applyStep() {
+      if (pass >= 4) {
+        done();
+        return;
+      }
+      if (col >= n) {
+        pass += 1;
+        col = 0;
+        window.setTimeout(applyStep, 0);
+        return;
+      }
+      var track = tracks[col];
+      var tryDelay = (step / delaySteps) * LOOP_HALF_DUR;
+      track.style.setProperty("--ltf-loop-delay", tryDelay.toFixed(2) + "s");
+      track.style.animation = "none";
+      void track.offsetHeight;
+      track.style.animation = "";
+      var sc = auditScoreFromAudit(auditVisibleDuplicateIssues(LAYOUT_SAMPLES));
+      if (sc < bestScore) {
+        bestScore = sc;
+        delays[col] = tryDelay;
+      }
+      step += 1;
+      if (step >= delaySteps) {
+        tracks[col].style.setProperty("--ltf-loop-delay", delays[col].toFixed(2) + "s");
+        col += 1;
+        step = 0;
+      }
+      window.setTimeout(applyStep, 0);
+    }
+    window.setTimeout(applyStep, 0);
+  }
+
+  function nudgePhaseDelaysDom(maxPasses) {
+    var tracks = columnsEl.querySelectorAll(".ltf-masonry-column__track.is-a");
+    var n = tracks.length;
+    if (!n || reduced) return;
+    var delays = [];
+    var c;
+    for (c = 0; c < n; c++) {
+      delays[c] =
+        parseFloat(getComputedStyle(tracks[c]).getPropertyValue("--ltf-loop-delay")) || 0;
+    }
+    var bestAudit = auditVisibleDuplicateIssues(LAYOUT_SAMPLES);
+    var bestScore = auditScoreFromAudit(bestAudit);
     var pass;
-    for (pass = 0; pass < (maxPasses || 4); pass++) {
+    var delaySteps = Math.max(6, Math.floor(LAYOUT_SAMPLES / 2));
+    for (pass = 0; pass < (maxPasses || 3); pass++) {
       for (c = 0; c < n; c++) {
         var track = tracks[c];
-        var dur =
-          parseFloat(getComputedStyle(track).getPropertyValue("--ltf-loop-dur")) || 55;
         var k;
-        for (k = -3; k <= 3; k++) {
-          if (k === 0) continue;
-          var tryDelay = Math.max(0, delays[c] + k * dur * 0.085);
+        for (k = 0; k < delaySteps; k++) {
+          var tryDelay = (k / delaySteps) * LOOP_HALF_DUR;
           track.style.setProperty("--ltf-loop-delay", tryDelay.toFixed(2) + "s");
-          restartTrackAnimation(track);
-          var a = auditVisibleDuplicateIssues(8);
-          var sc = auditScore(a);
+          track.style.animation = "none";
+          void track.offsetHeight;
+          track.style.animation = "";
+          var a = auditVisibleDuplicateIssues(LAYOUT_SAMPLES);
+          var sc = auditScoreFromAudit(a);
           if (sc < bestScore) {
             bestScore = sc;
             bestAudit = a;
@@ -789,8 +1371,13 @@
           }
         }
         track.style.setProperty("--ltf-loop-delay", delays[c].toFixed(2) + "s");
-        restartTrackAnimation(track);
+        track.style.animation = "none";
+        void track.offsetHeight;
+        track.style.animation = "";
       }
+    }
+    if (activePhaseDelays) {
+      for (c = 0; c < n; c++) activePhaseDelays[c] = delays[c];
     }
     return bestAudit;
   }
@@ -893,42 +1480,60 @@
     return { sameCol: sameCol, adjacent: adjacent, nonAdjClose: nonAdjClose };
   }
 
-  function finalizeWithDuplicateRetry(tiles, cols, attempt) {
+  function finalizeLayoutSettled(tiles, cols) {
     root.setAttribute("data-ltf-masonry-layout-settled", "0");
+    root.setAttribute("data-ltf-masonry-refine-pending", "1");
     root.querySelectorAll(".ltf-masonry-tile__media.is-a").forEach(capMedia);
     finalizeAllTracks();
-    if (reduced) {
+
+    function markSettled() {
+      root.removeAttribute("data-ltf-masonry-refine-pending");
       root.setAttribute("data-ltf-masonry-layout-settled", "1");
+    }
+
+    if (reduced || !tiles || !cols) {
+      markSettled();
       return;
     }
-    var audit = auditVisibleDuplicateIssues(8);
-    if ((audit.sameCol > 0 || audit.adjacent > 0 || audit.nonAdjClose > 0) && attempt < 48) {
-      buildColumnsFromTiles(tiles, cols, attempt + 1);
+
+    var parts = splitSourceTiles(tiles);
+    var w = viewport.clientWidth;
+    var gap = readGapPx();
+    var colW = cols > 0 ? (w - gap * (cols - 1)) / cols : w;
+    var domModels = measureDomColumnModels(cols, parts.video, 0, colW, gap);
+    var modelWrap = domModels.slice();
+    modelWrap.meta = buildHeightMapFromModels(domModels, cols, colW, gap);
+    solveDeterministicLayoutAsync(parts.images, cols, w, parts.video, 0, modelWrap, function (plan) {
+      if (!plan || !plan.orders) {
+        markSettled();
+        return;
+      }
+
+      buildColumnsFromTiles(tiles, cols, plan);
       promoteNearViewportImages();
       whenEagerImagesReady(function () {
-        finalizeWithDuplicateRetry(tiles, cols, attempt + 1);
+        root.querySelectorAll(".ltf-masonry-tile__media.is-a").forEach(capMedia);
+        finalizeAllTracks();
+        nudgePhaseDelaysAsync(function () {
+          markSettled();
+        });
       });
-      return;
-    }
-    if (audit.adjacent > 0 || audit.nonAdjClose > 0) {
-      nudgePhaseDelays(4);
-      audit = auditVisibleDuplicateIssues(8);
-    }
-    root.setAttribute("data-ltf-masonry-layout-settled", "1");
+    });
   }
 
   function rebuildLayout() {
     if (!sectionNear && !reduced) return;
+    if (root.getAttribute("data-ltf-masonry-refine-pending") === "1") return;
     var w = viewport.clientWidth;
     var cols = columnCount(w);
     var tiles = collectSourceTiles();
 
     if (!source || !source.querySelector(".ltf-masonry-tile.is-a")) return;
 
-    buildColumnsFromTiles(tiles, cols, 0);
+    buildColumnsFromTiles(tiles, cols);
     promoteNearViewportImages();
     whenEagerImagesReady(function () {
-      finalizeWithDuplicateRetry(tiles, cols, 0);
+      finalizeLayoutSettled(tiles, cols);
     });
   }
 
@@ -1022,6 +1627,22 @@
   root.rebuildLtfMasonryV2 = function () {
     sectionNear = true;
     root.setAttribute("data-ltf-masonry-near", "1");
+    var w = viewport.clientWidth;
+    var needCols = columnCount(w);
+    var haveCols = parseInt(root.getAttribute("data-ltf-masonry-cols") || "0", 10);
+    if (
+      layoutBuilt &&
+      root.getAttribute("data-ltf-masonry-layout-settled") === "1" &&
+      root.getAttribute("data-ltf-masonry-refine-pending") !== "1" &&
+      needCols === haveCols
+    ) {
+      promoteNearViewportImages();
+      return;
+    }
+    if (needCols !== haveCols) {
+      root.removeAttribute("data-ltf-masonry-refine-pending");
+      root.setAttribute("data-ltf-masonry-layout-settled", "0");
+    }
     rebuildLayout();
   };
   root.finalizeLtfMasonryV2 = finalizeAllTracks;

@@ -186,9 +186,10 @@ section [existing — unchanged copy/headline]
 
 - **Viewport:** locked height, top/bottom **edge cut-off** intentional (soft mask fade optional in CSS).
 - **Stagger:** each column gets a different `padding-top` (~6–20% of viewport height, patterned).
-- **Columns:** **5 (≥1600px) / 4 / 3 / 2** (≥820 / ≥520 / else) — **4 columns at 1440px**; **2 at 390px**.
+- **Columns:** **4 / 3 / 2** (≥820 / ≥520 / else) — **4 columns at 1440px and ≥1600px**; **2 at 390px**.
+- **Photo count:** production source needs **at least 16** distinct photos (plus optional one video tile). Placeholder demo uses 18 `seed/ltf-*` images.
 - **Loop height:** each column runs one **shuffled pass of the full ~11-image set** (each image at most once per half-loop); half-loop height ≥ viewport + tallest tile, then duplicate for seamless scroll. Same photo may appear in **different columns** (independent column shuffles + rotation + phase delays); never twice **in one column** on screen. Cross-column: adjacent columns must not show the **same seed** with ≥24px vertical band overlap; non-adjacent pairs need ≥60% viewport vertical separation (or no overlapping bands). `verify-demo-v2.mjs` regression fails f57805f-style same-column duplicates. Animation starts only after `data-ltf-loop-ready="1"`. **Lazy load** until section is near viewport; **eager** only for tiles in/near the frame. **Video** in column 0 only, never twice visible.
-- **Motion:** each column loops independently; **odd columns up**, **even down**; ~**40–70s** per loop (varies per column); CSS `transform` only; pauses when **offscreen** (IO) or **tab hidden**; **`prefers-reduced-motion`** → static stagger, no animation.
+- **Motion:** each column loops at the **same ~55s half-loop duration** (deterministic relative phase); **even columns up**, **odd down**; column orders + start delays are **solved at build** so adjacent/non-adjacent cross-column duplicate rules hold over a full period; CSS `transform` only; pauses when **offscreen** (IO) or **tab hidden**; **`prefers-reduced-motion`** → static stagger, no animation.
 - **Tiles:** ~**10% shorter** than v1 (`--ltf-masonry-height-scale: 0.9`); max aspect **1.25** (`is-cap` + cover when exceeded).
 - **Video:** one lazy video tile in source; plays only when visible inside the viewport; muted/loop/playsinline.
 - **Captions:** default off (`data-ltf-masonry-captions` to enable).
