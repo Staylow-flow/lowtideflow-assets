@@ -156,7 +156,7 @@ async function waitReady(page, { eagerAllForVerify = true } = {}) {
       if (!tracks.length) return false;
       return Array.from(tracks).every((t) => t.getAttribute("data-ltf-loop-ready") === "1");
     },
-    { timeout: 180000 }
+    { timeout: 90000 }
   );
   await page.waitForFunction(
     () => {
@@ -473,7 +473,7 @@ async function run() {
   await videoPage.evaluate(() => {
     document.querySelector("[data-ltf-masonry-v2]").setAttribute("data-ltf-masonry-paused", "0");
   });
-  await videoPage.waitForTimeout(10000);
+  await videoPage.waitForTimeout(5500);
   const rawVideo = await videoPage.video().path();
   await videoContext.close();
   const outVideo = `${artifactDir}/masonry-v2-motion-1440.webm`;
