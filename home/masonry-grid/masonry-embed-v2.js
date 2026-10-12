@@ -217,7 +217,8 @@
     track.setAttribute("data-ltf-loop-single-h", String(Math.round(m.total)));
     track.classList.add(colIdx % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
     track.style.setProperty("--ltf-loop-dur", LOOP_DUR + "s");
-    track.style.setProperty("--ltf-loop-delay", (PHASE[colIdx] || 0) + "s");
+    var phaseSec = PHASE[colIdx % PHASE.length] || 0;
+    track.style.setProperty("--ltf-loop-delay", -phaseSec + "s");
     track.setAttribute("data-ltf-loop-ready", "1");
   }
 

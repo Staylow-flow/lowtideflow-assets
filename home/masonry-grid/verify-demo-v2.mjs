@@ -334,11 +334,12 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
               anim.pause();
               const timing = anim.effect.getTiming();
               const dur = timing.duration;
-              const delay =
+              const delayMs =
                 typeof timing.delay === "number"
                   ? timing.delay
                   : parseFloat(getComputedStyle(track).animationDelay) || 0;
-              anim.currentTime = (delay + progress * dur) % dur;
+              const phaseMs = delayMs <= 0 ? -delayMs : delayMs;
+              anim.currentTime = (phaseMs + progress * dur) % dur;
             } catch (e) {}
           });
         });
@@ -426,11 +427,12 @@ async function assertViewportSample(page, label, w, h, screenshotName) {
               anim.pause();
               const timing = anim.effect.getTiming();
               const dur = timing.duration;
-              const delay =
+              const delayMs =
                 typeof timing.delay === "number"
                   ? timing.delay
                   : parseFloat(getComputedStyle(track).animationDelay) || 0;
-              anim.currentTime = (delay + progress * dur) % dur;
+              const phaseMs = delayMs <= 0 ? -delayMs : delayMs;
+              anim.currentTime = (phaseMs + progress * dur) % dur;
             } catch (e) {}
           });
         });
@@ -469,11 +471,14 @@ async function run() {
   videoContext.setDefaultTimeout(180000);
   const videoPage = await videoContext.newPage();
   await videoPage.goto(demoUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
-  await waitReady(videoPage);
   await videoPage.evaluate(() => {
-    document.querySelector("[data-ltf-masonry-v2]").setAttribute("data-ltf-masonry-paused", "0");
+    const root = document.querySelector("[data-ltf-masonry-v2]");
+    if (!root) return;
+    root.setAttribute("data-ltf-masonry-near", "1");
+    root.setAttribute("data-ltf-masonry-paused", "0");
+    if (root.rebuildLtfMasonryV2) root.rebuildLtfMasonryV2();
   });
-  await videoPage.waitForTimeout(5500);
+  await videoPage.waitForTimeout(8000);
   const rawVideo = await videoPage.video().path();
   await videoContext.close();
   const outVideo = `${artifactDir}/masonry-v2-motion-1440.webm`;
@@ -591,24 +596,32 @@ async function run() {
       }));
     });
 
-  const motionWaitMs = await page.evaluate(() => {
-    let maxDelaySec = 0;
+  await page.evaluate(() => {
     document.querySelectorAll(".ltf-masonry-column__track.is-a").forEach((t) => {
-      const d = getComputedStyle(t).animationDelay || "0s";
-      const sec = parseFloat(d) || 0;
-      if (sec > maxDelaySec) maxDelaySec = sec;
+      const d = parseFloat(getComputedStyle(t).animationDelay) || 0;
+      if (d > 0.01) {
+        throw new Error(`positive animation-delay ${d}s on column track`);
+      }
     });
-    return Math.ceil((maxDelaySec + 4) * 1000);
   });
+
   const t0b = await readTracks();
-  await page.waitForTimeout(motionWaitMs);
+  await page.waitForTimeout(1000);
   const t1b = await readTracks();
-  const dy0 = t1b[0].y - t0b[0].y;
-  const dy1 = t1b.length > 1 ? t1b[1].y - t0b[1].y : 0;
+  const motionCols = [];
+  for (let i = 0; i < t0b.length; i++) {
+    const dy = t1b[i].y - t0b[i].y;
+    motionCols.push({ col: i, dy, up: t0b[i].up });
+    if (Math.abs(dy) <= 2) {
+      errors.push(`Motion: col ${i} moved ${dy.toFixed(2)}px (need >2px in 1s)`);
+    } else if (t0b[i].up && dy >= 0) {
+      errors.push(`Motion: col ${i} scroll-up but dy=${dy.toFixed(2)} (expected negative)`);
+    } else if (!t0b[i].up && dy <= 0) {
+      errors.push(`Motion: col ${i} scroll-down but dy=${dy.toFixed(2)} (expected positive)`);
+    }
+  }
   const opposingDirs = t0b.length > 1 && t0b[0].up !== t0b[1].up;
-  if (Math.abs(dy0) < 3 && Math.abs(dy1) < 3) {
-    errors.push(`Motion: insufficient movement dy0=${dy0} dy1=${dy1}`);
-  } else if (!opposingDirs) {
+  if (!opposingDirs) {
     errors.push(`Motion: columns 0/1 same scroll direction up0=${t0b[0].up} up1=${t0b[1].up}`);
   }
 
@@ -653,7 +666,7 @@ async function run() {
       `  ${r.w}px (${r.label}): cols=${r.cols} issues=${r.issues.length} minColCoverage=${minRatios.map((x) => (x ?? 0).toFixed(2)).join(",")}${crossNote}${r.issues.length ? " " + JSON.stringify(r.issues) : " OK"}`
     );
   });
-  console.log("Motion delta sample:", { dy0, dy1 });
+  console.log("Motion delta sample (1s, all cols):", motionCols);
 
   if (errors.length) {
     console.error("FAILED:\n" + errors.join("\n"));

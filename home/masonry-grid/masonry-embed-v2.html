@@ -355,14 +355,15 @@
     if (track.getAttribute("data-ltf-loop-ready") === "1") return;
     var vh = viewport.clientHeight || 600;
     var m = singleMetrics(track, gap, colW);
-    var need = vh + m.max + gap * 2;
+    var need = vh + m.max + gap * 4;
     if (reduced) {
       track.setAttribute("data-ltf-loop-single-h", String(Math.round(m.total)));
       track.setAttribute("data-ltf-loop-ready", "1");
       return;
     }
     if (track.getAttribute("data-ltf-loop-cloned") === "1") return;
-    if (m.total < need) {
+    var guard = 0;
+    while (m.total < need && guard < 2) {
       singles(track).forEach(function (ch) {
         var dup = ch.cloneNode(true);
         dup.classList.add("is-ltf-clone");
@@ -370,6 +371,7 @@
         track.appendChild(dup);
       });
       m = singleMetrics(track, gap, colW);
+      guard += 1;
     }
     singles(track).forEach(function (ch) {
       var dup = ch.cloneNode(true);
@@ -382,7 +384,8 @@
     track.setAttribute("data-ltf-loop-single-h", String(Math.round(m.total)));
     track.classList.add(colIdx % 2 === 0 ? "is-ltf-scroll-up" : "is-ltf-scroll-down");
     track.style.setProperty("--ltf-loop-dur", LOOP_DUR + "s");
-    track.style.setProperty("--ltf-loop-delay", (PHASE[colIdx] || 0) + "s");
+    var phaseSec = PHASE[colIdx % PHASE.length] || 0;
+    track.style.setProperty("--ltf-loop-delay", -phaseSec + "s");
     track.setAttribute("data-ltf-loop-ready", "1");
   }
 
