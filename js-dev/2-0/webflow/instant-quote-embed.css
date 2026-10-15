@@ -42,8 +42,6 @@ body:has(.iq-page) > .system-preloader {
   --iq-panel-max-width: 520px;
   --iq-panel-min-height: 320px;
   --iq-panel-aspect: 520 / 320;
-  /* Calculate Production Run + Browse Files (Designer .ltf-spec-calc-btn) */
-  --ltf-spec-cta-width: 100%;
   --iq-upload-ants-offset-b: 14.5px;
   --iq-upload-ants-march: -29px;
 }
@@ -476,34 +474,32 @@ body:has(.iq-page) > .system-preloader {
   transform: scale(0.98);
 }
 
-/* Spec Engine — Calculate Production Run + Browse Files share one CTA shape */
-.ltf-spec-calc-btn,
-#iq-run-quote.ltf-spec-calc-btn,
-.iq-run-quote.ltf-spec-calc-btn,
-.iq-form-upload-btn.ltf-spec-calc-btn,
-label.iq-form-upload-btn.ltf-spec-calc-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-sizing: border-box !important;
-  width: var(--ltf-spec-cta-width) !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  max-height: 52px !important;
-  padding: 14px 28px !important;
-  border-radius: 6px !important;
-  font-size: 16px !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.64px !important;
-  text-transform: uppercase !important;
-  line-height: 1.1 !important;
-}
-
+/* Spec Engine desktop — Calculate + Browse share .ltf-spec-calc-btn shape.
+   Do not use bare .ltf-spec-calc-btn (Designer wrap .iq-run-quote-wrap also carries it). */
 @media screen and (min-width: 992px) {
   :root {
     --ltf-spec-cta-width: 250px;
+  }
+
+  #iq-run-quote.ltf-spec-calc-btn,
+  label.iq-form-upload-btn.ltf-spec-calc-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    width: var(--ltf-spec-cta-width) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding: 14px 28px !important;
+    border-radius: 6px !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.64px !important;
+    text-transform: uppercase !important;
+    line-height: 1.1 !important;
   }
 }
 
@@ -1410,8 +1406,7 @@ label.iq-form-upload-btn.ltf-spec-calc-btn {
   transform: none;
   margin: 0 0 15px !important;
   align-self: center;
-  width: var(--ltf-spec-cta-width);
-  max-width: 100%;
+  width: min(100%, 420px);
 }
 
 .iq-form-upload-title {
@@ -1445,14 +1440,9 @@ label.iq-form-upload-btn.ltf-spec-calc-btn {
    Only the animated gradient-shift-on-hover/click needs custom code. */
 .iq-form-upload-btn {
   margin-top: 8px;
-  font-weight: 900;
   background-size: 300% 300%;
   background-position: 0% 50%;
   transition: box-shadow 0.25s ease, transform 0.15s ease;
-}
-
-.iq-form-upload-btn.ltf-spec-calc-btn {
-  border-radius: 6px !important;
 }
 
 .iq-form-upload-btn:hover,
