@@ -42,8 +42,6 @@ body:has(.iq-page) > .system-preloader {
   --iq-panel-max-width: 520px;
   --iq-panel-min-height: 320px;
   --iq-panel-aspect: 520 / 320;
-  --iq-upload-ants-offset-b: 14.5px;
-  --iq-upload-ants-march: -29px;
 }
 
 /* Shared panel footprint — Total Cost Est. + artwork drop (all breakpoints) */
@@ -472,47 +470,6 @@ body:has(.iq-page) > .system-preloader {
 #iq-run-quote.is-running,
 .iq-run-quote.is-running {
   transform: scale(0.98);
-}
-
-/* Spec Engine desktop — Calculate + Browse share .ltf-spec-calc-btn shape.
-   Do not use bare .ltf-spec-calc-btn (Designer wrap .iq-run-quote-wrap also carries it). */
-@media screen and (min-width: 992px) {
-  :root {
-    --ltf-spec-cta-width: 250px;
-  }
-
-  #iq-run-quote.ltf-spec-calc-btn,
-  label.iq-form-upload-btn.ltf-spec-calc-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-    width: var(--ltf-spec-cta-width) !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    height: 52px !important;
-    min-height: 52px !important;
-    max-height: 52px !important;
-    padding: 14px 28px !important;
-    border-radius: 6px !important;
-    font-size: 16px !important;
-    font-weight: 900 !important;
-    letter-spacing: 0.64px !important;
-    text-transform: uppercase !important;
-    line-height: 1.1 !important;
-  }
-}
-
-@media screen and (min-width: 1024px) {
-  :root {
-    --ltf-spec-cta-width: 266px;
-  }
-}
-
-@media screen and (min-width: 1440px) {
-  :root {
-    --ltf-spec-cta-width: 360px;
-  }
 }
 
 /* ── LTF orbit / glow FX (Calculate + Submit) ────────────────────────
@@ -1215,15 +1172,15 @@ body:has(.iq-page) > .system-preloader {
 }
 
 #iq-form-artwork-drop .iq-form-upload-ants-rect {
-  x: 1.5px;
-  y: 1.5px;
-  width: calc(100% - 3px);
-  height: calc(100% - 3px);
-  rx: 14px;
-  ry: 14px;
+  x: 1px;
+  y: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  rx: 15px;
+  ry: 15px;
   fill: none;
   stroke-width: 3px;
-  stroke-dasharray: 15 14;
+  stroke-dasharray: 10 9;
   transition: opacity 0.3s ease;
 }
 
@@ -1235,7 +1192,7 @@ body:has(.iq-page) > .system-preloader {
 
 #iq-form-artwork-drop .iq-form-upload-ants-rect--b {
   stroke: var(--iq-nebula-purple);
-  stroke-dashoffset: var(--iq-upload-ants-offset-b);
+  stroke-dashoffset: 9.5;
   opacity: 0;
 }
 
@@ -1258,7 +1215,7 @@ body:has(.iq-page) > .system-preloader {
 
 @keyframes iq-marching-ants {
   to {
-    stroke-dashoffset: var(--iq-upload-ants-march);
+    stroke-dashoffset: -19px;
   }
 }
 
@@ -1377,13 +1334,10 @@ body:has(.iq-page) > .system-preloader {
   width: 100%;
   max-width: none;
   margin: 0 !important;
-  line-height: 1.12;
+  line-height: 1.15;
   text-align: center;
-  white-space: normal;
-  font-size: clamp(20px, 2.2vw, 24px);
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  white-space: nowrap;
+  font-size: clamp(15px, 2.4vw, 21px);
 }
 
 #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
@@ -1411,10 +1365,9 @@ body:has(.iq-page) > .system-preloader {
 
 .iq-form-upload-title {
   margin: 0;
-  font-size: clamp(20px, 2.2vw, 24px);
-  font-weight: 900;
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 700;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--iq-border);
 }
 

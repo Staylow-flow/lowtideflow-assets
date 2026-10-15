@@ -475,24 +475,9 @@
     ['a', 'b'].forEach(function (variant) {
       var rect = document.createElementNS(svgNS, 'rect');
       rect.setAttribute('class', 'iq-form-upload-ants-rect iq-form-upload-ants-rect--' + variant);
-      rect.setAttribute('vector-effect', 'non-scaling-stroke');
       svg.appendChild(rect);
     });
     drop.insertBefore(svg, drop.firstChild);
-  }
-
-  /** Sandbox upload copy — two-line title; safe if Designer markup drifts. */
-  function ensureArtworkUploadCopy(drop) {
-    if (!drop) return;
-    var titleEl = drop.querySelector('.iq-form-upload-title');
-    if (!titleEl || titleEl.dataset.iqTitleReady === '1') return;
-    titleEl.innerHTML = 'DRAG &amp; DROP<br>ART FILES HERE';
-    titleEl.dataset.iqTitleReady = '1';
-  }
-
-  function tagArtworkBrowseCalcBtn(node) {
-    if (node && node.classList) node.classList.add('ltf-spec-calc-btn');
-    return node;
   }
 
   function setArtworkDropMode(drop, mode) {
@@ -786,14 +771,11 @@
     purgeStaleArtworkLists(drop);
     ensureFileInputPlacement(drop, input);
     ensureArtworkAntsOverlay(drop);
-    ensureArtworkUploadCopy(drop);
     setArtworkDropMode(drop, 'idle');
 
     var dragDepth = 0;
 
-    browse = tagArtworkBrowseCalcBtn(browse);
     browse = wireBrowseAsLabel(browse, input);
-    browse = tagArtworkBrowseCalcBtn(browse);
 
     drop.addEventListener('click', function (event) {
       if (drop.classList.contains('is-queue') || drop.classList.contains('is-loading')) return;
