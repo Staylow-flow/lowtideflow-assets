@@ -3403,7 +3403,7 @@ body.iq-sheet-open {
 @media screen and (min-width: 1440px) {
   #iq-artwork-row .iq-artwork-panel,
   .iq-artwork-row .iq-artwork-panel {
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
