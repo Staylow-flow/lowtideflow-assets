@@ -3293,6 +3293,13 @@ body.iq-sheet-open {
    Scoped to #iq-form-artwork-drop — does not touch .iq-total-wrapper / Calculate. */
 
 @media screen and (min-width: 992px) {
+  #iq-artwork-row .iq-artwork-panel,
+  .iq-artwork-row .iq-artwork-panel {
+    position: relative !important;
+    top: 0;
+    transform: translateY(12px);
+  }
+
   #iq-form-artwork-drop.iq-form-upload,
   .iq-form-upload#iq-form-artwork-drop {
     padding: 18px 28px 10px !important;
@@ -3394,9 +3401,9 @@ body.iq-sheet-open {
 }
 
 @media screen and (min-width: 1440px) {
-  #iq-form-artwork-drop.iq-form-upload,
-  .iq-form-upload#iq-form-artwork-drop {
-    margin-top: 6px !important;
+  #iq-artwork-row .iq-artwork-panel,
+  .iq-artwork-row .iq-artwork-panel {
+    transform: translateY(10px);
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
@@ -3409,7 +3416,7 @@ body.iq-sheet-open {
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    top: 176.5px;
+    top: 177.5px;
     width: 360px !important;
   }
 }

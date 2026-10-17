@@ -759,13 +759,41 @@
     input.click();
   }
 
-  /** Desktop upload title copy (geometry handled in embed CSS). */
-  function ensureArtworkUploadTitleCopy(drop) {
+  var ARTWORK_TITLE_DESKTOP_HTML = 'DRAG &amp; DROP<br>ART FILES HERE';
+  var ARTWORK_TITLE_MOBILE_HTML = 'Drag & Drop Art Files Here';
+
+  function isDesktopArtworkTitleHtml(html) {
+    if (!html) return false;
+    return /DRAG\s*(?:&amp;|&)\s*DROP/i.test(html) && /ART FILES HERE/i.test(html);
+  }
+
+  function applyArtworkUploadTitleCopy(drop) {
     if (!drop) return;
     var titleEl = drop.querySelector('.iq-form-upload-title');
-    if (!titleEl || titleEl.dataset.iqTitleReady === '1') return;
-    titleEl.innerHTML = 'DRAG &amp; DROP<br>ART FILES HERE';
-    titleEl.dataset.iqTitleReady = '1';
+    if (!titleEl) return;
+    if (!titleEl.hasAttribute('data-iq-title-default')) {
+      titleEl.setAttribute('data-iq-title-default', titleEl.innerHTML);
+    }
+    var defaultHtml = titleEl.getAttribute('data-iq-title-default') || titleEl.innerHTML;
+    var desktop =
+      typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 992px)').matches;
+    var nextHtml = desktop
+      ? ARTWORK_TITLE_DESKTOP_HTML
+      : isDesktopArtworkTitleHtml(defaultHtml)
+        ? ARTWORK_TITLE_MOBILE_HTML
+        : defaultHtml;
+    if (titleEl.innerHTML !== nextHtml) titleEl.innerHTML = nextHtml;
+  }
+
+  function bindArtworkUploadTitleCopy(drop) {
+    applyArtworkUploadTitleCopy(drop);
+    if (typeof window.matchMedia !== 'function') return;
+    var mq = window.matchMedia('(min-width: 992px)');
+    var onChange = function () {
+      applyArtworkUploadTitleCopy(drop);
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
   }
 
   function initArtworkUpload() {
@@ -780,7 +808,7 @@
     purgeStaleArtworkLists(drop);
     ensureFileInputPlacement(drop, input);
     ensureArtworkAntsOverlay(drop);
-    ensureArtworkUploadTitleCopy(drop);
+    bindArtworkUploadTitleCopy(drop);
     setArtworkDropMode(drop, 'idle');
 
     var dragDepth = 0;
