@@ -759,6 +759,15 @@
     input.click();
   }
 
+  /** Desktop upload title copy (geometry handled in embed CSS). */
+  function ensureArtworkUploadTitleCopy(drop) {
+    if (!drop) return;
+    var titleEl = drop.querySelector('.iq-form-upload-title');
+    if (!titleEl || titleEl.dataset.iqTitleReady === '1') return;
+    titleEl.innerHTML = 'DRAG &amp; DROP<br>ART FILES HERE';
+    titleEl.dataset.iqTitleReady = '1';
+  }
+
   function initArtworkUpload() {
     var drop = document.getElementById('iq-form-artwork-drop');
     var input = document.getElementById('iq-form-artwork-file');
@@ -771,6 +780,7 @@
     purgeStaleArtworkLists(drop);
     ensureFileInputPlacement(drop, input);
     ensureArtworkAntsOverlay(drop);
+    ensureArtworkUploadTitleCopy(drop);
     setArtworkDropMode(drop, 'idle');
 
     var dragDepth = 0;

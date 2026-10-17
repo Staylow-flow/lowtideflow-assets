@@ -1147,7 +1147,7 @@ body:has(.iq-page) > .system-preloader {
   align-items: stretch;
   padding: 16px 12px 10px !important;
   border-radius: 16px;
-  border: 3px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
+  border: 2px solid transparent; /* dash pattern is painted by .iq-form-upload-ants */
   background:
     radial-gradient(ellipse 80% 60% at 50% 42%, rgba(42, 170, 184, 0.12), transparent 68%),
     radial-gradient(ellipse 55% 45% at 18% 78%, rgba(77, 37, 157, 0.08), transparent 70%),
@@ -1179,7 +1179,7 @@ body:has(.iq-page) > .system-preloader {
   rx: 15px;
   ry: 15px;
   fill: none;
-  stroke-width: 3px;
+  stroke-width: 2px;
   stroke-dasharray: 10 9;
   transition: opacity 0.3s ease;
 }
@@ -3287,4 +3287,129 @@ body.iq-sheet-open {
 
 #iq-order-form > .iq-field-stack .iq-field-error:not([hidden]) {
   display: block !important;
+}
+
+/* ── Spec Engine desktop: upload panel geometry parity (≥992 only) ───────
+   Scoped to #iq-form-artwork-drop — does not touch .iq-total-wrapper / Calculate. */
+
+@media screen and (min-width: 992px) {
+  #iq-form-artwork-drop.iq-form-upload,
+  .iq-form-upload#iq-form-artwork-drop {
+    padding: 18px 28px 10px !important;
+    border-radius: 14px !important;
+  }
+
+  #iq-form-artwork-drop .iq-form-upload-ants-rect {
+    stroke-width: 3px;
+    rx: 13px;
+    ry: 13px;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
+    display: block !important;
+    position: relative !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+    position: absolute !important;
+    left: 50% !important;
+    top: 2.3px;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 8px) !important;
+    max-width: none !important;
+    margin: 0 !important;
+    grid-row: auto !important;
+    white-space: normal !important;
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    line-height: 1.12 !important;
+    text-align: center !important;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    position: absolute !important;
+    left: 50% !important;
+    top: 60px;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 8px) !important;
+    max-width: none !important;
+    margin: 0 !important;
+    grid-row: auto !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    position: absolute !important;
+    left: 50% !important;
+    top: 127.3px;
+    transform: translateX(-50%) !important;
+    grid-row: auto !important;
+    margin: 0 !important;
+    width: 250px !important;
+    max-width: calc(100% - 56px) !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding: 14px 28px !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.64px !important;
+    text-transform: uppercase !important;
+    line-height: 1.1 !important;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn:active,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn:active {
+    transform: translateX(-50%) scale(0.97) !important;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+    top: 12.2px;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    top: 70px;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    top: 137.1px;
+    width: 266px !important;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  #iq-form-artwork-drop.iq-form-upload,
+  .iq-form-upload#iq-form-artwork-drop {
+    margin-top: 6px !important;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+    top: 52.6px;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    top: 110px;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    top: 176.5px;
+    width: 360px !important;
+  }
 }
