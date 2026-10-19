@@ -3427,13 +3427,46 @@ body.iq-sheet-open {
     text-transform: uppercase !important;
     line-height: 1.1 !important;
     align-self: start !important;
-    margin: calc(30px + (288px - 100cqh) * 0.11) auto 0 !important;
+    margin: calc(50.66px - 0.1214 * 100cqh + (288px - 100cqh) * 0.028) auto 0 !important;
     transform: none !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    margin-top: 6px !important;
+    margin-top: calc(-76.2px + 0.2147 * 100cqh + (288px - 100cqh) * 0.172) !important;
     padding: 0 8px !important;
+  }
+
+  @media screen and (min-width: 1280px) {
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+      margin-top: calc(-76.2px + 0.2147 * 100cqh + (288px - 100cqh) * 0.172 + 5.9px) !important;
+    }
+
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+      margin-top: calc(50.66px - 0.1214 * 100cqh + (288px - 100cqh) * 0.028 + 2.3px) !important;
+    }
+  }
+
+  @media screen and (max-width: 1279px) and (min-width: 1200px) {
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+      margin-top: calc(-76.2px + 0.2147 * 100cqh + (288px - 100cqh) * 0.172 + 4.9px) !important;
+    }
+
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+      margin-top: calc(50.66px - 0.1214 * 100cqh + (288px - 100cqh) * 0.028 + 2.4px) !important;
+    }
+  }
+
+  @media screen and (max-width: 1199px) {
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+      margin-top: calc(-76.2px + 0.2147 * 100cqh + (288px - 100cqh) * 0.172 - 4px - (100vw - 992px) * 0.0148) !important;
+    }
+
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+      margin-top: calc(50.66px - 0.1214 * 100cqh + (288px - 100cqh) * 0.028 - 2.16px + (100vw - 992px) * 0.05134) !important;
+    }
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn:active,
@@ -3531,15 +3564,75 @@ body.iq-sheet-open {
   }
 
   /* Idle upload stack matches no-code; pin shell to the same inner band height as no-code */
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
+    --iq-crew-browse-lift: 8.9px;
+    --iq-crew-hint-lift: 10.7px;
+  }
+
+  @media screen and (max-width: 1279px) and (min-width: 1200px) {
+    .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
+      --iq-crew-browse-lift: 14.2px;
+      --iq-crew-hint-lift: 14.8px;
+    }
+  }
+
+  @media screen and (max-width: 1199px) and (min-width: 1100px) {
+    .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
+      --iq-crew-browse-lift: calc(13.1px + (1200px - 100vw) * 0.319);
+      --iq-crew-hint-lift: 33.3px;
+    }
+  }
+
+  @media screen and (max-width: 1099px) and (min-width: 992px) {
+    .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
+      --iq-crew-browse-lift: calc(45px + (1100px - 100vw) * 0.268);
+      --iq-crew-hint-lift: calc(33px + (1100px - 100vw) * 0.012);
+    }
+  }
+
+  @media screen and (max-width: 1032px) and (min-width: 992px) {
+    .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
+      --iq-crew-browse-lift: calc(
+        45px + (1100px - 100vw) * 0.268 - 0.6px - (1032px - 100vw) * 0.025
+      );
+      --iq-crew-hint-lift: calc(
+        33px + (1100px - 100vw) * 0.012 - 0.5px - (1032px - 100vw) * 0.025 + (1032px - 100vw) * 0.04
+      );
+    }
+  }
+
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading)
     .iq-form-upload-shell {
-    flex: 0 0 var(--iq-spec-upload-band-height) !important;
-    height: var(--iq-spec-upload-band-height) !important;
-    min-height: var(--iq-spec-upload-band-height) !important;
-    max-height: var(--iq-spec-upload-band-height) !important;
+    flex: 0 0 auto !important;
     align-self: flex-start !important;
     width: 100% !important;
+    aspect-ratio: 520 / 320 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading)
+    .iq-form-upload-inner {
+    overflow: visible !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    margin-top: calc(50.66px - 0.1214 * 100cqh + (288px - 100cqh) * 0.028 + var(--iq-crew-browse-lift)) !important;
+    margin-bottom: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    margin-top: calc(-76.2px + 0.2147 * 100cqh + (288px - 100cqh) * 0.172 + var(--iq-crew-hint-lift)) !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
@@ -3548,18 +3641,6 @@ body.iq-sheet-open {
     height: 100% !important;
     min-height: 100% !important;
     max-height: 100% !important;
-  }
-
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-    margin-top: calc(100cqh * 0.507 - 97.5px) !important;
-  }
-
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    margin-top: calc(38px + (288px - 100cqh) * 0.11) auto 0 !important;
   }
 
   .iq-total-wrapper:has(> #crew20:not([hidden])) {

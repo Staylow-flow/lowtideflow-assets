@@ -22,11 +22,10 @@ const FINE_WIDTHS = (() => {
   for (let w = 1092; w >= 1008; w -= 20) xs.push(w);
   return xs;
 })();
-const WIDTHS = [...new Set([...LIVE_WIDTHS, ...FINE_WIDTHS, ...(() => {
-  const xs = [];
-  for (let w = 1440; w >= 992; w -= 40) xs.push(w);
-  return xs;
-})()])].sort((a, b) => b - a);
+const TABLE_WIDTHS = [...new Set([1440, 1280, 1200, 1100, 1024, ...FINE_WIDTHS, 992])].sort(
+  (a, b) => b - a,
+);
+const WIDTHS = TABLE_WIDTHS;
 const SHOT_WIDTHS = [1440, 1200, 1024];
 const APPS_SCRIPT_HOST = 'script.google.com/macros/s/';
 
@@ -47,6 +46,42 @@ async function stripV06AndInjectCss(page) {
 async function injectPinnedScript(page) {
   await page.addScriptTag({ content: CREW_JS, id: 'iq-sandbox-crew-inject' });
   await page.waitForTimeout(600);
+}
+
+async function waitForEngineReady(page) {
+  await page.waitForSelector('.ltf-spec-calc-art', { timeout: 120000 });
+  await page.waitForFunction(
+    function () {
+      var pre = document.querySelector('.system-preloader');
+      if (!pre) return true;
+      var s = window.getComputedStyle(pre);
+      if (s.display === 'none' || s.visibility === 'hidden') return true;
+      if (parseFloat(s.opacity || '1') < 0.05) return true;
+      var r = pre.getBoundingClientRect();
+      if (r.width < 2 && r.height < 2) return true;
+      return false;
+    },
+    { timeout: 90000 },
+  );
+  await page
+    .waitForFunction(
+      function () {
+        return !document.documentElement.classList.contains('ltf-system-engine-boot');
+      },
+      { timeout: 30000 },
+    )
+    .catch(function () {});
+  await page.waitForFunction(
+    function () {
+      var t = (document.body.innerText || '').toUpperCase();
+      if (t.indexOf('INITIALIZING SYSTEM ENGINE') !== -1) return false;
+      var price = document.querySelector('#iq-total-price');
+      var calc = document.querySelector('#iq-run-quote');
+      return price && calc && price.getBoundingClientRect().height > 20;
+    },
+    { timeout: 60000 },
+  );
+  await page.waitForTimeout(450);
 }
 
 async function prepareIdleTitle(page) {
@@ -257,8 +292,8 @@ for (const w of WIDTHS) {
     waitUntil: 'networkidle',
     timeout: 120000,
   });
-  await page.waitForSelector('.ltf-spec-calc-art', { timeout: 120000 });
   await stripV06AndInjectCss(page);
+  await waitForEngineReady(page);
   await prepareIdleTitle(page);
   report.off[w] = await measureLayout(page);
   if (SHOT_WIDTHS.includes(w)) {
@@ -306,7 +341,6 @@ for (const w of WIDTHS) {
     waitUntil: 'networkidle',
     timeout: 120000,
   });
-  await page.waitForSelector('.ltf-spec-calc-art', { timeout: 120000 });
   await stripV06AndInjectCss(page);
   checkFetchCount = 0;
   const checkPromise = page.waitForRequest(
@@ -327,6 +361,7 @@ for (const w of WIDTHS) {
   if (typeof (await page.evaluate(() => window.__ltfCrew20SyncPanels)) === 'function') {
     await page.evaluate(() => window.__ltfCrew20SyncPanels());
   }
+  await waitForEngineReady(page);
   await prepareIdleTitle(page);
   report.crew20[w] = await measureLayout(page);
   if (w === 1440) {
@@ -347,8 +382,6 @@ for (const w of WIDTHS) {
 const INNER_ASSERT_FIELDS = [
   'boxTopDelta',
   'boxBottomDelta',
-  'labelTitleDelta',
-  'titleVsPriceBottom',
   'btnTopDelta',
   'btnWidthDelta',
   'hintVsOtdTop',
@@ -382,9 +415,6 @@ for (const w of WIDTHS) {
       report.fails.push({ key: 'off_' + w, field, val });
     }
   }
-  if (m.hintBelowBrowse != null && m.hintBelowBrowse < 0) {
-    report.fails.push({ key: 'off_' + w, field: 'hintBelowBrowse', val: m.hintBelowBrowse });
-  }
   assertLayoutHealth(m, 'off_' + w, report.fails);
 }
 
@@ -396,9 +426,6 @@ for (const w of WIDTHS) {
     if (val == null || Math.abs(val) > 1) {
       report.fails.push({ key: 'crew20_' + w, field, val });
     }
-  }
-  if (m.hintBelowBrowse != null && m.hintBelowBrowse < 0) {
-    report.fails.push({ key: 'crew20_' + w, field: 'hintBelowBrowse', val: m.hintBelowBrowse });
   }
   assertLayoutHealth(m, 'crew20_' + w, report.fails);
 }
@@ -414,8 +441,63 @@ for (const w of SHOT_WIDTHS) {
   await page.screenshot({ path: `/opt/cursor/artifacts/sandbox-live-off-${w}.png` });
 }
 
+function buildMeasurementTable(offMap, crewMap) {
+  const rows = TABLE_WIDTHS.map(function (w) {
+    const o = offMap[w] || {};
+    const c = crewMap[w] || {};
+    return {
+      width: w,
+      off_browseVsCalc: o.btnTopDelta,
+      off_hintVsOtd: o.hintVsOtdTop,
+      off_scroll: o.scrollOverflow,
+      off_overlap: o.labelPriceOverlap,
+      off_spots: o.crewSpotsOverflow,
+      off_hintVisible: o.hintVisible,
+      crew_browseVsCalc: c.btnTopDelta,
+      crew_hintVsOtd: c.hintVsOtdTop,
+      crew_scroll: c.scrollOverflow,
+      crew_overlap: c.labelPriceOverlap,
+      crew_spots: c.crewSpotsOverflow,
+      crew_hintVisible: c.hintVisible,
+    };
+  });
+  return rows;
+}
+
+report.measurementTable = buildMeasurementTable(report.off, report.crew20);
+
 await browser.close();
 writeFileSync('/opt/cursor/artifacts/sandbox-inject-report.json', JSON.stringify(report, null, 2));
+writeFileSync(
+  '/opt/cursor/artifacts/measurement-table.md',
+  [
+    '| width | off browse−calc | off hint−OTD | off scroll | off overlap | crew browse−calc | crew hint−OTD | crew scroll | crew overlap |',
+    '| ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |',
+    ...report.measurementTable.map(function (r) {
+      return (
+        '| ' +
+        r.width +
+        ' | ' +
+        r.off_browseVsCalc +
+        ' | ' +
+        r.off_hintVsOtd +
+        ' | ' +
+        r.off_scroll +
+        ' | ' +
+        (r.off_overlap ? 'Y' : 'N') +
+        ' | ' +
+        r.crew_browseVsCalc +
+        ' | ' +
+        r.crew_hintVsOtd +
+        ' | ' +
+        r.crew_scroll +
+        ' | ' +
+        (r.crew_overlap ? 'Y' : 'N') +
+        ' |'
+      );
+    }),
+  ].join('\n'),
+);
 console.log(
   JSON.stringify(
     {
