@@ -44,7 +44,12 @@
         if (nw) c20.style.width = nw + 'px';
       }
       var idle = !box.classList.contains('is-queue') && !box.classList.contains('is-loading');
-      if (DESK.matches && idle) set(title, 'font-weight', '700'); else title.style.removeProperty('font-weight');
+      title.style.removeProperty('font-size');
+      if (DESK.matches && idle) {
+        set(title, 'font-weight', '700');
+        var fs = parseFloat(getComputedStyle(title).fontSize);
+        if (fs) set(title, 'font-size', (Math.round(fs * 0.8 * 100) / 100) + 'px'); /* v4b: -20% on desktop idle */
+      } else title.style.removeProperty('font-weight');
       [title, hint, btn].forEach(function (e) { clr(e, KEYS); });
       var c = rect(calc); if (!c.width) return;
       if (DESK.matches) {
