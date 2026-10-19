@@ -18,7 +18,7 @@
   var raf = 0, busy = false;
   function set(el, k, v) { el.style.setProperty(k, v, 'important'); }
   function clr(el, ks) { ks.forEach(function (k) { el.style.removeProperty(k); }); }
-  var KEYS = ['top', 'left', 'right', 'bottom', 'transform', 'margin-left', 'margin-right', 'margin-top', 'width', 'height', 'min-height', 'max-width', 'justify-self'];
+  var KEYS = ['top', 'left', 'right', 'bottom', 'transform', 'margin-left', 'margin-right', 'margin-top', 'width', 'height', 'min-height', 'max-width', 'justify-self', 'position', 'border-radius', 'font-size', 'font-weight', 'letter-spacing', 'line-height', 'text-transform', 'text-wrap', 'white-space', 'font-family', 'text-align', 'padding-left', 'padding-right', 'grid-row', 'grid-column'];
   function rect(el) { return el.getBoundingClientRect(); }
   function placeAbs(el, top, cx, w, h) {
     set(el, 'transform', 'none'); set(el, 'right', 'auto'); set(el, 'bottom', 'auto');
@@ -44,14 +44,14 @@
         if (nw) c20.style.width = nw + 'px';
       }
       var idle = !box.classList.contains('is-queue') && !box.classList.contains('is-loading');
-      title.style.removeProperty('font-size'); title.style.removeProperty('position');
-      if (idle) {
+      [title, hint, btn].forEach(function (e) { clr(e, KEYS); });
+      var price = Q('#iq-total-price'), Lw = Q('.iq-total-wrapper');
+      if (idle && DESK.matches) {
         set(title, 'font-weight', '700');
         var fs = parseFloat(getComputedStyle(title).fontSize);
-        if (fs) set(title, 'font-size', (Math.round(fs * 0.88 * 100) / 100) + 'px'); /* v5: 88% of page size, all widths */
-      } else title.style.removeProperty('font-weight');
-      var price = Q('#iq-total-price');
-      [title, hint, btn].forEach(function (e) { clr(e, KEYS); });
+        if (fs) set(title, 'font-size', (Math.round(fs * 0.88 * 100) / 100) + 'px'); /* v5: 88% of page size */
+      }
+      if (!idle) return; /* v6: queue/loading: leave the page's own layout, inline styles cleared above */
       var c = rect(calc); if (!c.width) return;
       if (DESK.matches) {
         var b = rect(box), cx = b.left + b.width / 2, L = rect(Q('.iq-total-wrapper') || box);
@@ -59,23 +59,42 @@
         if (Math.abs(b.top - L.top) > 2 || Math.abs(b.bottom - L.bottom) > 2 || c.width > b.width - 40) return;
         placeAbs(btn, c.top, cx, c.width, c.height);
         var pr0 = rect(price || label), th = rect(title).height;
-        placeAbs(title, pr0.top + pr0.height / 2 - th / 2, cx, null, null); /* v5: title centered on price */
+        placeAbs(title, pr0.top + pr0.height / 2 - th / 2 - 10, cx, null, null); /* v6: centered on price, 10px up */
         var o = rect(otd), hh = rect(hint).height;
         placeAbs(hint, o.top + o.height / 2 - hh / 2, cx, null, null);
+      } else if (idle && price && Lw) {
+        /* v6 stacked: mirror the Calc box. Title <-> price, Browse <-> Calculate, Accepted <-> Out the Door.
+           Box-relative offsets copied from the Calc box; absolute inside .iq-form-upload-inner (no reflow). */
+        var b2 = rect(box), l2 = rect(Lw), cx2 = c.left + c.width / 2, /* Calculate's center = Live Browse centering */ pc = rect(price), ps = getComputedStyle(price),
+            cs = getComputedStyle(calc), os = getComputedStyle(otd), o2 = rect(otd);
+        [title, btn, hint].forEach(function (el) { set(el, 'position', 'absolute'); set(el, 'grid-row', 'auto'); set(el, 'grid-column', 'auto'); }); /* abs grid items would use their grid area as containing block */
+        /* title: 2 balanced lines, bold, sized off the price */
+        set(title, 'font-weight', '700'); set(title, 'text-transform', 'uppercase'); set(title, 'text-align', 'center');
+        set(title, 'line-height', '1.05'); set(title, 'font-family', ps.fontFamily);
+        var tfs = Math.round(parseFloat(ps.fontSize) * 0.6 * 100) / 100;
+        set(title, 'font-size', tfs + 'px'); set(title, 'white-space', 'nowrap');
+        var one = rect(title).width, maxw = b2.width - 40;
+        if (one * 0.62 > maxw) { tfs = Math.floor(tfs * maxw / (one * 0.62) * 100) / 100; set(title, 'font-size', tfs + 'px'); one = rect(title).width; }
+        set(title, 'white-space', 'normal'); set(title, 'text-wrap', 'balance');
+        var tw2 = Math.ceil(one * 0.62);
+        set(btn, 'border-radius', cs.borderRadius); set(btn, 'font-size', cs.fontSize);
+        set(btn, 'font-weight', cs.fontWeight); set(btn, 'letter-spacing', cs.letterSpacing);
+        set(hint, 'font-size', os.fontSize); set(hint, 'text-align', 'center');
+        for (var pass = 0; pass < 2; pass++) {
+          b2 = rect(box);
+          set(title, 'width', tw2 + 'px'); set(title, 'max-width', 'none');
+          placeAbs(title, b2.top + (pc.top + pc.height / 2 - l2.top) - rect(title).height / 2, cx2, tw2, null);
+          placeAbs(btn, b2.top + (c.top - l2.top), cx2, c.width, c.height);
+          placeAbs(hint, b2.top + (o2.top - l2.top), cx2, c.width, null);
+        }
       } else {
         set(btn, 'width', c.width + 'px'); set(btn, 'max-width', 'none');
         set(btn, 'justify-self', 'start'); set(btn, 'margin-left', '0px'); set(btn, 'margin-right', '0px');
-        /* v5 stacked: title offset from its box top = price offset from left box top (visual shift, no reflow) */
-        var Lw = Q('.iq-total-wrapper');
-        if (price && Lw && idle) {
-          var want = rect(price).top - rect(Lw).top, have = rect(title).top - rect(box).top;
-          set(title, 'position', 'relative'); set(title, 'top', (want - have) + 'px');
-        }
         var ml = 0;
         for (var i = 0; i < 4; i++) {
-          var br = rect(btn), dx = (c.left + c.width / 2) - (br.left + br.width / 2);
+          var br = rect(btn); if (!br.width) break; var dx = (c.left + c.width / 2) - (br.left + br.width / 2);
           if (Math.abs(dx) < 0.3) break;
-          ml += (i === 0 ? dx : dx * 2); /* centered flex/grid parents move the item by half the margin */
+          ml += (i === 0 ? dx : dx * 2);
           set(btn, 'margin-left', ml + 'px');
         }
       }
