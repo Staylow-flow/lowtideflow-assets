@@ -5,9 +5,13 @@
   "description": "Lowtideflow Apparel — local dev server for hero preview",
   "scripts": {
     "start": "npx serve . --listen 3000 --single",
-    "dev":   "npx serve . --listen 3000"
+    "dev": "npx serve . --listen 3000",
+    "verify:sandbox-inject": "node scripts/verify-sandbox-inject.mjs"
   },
   "devDependencies": {
     "serve": "^14.2.4"
+  },
+  "dependencies": {
+    "playwright": "^1.64.1"
   }
 }
