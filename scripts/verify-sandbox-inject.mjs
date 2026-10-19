@@ -22,7 +22,7 @@ const FINE_WIDTHS = (() => {
   for (let w = 1092; w >= 1008; w -= 20) xs.push(w);
   return xs;
 })();
-const TABLE_WIDTHS = [...new Set([1440, 1280, 1200, 1100, 1024, ...FINE_WIDTHS, 992])].sort(
+const TABLE_WIDTHS = [...new Set([1440, 1280, 1200, 1100, 1024, ...FINE_WIDTHS, 1008, 992])].sort(
   (a, b) => b - a,
 );
 const WIDTHS = TABLE_WIDTHS;
