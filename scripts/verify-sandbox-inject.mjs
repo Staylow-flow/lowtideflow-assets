@@ -17,7 +17,12 @@ for (const f of JS_FILES) {
 }
 
 const LIVE_WIDTHS = [1440, 1280, 1200, 1100, 1024, 992];
-const WIDTHS = [...new Set([...LIVE_WIDTHS, ...(() => {
+const FINE_WIDTHS = (() => {
+  const xs = [];
+  for (let w = 1092; w >= 1008; w -= 20) xs.push(w);
+  return xs;
+})();
+const WIDTHS = [...new Set([...LIVE_WIDTHS, ...FINE_WIDTHS, ...(() => {
   const xs = [];
   for (let w = 1440; w >= 992; w -= 40) xs.push(w);
   return xs;
@@ -71,18 +76,54 @@ async function measureLayout(page) {
     var browse = document.querySelector('label.iq-form-upload-btn, .iq-form-upload-btn');
     var price = document.querySelector('#iq-total-price');
     var hint = document.querySelector('.iq-form-upload-hint');
-    if (!calcArt || !left || !right || !label || !title || !calc || !browse || !hint) {
+    var info = document.querySelector('.iq-total-wrapper .iq-artwork-info-link');
+    if (!calcArt || !left || !right || !label || !title || !calc || !browse || !hint || !info) {
       return { error: 'missing nodes' };
     }
     var lr = left.getBoundingClientRect();
     var rr = right.getBoundingClientRect();
-    var titleTop = num(title.getBoundingClientRect().top);
-    var hintTop = num(hint.getBoundingClientRect().top);
-    var browseTop = num(browse.getBoundingClientRect().top);
+    var tr = title.getBoundingClientRect();
+    var hr = hint.getBoundingClientRect();
+    var br = browse.getBoundingClientRect();
+    var ir = info.getBoundingClientRect();
+    var titleTop = num(tr.top);
+    var titleBottom = num(tr.bottom);
+    var hintTop = num(hr.top);
+    var hintCenterY = num((hr.top + hr.bottom) / 2);
+    var infoCenterY = num((ir.top + ir.bottom) / 2);
+    var infoTop = num(ir.top);
+    var labelBottom = num(label.getBoundingClientRect().bottom);
+    var priceTop = num(price.getBoundingClientRect().top);
+    var labelPriceOverlap = labelBottom - priceTop > 0.5;
+    var scrollOverflow = document.documentElement.scrollWidth - window.innerWidth;
+    var crew = document.getElementById('crew20');
+    var crewSpots = document.getElementById('c20-spots');
+    var crewSpotsOverflow = false;
+    if (crew && !crew.hidden && crewSpots && !crewSpots.hidden && left.contains(crew)) {
+      var wr = left.getBoundingClientRect();
+      var sr = crewSpots.getBoundingClientRect();
+      crewSpotsOverflow = sr.bottom > wr.bottom + 0.5 || sr.right > wr.right + 0.5 || sr.left < wr.left - 0.5;
+    }
+    var hintStyle = hint && window.getComputedStyle(hint);
+    var hintVisible =
+      hint &&
+      hint.getClientRects().length > 0 &&
+      hintStyle &&
+      hintStyle.visibility !== 'hidden' &&
+      hintStyle.display !== 'none' &&
+      parseFloat(hintStyle.opacity || '1') > 0.05 &&
+      hr.height > 2;
+    var browseTop = num(br.top);
+    var browseBottom = num(br.bottom);
     var calcTop = num(calc.getBoundingClientRect().top);
     var labelTop = num(label.getBoundingClientRect().top);
+    var priceBottom = num(price.getBoundingClientRect().bottom);
     var calcW = num(calc.getBoundingClientRect().width);
     var browseW = num(browse.getBoundingClientRect().width);
+    var dropCx = num((rr.left + rr.right) / 2);
+    var titleCx = num((tr.left + tr.right) / 2);
+    var hintCx = num((hr.left + hr.right) / 2);
+    var browseCx = num((br.left + br.right) / 2);
     return {
       rowTop: num(calcArt.getBoundingClientRect().top),
       prevGap: prev ? num(calcArt.getBoundingClientRect().top - prev.getBoundingClientRect().bottom) : null,
@@ -94,9 +135,24 @@ async function measureLayout(page) {
       boxTopDelta: num(rr.top - lr.top),
       boxBottomDelta: num(rr.bottom - lr.bottom),
       titleTop,
+      titleBottom,
       hintTop,
+      hintCenterY,
+      infoCenterY,
       browseTop,
+      browseBottom,
       titleVsLabel: num(titleTop - labelTop),
+      titleVsPriceBottom: num(titleBottom - priceBottom),
+      hintVsInfoCenter: num(hintCenterY - infoCenterY),
+      hintVsOtdTop: num(hintTop - infoTop),
+      labelPriceOverlap,
+      scrollOverflow: num(scrollOverflow),
+      crewSpotsOverflow,
+      hintVisible,
+      hintBelowBrowse: num(hr.top - br.bottom),
+      titleCenterDelta: num(titleCx - dropCx),
+      hintCenterDelta: num(hintCx - dropCx),
+      browseCenterDelta: num(browseCx - dropCx),
       browseVsCalc: num(browseTop - calcTop),
       browseW,
       calcW,
@@ -117,7 +173,9 @@ function innerPanelTable(map, label) {
     return {
       w,
       titleVsLabel: m.titleVsLabel,
-      hintTop: m.hintTop,
+      titleVsPriceBottom: m.titleVsPriceBottom,
+      hintVsInfoCenter: m.hintVsInfoCenter,
+      hintBelowBrowse: m.hintBelowBrowse,
       browseVsCalc: m.browseVsCalc,
       browseVsCalcW: m.browseVsCalcW,
     };
@@ -290,11 +348,32 @@ const INNER_ASSERT_FIELDS = [
   'boxTopDelta',
   'boxBottomDelta',
   'labelTitleDelta',
+  'titleVsPriceBottom',
   'btnTopDelta',
   'btnWidthDelta',
+  'hintVsOtdTop',
+  'titleCenterDelta',
+  'hintCenterDelta',
+  'browseCenterDelta',
 ];
 
-for (const w of LIVE_WIDTHS) {
+function assertLayoutHealth(m, keyPrefix, fails) {
+  if (!m || m.error) return;
+  if (m.labelPriceOverlap) {
+    fails.push({ key: keyPrefix, field: 'labelPriceOverlap', val: true });
+  }
+  if (m.scrollOverflow != null && m.scrollOverflow > 1) {
+    fails.push({ key: keyPrefix, field: 'scrollOverflow', val: m.scrollOverflow });
+  }
+  if (m.crewSpotsOverflow) {
+    fails.push({ key: keyPrefix, field: 'crewSpotsOverflow', val: true });
+  }
+  if (m.hintVisible === false) {
+    fails.push({ key: keyPrefix, field: 'hintVisible', val: false });
+  }
+}
+
+for (const w of WIDTHS) {
   const m = report.off[w];
   if (!m || m.error) continue;
   for (const field of INNER_ASSERT_FIELDS) {
@@ -303,15 +382,26 @@ for (const w of LIVE_WIDTHS) {
       report.fails.push({ key: 'off_' + w, field, val });
     }
   }
+  if (m.hintBelowBrowse != null && m.hintBelowBrowse < 0) {
+    report.fails.push({ key: 'off_' + w, field: 'hintBelowBrowse', val: m.hintBelowBrowse });
+  }
+  assertLayoutHealth(m, 'off_' + w, report.fails);
 }
 
-report.fails.push(
-  ...assertTolerance(
-    report.crew20,
-    INNER_ASSERT_FIELDS,
-    'crew20_',
-  ),
-);
+for (const w of WIDTHS) {
+  const m = report.crew20[w];
+  if (!m || m.error) continue;
+  for (const field of INNER_ASSERT_FIELDS) {
+    const val = m[field];
+    if (val == null || Math.abs(val) > 1) {
+      report.fails.push({ key: 'crew20_' + w, field, val });
+    }
+  }
+  if (m.hintBelowBrowse != null && m.hintBelowBrowse < 0) {
+    report.fails.push({ key: 'crew20_' + w, field: 'hintBelowBrowse', val: m.hintBelowBrowse });
+  }
+  assertLayoutHealth(m, 'crew20_' + w, report.fails);
+}
 
 report.innerPanelOff = innerPanelTable(report.off, 'no-code');
 report.innerPanelCrew20 = innerPanelTable(report.crew20, 'CREW20');

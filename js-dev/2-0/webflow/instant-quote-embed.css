@@ -3292,6 +3292,10 @@ body.iq-sheet-open {
    Scoped to #iq-form-artwork-drop — does not touch .iq-total-wrapper / Calculate. */
 
 @media screen and (min-width: 992px) {
+  .ltf-spec-calc-art {
+    --iq-spec-upload-band-height: calc(var(--iq-panel-min-height) - 28px);
+  }
+
   #iq-artwork-row .iq-artwork-panel,
   .iq-artwork-row .iq-artwork-panel {
     position: relative !important;
@@ -3333,11 +3337,11 @@ body.iq-sheet-open {
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
     display: grid !important;
-    grid-template-rows: 1fr auto 1fr !important;
+    grid-template-rows: auto auto auto !important;
     grid-template-columns: minmax(0, 1fr) !important;
     gap: 0 !important;
     align-items: stretch !important;
-    justify-items: stretch !important;
+    justify-items: center !important;
     position: relative !important;
     height: 100% !important;
     min-height: 100% !important;
@@ -3354,7 +3358,7 @@ body.iq-sheet-open {
     top: auto !important;
     transform: none !important;
     width: 100% !important;
-    max-width: none !important;
+    max-width: 100% !important;
     margin: 0 !important;
     justify-self: center !important;
     align-self: start !important;
@@ -3365,35 +3369,41 @@ body.iq-sheet-open {
     text-transform: uppercase !important;
     line-height: 1.12 !important;
     text-align: center !important;
+    min-height: 82.953125px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    grid-row: 2 !important;
+    grid-row: 3 !important;
     grid-column: 1 !important;
     position: static !important;
     left: auto !important;
     top: auto !important;
     transform: none !important;
     width: 100% !important;
-    max-width: none !important;
-    margin: 10px 0 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
     justify-self: center !important;
-    align-self: center !important;
+    align-self: start !important;
     white-space: normal !important;
     text-align: center !important;
     line-height: 1.2 !important;
     font-size: 13px !important;
     letter-spacing: -0.01em !important;
-    min-height: 59px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    min-height: 0 !important;
+    height: auto !important;
+    display: block !important;
     box-sizing: border-box !important;
+    padding: 0 8px !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    grid-row: 3 !important;
+    grid-row: 2 !important;
     grid-column: 1 !important;
     position: static !important;
     left: auto !important;
@@ -3417,7 +3427,13 @@ body.iq-sheet-open {
     text-transform: uppercase !important;
     line-height: 1.1 !important;
     align-self: start !important;
-    margin: -1px auto 0 !important;
+    margin: calc(30px + (288px - 100cqh) * 0.11) auto 0 !important;
+    transform: none !important;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    margin-top: 6px !important;
+    padding: 0 8px !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn:active,
@@ -3433,18 +3449,27 @@ body.iq-sheet-open {
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
       margin-top: calc(100cqh * 0.969 - 213.05px) !important;
     }
-
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-      margin-top: calc(-1px + (100cqh - 288px) * 0.19) !important;
-    }
   }
 
-  @container iq-upload-inner (max-height: 224px) {
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-      margin-top: calc(-1px + (100cqh - 288px) * 0.235) !important;
-    }
+  .ltf-spec-calc-art .iq-receipt-right {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: clamp(16px, 3vw, 32px) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .ltf-spec-calc-art .iq-receipt-right > .iq-total-wrapper,
+  .ltf-spec-calc-art .iq-receipt-right > #iq-artwork-row,
+  .ltf-spec-calc-art .iq-receipt-right > .iq-artwork-row {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: min(var(--iq-panel-max-width), 100%) !important;
+    width: min(var(--iq-panel-max-width), 100%) !important;
   }
 
 }
@@ -3458,49 +3483,34 @@ body.iq-sheet-open {
 
 /* ── Spec Engine desktop: CREW20 in-card layout (≥992, with pinned script) ── */
 @media screen and (min-width: 992px) {
-  .ltf-spec-calc-art {
-    --iq-spec-desktop-fr-band: 114.516px;
-  }
-
-  /* CREW20 inside total card (step 2) — equal-height columns, tops aligned */
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
-    align-items: stretch !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
+    max-width: 100% !important;
+    overflow-x: clip !important;
   }
 
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt,
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right {
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-total-wrapper,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-form-artwork-drop.iq-form-upload,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-form-upload#iq-form-artwork-drop {
+    aspect-ratio: auto !important;
+    width: min(var(--iq-panel-max-width), 100%) !important;
+    max-width: min(var(--iq-panel-max-width), 100%) !important;
+    min-height: var(--iq-panel-min-height) !important;
     height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > .iq-receipt,
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > #iq-artwork-row,
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > .iq-artwork-row {
-    align-self: start !important;
-    height: auto !important;
-    min-height: 0 !important;
     box-sizing: border-box !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right {
     flex-wrap: nowrap !important;
-    align-items: stretch !important;
-    height: auto !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
   }
 
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-total-wrapper {
-    height: max-content !important;
-    min-height: var(--iq-panel-min-height) !important;
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right > .iq-total-wrapper,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right > #iq-artwork-row,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right > .iq-artwork-row {
+    align-self: flex-start !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-artwork-row .iq-artwork-panel,
@@ -3508,92 +3518,56 @@ body.iq-sheet-open {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    height: 100% !important;
-    min-height: 100% !important;
-    transform: none !important;
-  }
-
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-form-artwork-drop.iq-form-upload,
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-form-upload#iq-form-artwork-drop {
-    flex: 1 1 auto !important;
-    height: 100% !important;
-    min-height: var(--iq-panel-min-height) !important;
-    align-self: stretch !important;
-    margin-top: 0 !important;
+    min-height: 0 !important;
+    transform: translateY(12px) !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-form-artwork-drop.iq-form-upload,
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-form-upload#iq-form-artwork-drop {
     display: flex !important;
     flex-direction: column !important;
+    align-items: stretch !important;
+    margin-top: 0 !important;
   }
 
-  /* Idle quote rhythm stays in the top 320px; extra column height is blank on the upload side */
+  /* Idle upload stack matches no-code; pin shell to the same inner band height as no-code */
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading)
+    .iq-form-upload-shell {
+    flex: 0 0 var(--iq-spec-upload-band-height) !important;
+    height: var(--iq-spec-upload-band-height) !important;
+    min-height: var(--iq-spec-upload-band-height) !important;
+    max-height: var(--iq-spec-upload-band-height) !important;
+    align-self: flex-start !important;
+    width: 100% !important;
+  }
+
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading)
     .iq-form-upload-inner {
-    display: grid !important;
-    flex: 0 0 var(--iq-panel-min-height) !important;
-    height: var(--iq-panel-min-height) !important;
-    max-height: var(--iq-panel-min-height) !important;
-    min-height: var(--iq-panel-min-height) !important;
-    grid-template-rows: 1fr auto 1fr !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    position: relative !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    grid-row: 1 !important;
-    grid-column: 1 !important;
-    align-self: start !important;
-    justify-self: center !important;
-    width: 100% !important;
-    margin: 50.52px 0 0 !important;
-    transform: none !important;
-  }
-
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    grid-row: 2 !important;
-    grid-column: 1 !important;
-    align-self: center !important;
-    margin: 10px 0 0 !important;
-    transform: none !important;
-    min-height: 59px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    margin-top: calc(100cqh * 0.507 - 97.5px) !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    grid-row: 3 !important;
-    grid-column: 1 !important;
-    align-self: start !important;
-    justify-self: center !important;
-    width: calc(100% - 100px) !important;
-    max-width: none !important;
-    align-self: start !important;
-    margin: -66px auto 0 !important;
-    transform: none !important;
+    margin-top: calc(38px + (288px - 100cqh) * 0.11) auto 0 !important;
   }
 
   .iq-total-wrapper:has(> #crew20:not([hidden])) {
-    grid-template-rows: var(--iq-spec-desktop-fr-band) auto var(--iq-spec-desktop-fr-band) auto auto minmax(0, 1fr) !important;
+    /* Match no-code: calc + OTD share one auto row; crew sits in row 4 */
+    grid-template-rows: minmax(0, 114.516px) auto auto auto !important;
+    overflow: hidden !important;
+    min-height: var(--iq-panel-min-height) !important;
+    align-content: start !important;
   }
 
   .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-total-label {
@@ -3614,23 +3588,25 @@ body.iq-sheet-open {
   }
 
   .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-artwork-info-link {
-    grid-row: 4 !important;
-    align-self: center !important;
+    grid-row: 3 !important;
+    align-self: end !important;
     justify-self: center !important;
     width: 100%;
     text-align: center !important;
+    margin-bottom: 0 !important;
   }
 
   .iq-total-wrapper > #crew20:not([hidden]) {
-    grid-row: 5 !important;
-    align-self: center !important;
+    grid-row: 4 !important;
+    align-self: start !important;
     justify-self: center !important;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
-    margin: 8px 0 0 !important;
+    margin: 8px 0 4px !important;
+    padding-bottom: 0 !important;
   }
 
-  /* Webflow-placed promo row (sibling) until sandbox script relocates into card */
   .iq-receipt-right > #crew20 {
     display: none !important;
   }
