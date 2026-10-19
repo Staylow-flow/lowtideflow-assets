@@ -9,7 +9,7 @@
    than the upload box. Each run releases that width, lets the grid re-size, then
    re-pins it to the price box width.
    v3: instant-quote-embed.css (head <link> @9a0e19d) forces the title to
-   font-weight 900 !important at >=992 in the idle state; inline 500 !important
+   font-weight 900 !important at >=992 in the idle state; inline 700 !important (v4: Nate wants 700; v3 was 500)
    here overrides it on desktop only (<=991 untouched, stays 700). */
 (function () {
   'use strict';
@@ -44,7 +44,7 @@
         if (nw) c20.style.width = nw + 'px';
       }
       var idle = !box.classList.contains('is-queue') && !box.classList.contains('is-loading');
-      if (DESK.matches && idle) set(title, 'font-weight', '500'); else title.style.removeProperty('font-weight');
+      if (DESK.matches && idle) set(title, 'font-weight', '700'); else title.style.removeProperty('font-weight');
       [title, hint, btn].forEach(function (e) { clr(e, KEYS); });
       var c = rect(calc); if (!c.width) return;
       if (DESK.matches) {
