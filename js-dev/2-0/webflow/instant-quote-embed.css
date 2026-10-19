@@ -3289,43 +3289,14 @@ body.iq-sheet-open {
 }
 
 /* ── Spec Engine desktop: upload panel geometry parity (≥992 only) ───────
-   Mirror .iq-total-wrapper grid rhythm (panel-relative, not viewport top:*).
-   Replaces Live 9a0e19d absolute + 1024/1440 top jumps that drifted on resize. */
+   Scoped to #iq-form-artwork-drop — does not touch .iq-total-wrapper / Calculate. */
 
 @media screen and (min-width: 992px) {
-  /* Top/bottom 1fr bands in the 320px quote card (stable across 992–1440 in inject sweep) */
-  .ltf-spec-calc-art {
-    --iq-spec-desktop-fr-band: 114.516px;
-  }
-
-  .ltf-spec-calc-art .iq-run-quote-wrap.ltf-calc-narrow-a,
-  .ltf-spec-calc-art .iq-run-quote-wrap {
-    width: calc(100% - 100px) !important;
-    max-width: none !important;
-    margin-inline: auto !important;
-    box-sizing: border-box !important;
-  }
-
-  .ltf-spec-calc-art #iq-run-quote,
-  .ltf-spec-calc-art .iq-run-quote {
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Keep panel canvas height fixed on desktop so 1fr/auto/1fr bands do not
-     shrink with viewport width (aspect-ratio was sliding upload copy upward). */
-  .ltf-spec-calc-art .iq-total-wrapper,
-  .ltf-spec-calc-art #iq-form-artwork-drop.iq-form-upload,
-  .ltf-spec-calc-art .iq-form-upload#iq-form-artwork-drop {
-    aspect-ratio: auto !important;
-    height: var(--iq-panel-min-height) !important;
-    min-height: var(--iq-panel-min-height) !important;
-  }
-
-  /* Replaces retired translateY(12px) panel offset — box tops align on sandbox/live calc row */
-  .ltf-spec-calc-art #iq-form-artwork-drop.iq-form-upload,
-  .ltf-spec-calc-art .iq-form-upload#iq-form-artwork-drop {
-    margin-top: 23px !important;
+  #iq-artwork-row .iq-artwork-panel,
+  .iq-artwork-row .iq-artwork-panel {
+    position: relative !important;
+    top: 0;
+    transform: translateY(12px);
   }
 
   #iq-form-artwork-drop.iq-form-upload,
@@ -3341,32 +3312,23 @@ body.iq-sheet-open {
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
-    display: grid !important;
-    grid-template-rows: 1fr auto 1fr !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    gap: 0 !important;
-    align-items: stretch !important;
-    justify-items: stretch !important;
+    display: block !important;
     position: relative !important;
     height: 100% !important;
     min-height: 100% !important;
-    width: 100% !important;
     padding: 0 !important;
-    box-sizing: border-box !important;
+    gap: 0 !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-    grid-row: 1 !important;
-    grid-column: 1 !important;
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    transform: translateY(-15px) !important;
-    width: 100% !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 2.3px;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 8px) !important;
     max-width: none !important;
-    margin: 66px 0 0 !important;
-    justify-self: center !important;
-    align-self: end !important;
+    margin: 0 !important;
+    grid-row: auto !important;
     white-space: normal !important;
     font-size: 24px !important;
     font-weight: 900 !important;
@@ -3377,45 +3339,35 @@ body.iq-sheet-open {
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    grid-row: 2 !important;
-    grid-column: 1 !important;
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    transform: translateY(-15px) !important;
-    width: 100% !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 60px;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 8px) !important;
     max-width: none !important;
-    margin: 10px 0 0 !important;
-    justify-self: center !important;
-    align-self: center !important;
+    margin: 0 !important;
+    grid-row: auto !important;
     white-space: normal !important;
     text-align: center !important;
-    line-height: 1.2 !important;
-    font-size: 13px !important;
-    letter-spacing: -0.01em !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    grid-row: 3 !important;
-    grid-column: 1 !important;
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    transform: translateY(-6px) !important;
-    margin: 0 auto !important;
-    align-self: start !important;
-    justify-self: center !important;
-    width: calc(100% - 100px) !important;
-    max-width: none !important;
-    min-width: 0 !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 127.3px;
+    transform: translateX(-50%) !important;
+    grid-row: auto !important;
+    margin: 0 !important;
+    width: 250px !important;
+    max-width: calc(100% - 56px) !important;
     height: 52px !important;
     min-height: 52px !important;
     max-height: 52px !important;
     padding: 14px 28px !important;
     border-radius: 6px !important;
     box-sizing: border-box !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     font-size: 16px !important;
@@ -3427,30 +3379,76 @@ body.iq-sheet-open {
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn:active,
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn:active {
-    transform: translateY(-6px) scale(0.97) !important;
+    transform: translateX(-50%) scale(0.97) !important;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+    top: 12.2px;
   }
 
-  /* Middle band: hint block matches price row height so row-3 CTAs share a baseline */
-  .ltf-spec-calc-art #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    min-height: 55px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    top: 70px;
   }
 
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    top: 137.1px;
+    width: 266px !important;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  #iq-artwork-row .iq-artwork-panel,
+  .iq-artwork-row .iq-artwork-panel {
+    transform: translateY(12px);
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+    top: 52.6px;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    top: 110px;
+  }
+
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    top: 177.5px;
+    width: 360px !important;
+  }
+}
+
+/* ── Spec Engine desktop: CREW20 in-card layout (≥992, with pinned script) ── */
+@media screen and (min-width: 992px) {
+  .ltf-spec-calc-art {
+    --iq-spec-desktop-fr-band: 114.516px;
+  }
 
   /* CREW20 inside total card (step 2) — equal-height columns, tops aligned */
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
     align-items: stretch !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > .iq-receipt,
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > #iq-artwork-row,
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > .iq-artwork-row {
     align-self: start !important;
-    height: 100% !important;
-    min-height: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
     box-sizing: border-box !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
@@ -3461,11 +3459,11 @@ body.iq-sheet-open {
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right {
     flex-wrap: nowrap !important;
     align-items: stretch !important;
-    height: 100% !important;
+    height: auto !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-total-wrapper {
-    height: auto !important;
+    height: max-content !important;
     min-height: var(--iq-panel-min-height) !important;
   }
 
@@ -3476,6 +3474,7 @@ body.iq-sheet-open {
     align-items: stretch !important;
     height: 100% !important;
     min-height: 100% !important;
+    transform: none !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-form-artwork-drop.iq-form-upload,
@@ -3497,11 +3496,63 @@ body.iq-sheet-open {
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading)
     .iq-form-upload-inner {
+    display: grid !important;
     flex: 0 0 var(--iq-panel-min-height) !important;
     height: var(--iq-panel-min-height) !important;
     max-height: var(--iq-panel-min-height) !important;
     min-height: var(--iq-panel-min-height) !important;
     grid-template-rows: 1fr auto 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    position: relative !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    grid-row: 1 !important;
+    grid-column: 1 !important;
+    align-self: end !important;
+    justify-self: center !important;
+    width: 100% !important;
+    margin: 66px 0 0 !important;
+    transform: translateY(-23px) !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    grid-row: 2 !important;
+    grid-column: 1 !important;
+    align-self: center !important;
+    margin: 10px 0 0 !important;
+    transform: translateY(-15px) !important;
+    min-height: 55px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    grid-row: 3 !important;
+    grid-column: 1 !important;
+    align-self: start !important;
+    justify-self: center !important;
+    width: calc(100% - 100px) !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    transform: translateY(-64px) !important;
   }
 
   /* Orbit wrap was 97px tall vs 52px Browse — match button box for row-3 parity */
@@ -3509,19 +3560,6 @@ body.iq-sheet-open {
     height: 52px !important;
     min-height: 52px !important;
     max-height: 52px !important;
-  }
-
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-    margin-top: 66px 0 0 !important;
-    transform: translateY(-23px) !important;
-  }
-
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
-    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    transform: translateY(-15px) !important;
   }
 
   .iq-total-wrapper:has(> #crew20:not([hidden])) {
