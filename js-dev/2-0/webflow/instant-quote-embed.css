@@ -3293,6 +3293,11 @@ body.iq-sheet-open {
    Replaces Live 9a0e19d absolute + 1024/1440 top jumps that drifted on resize. */
 
 @media screen and (min-width: 992px) {
+  /* Top/bottom 1fr bands in the 320px quote card (stable across 992–1440 in inject sweep) */
+  .ltf-spec-calc-art {
+    --iq-spec-desktop-fr-band: 114.516px;
+  }
+
   .ltf-spec-calc-art .iq-run-quote-wrap.ltf-calc-narrow-a,
   .ltf-spec-calc-art .iq-run-quote-wrap {
     width: calc(100% - 100px) !important;
@@ -3435,4 +3440,134 @@ body.iq-sheet-open {
   }
 
 
+  /* CREW20 inside total card (step 2) — equal-height columns, tops aligned */
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) {
+    align-items: stretch !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > .iq-receipt,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > #iq-artwork-row,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) > .iq-artwork-row {
+    align-self: start !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    box-sizing: border-box !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right {
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    height: 100% !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-total-wrapper {
+    height: auto !important;
+    min-height: var(--iq-panel-min-height) !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-artwork-row .iq-artwork-panel,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-artwork-row .iq-artwork-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    height: 100% !important;
+    min-height: 100% !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-form-artwork-drop.iq-form-upload,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-form-upload#iq-form-artwork-drop {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    min-height: var(--iq-panel-min-height) !important;
+    align-self: stretch !important;
+    margin-top: 0 !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-form-artwork-drop.iq-form-upload,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-form-upload#iq-form-artwork-drop {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Idle quote rhythm stays in the top 320px; extra column height is blank on the upload side */
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading)
+    .iq-form-upload-inner {
+    flex: 0 0 var(--iq-panel-min-height) !important;
+    height: var(--iq-panel-min-height) !important;
+    max-height: var(--iq-panel-min-height) !important;
+    min-height: var(--iq-panel-min-height) !important;
+    grid-template-rows: 1fr auto 1fr !important;
+  }
+
+  /* Orbit wrap was 97px tall vs 52px Browse — match button box for row-3 parity */
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-run-quote-wrap {
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+    margin-top: 66px 0 0 !important;
+    transform: translateY(-23px) !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+    transform: translateY(-15px) !important;
+  }
+
+  .iq-total-wrapper:has(> #crew20:not([hidden])) {
+    grid-template-rows: var(--iq-spec-desktop-fr-band) auto var(--iq-spec-desktop-fr-band) auto auto minmax(0, 1fr) !important;
+  }
+
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-total-label {
+    grid-row: 1 !important;
+  }
+
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > #iq-total-price,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-total-price {
+    grid-row: 2 !important;
+  }
+
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-run-quote-wrap,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-orbit-wrap:has(#iq-run-quote),
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .ltf-btn-gradient-wrap:has(#iq-run-quote),
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > #iq-run-quote,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-run-quote {
+    grid-row: 3 !important;
+  }
+
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-artwork-info-link {
+    grid-row: 4 !important;
+    align-self: center !important;
+    justify-self: center !important;
+    width: 100%;
+    text-align: center !important;
+  }
+
+  .iq-total-wrapper > #crew20:not([hidden]) {
+    grid-row: 5 !important;
+    align-self: center !important;
+    justify-self: center !important;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 8px 0 0 !important;
+  }
+
+  /* Webflow-placed promo row (sibling) until sandbox script relocates into card */
+  .iq-receipt-right > #crew20 {
+    display: none !important;
+  }
+
+  .iq-total-wrapper > #crew20:not([hidden]) {
+    display: flex !important;
+  }
 }
