@@ -3305,30 +3305,59 @@ body.iq-sheet-open {
     border-radius: 14px !important;
   }
 
+  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
+    container-type: size;
+    container-name: iq-upload-inner;
+  }
+
   #iq-form-artwork-drop .iq-form-upload-ants-rect {
     stroke-width: 3px;
     rx: 13px;
     ry: 13px;
   }
 
+  /* Right panel only: mirror .iq-total-wrapper 1fr / auto / 1fr (no viewport top:* drift) */
+  .ltf-spec-calc-art .iq-run-quote-wrap.ltf-calc-narrow-a,
+  .ltf-spec-calc-art .iq-run-quote-wrap {
+    width: calc(100% - 100px) !important;
+    max-width: none !important;
+    margin-inline: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .ltf-spec-calc-art #iq-run-quote,
+  .ltf-spec-calc-art .iq-run-quote {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-inner {
-    display: block !important;
+    display: grid !important;
+    grid-template-rows: 1fr auto 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
     position: relative !important;
     height: 100% !important;
     min-height: 100% !important;
+    width: 100% !important;
     padding: 0 !important;
-    gap: 0 !important;
+    box-sizing: border-box !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-    position: absolute !important;
-    left: 50% !important;
-    top: 2.3px;
-    transform: translateX(-50%) !important;
-    width: calc(100% - 8px) !important;
+    grid-row: 1 !important;
+    grid-column: 1 !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
-    grid-row: auto !important;
+    justify-self: center !important;
+    align-self: start !important;
     white-space: normal !important;
     font-size: 24px !important;
     font-weight: 900 !important;
@@ -3339,35 +3368,47 @@ body.iq-sheet-open {
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    position: absolute !important;
-    left: 50% !important;
-    top: 60px;
-    transform: translateX(-50%) !important;
-    width: calc(100% - 8px) !important;
+    grid-row: 2 !important;
+    grid-column: 1 !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
     max-width: none !important;
-    margin: 0 !important;
-    grid-row: auto !important;
+    margin: 10px 0 0 !important;
+    justify-self: center !important;
+    align-self: center !important;
     white-space: normal !important;
     text-align: center !important;
+    line-height: 1.2 !important;
+    font-size: 13px !important;
+    letter-spacing: -0.01em !important;
+    min-height: 59px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    position: absolute !important;
-    left: 50% !important;
-    top: 127.3px;
-    transform: translateX(-50%) !important;
-    grid-row: auto !important;
-    margin: 0 !important;
-    width: 250px !important;
-    max-width: calc(100% - 56px) !important;
+    grid-row: 3 !important;
+    grid-column: 1 !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: calc(100% - 100px) !important;
+    max-width: none !important;
+    min-width: 0 !important;
     height: 52px !important;
     min-height: 52px !important;
     max-height: 52px !important;
     padding: 14px 28px !important;
     border-radius: 6px !important;
     box-sizing: border-box !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     font-size: 16px !important;
@@ -3375,48 +3416,43 @@ body.iq-sheet-open {
     letter-spacing: 0.64px !important;
     text-transform: uppercase !important;
     line-height: 1.1 !important;
+    align-self: start !important;
+    margin: -1px auto 0 !important;
   }
 
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn:active,
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn:active {
-    transform: translateX(-50%) scale(0.97) !important;
+    transform: scale(0.97) !important;
   }
-}
 
-@media screen and (min-width: 1024px) {
   #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-    top: 12.2px;
+    margin-top: calc(100cqh * 0.507 - 95.5px) !important;
   }
 
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    top: 70px;
+  @container iq-upload-inner (max-height: 252px) {
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
+      margin-top: calc(100cqh * 0.969 - 213.05px) !important;
+    }
+
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+      margin-top: calc(-1px + (100cqh - 288px) * 0.19) !important;
+    }
   }
 
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    top: 137.1px;
-    width: 266px !important;
+  @container iq-upload-inner (max-height: 224px) {
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
+      margin-top: calc(-1px + (100cqh - 288px) * 0.235) !important;
+    }
   }
+
 }
 
 @media screen and (min-width: 1440px) {
   #iq-artwork-row .iq-artwork-panel,
   .iq-artwork-row .iq-artwork-panel {
     transform: translateY(12px);
-  }
-
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-title {
-    top: 52.6px;
-  }
-
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-hint {
-    top: 110px;
-  }
-
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
-  #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-    top: 177.5px;
-    width: 360px !important;
   }
 }
 
@@ -3515,11 +3551,11 @@ body.iq-sheet-open {
     top: auto !important;
     grid-row: 1 !important;
     grid-column: 1 !important;
-    align-self: end !important;
+    align-self: start !important;
     justify-self: center !important;
     width: 100% !important;
-    margin: 66px 0 0 !important;
-    transform: translateY(-23px) !important;
+    margin: 50.52px 0 0 !important;
+    transform: none !important;
   }
 
   .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
@@ -3531,8 +3567,8 @@ body.iq-sheet-open {
     grid-column: 1 !important;
     align-self: center !important;
     margin: 10px 0 0 !important;
-    transform: translateY(-15px) !important;
-    min-height: 55px !important;
+    transform: none !important;
+    min-height: 59px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -3551,15 +3587,9 @@ body.iq-sheet-open {
     justify-self: center !important;
     width: calc(100% - 100px) !important;
     max-width: none !important;
-    margin: 0 auto !important;
-    transform: translateY(-64px) !important;
-  }
-
-  /* Orbit wrap was 97px tall vs 52px Browse — match button box for row-3 parity */
-  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-run-quote-wrap {
-    height: 52px !important;
-    min-height: 52px !important;
-    max-height: 52px !important;
+    align-self: start !important;
+    margin: -66px auto 0 !important;
+    transform: none !important;
   }
 
   .iq-total-wrapper:has(> #crew20:not([hidden])) {

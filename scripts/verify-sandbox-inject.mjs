@@ -70,28 +70,59 @@ async function measureLayout(page) {
     var calc = document.querySelector('#iq-run-quote');
     var browse = document.querySelector('label.iq-form-upload-btn, .iq-form-upload-btn');
     var price = document.querySelector('#iq-total-price');
-    if (!calcArt || !left || !right || !label || !title || !calc || !browse) {
+    var hint = document.querySelector('.iq-form-upload-hint');
+    if (!calcArt || !left || !right || !label || !title || !calc || !browse || !hint) {
       return { error: 'missing nodes' };
     }
     var lr = left.getBoundingClientRect();
     var rr = right.getBoundingClientRect();
+    var titleTop = num(title.getBoundingClientRect().top);
+    var hintTop = num(hint.getBoundingClientRect().top);
+    var browseTop = num(browse.getBoundingClientRect().top);
+    var calcTop = num(calc.getBoundingClientRect().top);
+    var labelTop = num(label.getBoundingClientRect().top);
+    var calcW = num(calc.getBoundingClientRect().width);
+    var browseW = num(browse.getBoundingClientRect().width);
     return {
       rowTop: num(calcArt.getBoundingClientRect().top),
       prevGap: prev ? num(calcArt.getBoundingClientRect().top - prev.getBoundingClientRect().bottom) : null,
       leftH: left.offsetHeight,
       rightH: right.offsetHeight,
-      calcTop: num(calc.getBoundingClientRect().top),
-      labelTop: num(label.getBoundingClientRect().top),
+      calcTop,
+      labelTop,
       priceTop: num(price.getBoundingClientRect().top),
       boxTopDelta: num(rr.top - lr.top),
       boxBottomDelta: num(rr.bottom - lr.bottom),
-      labelTitleDelta: num(title.getBoundingClientRect().top - label.getBoundingClientRect().top),
-      btnTopDelta: num(browse.getBoundingClientRect().top - calc.getBoundingClientRect().top),
-      btnWidthDelta: num(browse.getBoundingClientRect().width - calc.getBoundingClientRect().width),
+      titleTop,
+      hintTop,
+      browseTop,
+      titleVsLabel: num(titleTop - labelTop),
+      browseVsCalc: num(browseTop - calcTop),
+      browseW,
+      calcW,
+      browseVsCalcW: num(browseW - calcW),
+      labelTitleDelta: num(titleTop - labelTop),
+      btnTopDelta: num(browseTop - calcTop),
+      btnWidthDelta: num(browseW - calcW),
       crewInsideLeft: !!left.querySelector('#crew20'),
       receiptSiblingCrew: !!document.querySelector('.iq-receipt-right > #crew20'),
     };
   });
+}
+
+function innerPanelTable(map, label) {
+  const rows = LIVE_WIDTHS.map(function (w) {
+    const m = map[w];
+    if (!m || m.error) return { w, error: m && m.error };
+    return {
+      w,
+      titleVsLabel: m.titleVsLabel,
+      hintTop: m.hintTop,
+      browseVsCalc: m.browseVsCalc,
+      browseVsCalcW: m.browseVsCalcW,
+    };
+  });
+  return { label, rows };
 }
 
 function assertTolerance(map, fields, prefix) {
@@ -255,13 +286,35 @@ for (const w of WIDTHS) {
   }
 }
 
+const INNER_ASSERT_FIELDS = [
+  'boxTopDelta',
+  'boxBottomDelta',
+  'labelTitleDelta',
+  'btnTopDelta',
+  'btnWidthDelta',
+];
+
+for (const w of LIVE_WIDTHS) {
+  const m = report.off[w];
+  if (!m || m.error) continue;
+  for (const field of INNER_ASSERT_FIELDS) {
+    const val = m[field];
+    if (val == null || Math.abs(val) > 1) {
+      report.fails.push({ key: 'off_' + w, field, val });
+    }
+  }
+}
+
 report.fails.push(
   ...assertTolerance(
     report.crew20,
-    ['boxTopDelta', 'boxBottomDelta', 'labelTitleDelta', 'btnTopDelta', 'btnWidthDelta'],
+    INNER_ASSERT_FIELDS,
     'crew20_',
   ),
 );
+
+report.innerPanelOff = innerPanelTable(report.off, 'no-code');
+report.innerPanelCrew20 = innerPanelTable(report.crew20, 'CREW20');
 
 for (const w of SHOT_WIDTHS) {
   await page.setViewportSize({ width: w, height: 900 });
@@ -277,6 +330,8 @@ console.log(
   JSON.stringify(
     {
       liveVsNewNoCode: report.liveVsNewNoCode,
+      innerPanelOff: report.innerPanelOff,
+      innerPanelCrew20: report.innerPanelCrew20,
       runtime: report.runtime,
       failCount: report.fails.length,
       fails: report.fails.slice(0, 24),
