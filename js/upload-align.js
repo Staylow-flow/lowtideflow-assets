@@ -3,7 +3,11 @@
    >=992: Browse top/width/height = Calculate; title top = Total label top;
           Accepted vertical center = OTD link center; all centered in the panel.
    <=991: Browse horizontal center/width = Calculate; title/hint untouched.
-   Never changes either box's height. Inline styles only, no translate. */
+   Never changes either box's height. Inline styles only, no translate.
+   v2: CREW20 (?code=) pins #crew20 to a px width; inside the grid that px width
+   kept column 1 at its load width when narrowing, so the price box stayed taller
+   than the upload box. Each run releases that width, lets the grid re-size, then
+   re-pins it to the price box width. */
 (function () {
   'use strict';
   var Q = function (s) { return document.querySelector(s); };
@@ -30,7 +34,12 @@
           hint = Q('#iq-form-upload-hint'), btn = Q('#iq-form-artwork-browse'),
           calc = Q('#iq-run-quote'), label = Q('.iq-total-label'), otd = Q('.iq-artwork-info-link');
       if (!box || !title || !hint || !btn || !calc || !label || !otd) return;
-      var bh = box.style.height, lh;
+      var c20 = Q('#crew20'), tw = Q('.iq-total-wrapper');
+      if (c20 && tw && !c20.hidden) {
+        c20.style.removeProperty('width');
+        var nw = tw.getBoundingClientRect().width;
+        if (nw) c20.style.width = nw + 'px';
+      }
       [title, hint, btn].forEach(function (e) { clr(e, KEYS); });
       var c = rect(calc); if (!c.width) return;
       if (DESK.matches) {
