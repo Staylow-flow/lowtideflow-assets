@@ -1,16 +1,13 @@
-/* LTF upload-align v1 (Oct 19 2026) - Live /spec-engine.
-   Aligns the upload panel content to the left price box:
-   >=992: Browse top/width/height = Calculate; title top = Total label top;
-          Accepted vertical center = OTD link center; all centered in the panel.
-   <=991: Browse horizontal center/width = Calculate; title/hint untouched.
-   Never changes either box's height. Inline styles only, no translate.
-   v2: CREW20 (?code=) pins #crew20 to a px width; inside the grid that px width
-   kept column 1 at its load width when narrowing, so the price box stayed taller
-   than the upload box. Each run releases that width, lets the grid re-size, then
-   re-pins it to the price box width.
-   v3: instant-quote-embed.css (head <link> @9a0e19d) forces the title to
-   font-weight 900 !important at >=992 in the idle state; inline 700 !important (v4: Nate wants 700; v3 was 500)
-   here overrides it on desktop only. v5: title 700 @ 88% at all widths, centered on #iq-total-price (desktop), price-offset mirrored (stacked) (<=991 untouched, stays 700). */
+/* LTF upload-align v7 (Oct 19 2026) - /spec-engine, footer-loaded. Inline styles only; idle state only
+   (queue/loading: all inline styles cleared, page layout untouched). Never changes either box's height.
+   >=992 (desktop, = v6): Browse top/width/height = Calculate; title 700 @ 88% of page size, centered on
+     #iq-total-price minus 10px; Accepted centered on Out the Door; all centered in the upload box.
+     Overrides instant-quote-embed.css (head <link> @9a0e19d) font-weight 900 !important.
+   <=991 (stacked, v7): upload box mirrors the Calc box. Title 700, uppercase, 2 balanced lines,
+     0.375 x price size (48 -> 18px), centered on the price's offset from its box top; Browse = Calculate
+     width/height/top offset/radius/type, centered in its own box; Accepted 0.75 x Out the Door size
+     (16 -> 12px), top on OTD's top offset. Absolute inside .iq-form-upload-inner (grid-area reset).
+   CREW20 (?code=): releases and re-pins #crew20's px width each run so the grid tracks resizes (v2). */
 (function () {
   'use strict';
   var Q = function (s) { return document.querySelector(s); };
@@ -65,21 +62,22 @@
       } else if (idle && price && Lw) {
         /* v6 stacked: mirror the Calc box. Title <-> price, Browse <-> Calculate, Accepted <-> Out the Door.
            Box-relative offsets copied from the Calc box; absolute inside .iq-form-upload-inner (no reflow). */
-        var b2 = rect(box), l2 = rect(Lw), cx2 = c.left + c.width / 2, /* Calculate's center = Live Browse centering */ pc = rect(price), ps = getComputedStyle(price),
+        var b2 = rect(box), l2 = rect(Lw), cx2 = b2.left + b2.width / 2, /* v7: center in its own box (Calculate width kept) */ pc = rect(price), ps = getComputedStyle(price),
             cs = getComputedStyle(calc), os = getComputedStyle(otd), o2 = rect(otd);
         [title, btn, hint].forEach(function (el) { set(el, 'position', 'absolute'); set(el, 'grid-row', 'auto'); set(el, 'grid-column', 'auto'); }); /* abs grid items would use their grid area as containing block */
         /* title: 2 balanced lines, bold, sized off the price */
         set(title, 'font-weight', '700'); set(title, 'text-transform', 'uppercase'); set(title, 'text-align', 'center');
         set(title, 'line-height', '1.05'); set(title, 'font-family', ps.fontFamily);
-        var tfs = Math.round(parseFloat(ps.fontSize) * 0.6 * 100) / 100;
+        var tfs = Math.round(parseFloat(ps.fontSize) * 0.375 * 100) / 100; /* v7: 0.375 x price (48px -> 18px) */
         set(title, 'font-size', tfs + 'px'); set(title, 'white-space', 'nowrap');
-        var one = rect(title).width, maxw = b2.width - 40;
-        if (one * 0.62 > maxw) { tfs = Math.floor(tfs * maxw / (one * 0.62) * 100) / 100; set(title, 'font-size', tfs + 'px'); one = rect(title).width; }
+        var tw0 = function () { set(title, 'width', 'max-content'); var r0 = document.createRange(); r0.selectNodeContents(title); return r0.getBoundingClientRect().width; }; /* text width, not box width */
+        var one = tw0(), maxw = b2.width - 40;
+        if (one * 0.62 > maxw) { tfs = Math.floor(tfs * maxw / (one * 0.62) * 100) / 100; set(title, 'font-size', tfs + 'px'); one = tw0(); }
         set(title, 'white-space', 'normal'); set(title, 'text-wrap', 'balance');
         var tw2 = Math.ceil(one * 0.62);
         set(btn, 'border-radius', cs.borderRadius); set(btn, 'font-size', cs.fontSize);
         set(btn, 'font-weight', cs.fontWeight); set(btn, 'letter-spacing', cs.letterSpacing);
-        set(hint, 'font-size', os.fontSize); set(hint, 'text-align', 'center');
+        set(hint, 'font-size', (Math.round(parseFloat(os.fontSize) * 0.75 * 100) / 100) + 'px'); /* v7: 0.75 (16 -> 12px) */ set(hint, 'text-align', 'center');
         for (var pass = 0; pass < 2; pass++) {
           b2 = rect(box);
           set(title, 'width', tw2 + 'px'); set(title, 'max-width', 'none');
