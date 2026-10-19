@@ -47,6 +47,20 @@ const STICK_FRICTION = 0.94;
 const STICK_SNAP = 0.12;
 const STICK_SHARE = 0.5;
 
+/* Scroll-in interaction lock (desktop only). Owner “x 50% / y 100%” means hole
+   centered on the host and at the TOP of the magnifier travel range — not CSS
+   top:100% (that would be the bottom). Lens uses translate3d(lx, ly): smaller ly
+   is higher; travel top = lensBounds().minY. */
+const SCROLL_LOCK_HOLE_NX = 0.5;
+const SCROLL_LOCK_TRAVEL_TY = 0;
+const UNLOCK_GLIDE_MS = 400;
+const UNLOCK_GLIDE_SMOOTH = SMOOTH;
+const NAV_H = 52;
+const SCROLL_UNLOCK_VISIBLE = 0.6;
+const SCROLL_RELOCK_VISIBLE = 0.4;
+/** Non-hover: ease lens toward visible slice of garment (viewport minus nav). */
+const VISIBLE_FOLLOW_SMOOTH = SMOOTH;
+
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
 }
@@ -133,6 +147,9 @@ function bind(host) {
   let targetY = 0;
   let lastLx = 0;
   let lastLy = 0;
+  /** Host-space Y locked after unhover; X still centers on the garment. */
+  let anchorLy = null;
+  let postHoverIdle = false;
   let returning = false;
   let hangNx = REST_X;
   let hangNy = REST_Y;
@@ -141,6 +158,14 @@ function bind(host) {
   let viewStickY = 0;
   let stickVel = 0;
   let started = false;
+  let scrollLockWasActive = false;
+  let scrollLockActive = true;
+  let interactionReady = false;
+  let glidingUnlock = false;
+  let frameHostRect = null;
+  let glideStartedAt = 0;
+  let lastPtrX = null;
+  let lastPtrY = null;
   const objectUrls = [];
   const xDir = Math.random() < 0.5 ? -1 : 1;
 
@@ -269,6 +294,82 @@ function bind(host) {
     };
   }
 
+  function scrollLockLensPosition() {
+    const b = lensBounds();
+    const w = host.clientWidth || 0;
+    const lx = w * SCROLL_LOCK_HOLE_NX - holeCx;
+    const ly = b.minY + (b.maxY - b.minY) * SCROLL_LOCK_TRAVEL_TY;
+    return clampLens(lx, ly);
+  }
+
+  function hostVisibleFraction(r, vh = window.innerHeight || 1) {
+    if (!r || r.height <= 0) return 0;
+    const viewTop = NAV_H;
+    const viewBottom = vh;
+    const visTop = Math.max(r.top, viewTop);
+    const visBot = Math.min(r.bottom, viewBottom);
+    return Math.max(0, visBot - visTop) / r.height;
+  }
+
+  function updateScrollLockState(r) {
+    if (isMobile()) {
+      scrollLockActive = false;
+      return;
+    }
+    const frac = hostVisibleFraction(r);
+    if (scrollLockActive) {
+      if (frac >= SCROLL_UNLOCK_VISIBLE) scrollLockActive = false;
+    } else if (frac < SCROLL_RELOCK_VISIBLE) {
+      scrollLockActive = true;
+    }
+  }
+
+  function applyScrollLock() {
+    viewStickY = 0;
+    stickVel = 0;
+    returning = false;
+    glidingUnlock = false;
+    interactionReady = false;
+    const at = scrollLockLensPosition();
+    applyLens(at.x, at.y);
+  }
+
+  function pointerLensPosition(clientX, clientY, r = frameHostRect) {
+    const rect = r || host.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    return clampLens(x - holeCx, y - holeCy);
+  }
+
+  function beginUnlockTransition() {
+    viewStickY = 0;
+    stickVel = 0;
+    returning = false;
+    if (hovering && lastPtrX != null && lastPtrY != null) {
+      glidingUnlock = true;
+      glideStartedAt = performance.now();
+      interactionReady = false;
+      return;
+    }
+    interactionReady = false;
+  }
+
+  function tickUnlockGlide(now) {
+    const target = pointerLensPosition(lastPtrX, lastPtrY, frameHostRect);
+    const elapsed = now - glideStartedAt;
+    const blend = UNLOCK_GLIDE_SMOOTH * (elapsed < UNLOCK_GLIDE_MS ? 1.35 : 1);
+    const dx = (target.x - lastLx) * blend;
+    const dy = (target.y - lastLy) * blend;
+    const dist = Math.hypot(target.x - lastLx, target.y - lastLy);
+    if (dist < 0.6 || elapsed >= UNLOCK_GLIDE_MS) {
+      glidingUnlock = false;
+      interactionReady = true;
+      applyLens(target.x, target.y);
+      return;
+    }
+    applyLens(lastLx + dx, lastLy + dy);
+  }
+
   function placeStart() {
     const b = lensBounds();
     if (isMobile()) {
@@ -278,16 +379,61 @@ function bind(host) {
       hangNy = (lastLy + holeCy) / (host.clientHeight || 1);
       return;
     }
-    const x = Math.max(0, b.minX);
-    const y = Math.max(0, b.minY) + Math.max(0, host.clientHeight - lensH) * 0.16;
-    lastLx = x;
-    lastLy = y;
-    hangNx = (x + holeCx) / (host.clientWidth || 1);
-    hangNy = (y + holeCy) / (host.clientHeight || 1);
+    const at = scrollLockLensPosition();
+    lastLx = at.x;
+    lastLy = at.y;
+    hangNx = (at.x + holeCx) / (host.clientWidth || 1);
+    hangNy = (at.y + holeCy) / (host.clientHeight || 1);
+  }
+
+  function visibleSliceCenterHostY(r, vh = window.innerHeight || 1) {
+    if (!r || r.height <= 0) return (host.clientHeight || 0) * REST_Y;
+    const viewTop = NAV_H;
+    const viewBottom = vh;
+    const visTop = Math.max(r.top, viewTop);
+    const visBot = Math.min(r.bottom, viewBottom);
+    if (visBot <= visTop) return (host.clientHeight || 0) * REST_Y;
+    return (visTop + visBot) * 0.5 - r.top;
+  }
+
+  function restTarget(r = frameHostRect) {
+    const rect = r || host.getBoundingClientRect();
+    const cy = visibleSliceCenterHostY(rect);
+    return clampLens(rect.width * 0.5 - holeCx, cy - holeCy);
   }
 
   function rest() {
-    return clampLens(host.clientWidth * 0.5 - holeCx, lastLy);
+    return restTarget();
+  }
+
+  /** Clamp a host-space lens Y so the whole lens stays in the viewport (below nav, above fold). */
+  function visibleClampY(ly, rect) {
+    const vh = window.innerHeight || 1;
+    const pad = 8;
+    const visTop = NAV_H - rect.top;
+    const visBot = vh - rect.top;
+    const lo = visTop + pad;
+    const hi = visBot - lensH - pad;
+    if (hi < lo) return ly;
+    return Math.min(Math.max(ly, lo), hi);
+  }
+
+  /** X centred, Y = release anchor clamped to the viewport band (below nav, above fold). */
+  function visibleAnchoredLensTarget(r = frameHostRect) {
+    const rect = r || host.getBoundingClientRect();
+    return clampLens(rect.width * 0.5 - holeCx, visibleClampY(anchorLy ?? lastLy, rect));
+  }
+
+  function glideTowardVisibleRest(r = frameHostRect, blend = VISIBLE_FOLLOW_SMOOTH) {
+    viewStickY = 0;
+    stickVel = 0;
+    const rect = r || host.getBoundingClientRect();
+    const clamped = (postHoverIdle && anchorLy != null)
+      ? clampLens(rect.width * 0.5 - holeCx, visibleClampY(anchorLy, rect))
+      : restTarget(rect);
+    const dx = (clamped.x - lastLx) * blend;
+    const dy = (clamped.y - lastLy) * blend;
+    applyLens(lastLx + dx, lastLy + dy);
   }
 
   function paint() {
@@ -307,11 +453,16 @@ function bind(host) {
     paint();
   }
 
-  function moveToPointer(clientX, clientY) {
-    const r = host.getBoundingClientRect();
-    const x = clientX - r.left;
-    const y = clientY - r.top;
-    applyLens(x - holeCx, y - holeCy);
+  function moveToPointer(clientX, clientY, r = frameHostRect) {
+    const at = pointerLensPosition(clientX, clientY, r);
+    applyLens(at.x, at.y);
+  }
+
+  function glidePointerToward(clientX, clientY, r, blend = SMOOTH) {
+    const target = pointerLensPosition(clientX, clientY, r);
+    const dx = (target.x - lastLx) * blend;
+    const dy = (target.y - lastLy) * blend;
+    applyLens(lastLx + dx, lastLy + dy);
   }
 
   function parkIce() {
@@ -357,21 +508,28 @@ function bind(host) {
       returning = false;
       viewStickY = 0;
       stickVel = 0;
+      scrollLockActive = false;
+      scrollLockWasActive = false;
+      glidingUnlock = false;
+      interactionReady = true;
       host.classList.add('is-hover');
       loadAssets();
       sizeLens();
       lens.style.willChange = 'transform';
       print.style.willChange = 'transform';
-      moveToPointer(e.clientX, e.clientY);
+      lastPtrX = e.clientX;
+      lastPtrY = e.clientY;
     });
 
     host.addEventListener('pointermove', (e) => {
-      if (!hovering) return;
-      moveToPointer(e.clientX, e.clientY);
+      lastPtrX = e.clientX;
+      lastPtrY = e.clientY;
     });
 
     host.addEventListener('pointerleave', () => {
       hovering = false;
+      anchorLy = lastLy;
+      postHoverIdle = true;
       returning = true;
       host.classList.remove('is-hover');
     });
@@ -387,8 +545,16 @@ function bind(host) {
     }
     if (!assetsOn) return;
     sizeLens();
+    frameHostRect = host.getBoundingClientRect();
     if (mobileMode) applyScrollPan();
-    else if (!hovering && !returning) parkIce();
+    else if (hovering && lastPtrX != null && lastPtrY != null) {
+      moveToPointer(lastPtrX, lastPtrY, frameHostRect);
+    } else if (!hovering && !returning) {
+      if (postHoverIdle) {
+        const at = visibleAnchoredLensTarget(frameHostRect);
+        applyLens(at.x, at.y);
+      } else parkIce();
+    }
   }, { passive: true });
 
   /* Kick the fetch as soon as the module binds — do not wait for hover. */
@@ -403,6 +569,7 @@ function bind(host) {
         seen = true;
         loadAssets();
         sizeLens();
+        frameHostRect = host.getBoundingClientRect();
         if (isMobile()) applyScrollPan();
         else parkIce();
       },
@@ -419,37 +586,41 @@ function bind(host) {
       return;
     }
 
-    if (hovering) return;
+    frameHostRect = host.getBoundingClientRect();
 
-    tickStick();
+    if (hovering && lastPtrX != null && lastPtrY != null) {
+      scrollLockWasActive = false;
+      if (glidingUnlock) {
+        tickUnlockGlide(now);
+        return;
+      }
+      glidePointerToward(lastPtrX, lastPtrY, frameHostRect);
+      interactionReady = true;
+      return;
+    }
 
     if (returning) {
-      const at = rest();
+      const rect = frameHostRect || host.getBoundingClientRect();
+      const at = visibleAnchoredLensTarget(rect);
       const dx = at.x - lastLx;
-      const dy = at.y - lastLy;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 0.4) {
+      if (Math.abs(dx) < 0.4) {
         returning = false;
         iceX = 0;
         iceY = 0;
         targetX = 0;
         targetY = 0;
-        parkIce();
+        applyLens(at.x, at.y);
         return;
       }
       let mx = dx * RETURN_EASE;
-      let my = dy * RETURN_EASE;
-      const step = Math.hypot(mx, my);
-      if (step > RETURN_MAX) {
-        mx *= RETURN_MAX / step;
-        my *= RETURN_MAX / step;
-      }
-      applyLens(lastLx + mx, lastLy + my);
+      if (Math.abs(mx) > RETURN_MAX) mx = RETURN_MAX * Math.sign(mx);
+      viewStickY = 0;
+      stickVel = 0;
+      applyLens(lastLx + mx, lastLy + (at.y - lastLy) * VISIBLE_FOLLOW_SMOOTH);
       return;
     }
 
-    if (Math.abs(stickVel) < IDLE && Math.abs(scroll.deltaY) < IDLE) return;
-    paint();
+    glideTowardVisibleRest(frameHostRect);
   }, {
     element: host,
     onEnter() {

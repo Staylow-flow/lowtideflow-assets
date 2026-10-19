@@ -563,32 +563,57 @@ const GAS_FOLLOW_DELAY_MS  = 300;              // gas lags rock by 0.3 s
 const GAS_COAST_TAU_MS     = 3000;             // 2–4 s ease-out coast (midpoint)
 const ROCK_SCROLL_COAST    = 1.30;             // +30% post-scroll spin momentum
 const ROCK_SPIN_DECAY      = 0.9984;             // friction — coast ~2 s, no snap-back
-const SCROLL_IMPULSE_GAIN  = 0.135;              // ×0.1 from prior tuning
-const SCROLL_VEL_SCALE     = 0.0055;
+const SCROLL_IMPULSE_GAIN  = 0.27;               // Live @4749e8b
+const SCROLL_VEL_SCALE     = 0.011;              // Live @4749e8b
 const ROCK_SCALE_BASE      = 12.936 * 1.25 * 1.15;  /* +25% base, +15% hero tune */
+const ROCK_FACE_YAW        = 0;
+const ROCK_OPEN_PITCH      = Math.PI / 2;
 const CAMERA_Z             = 24;
 const CAMERA_FOV           = 45;
+const INTRO_ROLL_MS        = 2000;
+const INTRO_ROLL_PEAK      = 0.62;
+/** Snail-paced forward roll on X (one full turn per period). Tune between 60_000–90_000 ms. */
+const AUTO_FORWARD_ROLL_PERIOD_MS = 75000;
+const AUTO_FORWARD_ROLL_RAD_PER_MS = (Math.PI * 2) / AUTO_FORWARD_ROLL_PERIOD_MS;
+/** Cross-axis idle wobble ≈ 7.5% of primary (X) pitch cap — smooth sin drift, no jitter. */
+const CROSS_AXIS_IDLE_RATIO = 0.075;
+/** Scale cross-axis wobble inputs so drift stays inside the ~±1.1° window (cap = safety only). */
+const CROSS_WOBBLE_INPUT_SCALE = CROSS_AXIS_IDLE_RATIO;
 
 /**
- * Rock motion baseline — locked fallback (Jul 14 2026, pre-hover restore).
- * Restore these values if a motion tweak overshoots; idle amps below are +10%.
+ * Rock motion — Live @4749e8b idle float (hard caps) + one-way scroll pitch roll.
  */
 const ROCK_MOTION_BASELINE = Object.freeze({
-  idleYawAmp1:     0.07,
-  idleYawAmp2:     0.03,
-  idleNodAmp:      0.025,
-  idleYawLerp:     0.036,
-  idleNodLerp:     0.030,
+  idleYawAmp1:     0.38,
+  idleYawAmp2:     0.22,
+  idleYawAmp3:     0.14,
+  idleNodAmp:      0.22,
+  idleNodAmp2:     0.112,
+  idlePitchAmp:    0.48,
+  idlePitchAmp2:   0.28,
+  idleYawLerp:     0.022,
+  idleNodLerp:     0.020,
   mouseLerp:       0.028,
-  maxMouseYawDeg:  15,
-  maxMouseRollDeg: 8,
+  maxYawDeg:       10,
+  maxPitchDeg:     15,
+  maxRollDeg:      8,
 });
 
-const MAX_MOUSE_YAW  = (ROCK_MOTION_BASELINE.maxMouseYawDeg * 0.7 * Math.PI) / 180;
-const MAX_MOUSE_ROLL = (ROCK_MOTION_BASELINE.maxMouseRollDeg * 2.0 * Math.PI) / 180;
-const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1 * 1.1;
-const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2 * 1.1;
-const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp  * 1.1;
+const MAX_PITCH = (ROCK_MOTION_BASELINE.maxPitchDeg * Math.PI) / 180;
+const MAX_CROSS = MAX_PITCH * CROSS_AXIS_IDLE_RATIO;
+const IDLE_YAW_AMP1  = ROCK_MOTION_BASELINE.idleYawAmp1;
+const IDLE_YAW_AMP2  = ROCK_MOTION_BASELINE.idleYawAmp2;
+const IDLE_YAW_AMP3  = ROCK_MOTION_BASELINE.idleYawAmp3;
+const IDLE_NOD_AMP   = ROCK_MOTION_BASELINE.idleNodAmp;
+const IDLE_NOD_AMP2  = ROCK_MOTION_BASELINE.idleNodAmp2;
+const IDLE_PITCH_AMP = ROCK_MOTION_BASELINE.idlePitchAmp;
+const IDLE_PITCH_AMP2 = ROCK_MOTION_BASELINE.idlePitchAmp2;
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 /** Tighter mobile layout — nebula/rock bleed ≤ ~15% past viewport edges */
 const GAS_MOBILE_OVERRIDES = Object.freeze({
@@ -606,6 +631,8 @@ const GAS_MOBILE_OVERRIDES = Object.freeze({
 
 const MOBILE_LAYOUT_MAX_W = 991;
 const MOBILE_CAMERA_Z     = 27;
+/** Live @4749e8b middle-layout anchor uses this camera distance. */
+const MIDDLE_LAYOUT_CAMERA_Z = 36;
 /** Retina mobile DPR cap — sharper rock without full 2×+ fill cost */
 const MOBILE_RENDER_DPR   = 1.5;
 const MOBILE_TEX_ANISO    = 8;
@@ -614,12 +641,130 @@ function isMobileLayout(w = typeof window !== 'undefined' ? window.innerWidth : 
   return w <= MOBILE_LAYOUT_MAX_W;
 }
 
+/**
+ * Tablet 768–991 + phone landscape — same band as MODE B hero CSS.
+ */
+function isHeroMiddleLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  if (w >= 992) return false;
+  if (w <= 767) {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(orientation: landscape)').matches;
+  }
+  return w <= MOBILE_LAYOUT_MAX_W;
+}
+
+/** Middle band or desktop — not phone portrait (<768 width). */
+function isHeroH1RockAnchorLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  if (w >= 992) return true;
+  if (w < 768) return false;
+  return isHeroMiddleLayout(w);
+}
+
+const MIDDLE_ROCK_H1_WIDTH_MULT = 1.375;
+const MIDDLE_ROCK_SCALE_MIN = 0.42;
+const MIDDLE_ROCK_SCALE_MAX = 1.35;
+const MIDDLE_ROCK_SCALE_BOOST = 1.25;
+const MIDDLE_CANVAS_ASPECT = 72 / 100;
+/**
+ * Live @4749e8b mobile GLB scale = ROCK_SCALE_BASE×(1.30×0.75)×0.82 vs this file's
+ * ROCK_SCALE_BASE. Middle group scale must include this so on-screen rock matches Live.
+ */
+const MIDDLE_ROCK_GROUP_PARITY = 1.30 * 0.75 * 0.82;
+/** Desktop ≥992: constant on-screen rock size (px), max radius @992×900 on @d561ffc × 1.25. */
+const DESKTOP_ROCK_TARGET_SCREEN_RADIUS_PX = 407.5 * 1.25;
+/** Phone portrait <=479 (Webflow "tiny") only: rockGroup scale vs the B22 dev size (B23: 25% smaller). */
+const PHONE_PORTRAIT_ROCK_SCALE = 0.75;
+/**
+ * Nebula gas alpha multiplier on phone portrait (B23: 50% for copy legibility).
+ * Same mechanism as Live rock-scene.js @4749e8b MOBILE_GAS_ALPHA_MULT (0.72, all <=991).
+ */
+const PHONE_PORTRAIT_GAS_ALPHA_MULT = 0.5;
+/** Tablet 768-991 + phone landscape: 1 = unchanged (Live @4749e8b uses 0.72 here). */
+const MIDDLE_GAS_ALPHA_MULT = 1.0;
+
+/** Phone portrait <=479 px (Webflow "tiny"); 480-767 portrait + all landscape/tablet/desktop unchanged. */
+function isPhonePortraitRockLayout(w = typeof window !== 'undefined' ? window.innerWidth : 1200) {
+  return w <= 479 && !isHeroMiddleLayout(w);
+}
+
+function middleLayoutRefHeight(viewportW) {
+  const w = Math.max(viewportW, 100);
+  return Math.max(w * MIDDLE_CANVAS_ASPECT, 280);
+}
+
+/** Union of rendered text line boxes — ignores full-width block wrapper width. */
+function measureH1InkBounds(h1El) {
+  if (!h1El || typeof document === 'undefined') return null;
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(h1El);
+    const rects = range.getClientRects();
+    if (!rects.length) return null;
+
+    let left = Infinity;
+    let right = -Infinity;
+    let top = Infinity;
+    let bottom = -Infinity;
+    let maxLineW = 0;
+    for (let i = 0; i < rects.length; i++) {
+      const r = rects[i];
+      if (r.width < 0.5 || r.height < 0.5) continue;
+      left = Math.min(left, r.left);
+      right = Math.max(right, r.right);
+      top = Math.min(top, r.top);
+      bottom = Math.max(bottom, r.bottom);
+      maxLineW = Math.max(maxLineW, r.width);
+    }
+    if (left === Infinity) return null;
+    return {
+      left,
+      top,
+      right,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+      maxLineWidth: maxLineW,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Live @4749e8b middle anchor uses `.ltf-hero-headline` bounds. When Designer
+ * gives the headline a full-width box (V2 sandbox), size/position from ink metrics.
+ */
+function middleRockAnchorMetrics(headline, h1El) {
+  const boxRect = headline.getBoundingClientRect();
+  const refWidth = Math.max(boxRect.width, 120);
+  const ink = measureH1InkBounds(h1El);
+  if (!ink || ink.maxLineWidth < 8) {
+    return { anchorRect: boxRect, refWidth };
+  }
+
+  const boxMuchWider = boxRect.width > ink.maxLineWidth * 1.12;
+  if (!boxMuchWider) {
+    return { anchorRect: boxRect, refWidth };
+  }
+
+  const anchorRect = {
+    left: ink.left,
+    top: boxRect.top,
+    right: ink.right,
+    bottom: boxRect.bottom,
+    width: ink.width,
+    height: boxRect.bottom - boxRect.top,
+  };
+  return { anchorRect, refWidth };
+}
+
 function activeGasBounds(viewportW) {
   if (!isMobileLayout(viewportW)) return GAS_LOCKED_BOUNDS;
   return { ...GAS_LOCKED_BOUNDS, ...GAS_MOBILE_OVERRIDES };
 }
 
 function mobileCameraZ(viewportW) {
+  if (isHeroMiddleLayout(viewportW)) return MIDDLE_LAYOUT_CAMERA_Z;
   return isMobileLayout(viewportW) ? MOBILE_CAMERA_Z : CAMERA_Z;
 }
 
@@ -698,10 +843,17 @@ function frontOpacity() {
   return Number.isFinite(n) ? clamp(n, 0, 1) : FRONT_FG_OPACITY;
 }
 
-function rockLiftWorld(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx) {
+function rockLiftWorld(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx, camZ = CAMERA_Z) {
   const fovRad   = (CAMERA_FOV * Math.PI) / 180;
-  const visibleH = 2 * CAMERA_Z * Math.tan(fovRad / 2);
+  const visibleH = 2 * camZ * Math.tan(fovRad / 2);
   return (px / viewportH) * visibleH;
+}
+
+function visibleWorldSize(viewportW, viewportH, camZ = CAMERA_Z) {
+  const fovRad = (CAMERA_FOV * Math.PI) / 180;
+  const visibleH = 2 * camZ * Math.tan(fovRad / 2);
+  const visibleW = visibleH * (viewportW / Math.max(viewportH, 1));
+  return { visibleW, visibleH };
 }
 
 function rockLiftUV(viewportH, px = GAS_LOCKED_BOUNDS.rockLiftPx) {
@@ -896,8 +1048,11 @@ class RockScene {
 
     this.running          = false;
     this.raf              = 0;
-    this.rockPitchAccum   = 0;
     this.scrollPitchOffset = 0;
+    this.autoForwardRoll     = 0;
+    this._introPending     = false;
+    this._introStartPerf   = null;
+    this._introDone        = true;
     this.scrollPitchVelocity = 0;
     this._lastScrollProgress  = 0;
     this.hScrollYawTarget  = 0;
@@ -909,6 +1064,8 @@ class RockScene {
     this._prevPitch         = 0;
     this._prevDelayedPitch  = 0;
     this.rockLiftPx         = GAS_LOCKED_BOUNDS.rockLiftPx;
+    this._h1AnchorActive    = false;
+    this._h1SyncRaf         = 0;
 
     this._initRenderer();
     this._initScenes();
@@ -989,9 +1146,151 @@ class RockScene {
   }
 
   _applyRockLift() {
+    if (this.rockGroup && this._h1AnchorActive) return;
     if (this.rockGroup) {
-      this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx);
+      const camZ = this.camera ? this.camera.position.z : CAMERA_Z;
+      this.rockGroup.position.y = rockLiftWorld(this.h, this.rockLiftPx, camZ);
     }
+  }
+
+  _rockScreenRadiusPx() {
+    if (!this.rockGroup || !this.camera || !this.renderer) return 0;
+    this.rockGroup.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(this.rockGroup);
+    if (box.isEmpty()) return 0;
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    if (!Number.isFinite(sphere.radius) || sphere.radius <= 0) return 0;
+    const canvas = this.renderer.domElement;
+    const rect = canvas.getBoundingClientRect();
+    const center = sphere.center.clone();
+    const edge = center.clone().add(new THREE.Vector3(sphere.radius, 0, 0));
+    const toScreen = (v) => {
+      const p = v.clone().project(this.camera);
+      if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return null;
+      return {
+        x: (p.x * 0.5 + 0.5) * rect.width + rect.left,
+        y: (-p.y * 0.5 + 0.5) * rect.height + rect.top,
+      };
+    };
+    const c = toScreen(center);
+    const e = toScreen(edge);
+    if (!c || !e) return 0;
+    const r = Math.hypot(e.x - c.x, e.y - c.y);
+    return Number.isFinite(r) ? r : 0;
+  }
+
+  _applyH1AnchorPosition(vw, anchorRect, layoutH) {
+    const canvasRect = this.container.getBoundingClientRect();
+    if (canvasRect.width < 2 || anchorRect.width < 2 || anchorRect.height < 2) return false;
+
+    const camZ = this.camera ? this.camera.position.z : mobileCameraZ(vw);
+    const { visibleW } = visibleWorldSize(this.w, layoutH, camZ);
+
+    const canvasCenterX = canvasRect.left + canvasRect.width * 0.5;
+    const h1CenterX = anchorRect.left + anchorRect.width * 0.5;
+    const pxOffsetX = h1CenterX - canvasCenterX;
+    this.rockGroup.position.x = (pxOffsetX / this.w) * visibleW;
+
+    const h1MidY = anchorRect.top + anchorRect.height * 0.5;
+    const canvasMidY = canvasRect.top + canvasRect.height * 0.5;
+    const pxLift = canvasMidY - h1MidY;
+    this.rockGroup.position.y = rockLiftWorld(layoutH, pxLift, camZ);
+    return true;
+  }
+
+  _desktopGroupScaleForScreenRadius(targetPx) {
+    const DESKTOP_SCALE_MIN = 0.22;
+    const DESKTOP_SCALE_MAX = 2.75;
+    const saved = this.rockGroup.scale.x;
+
+    this.rockGroup.scale.setScalar(1);
+    const rUnit = this._rockScreenRadiusPx();
+    if (rUnit < 4) {
+      this.rockGroup.scale.setScalar(
+        Number.isFinite(this._lastDesktopRockScale) ? this._lastDesktopRockScale : saved,
+      );
+      return this.rockGroup.scale.x;
+    }
+
+    let scale = clamp(targetPx / rUnit, DESKTOP_SCALE_MIN, DESKTOP_SCALE_MAX);
+    this.rockGroup.scale.setScalar(scale);
+    const rFit = this._rockScreenRadiusPx();
+    if (rFit >= 4) {
+      scale = clamp(scale * (targetPx / rFit), DESKTOP_SCALE_MIN, DESKTOP_SCALE_MAX);
+      this.rockGroup.scale.setScalar(scale);
+    }
+    this._lastDesktopRockScale = scale;
+    return scale;
+  }
+
+  _applyH1AnchoredRockTransform(vw, anchorRect, refW, layoutH, groupParity = 1) {
+    if (!this._applyH1AnchorPosition(vw, anchorRect, layoutH)) return false;
+
+    const widthRatio = (refW * MIDDLE_ROCK_H1_WIDTH_MULT) / Math.max(
+      this.container.getBoundingClientRect().width,
+      320,
+    );
+    const rockScale = clamp(
+      widthRatio * 0.92 * MIDDLE_ROCK_SCALE_BOOST,
+      MIDDLE_ROCK_SCALE_MIN,
+      MIDDLE_ROCK_SCALE_MAX,
+    );
+    this.rockGroup.scale.setScalar(rockScale * groupParity);
+    return true;
+  }
+
+  /** Live @4749e8b middle-layout rock anchor (tablet + phone landscape). */
+  _syncMiddleLayoutAnchoredRock(vw) {
+    const headline = document.querySelector('.ltf-hero-headline')
+      || document.querySelector('.ltf-hero .ltf-main-header')?.closest('.ltf-hero-headline');
+    if (!headline) return false;
+
+    const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
+    const { anchorRect, refWidth } = middleRockAnchorMetrics(headline, h1);
+    const layoutH = middleLayoutRefHeight(this.w);
+    return this._applyH1AnchoredRockTransform(
+      vw, anchorRect, refWidth, layoutH, MIDDLE_ROCK_GROUP_PARITY,
+    );
+  }
+
+  /** V2 desktop — H1 position anchor; fixed on-screen rock size (px). */
+  _syncDesktopH1AnchoredRock(vw) {
+    const headline = document.querySelector('.ltf-hero-headline');
+    if (!headline) return false;
+
+    const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header') || headline;
+    const h1Rect = h1.getBoundingClientRect();
+    if (!this._applyH1AnchorPosition(vw, h1Rect, this.h)) return false;
+    const scale = this._desktopGroupScaleForScreenRadius(DESKTOP_ROCK_TARGET_SCREEN_RADIUS_PX);
+    this.rockGroup.scale.setScalar(scale);
+    return true;
+  }
+
+  /**
+   * Pin boulder behind the live H1 using measured DOM geometry.
+   * Nebula gas center stays locked — only rock position/scale move.
+   */
+  _syncH1AnchoredRock(vw) {
+    this._h1AnchorActive = false;
+    if (!this.rockGroup || !this.container) return false;
+
+    let ok = false;
+    if (isHeroMiddleLayout(vw)) {
+      ok = this._syncMiddleLayoutAnchoredRock(vw);
+    } else if (vw >= 992) {
+      ok = this._syncDesktopH1AnchoredRock(vw);
+    }
+
+    if (ok) this._h1AnchorActive = true;
+    return ok;
+  }
+
+  _scheduleH1RockSync() {
+    if (this._h1SyncRaf) return;
+    this._h1SyncRaf = requestAnimationFrame(() => {
+      this._h1SyncRaf = 0;
+      this._syncLayoutProfile();
+    });
   }
 
   _applyGasUniforms(uni, b) {
@@ -1028,7 +1327,13 @@ class RockScene {
       this.camera.position.z = mobileCameraZ(vw);
     }
     this.rockLiftPx = mobile ? 150 : GAS_LOCKED_BOUNDS.rockLiftPx;
-    this._applyRockLift();
+    if (!this._syncH1AnchoredRock(vw)) {
+      if (this.rockGroup) {
+        this.rockGroup.position.x = 0;
+        this.rockGroup.scale.setScalar(isPhonePortraitRockLayout(vw) ? PHONE_PORTRAIT_ROCK_SCALE : 1);
+      }
+      this._applyRockLift();
+    }
   }
 
   /* ── Nebula background quad ─────────────────────────────────────────────── */
@@ -1178,12 +1483,16 @@ class RockScene {
 
         const box    = new THREE.Box3().setFromObject(model);
         const size   = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
 
         const longestDim = Math.max(size.x, size.y, size.z, 0.001);
         const scale = ROCK_SCALE_BASE / longestDim;
         model.scale.setScalar(scale);
-        model.position.copy(center.negate().multiplyScalar(scale));
+        model.rotation.set(0.05 + ROCK_OPEN_PITCH, -0.2 + ROCK_FACE_YAW, 0.03);
+        model.position.set(0, 0, 0);
+        model.updateMatrixWorld(true);
+
+        const spunCenter = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
+        model.position.copy(spunCenter).negate();
 
         const ROCK_X_CORRECT = -0.6;
         model.position.x += ROCK_X_CORRECT;
@@ -1194,9 +1503,14 @@ class RockScene {
           typeof window !== 'undefined' ? window.innerWidth : this.w,
         );
 
-        model.rotation.set(0.05, -0.2, 0.03);
         this.rockGroup.add(model);
         this.rockGroup.visible = layerVisibility().rock;
+        if (!prefersReducedMotion()) {
+          this._introPending = true;
+          this._introDone = false;
+        }
+        this._syncLayoutProfile();
+        this._scheduleH1RockSync();
 
         const lv = layerVisibility();
         console.log('[LTF Rock] ready | behind:', lv.behind, '| rock:', lv.rock, '| front:', lv.front);
@@ -1232,6 +1546,21 @@ class RockScene {
       );
     };
     window.addEventListener('wheel', this._onWheelFn, { passive: true });
+
+    this._bindH1AnchorObserver();
+  }
+
+  _bindH1AnchorObserver() {
+    if (typeof ResizeObserver !== 'function') return;
+    const headline = document.querySelector('.ltf-hero-headline');
+    if (!headline) return;
+    this._h1ResizeObserver = new ResizeObserver(() => {
+      const vw = typeof window !== 'undefined' ? window.innerWidth : this.w;
+      if (isHeroH1RockAnchorLayout(vw)) this._scheduleH1RockSync();
+    });
+    this._h1ResizeObserver.observe(headline);
+    const h1 = headline.querySelector('h1, .ltf-main-header, .ltf-section-header');
+    if (h1) this._h1ResizeObserver.observe(h1);
   }
 
   /* ── Resize ─────────────────────────────────────────────────────────────── */
@@ -1242,15 +1571,16 @@ class RockScene {
     }
     this.w = Math.max(rect.width,  100);
     this.h = Math.max(rect.height, 100);
+    const vw = typeof window !== 'undefined' ? window.innerWidth : this.w;
     this.renderer.setSize(this.w, this.h);
-    this.camera.aspect = this.w / this.h;
+    const aspectH = isHeroMiddleLayout(vw) ? middleLayoutRefHeight(this.w) : this.h;
+    this.camera.aspect = this.w / aspectH;
     this.camera.updateProjectionMatrix();
-    this._applyRockLift();
     if (this.nebulaUni) {
-      this.nebulaUni.aspect.value = this.w / this.h;
+      this.nebulaUni.aspect.value = this.w / aspectH;
     }
     if (this.fgNebulaUni) {
-      this.fgNebulaUni.aspect.value = this.w / this.h;
+      this.fgNebulaUni.aspect.value = this.w / aspectH;
     }
     this._syncLayoutProfile();
   }
@@ -1305,38 +1635,62 @@ class RockScene {
     /* Horizontal wheel tilt — spring toward target, clamped ±5° */
     this.hScrollYaw += (this.hScrollYawTarget - this.hScrollYaw) * 0.07;
 
-    /* ── Rock rotation ────────────────────────────────────────────────────
-       X: auto-spin + scroll coast only (no mouse hover roll).
-       Y: idle wobble + horizontal scroll tilt (no mouse yaw).
-       Z: subtle idle nod only.                                           */
+    /* ── Rock rotation (Live @4749e8b motion — layout anchor unchanged) ───── */
     if (this.rockGroup) {
-      /* Slow continuous tumble — ~1 full rotation per 140 s */
-      this.rockPitchAccum += 0.0000225 * dt;
-
-      /* Scroll → impulse only (no spring). Heavy rock coasts, never rubber-bands. */
       const scrollDelta = this.scrollProgress - this._lastScrollProgress;
       this._lastScrollProgress = this.scrollProgress;
 
-      if (Math.abs(scrollDelta) > 0.000001) {
-        const dirGain = scrollDelta >= 0 ? 1.0 : 0.25;
-        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN * dirGain
+      if (scrollDelta > 0.000001) {
+        this.scrollPitchVelocity += scrollDelta * SCROLL_ROT_DOWN
                                   * SCROLL_IMPULSE_GAIN * ROCK_SCROLL_COAST;
+      } else if (scrollDelta < -0.000001) {
+        this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity);
       }
 
       this.scrollPitchVelocity *= Math.pow(ROCK_SPIN_DECAY, dt);
-      this.scrollPitchOffset  += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
+      this.scrollPitchVelocity = Math.max(0, this.scrollPitchVelocity);
+      this.scrollPitchOffset += this.scrollPitchVelocity * dt * SCROLL_VEL_SCALE;
+      this.autoForwardRoll += AUTO_FORWARD_ROLL_RAD_PER_MS * dt;
 
-      const basePitch = this.rockPitchAccum + this.scrollPitchOffset;
+      const idlePitch = Math.sin(t * 0.00011) * IDLE_PITCH_AMP
+                      + Math.sin(t * 0.00019 + 0.9) * IDLE_PITCH_AMP2;
+      const idleYaw = CROSS_WOBBLE_INPUT_SCALE * (
+        0.36 * Math.sin(t * 0.000037 + 0.15) * IDLE_YAW_AMP1
+        + 0.31 * Math.sin(t * 0.000061 + 1.73) * IDLE_YAW_AMP2
+        + 0.22 * Math.sin(t * 0.000089 + 2.97) * IDLE_YAW_AMP3
+        + 0.11 * Math.sin(t * 0.000023 + 0.62) * IDLE_NOD_AMP
+      );
+      const idleNod = CROSS_WOBBLE_INPUT_SCALE * (
+        0.58 * Math.sin(t * 0.000031 + 1.40) * IDLE_NOD_AMP
+        + 0.42 * Math.sin(t * 0.000073 + 0.40) * IDLE_NOD_AMP2
+      );
+
+      let introExtraX = 0;
+      if (this._introPending) {
+        this._introStartPerf = performance.now();
+        this._introPending = false;
+      }
+      if (!this._introDone && this._introStartPerf != null && !prefersReducedMotion()) {
+        const elapsed = performance.now() - this._introStartPerf;
+        const u = clamp(elapsed / INTRO_ROLL_MS, 0, 1);
+        const easeOut = 1 - (1 - u) ** 3;
+        introExtraX = INTRO_ROLL_PEAK * (1 - easeOut);
+        if (u >= 1) this._introDone = true;
+      } else if (prefersReducedMotion()) {
+        this._introDone = true;
+      }
+
+      const targetX = clamp(idlePitch, -MAX_PITCH, MAX_PITCH)
+                    + this.autoForwardRoll
+                    + this.scrollPitchOffset
+                    + introExtraX;
+      const targetY = HSCROLL_Y_BIAS
+                    + this.hScrollYaw
+                    + clamp(idleYaw, -MAX_CROSS, MAX_CROSS);
+      const targetZ = clamp(idleNod, -MAX_CROSS, MAX_CROSS);
+
       this.mouseRollOffset = 0;
-      this.rockGroup.rotation.x = basePitch;
-
-      /* Idle wobble (+10% natural drift) + scroll Y tilt — no mouse nudge */
-      const idleYaw = Math.sin(t * 0.00020) * IDLE_YAW_AMP1
-                    + Math.sin(t * 0.00039) * IDLE_YAW_AMP2;
-      const idleNod = Math.sin(t * 0.00015 + 1.4) * IDLE_NOD_AMP;
-      const targetY = idleYaw + this.hScrollYaw + HSCROLL_Y_BIAS;
-      const targetZ = idleNod;
-
+      this.rockGroup.rotation.x += (targetX - this.rockGroup.rotation.x) * ROCK_MOTION_BASELINE.idleNodLerp;
       this.rockGroup.rotation.y += (targetY - this.rockGroup.rotation.y) * ROCK_MOTION_BASELINE.idleYawLerp;
       this.rockGroup.rotation.z += (targetZ - this.rockGroup.rotation.z) * ROCK_MOTION_BASELINE.idleNodLerp;
     }
@@ -1370,9 +1724,12 @@ class RockScene {
     const behindOp = behindOpacity();
     const frontOp  = frontOpacity();
     const frontOn  = layers.front || layers.frontInspect;
+    const gasVw    = typeof window !== 'undefined' ? window.innerWidth : this.w;
+    const gasAlphaMult = isPhonePortraitRockLayout(gasVw) ? PHONE_PORTRAIT_GAS_ALPHA_MULT
+      : (isHeroMiddleLayout(gasVw) ? MIDDLE_GAS_ALPHA_MULT : 1.0);
 
     if (this.nebulaUni && layers.behind) {
-      this.nebulaUni.alphaScale.value       = behindOp;
+      this.nebulaUni.alphaScale.value       = behindOp * gasAlphaMult;
       this.nebulaUni.time.value             = nebulaTime;
       this.nebulaUni.rockYaw.value          = nebulaYaw;
       this.nebulaUni.rockPitch.value        = nebulaPitch;
@@ -1380,7 +1737,7 @@ class RockScene {
       this.nebulaUni.mouseXY.value.set(this.mouseX, this.mouseY);
     }
     if (this.fgNebulaUni && frontOn) {
-      this.fgNebulaUni.alphaScale.value     = frontOp;
+      this.fgNebulaUni.alphaScale.value     = frontOp * gasAlphaMult;
       this.fgNebulaUni.time.value           = nebulaTime;
       this.fgNebulaUni.rockYaw.value        = nebulaYaw;
       this.fgNebulaUni.rockPitch.value      = nebulaPitch;
@@ -1427,6 +1784,11 @@ class RockScene {
     cancelAnimationFrame(this.raf);
     this.raf = 0;
     this._io?.disconnect();
+    this._h1ResizeObserver?.disconnect();
+    if (this._h1SyncRaf) {
+      cancelAnimationFrame(this._h1SyncRaf);
+      this._h1SyncRaf = 0;
+    }
     if (this._onVisibilityFn) {
       document.removeEventListener('visibilitychange', this._onVisibilityFn);
     }
