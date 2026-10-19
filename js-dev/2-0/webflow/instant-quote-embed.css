@@ -3475,7 +3475,10 @@ body.iq-sheet-open {
 
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading) .iq-form-upload-btn,
     #iq-form-artwork-drop:not(.is-queue):not(.is-loading) label.iq-form-upload-btn {
-      margin-top: calc(50.66px - 0.1214 * 100cqh + (288px - 100cqh) * 0.028 - 2.16px + (100vw - 992px) * 0.05134) !important;
+      margin-top: calc(
+        50.66px - 0.1214 * 100cqh + (288px - 100cqh) * 0.028 - 2.16px + (100vw - 992px) * 0.05134
+        - max(0px, 100vw - 1100px) * 0.056
+      ) !important;
     }
   }
 
