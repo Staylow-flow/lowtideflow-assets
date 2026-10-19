@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LTF Masonry Grid — Sandbox Demo</title>
+  <style>
+    :root {
+      --ltf-canvas-dark: #00001c;
+      --ltf-bg-secondary: #06142e;
+      --ltf-text-secondary: #e5e5e5;
+      --site-max-width: 1400px;
+      --fluid-padding: clamp(20px, 3vw, 48px);
+    }
+    * { box-sizing: border-box; }
+    html { overflow-x: hidden; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--ltf-bg-secondary);
+      color: var(--ltf-text-secondary);
+      font-family: acumin-pro, "Helvetica Neue", Arial, sans-serif;
+      overflow-x: hidden;
+    }
+    .demo-shell {
+      max-width: var(--site-max-width);
+      margin: 0 auto;
+      padding: var(--fluid-padding);
+    }
+    .demo-note {
+      font-size: 12px;
+      opacity: 0.65;
+      margin-bottom: 1.25rem;
+    }
+    /* Demo-only stand-in for existing sandbox copy — not a Webflow class to create */
+    .ltf-masonry-demo-copy {
+      max-width: 42rem;
+      margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+    }
+    .ltf-masonry-demo-copy p {
+      margin: 0 0 0.75rem;
+      font-size: clamp(15px, 1.05vw, 18px);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-shell">
+    <p class="demo-note">Standalone preview — replace square tile grid under hero (Sandbox Home). No new heading.</p>
+
+    <div class="ltf-masonry-demo-copy">
+      <p>We design heavy-duty apparel throughout SoCal &amp; across the country.</p>
+    </div>
+
+    <!-- Section wrapper attrs mirror Webflow: keep existing section, add data-ltf-masonry on inner or section -->
+    <section data-ltf-masonry aria-label="Product lookbook grid">
+      <div class="ltf-masonry-grid is-a" role="list">
+        <!-- Video tile -->
+        <article class="ltf-masonry-tile is-a" role="listitem" data-ltf-masonry-video-tile>
+          <div class="ltf-masonry-tile__media is-a">
+            <video
+              class="ltf-masonry-tile__video is-a"
+              data-ltf-video-lazy
+              data-src="./assets/apparel-placeholder.webm"
+              poster="./assets/apparel-poster.jpg"
+              width="960"
+              height="540"
+              preload="none"
+              muted
+              loop
+              playsinline
+              aria-label="Apparel fabric preview placeholder"
+            ></video>
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Heavyweight fleece stack, placeholder</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-01/960/520" alt="Printed tee close-up placeholder" width="960" height="520" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Tree Trimming, heavyweight tee</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-02/720/720" alt="Square hoodie print placeholder" width="720" height="720" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Built-In-Time hoodie, chest print</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-03/960/600" alt="Landscape crew shot placeholder" width="960" height="600" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">On-body crew sample</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-04/640/860" alt="Portrait tee placeholder" width="640" height="860" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Hi-vis layer, back print</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-05/960/540" alt="Wide landscape placeholder" width="960" height="540" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Demolition crew neck, orange base</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-06/800/800" alt="Square print detail placeholder" width="800" height="800" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Iron Workers long sleeve</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-07/960/500" alt="Wide tee flat lay placeholder" width="960" height="500" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Black ink on orange, flat lay</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-08/600/900" alt="Tall portrait — capped at 1.35 aspect" width="600" height="900" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Portrait tile (aspect capped in CSS)</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-09/920/680" alt="Mild portrait placeholder" width="920" height="680" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Crew long sleeve sample</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-10/960/620" alt="Landscape hoodie placeholder" width="960" height="620" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Heavyweight hoodie, sleeve hit</p>
+        </article>
+
+        <article class="ltf-masonry-tile is-a" role="listitem">
+          <div class="ltf-masonry-tile__media is-a">
+            <img class="ltf-masonry-tile__img is-a" src="https://picsum.photos/seed/ltf-11/880/560" alt="Hi-vis orange accent placeholder" width="880" height="560" loading="lazy" decoding="async" />
+          </div>
+          <p class="ltf-masonry-tile__caption is-a">Hi-vis orange shell, chest logo</p>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <!-- Inlined from masonry-embed.html (paste that file in Webflow instead) -->
+  <style>
+  [data-ltf-masonry] {
+    --ltf-masonry-gap: clamp(12px, 1.15vw, 18px);
+    --ltf-masonry-radius: 8px;
+    --ltf-masonry-max-hw: 1.35;
+    --ltf-masonry-navy: #06142e;
+    --ltf-masonry-slate: #e5e5e5;
+    --ltf-masonry-orange: rgba(255, 106, 28, 0.35);
+    width: 100%;
+    overflow-x: clip;
+    overflow-x: hidden;
+    color: var(--ltf-masonry-slate);
+  }
+  [data-ltf-masonry] .ltf-masonry-grid.is-a {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 1px;
+  }
+  [data-ltf-masonry] .ltf-masonry-grid.is-a:not(.is-ltf-packed) .ltf-masonry-tile.is-a {
+    visibility: hidden;
+    position: absolute;
+    pointer-events: none;
+  }
+  [data-ltf-masonry] .ltf-masonry-grid.is-a.is-ltf-packed .ltf-masonry-tile.is-a {
+    visibility: visible;
+    pointer-events: auto;
+  }
+  [data-ltf-masonry] .ltf-masonry-tile.is-a {
+    display: block;
+    box-sizing: border-box;
+    border-radius: var(--ltf-masonry-radius);
+    overflow: hidden;
+    background: linear-gradient(145deg, #263350 0%, #0a1a32 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+    will-change: transform, opacity;
+  }
+  [data-ltf-masonry] .ltf-masonry-tile.is-a:focus-within {
+    outline: 2px solid var(--ltf-masonry-orange);
+    outline-offset: 2px;
+  }
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a {
+    position: relative;
+    width: 100%;
+    line-height: 0;
+    background: #00001c;
+  }
+  [data-ltf-masonry] .ltf-masonry-tile__img.is-a,
+  [data-ltf-masonry] .ltf-masonry-tile__video.is-a {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    border: 0;
+    vertical-align: bottom;
+  }
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a.is-cap {
+    aspect-ratio: 1 / var(--ltf-masonry-max-hw);
+    max-height: none;
+    overflow: hidden;
+  }
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a.is-cap .ltf-masonry-tile__img.is-a,
+  [data-ltf-masonry] .ltf-masonry-tile__media.is-a.is-cap .ltf-masonry-tile__video.is-a {
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  [data-ltf-masonry] .ltf-masonry-tile__caption.is-a {
+    display: none;
+    padding: 10px 12px 12px;
+    font-family: acumin-pro, "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    color: var(--ltf-masonry-slate);
+    background: linear-gradient(to top, rgba(0, 0, 28, 0.92), rgba(0, 0, 28, 0.55));
+    margin-top: -2.4em;
+    position: relative;
+    z-index: 1;
+  }
+  [data-ltf-masonry][data-ltf-masonry-captions] .ltf-masonry-tile__caption.is-a {
+    display: block;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    [data-ltf-masonry] .ltf-masonry-tile.is-a {
+      opacity: 0;
+      transform: translate3d(0, 14px, 0);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    [data-ltf-masonry] .ltf-masonry-tile.is-a.is-ltf-revealed {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-ltf-masonry] .ltf-masonry-tile.is-a {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  </style>
+  <script src="./masonry-embed.js"></script>
+</body>
+</html>
