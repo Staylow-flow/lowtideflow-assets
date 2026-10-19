@@ -10,7 +10,7 @@
    re-pins it to the price box width.
    v3: instant-quote-embed.css (head <link> @9a0e19d) forces the title to
    font-weight 900 !important at >=992 in the idle state; inline 700 !important (v4: Nate wants 700; v3 was 500)
-   here overrides it on desktop only (<=991 untouched, stays 700). */
+   here overrides it on desktop only. v5: title 700 @ 88% at all widths, centered on #iq-total-price (desktop), price-offset mirrored (stacked) (<=991 untouched, stays 700). */
 (function () {
   'use strict';
   var Q = function (s) { return document.querySelector(s); };
@@ -44,12 +44,13 @@
         if (nw) c20.style.width = nw + 'px';
       }
       var idle = !box.classList.contains('is-queue') && !box.classList.contains('is-loading');
-      title.style.removeProperty('font-size');
-      if (DESK.matches && idle) {
+      title.style.removeProperty('font-size'); title.style.removeProperty('position');
+      if (idle) {
         set(title, 'font-weight', '700');
         var fs = parseFloat(getComputedStyle(title).fontSize);
-        if (fs) set(title, 'font-size', (Math.round(fs * 0.8 * 100) / 100) + 'px'); /* v4b: -20% on desktop idle */
+        if (fs) set(title, 'font-size', (Math.round(fs * 0.88 * 100) / 100) + 'px'); /* v5: 88% of page size, all widths */
       } else title.style.removeProperty('font-weight');
+      var price = Q('#iq-total-price');
       [title, hint, btn].forEach(function (e) { clr(e, KEYS); });
       var c = rect(calc); if (!c.width) return;
       if (DESK.matches) {
@@ -57,12 +58,19 @@
         /* Guard: only align when both boxes share top+bottom and Browse fits; otherwise leave Live as-is. */
         if (Math.abs(b.top - L.top) > 2 || Math.abs(b.bottom - L.bottom) > 2 || c.width > b.width - 40) return;
         placeAbs(btn, c.top, cx, c.width, c.height);
-        placeAbs(title, rect(label).top, cx, null, null);
+        var pr0 = rect(price || label), th = rect(title).height;
+        placeAbs(title, pr0.top + pr0.height / 2 - th / 2, cx, null, null); /* v5: title centered on price */
         var o = rect(otd), hh = rect(hint).height;
         placeAbs(hint, o.top + o.height / 2 - hh / 2, cx, null, null);
       } else {
         set(btn, 'width', c.width + 'px'); set(btn, 'max-width', 'none');
         set(btn, 'justify-self', 'start'); set(btn, 'margin-left', '0px'); set(btn, 'margin-right', '0px');
+        /* v5 stacked: title offset from its box top = price offset from left box top (visual shift, no reflow) */
+        var Lw = Q('.iq-total-wrapper');
+        if (price && Lw && idle) {
+          var want = rect(price).top - rect(Lw).top, have = rect(title).top - rect(box).top;
+          set(title, 'position', 'relative'); set(title, 'top', (want - have) + 'px');
+        }
         var ml = 0;
         for (var i = 0; i < 4; i++) {
           var br = rect(btn), dx = (c.left + c.width / 2) - (br.left + br.width / 2);
