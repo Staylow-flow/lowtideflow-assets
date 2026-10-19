@@ -1,0 +1,53 @@
+/* MOCKUP ONLY — Option B: CREW20 outside left price box (≥992). Gap below box = 28px (Live desktop .iq-receipt-right row gap, 9a0e19d). */
+
+@media screen and (min-width: 992px) {
+  /* Boxes match no-code Live + spec upload geometry; no in-card crew overrides. */
+  .ltf-spec-calc-art:has(.iq-receipt-right > #crew20:not([hidden])) .iq-total-wrapper {
+    aspect-ratio: var(--iq-panel-aspect) !important;
+    height: auto !important;
+  }
+
+  .iq-receipt-right > #crew20:not([hidden]) {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: min(var(--iq-panel-max-width), 100%) !important;
+    max-width: min(var(--iq-panel-max-width), 100%) !important;
+    margin: 28px 0 0 !important;
+    align-self: flex-start !important;
+    box-sizing: border-box !important;
+  }
+
+  .iq-total-wrapper > #crew20 {
+    display: none !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-receipt-right > #crew20:not([hidden])) .iq-receipt-right {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    align-content: flex-start !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-receipt-right > #crew20:not([hidden])) .iq-receipt-right > .iq-total-wrapper {
+    flex: 0 0 auto !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-receipt-right > #crew20:not([hidden])) .iq-receipt-right > #iq-artwork-row,
+  .ltf-spec-calc-art:has(.iq-receipt-right > #crew20:not([hidden])) .iq-receipt-right > .iq-artwork-row {
+    flex: 1 1 0 !important;
+    min-width: min(var(--iq-panel-max-width), 100%) !important;
+  }
+}
+
+@media screen and (max-width: 991px) {
+  .iq-receipt-right > #crew20:not([hidden]) {
+    display: flex !important;
+    width: 100% !important;
+    margin-top: 16px !important;
+  }
+
+  .iq-total-wrapper > #crew20 {
+    display: none !important;
+  }
+}

@@ -1,0 +1,85 @@
+/* MOCKUP ONLY — Option A: CREW20 inside price box, balanced 10px rhythm (≥992). */
+
+@media screen and (min-width: 992px) {
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-total-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 18px 28px 18px !important;
+    aspect-ratio: auto !important;
+    height: auto !important;
+    min-height: var(--iq-panel-min-height) !important;
+    overflow: visible !important;
+    grid-template-rows: none !important;
+  }
+
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-total-label,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > #iq-total-price,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-total-price,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-run-quote-wrap,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-orbit-wrap,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .ltf-btn-gradient-wrap,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > #iq-run-quote,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-run-quote,
+  .iq-total-wrapper:has(> #crew20:not([hidden])) > .iq-artwork-info-link {
+    grid-row: auto !important;
+    order: unset !important;
+    margin: 0 !important;
+    transform: none !important;
+    align-self: center !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .iq-total-wrapper > #crew20:not([hidden]) {
+    grid-row: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 10px !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #crew20 #c20-three {
+    gap: 10px !important;
+  }
+
+  #crew20 #c20-spots {
+    gap: 10px !important;
+    padding: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  #crew20 #c20-msg {
+    margin-top: 0 !important;
+  }
+
+  .iq-receipt-right > #crew20 {
+    display: none !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) #iq-form-artwork-drop.iq-form-upload,
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-form-upload#iq-form-artwork-drop {
+    aspect-ratio: auto !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden]))
+    #iq-form-artwork-drop:not(.is-queue):not(.is-loading)
+    .iq-form-upload-shell {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    aspect-ratio: var(--iq-panel-aspect) !important;
+    height: auto !important;
+  }
+
+  .ltf-spec-calc-art:has(.iq-total-wrapper > #crew20:not([hidden])) .iq-receipt-right {
+    align-items: flex-start !important;
+  }
+}
