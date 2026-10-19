@@ -7,7 +7,10 @@
    v2: CREW20 (?code=) pins #crew20 to a px width; inside the grid that px width
    kept column 1 at its load width when narrowing, so the price box stayed taller
    than the upload box. Each run releases that width, lets the grid re-size, then
-   re-pins it to the price box width. */
+   re-pins it to the price box width.
+   v3: instant-quote-embed.css (head <link> @9a0e19d) forces the title to
+   font-weight 900 !important at >=992 in the idle state; inline 500 !important
+   here overrides it on desktop only (<=991 untouched, stays 700). */
 (function () {
   'use strict';
   var Q = function (s) { return document.querySelector(s); };
@@ -40,6 +43,8 @@
         var nw = tw.getBoundingClientRect().width;
         if (nw) c20.style.width = nw + 'px';
       }
+      var idle = !box.classList.contains('is-queue') && !box.classList.contains('is-loading');
+      if (DESK.matches && idle) set(title, 'font-weight', '500'); else title.style.removeProperty('font-weight');
       [title, hint, btn].forEach(function (e) { clr(e, KEYS); });
       var c = rect(calc); if (!c.width) return;
       if (DESK.matches) {
@@ -71,7 +76,7 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(kick);
     var root = Q('.ltf-spec-calc-art') || document.body;
     new MutationObserver(function () { if (!busy) kick(); })
-      .observe(root, { childList: true, subtree: true, characterData: true });
+      .observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
     if (window.ResizeObserver) {
       var ro = new ResizeObserver(kick);
       ['.iq-total-wrapper', '#iq-form-artwork-drop', '#iq-run-quote', '.iq-total-label'].forEach(function (s) { var e = Q(s); if (e) ro.observe(e); });
